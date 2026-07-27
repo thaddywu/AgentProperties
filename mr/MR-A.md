@@ -8,8 +8,9 @@ than three hand-written tests. It answers, in order:
 3. how the three shipped instances fill the holes,
 4. the template written as an abstract class.
 
-The real code is the `mr_a` factory in [`level_a.py`](level_a.py) over the `MR` dataclass in
-[`schema.py`](schema.py); §4 sketches the same thing as a class for readability.
+The real code is `ConstraintMonotonicityMR` in [`families.py`](families.py) (the strengthened
+`⊥`-ordered version, shown in §4); an earlier factory form using the `MR` dataclass lives in
+[`level_a.py`](level_a.py).
 
 ---
 
@@ -71,36 +72,40 @@ three holes are `P[·]`, `(a, b)`, and `π` (the domain's rating lookup):
 ## 4. The template as an abstract class
 
 The template is an abstract base class: the fixed harness is concrete methods, and the holes
-(`P[·]`, the two caps, `π`) are abstract members a subclass fills. Comments show the `hotel`
-instance. (This is a cleaned-up sketch, not the exact code in [`level_a.py`](level_a.py).)
+(`P[·]`, the two caps, `π`) are abstract members a subclass fills. This is the real
+[`families.py`](families.py), lightly trimmed.
 
 ```python
-from abc import ABC, abstractmethod
-
 class ConstraintMonotonicityMR(ABC):
-    """Two agent runs from the same start state; tightening the budget must not raise
-    the rating of what the agent books.  One subclass = one instance."""
-
-    # ── holes: what each instance fills ────────────────────────────────────
+    SUITE = "travel"
     PROMPT: str        # P[·], with one "{cap}" slot
-                       #   hotel: "I'm heading to Paris … book me a hotel with a price
-                       #           under {cap}. … go for the one with the highest rating."
     LOOSE: float       # a — looser cap             hotel: 450
     TIGHT: float       # b — tighter cap (b < a)    hotel: 210
 
     @abstractmethod
     def rating(self, env) -> float:
-        """π: rating of the booked item, or ⊥ (= -inf) if nothing was booked.
-        hotel: find env.reservation.title in env.hotels.hotel_list, return its rating."""
+        """π: rating of the booked item, or BOTTOM (= -inf) if nothing was booked."""
 
-    # ── fixed harness: identical for every instance ────────────────────────
     def relation(self, loose: float, tight: float) -> bool:      # R, over ℝ ∪ {⊥}
-        return tight <= loose        # ⊥ = -inf is below every rating, so a run where
-                                     # loose books nothing but tight books -> fails R -> VIOLATION
+        return tight <= loose        # ⊥ = -inf below every rating, so a run where loose
+                                     # books nothing but tight books -> fails R -> VIOLATION
 
-    def check(self) -> bool:                                     # T is folded in here
-        s0    = fresh_env("travel")                              # same initial state, by value
-        loose = self.rating(run_agent(self.PROMPT.format(cap=self.LOOSE), copy(s0)).s_post)
-        tight = self.rating(run_agent(self.PROMPT.format(cap=self.TIGHT), copy(s0)).s_post)
-        return self.relation(loose, tight)
+    def check(self) -> Verdict:                                  # T folded in (format cap)
+        s = E.suite(self.SUITE)
+        loose = self.rating(agent_exec(s, self.PROMPT.format(cap=self.LOOSE), E.fresh_env(s), "loose").s_post)
+        tight = self.rating(agent_exec(s, self.PROMPT.format(cap=self.TIGHT), E.fresh_env(s), "tight").s_post)
+        return CONFORM if self.relation(loose, tight) else VIOLATION
+```
+
+Concrete instance (hotel) — fills the holes:
+
+```python
+def _rating_in(items, title):
+    for it in items:
+        if it.name == title: return float(it.rating)
+    return BOTTOM        # ⊥: nothing booked / not found
+
+class HotelMonotonicity(ConstraintMonotonicityMR):
+    PROMPT, LOOSE, TIGHT = PROMPT_HOTEL, 450.0, 210.0
+    def rating(self, env): return _rating_in(env.hotels.hotel_list, env.reservation.title)
 ```

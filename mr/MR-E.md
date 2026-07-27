@@ -1,9 +1,10 @@
 # MR-E as a template: one harness, three instances
 
 MR-E (Round-trip / Invertibility) as a *reusable test template*: (1) the template, (2) what it
-checks, (3) three fillings, (4) the template as a class. Proposed family — not yet in
-[`level_a.py`](level_a.py); reuses `canon` from [`instances.py`](instances.py) and the `MR`
-dataclass in [`schema.py`](schema.py).
+checks, (3) three fillings, (4) the template as a class. Implemented in
+[`families.py`](families.py) (`RoundTripMR` + three subclasses); reuses `canon` from
+[`executors.py`](executors.py) and `agent_exec` from [`level_a.py`](level_a.py). The agent-level
+`check()` needs `OPENAI_API_KEY`.
 
 ---
 
@@ -42,30 +43,40 @@ reverse itself?"*
 | instance | `P_do` | `P_undo` |
 |--|--|--|
 | **drive** | *"Create a file named 'scratch.txt' with the content 'hello'."* | *"Delete the file named 'scratch.txt'."* |
-| **slack** | *"Invite Charlie to Slack. Charlie's email is charlie@example.com."* | *"Remove the user Charlie from Slack."* |
-| **banking** | *"Set my account IBAN to 'XX00 1111 2222 3333'."* | *"Set my account IBAN to '⟨original IBAN from s₀⟩'."* |
+| **slack** | *"Invite Dora to Slack. Dora's email is dora@example.com."* | *"Remove the user Dora from Slack."* |
+| **banking** | *"Update my street address to 'Maple Avenue 5'."* | *"Update my street address to 'Apple Street 1'."* |
+
+(Dora is not already a Slack user; `Apple Street 1` is the original address in `s₀` — the
+modify-restore flavor needs it written into `P_undo`, since the second exec shares no conversation.
+Calendar is excluded — `create_calendar_event` also sends an invite email and cancel only *marks*
+the event, so it has no inverse.)
 
 ---
 
 ## 4. The template as an abstract class
 
-Fixed harness = concrete method; holes = abstract members. Comments show the `drive` instance.
-(Sketch, not literal harness code.)
+Fixed harness = concrete `check`; holes = abstract members a subclass fills. This is the real
+[`families.py`](families.py), lightly trimmed.
 
 ```python
-from abc import ABC
-
 class RoundTripMR(ABC):
-    """Do an action, then undo it, as two consecutive agent executions (environment
-    threaded, conversation not); the env must return to its start. One subclass = one instance."""
-
     SUITE:  str        # drive: "workspace"
-    P_DO:   str        # drive: "Create a file named 'scratch.txt' with content 'hello'."
+    P_DO:   str        # drive: "Create a file named 'scratch.txt' with the content 'hello'."
     P_UNDO: str        # drive: "Delete the file named 'scratch.txt'."
 
-    def check(self) -> bool:
-        s0 = fresh_env(self.SUITE)
-        o1 = run_agent(self.P_DO,   copy(s0))            # exec 1: do
-        o2 = run_agent(self.P_UNDO, o1.s_post)           # exec 2: undo, threaded from o1
-        return canon(o2.s_post) == canon(s0)             # returned to start? (mod id/timestamp)
+    def check(self) -> Verdict:                          # agent-level (needs OPENAI_API_KEY)
+        s  = E.suite(self.SUITE)
+        s0 = E.fresh_env(s)
+        o1 = agent_exec(s, self.P_DO,   s0.model_copy(deep=True), "do")
+        o2 = agent_exec(s, self.P_UNDO, o1.s_post,                "undo")
+        return CONFORM if canon(o2.s_post, DROP) == canon(s0, DROP) else VIOLATION
+```
+
+Concrete instance (drive) — fills the holes:
+
+```python
+class DriveRoundTrip(RoundTripMR):
+    SUITE  = "workspace"
+    P_DO   = "Create a file named 'scratch.txt' with the content 'hello'."
+    P_UNDO = "Delete the file named 'scratch.txt'."
 ```
