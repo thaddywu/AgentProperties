@@ -9,8 +9,7 @@ than three hand-written tests. It answers, in order:
 4. the template written as an abstract class.
 
 The real code is `ConstraintMonotonicityMR` in [`families.py`](families.py) (the strengthened
-`⊥`-ordered version, shown in §4); an earlier factory form using the `MR` dataclass lives in
-[`level_a.py`](level_a.py).
+`⊥`-ordered version, shown in §4).
 
 ---
 

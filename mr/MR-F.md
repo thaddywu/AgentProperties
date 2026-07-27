@@ -2,8 +2,8 @@
 
 MR-F (Idempotence) as a *reusable test template*: (1) the template, (2) what it checks, (3) three
 fillings, (4) the template as a class. Implemented in [`families.py`](families.py)
-(`IdempotenceMR` + three subclasses); reuses `canon` from [`executors.py`](executors.py) and
-`agent_exec` from [`level_a.py`](level_a.py). The agent-level `check()` needs `OPENAI_API_KEY`.
+(`IdempotenceMR` + three subclasses); reuses `canon` and `agent_exec` from
+[`executors.py`](executors.py). The agent-level `check()` needs `OPENAI_API_KEY`.
 
 ---
 

@@ -20,8 +20,7 @@ import sys
 from abc import ABC, abstractmethod
 
 import executors as E
-from executors import canon
-from level_a import agent_exec
+from executors import agent_exec, canon
 from schema import Verdict
 
 BOTTOM = float("-inf")
