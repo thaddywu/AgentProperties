@@ -1,0 +1,199 @@
+# Filesystem typestate machine.
+#
+# Written by hand from openapi.yaml, never inferred from traces -- the same discipline
+# as mr/typestate.py. Every edge carries a `note` saying which part of the spec it
+# came from, so a reviewer can disagree with a specific line rather than the whole file.
+#
+# This file and openapi.yaml must agree. `python3 tsm/check_spec.py` enforces that:
+# every operationId here exists there and vice versa, and every state named below is
+# declared. Two files that must stay in sync is a real risk; the checker is what makes
+# a divergence loud instead of silent.
+
+version: 0.1.0
+resource: path
+key: normalised absolute path
+
+states:
+  UNKNOWN:
+    initial: true
+    note: >-
+      Never observed. The default, and the reason this machine has three states rather
+      than two: a container ships an entire filesystem, so a path the agent has not
+      touched is not absent, it is unknown. Reading it is legitimate probing.
+  EXISTS:
+    note: Known to be there -- seeded from the task, created by the trace, or probed.
+  ABSENT:
+    note: >-
+      Known not to be there: deleted by this trace, or a stat that failed. Reading it
+      is the violation this machine exists to find.
+
+# Paths the agent had a legitimate source for. Separate from state because the two
+# distinguish failures that look identical if you only track states:
+#   not in ledger + UNKNOWN -> the agent invented a filename
+#   in ledger     + ABSENT  -> the path is real but was removed
+ledger:
+  seeded_from:
+    - absolute paths named in the task instruction
+    - paths the task Dockerfile creates or copies
+  grown_by:
+    - any path fs.write, fs.copy or archive.pack creates
+    - any path under a directory fs.list or fs.stat visited
+  note: >-
+    The last rule is deliberately loose. Without parsing output the adapter cannot
+    learn which members a listing returned, so it admits the whole subtree. This
+    under-reports invented paths and never over-reports them.
+
+scope:
+  judged: [/app, /opt, /srv, /data, /testbed, /root, /tmp, /home]
+  recorded_but_not_judged: [/usr, /etc, /bin, /sbin, /lib, /var, /proc, /sys, /dev, /boot]
+
+findings:
+  UNBOUND_IDENTIFIER:
+    when: a read or exec names a path that is in no ledger
+    note: the agent invented a filename
+  UNDEFINED_TRANSITION:
+    when: a read or exec names a path in ABSENT
+    note: use after delete, or a repeat of a call already known to fail
+  GUARD_UNSATISFIED:
+    when: a guard on a defined edge fails
+    note: writing into a directory known not to exist
+
+edges:
+  fs.read:
+    - resource: path
+      src: [UNKNOWN, EXISTS]
+      dst: unchanged
+      guard: path in ledger
+      violation_if_src: [ABSENT]
+      note: consuming a path requires it to be there
+
+  fs.exec:
+    - resource: path
+      src: [UNKNOWN, EXISTS]
+      dst: unchanged
+      guard: path in ledger
+      violation_if_src: [ABSENT]
+      note: >-
+        Same edge as fs.read, but everything the script writes afterwards is invisible.
+        Findings raised after an fs.exec are tagged after_opaque_exec so their
+        false-positive rate can be measured on its own.
+
+  fs.write:
+    - resource: path
+      src: [UNKNOWN, EXISTS, ABSENT]
+      dst: EXISTS
+      guard: parent(path) not in ABSENT
+      note: writing revives a deleted path, so ABSENT is a legal source
+
+  fs.delete:
+    - resource: path
+      src: [UNKNOWN, EXISTS, ABSENT]
+      dst: ABSENT
+      note: >-
+        Deleting something already absent is not reported. `rm -f` on a missing file
+        is idiomatic, and rm succeeds. With recursive=true every known descendant
+        moves to ABSENT as well.
+
+  fs.stat:
+    - resource: path
+      src: [UNKNOWN, EXISTS, ABSENT]
+      dst: from_exit_code
+      note: >-
+        Never violates -- probing a path the agent just deleted is correct behaviour.
+        dst is EXISTS on exit 0 and ABSENT on nonzero, but ONLY when the step holds a
+        single segment. A step joined by && or || carries one exit code for the whole
+        step, so attribution is impossible and the state is left unchanged.
+
+  fs.list:
+    - resource: path
+      src: [UNKNOWN, EXISTS, ABSENT]
+      dst: from_exit_code
+      note: >-
+        Never violates, like fs.stat -- `ls p` on a path the agent deleted is a
+        verification, not a use. It differs from fs.stat in also admitting every path
+        under this directory to the ledger, which is the only way the ledger learns
+        the names an enumeration returned without parsing output. Both are needed and
+        they are orthogonal: conflating them made every listed-then-used path look
+        invented.
+
+  fs.copy:
+    - resource: src
+      src: [UNKNOWN, EXISTS]
+      dst: unchanged
+      guard: src in ledger
+      violation_if_src: [ABSENT]
+      note: one call, two resources -- this is why an operation may carry several edges
+    - resource: dst
+      src: [UNKNOWN, EXISTS, ABSENT]
+      dst: EXISTS
+      guard: parent(dst) not in ABSENT
+
+  fs.move:
+    - resource: src
+      src: [UNKNOWN, EXISTS]
+      dst: ABSENT
+      guard: src in ledger
+      violation_if_src: [ABSENT]
+      note: unlike copy, the source ends up gone
+    - resource: dst
+      src: [UNKNOWN, EXISTS, ABSENT]
+      dst: EXISTS
+      guard: parent(dst) not in ABSENT
+
+  fs.chdir:
+    - resource: path
+      src: [UNKNOWN, EXISTS]
+      dst: unchanged
+      note: >-
+        Carries no state change. The adapter has already applied it -- every path in a
+        converted trace is absolute. Recorded so the trace can be audited.
+
+  archive.pack:
+    - resource: archive
+      src: [UNKNOWN, EXISTS, ABSENT]
+      dst: EXISTS
+    - resource: member
+      src: [UNKNOWN, EXISTS]
+      dst: unchanged
+      guard: member in ledger
+      violation_if_src: [ABSENT]
+      note: members are resolved against base_dir when -C was given
+
+  archive.unpack:
+    - resource: archive
+      src: [UNKNOWN, EXISTS]
+      dst: unchanged
+      guard: archive in ledger
+      violation_if_src: [ABSENT]
+      note: >-
+        The extracted members are NOT modelled -- their names live only in output.
+        They stay UNKNOWN, so reading them afterwards raises nothing. Known false
+        negative, preferred over guessing.
+
+  sys.opaque:
+    - resource: none
+      note: >-
+        No edge. An unrecognised command may have done anything, but widening every
+        path back to UNKNOWN after each one would erase the machine. Instead the state
+        is left alone and findings that follow an opaque call are tagged, so the cost
+        of this choice is measurable rather than assumed.
+
+  sys.noop:
+    - resource: none
+      note: declared to touch no path
+
+not_modelled:
+  - what: writes performed inside fs.exec
+    why: 486 of 586 open() calls in terminal-bench live in scripts the agent writes then runs
+  - what: archive members after archive.unpack
+    why: recoverable only from output
+  - what: $VAR, globs, backticks, $(...)
+    why: emitted as unresolved; the call is recorded and skipped
+  - what: which branch of `a || b` actually ran
+    why: needs a per-segment exit code; traces carry one per step, so both are walked
+  - what: symlink aliasing
+    why: 3 of 241 terminal-bench tasks use ln
+  - what: file versus directory type
+    why: type errors are rare in this corpus and would double the cost of every edge
+  - what: permission bits
+    why: only fs.exec would consult them

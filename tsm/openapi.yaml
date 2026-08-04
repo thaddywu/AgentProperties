@@ -1,0 +1,349 @@
+openapi: 3.1.0
+info:
+  title: Minimal Filesystem Service
+  version: 0.1.0
+  summary: >-
+    The smallest set of typed operations that covers the filesystem behaviour of agent
+    traces. Not a model of a filesystem, and not a model of every binary -- both are
+    impossible. The goal is to normalise shell commands into operations whose
+    preconditions can be checked, and to say explicitly what is left unmodelled.
+  description: |
+    Two consumers, one spec.
+
+      * Today: a normalisation schema. Recorded traces are converted into calls
+        against these operations and replayed through the state machine in fsm.yaml.
+      * Later: a real service an agent calls, with `sys.opaque` as the escape hatch.
+
+    The escape hatch is the design risk. If an agent can send arbitrary commands it
+    will send everything that way and the typed operations become decoration. The
+    measurable guard is the share of segments that land in `sys.opaque`: currently
+    7.3% over the 333 terminal-bench leaderboard traces.
+
+    PATHS ARE ALWAYS ABSOLUTE. Resolving a relative path against a working directory
+    is the adapter's job, not this service's. When the adapter cannot resolve one it
+    emits `unresolved: true` and the state machine skips the call rather than guessing.
+
+x-conventions:
+  absolute-paths: >-
+    Every `path` is absolute and normalised: `..`, `.`, duplicate slashes and any
+    trailing slash are removed, so `/opt/data/` and `/opt/data` are the same instance.
+  scope: >-
+    Only paths under /app /opt /srv /data /testbed /root /tmp /home are judged. 194 of
+    the 207 instruction-named paths in terminal-bench live under /app, while the base
+    image ships tens of thousands of system paths no trace ever introduces. Calls
+    outside the scope are still recorded, never judged.
+  minimal-flag-support: >-
+    A flag is modelled only if it (a) selects a different operation, (b) names a path,
+    or (c) consumes a token that would otherwise be read as a path. Everything else is
+    listed under x-ignored-flags. This is what keeps `tar` at four flags instead of
+    forty.
+  exit-code-only: >-
+    Operations may use the exit code. No operation parses stdout. Output formats vary
+    per flag, are truncated in traces, and would reintroduce the dependency on the
+    terminal render that the adapter exists to remove.
+
+paths:
+  /fs/read:
+    post:
+      operationId: fs.read
+      summary: Consume the contents of an existing path.
+      x-commands: [cat, less, more, nl, od, xxd, diff, sort, uniq, cut, jq, awk, md5sum,
+                   sha256sum, head, tail, grep, rg, egrep, wc, shred, chmod, chown, chgrp, sed, gpg]
+      x-modeled-flags:
+        head/tail: [-n, -c]
+        grep: [-e, -m, -A, -B, -C]
+        sed: [-e, -f]
+        shred: [-n, -s]
+        gpg: [--cipher-algo, --compress-algo, --passphrase-fd, -r]
+      x-ignored-flags: all others
+      x-provenance: >-
+        grep takes its LAST operand: the first non-flag argument is the pattern.
+        chmod/chown are reads because they require the path to exist but change only
+        metadata. shred overwrites in place; the removal is a separate rm.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PathCall'}
+      responses:
+        '200': {description: read}
+
+  /fs/write:
+    post:
+      operationId: fs.write
+      summary: Create or overwrite a path.
+      x-commands: [mkdir, touch, '>', '>>', heredoc-target]
+      x-modeled-flags:
+        mkdir: [-p]
+      x-ignored-flags: all others
+      x-provenance: >-
+        A redirection creates its target whatever command produced the bytes, so `>`
+        is handled at the segment level rather than per command. Heredocs are written
+        both as `cat > f <<EOF` and `cat <<EOF > f`; missing the second spelling hid
+        690 writes across the leaderboard traces.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PathCall'}
+      responses:
+        '200': {description: written}
+
+  /fs/delete:
+    post:
+      operationId: fs.delete
+      summary: Remove a path.
+      x-commands: [rm, rmdir, unlink]
+      x-modeled-flags:
+        rm: [-r, -R, --recursive]
+      x-ignored-flags: all others
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/PathCall'
+                - type: object
+                  properties:
+                    recursive: {type: boolean, default: false}
+      responses:
+        '200': {description: deleted}
+
+  /fs/stat:
+    post:
+      operationId: fs.stat
+      summary: Ask whether a path is there. Never consumes it.
+      x-commands: [stat, file, du, test, realpath, readlink]
+      x-ignored-flags: all
+      x-provenance: >-
+        Separate from fs.read because agents verify a deletion with
+        `ls p 2>/dev/null || echo gone`. Folding that into fs.read turns every cleanup
+        task into a false use-after-delete.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PathCall'}
+      responses:
+        '200': {description: present}
+        '404': {description: absent}
+
+  /fs/list:
+    post:
+      operationId: fs.list
+      summary: Enumerate a directory.
+      x-commands: [ls, find, tree]
+      x-ignored-flags: all
+      x-provenance: >-
+        The only operation that yields negative information. Without parsing output
+        the adapter cannot learn the member names, so instead every path under the
+        listed directory is admitted to the ledger. Deliberately loose.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PathCall'}
+      responses:
+        '200': {description: listed}
+
+  /fs/copy:
+    post:
+      operationId: fs.copy
+      summary: Copy src to dst. Moves two resources, so it carries two edges.
+      x-commands: [cp, install]
+      x-modeled-flags:
+        cp: [-t, --target-directory, -m, -S]
+      x-ignored-flags: all others
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SrcDstCall'}
+      responses:
+        '200': {description: copied}
+
+  /fs/move:
+    post:
+      operationId: fs.move
+      summary: Move src to dst. Deletes src.
+      x-commands: [mv]
+      x-modeled-flags:
+        mv: [-t]
+      x-ignored-flags: all others
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SrcDstCall'}
+      responses:
+        '200': {description: moved}
+
+  /fs/exec:
+    post:
+      operationId: fs.exec
+      summary: Run a script. Its own writes are invisible at this layer.
+      x-commands: [python, python3, bash, sh, node, perl, ruby, '.', source, './prog']
+      x-modeled-flags:
+        python: [-c, -m]
+      x-ignored-flags: all others
+      x-provenance: >-
+        The largest known hole: 810 calls over the leaderboard traces, and in
+        terminal-bench 486 of 586 open() calls live inside scripts the agent writes
+        and then runs. Recovering them means parsing the heredoc body the agent typed,
+        which is out of scope for this version.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PathCall'}
+      responses:
+        '200': {description: executed}
+
+  /fs/chdir:
+    post:
+      operationId: fs.chdir
+      summary: Change the working directory used to resolve later relative paths.
+      x-commands: [cd, pushd]
+      x-ignored-flags: all
+      x-provenance: >-
+        Recorded as a call so the converted trace is self-contained, but the adapter
+        has already applied it: every path in the output is absolute.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/PathCall'
+                - type: object
+                  properties:
+                    durable:
+                      type: boolean
+                      description: >-
+                        False inside a pipeline or a subshell, where the change dies
+                        with the child process.
+      responses:
+        '200': {description: changed}
+
+  /archive/pack:
+    post:
+      operationId: archive.pack
+      summary: Create an archive from members.
+      x-commands: [tar]
+      x-modeled-flags:
+        tar: [-c, -f, -C, -T]
+      x-ignored-flags: [-z, -j, -v, -p, and all long options]
+      x-provenance: >-
+        tar's direction lives in the mode characters, so one command name selects two
+        operations: `c` packs, `x`/`t` unpack. `-C DIR` resolves members against DIR,
+        not against the shell's cwd.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [archive]
+              properties:
+                archive: {$ref: '#/components/schemas/AbsolutePath'}
+                members:
+                  type: array
+                  items: {$ref: '#/components/schemas/AbsolutePath'}
+                base_dir: {$ref: '#/components/schemas/AbsolutePath'}
+      responses:
+        '200': {description: packed}
+
+  /archive/unpack:
+    post:
+      operationId: archive.unpack
+      summary: Read an archive. Member names are not modelled.
+      x-commands: [tar, unzip, 7z, gunzip]
+      x-modeled-flags:
+        tar: [-x, -t, -f, -C]
+      x-ignored-flags: all others
+      x-provenance: >-
+        Members are recoverable only from output, which no operation parses. They stay
+        UNKNOWN, so later reads of them are not reported. A deliberate false negative.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [archive]
+              properties:
+                archive: {$ref: '#/components/schemas/AbsolutePath'}
+      responses:
+        '200': {description: unpacked}
+
+  /sys/opaque:
+    post:
+      operationId: sys.opaque
+      summary: Escape hatch. A command with no typed operation.
+      x-commands: [any unrecognised binary]
+      x-provenance: >-
+        Currently 7.3% of segments, dominated by task-specific binaries (pdp11 39,
+        fasttext 31, aws 24, nginx 23) and by shell keywords the splitter lets through
+        (do, done, for). Rising share here means the typed surface is losing.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [command]
+              properties:
+                command: {type: string, description: the raw segment, verbatim}
+      responses:
+        '200': {description: ran}
+
+  /sys/noop:
+    post:
+      operationId: sys.noop
+      summary: A command declared to touch no path.
+      x-commands: [echo, printf, pwd, which, pip, apt, conda, npm, uv, git, curl, wget,
+                   ps, kill, sleep, export, set, tmux, mini]
+      x-provenance: >-
+        Declared explicitly so that a command in neither this list nor any typed
+        operation is a genuine gap rather than a silent drop. git and pip appear here
+        because they belong to other resource families (the git object graph, the
+        package environment), not to the filesystem machine.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                command: {type: string}
+      responses:
+        '200': {description: ran}
+
+components:
+  schemas:
+    AbsolutePath:
+      type: string
+      pattern: '^/'
+      description: Absolute, normalised. The adapter resolves; this service never guesses.
+
+    PathCall:
+      type: object
+      required: [path]
+      properties:
+        path: {$ref: '#/components/schemas/AbsolutePath'}
+        unresolved:
+          type: boolean
+          default: false
+          description: >-
+            The adapter could not produce an absolute path -- the argument contained
+            $VAR, a glob, or command substitution. `path` is then null and the state
+            machine skips the call.
+
+    SrcDstCall:
+      type: object
+      required: [src, dst]
+      properties:
+        src: {$ref: '#/components/schemas/AbsolutePath'}
+        dst: {$ref: '#/components/schemas/AbsolutePath'}
+        unresolved: {type: boolean, default: false}
