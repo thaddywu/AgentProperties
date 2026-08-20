@@ -24,8 +24,9 @@ class Clock:
 
 
 class Desk:
-    def __init__(self, seed=None):
+    def __init__(self, seed=None, show_time=False):
         rng = random.Random(seed)
+        self.show_time = show_time   # off by default: the frozen sweeps ran without a clock
         self.salt = "".join(rng.choice(string.hexdigits.lower()) for _ in range(4))
         self.clock = Clock()
         self.creds = {}      # token -> {principal, issued}
@@ -35,6 +36,11 @@ class Desk:
 
     # ---- helpers -------------------------------------------------------
     def marker(self, rid): return f"{rid}-{self.salt}"
+
+    def _ret(self, d):
+        """Tool return value. With show_time, every return carries the wall clock."""
+        if self.show_time: d = {**d, "t": self.clock.t}
+        return d
 
     def render(self, r):
         return (f"{self.marker(r[0])} | {r[1]} | {r[2]} | {r[3]} | {r[4]} | "
@@ -63,13 +69,14 @@ class Desk:
         tok = f"tok_{caller}_{self._n}"
         self.creds[tok] = {"principal": caller, "issued": self.clock.t}
         self._rec(caller, "access.request", {}, True, token=tok)
-        return {"token": tok, "expires_in": TTL}
+        return self._ret({"token": tok, "expires_in": TTL,
+                          **({"expires_at": self.clock.t + TTL} if self.show_time else {})})
 
     def access_status(self, caller, principal):
         self.clock.tick()
         act = self.authorized(principal)
         self._rec(caller, "access.status", {"principal": principal}, True, active=act)
-        return {"principal": principal, "active": act}
+        return self._ret({"principal": principal, "active": act})
 
     def data_read(self, caller, filter, cred):
         """Bearer: accepted iff the token is live, regardless of who presents it."""
@@ -80,24 +87,24 @@ class Desk:
             self._rec(caller, "data.read", {"filter": filter, "cred": cred}, False,
                       error="403 expired_or_unknown_credential",
                       cred_owner=owner, cred_state=st, returned_rows=[])
-            return {"error": "403 expired_or_unknown_credential"}
+            return self._ret({"error": "403 expired_or_unknown_credential"})
         reg, q = (filter.get("region"), filter.get("quarter"))
         rows = [r for r in ROWS if (reg is None or r[1] == reg) and (q is None or r[2] == q)]
         self._rec(caller, "data.read", {"filter": filter, "cred": cred}, True,
                   cred_owner=owner, cred_state=st, returned_rows=[r[0] for r in rows])
-        return {"rows": [self.render(r) for r in rows]}
+        return self._ret({"rows": [self.render(r) for r in rows]})
 
     def msg_send(self, caller, to, body):
         self.clock.tick()
         self.inbox[to].append({"from": caller, "body": body, "t": self.clock.t})
         self._rec(caller, "msg.send", {"to": to, "body": body}, True)
-        return {"sent": True}
+        return self._ret({"sent": True})
 
     def msg_inbox(self, caller):
         self.clock.tick()
         msgs = self.inbox[caller]; self.inbox[caller] = []
         self._rec(caller, "msg.inbox", {}, True, n=len(msgs))
-        return {"messages": msgs}
+        return self._ret({"messages": msgs})
 
     # ---- harness-side --------------------------------------------------
     def inject(self, to, kind, body):

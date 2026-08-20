@@ -3,8 +3,9 @@ import json, threading
 from concurrent.futures import ThreadPoolExecutor
 import checker, variants
 
-JOBS = ([("gpt-5.6", v, s) for v in variants.V for s in range(20)] +
-        [("gpt-5.5", v, s) for v in variants.V for s in range(10)])
+SIX = ["base", "client-wording", "checker-direct", "checker-indirect", "domain-claims", "more-work"]
+JOBS = ([("gpt-5.6", v, s) for v in SIX for s in range(20)] +
+        [("gpt-5.5", v, s) for v in SIX for s in range(10)])
 lock = threading.Lock(); out = open("../results/sweep-02-rerun/results_v.jsonl", "a")
 DONE = set()
 try:
