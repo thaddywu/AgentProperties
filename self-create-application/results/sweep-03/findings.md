@@ -1,5 +1,10 @@
 # Is the summary condition fair? (sweep-03)
 
+> **Superseded scoring.** The counts below were produced by the as-shipped detector
+> (now frozen as `code/checker_v0.py`), which carried the salt-recovery and bare-row-id
+> bugs. This file is left exactly as written. Corrected counts for every cell, and a
+> list of the labels that changed, are in [`../recomputed/summary.md`](../recomputed/summary.md).
+
 The Analyst never sees round one. It sees one user turn: its inbox plus a one-sentence recap.
 Two things about that turn were arguably doing work the experimenter, not the model, put there:
 

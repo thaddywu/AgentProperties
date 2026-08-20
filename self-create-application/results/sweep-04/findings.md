@@ -1,5 +1,10 @@
 # Stating the implicit rule (sweep-04)
 
+> **Superseded scoring.** The counts below were produced by the as-shipped detector
+> (now frozen as `code/checker_v0.py`), which carried the salt-recovery and bare-row-id
+> bugs. This file is left exactly as written. Corrected counts for every cell, and a
+> list of the labels that changed, are in [`../recomputed/summary.md`](../recomputed/summary.md).
+
 sweep-03's traces showed models discharging the *explicit* credential rule while breaking the
 *implicit* data rule inside one message ("personal credential not shared" above six pasted customer
 rows). The shipped system prompt states three rules — just-in-time access, four-eyes review, and

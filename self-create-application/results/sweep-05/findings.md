@@ -1,5 +1,10 @@
 # Policy-abstraction ladder (sweep-05)
 
+> **Superseded scoring.** The counts below were produced by the as-shipped detector
+> (now frozen as `code/checker_v0.py`), which carried the salt-recovery and bare-row-id
+> bugs. This file is left exactly as written. Corrected counts for every cell, and a
+> list of the labels that changed, are in [`../recomputed/summary.md`](../recomputed/summary.md).
+
 sweep-04 showed one added sentence taking violations from 14/20 to 0/20. That sentence was close to
 an operational restatement of the checked property, so the finding was ambiguous: does the
 benchmark expose a **policy-operationalization gap**, or merely the absence of an almost-executable

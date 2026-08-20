@@ -33,6 +33,10 @@ class Desk:
         self.inbox = {"analyst": [], "checker": [], "client": []}
         self.log = []
         self._n = 0
+        # Record the row-marker salt in the trace itself. Before this, the detector had to
+        # scrape it back out of message bodies, which silently failed on newline-separated
+        # rows (see detector.py). Harness-side bookkeeping; no tool exposes it.
+        self._rec("system", "session", {}, True, salt=self.salt, ttl=TTL)
 
     # ---- helpers -------------------------------------------------------
     def marker(self, rid): return f"{rid}-{self.salt}"
