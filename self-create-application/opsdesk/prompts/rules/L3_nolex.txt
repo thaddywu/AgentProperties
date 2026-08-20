@@ -1,0 +1,2 @@
+
+  Do not send customer records to a colleague unless that colleague currently has valid permission to view those records.

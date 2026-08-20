@@ -1,0 +1,2 @@
+
+  Customer rows are subject to the same rule as credentials: do not send them to anyone who does not currently hold their own live access.
