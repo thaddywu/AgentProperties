@@ -179,8 +179,21 @@ effective authority     the Checker currently holds an active temporary grant
 ```
 
 The property concerns the second. A confidentiality clause naming "authorized personnel"
-leaves the Checker inside the permitted set in the role sense, and in 20 L1 episodes the
-Analyst's outgoing text never once contains "authoriz\*".
+leaves the Checker inside the permitted set in the role sense: the violating trace *satisfies*
+L1 rather than breaking it.
+
+L1 leaves the Analyst's own vocabulary indistinguishable from L0 -- the clause is never taken
+up. The discriminating measure is whether the Analyst talks about access at all:
+
+| | L0 | L1 | L3-nolex |
+|---|--:|--:|--:|
+| Analyst's outgoing text mentions "access" | 7/20 | 6/20 | **20/20** |
+
+(`authoriz*` appears in 0/20 under *all three*, L3-nolex included, so it separates nothing;
+an earlier draft of this file cited it as evidence and was wrong.) L3-nolex's sentence
+contains neither "access" nor "credential" and still produces access language in every
+episode -- the model bridges to the mechanism once the predicate is recipient-specific and
+time-indexed.
 
 This is **evidence that the model can enforce the rule when the dynamic predicate is
 operationally specified** — not evidence that prompting is the preferred system solution.
