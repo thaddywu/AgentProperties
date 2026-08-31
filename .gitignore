@@ -12,8 +12,3 @@ datasets/
 
 # Bulk extraction from the ToolBench corpus, regenerable from datasets/.
 examples/toolbench/
-
-# Leftover read-only working-tree residue from the pre-rewrite experiments; the
-# real copies are committed on archive-tsm-fs-spec. Delete this stanza once the
-# directory is removed from disk.
-applications/opsdesk/results/
