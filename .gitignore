@@ -5,9 +5,14 @@
 __pycache__/
 *.pyc
 
-# Third-party benchmark corpora, cloned/downloaded, ~40G. Not ours to vendor.
-# Provenance and per-file pointers live in survey/dataset.md and survey/pointer.md.
-datasets/
+# Third-party benchmark corpora, ~40G, never vendored into this repo.
+# The seven upstream git checkouts under datasets/ are tracked as submodules.
+# The four below are plain downloads with no .git, so they are pinned by
+# repo id + revision in datasets.lock.json and refetched by scripts/fetch_datasets.sh.
+datasets/Open-SWE-Traces/
+datasets/ToolBench/
+datasets/TRAIL/
+datasets/ha-ultimate/
 
 # Bulk extraction from the ToolBench corpus (~64M, 7.8k files), regenerable from
 # datasets/. The curated per-benchmark examples referenced by survey/pointer.md

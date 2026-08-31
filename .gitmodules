@@ -1,0 +1,21 @@
+[submodule "datasets/AgentBench"]
+	path = datasets/AgentBench
+	url = https://github.com/THUDM/AgentBench.git
+[submodule "datasets/agentdojo"]
+	path = datasets/agentdojo
+	url = https://github.com/ethz-spylab/agentdojo.git
+[submodule "datasets/RestBench"]
+	path = datasets/RestBench
+	url = https://github.com/Yifan-Song793/RestGPT
+[submodule "datasets/tau-bench"]
+	path = datasets/tau-bench
+	url = https://github.com/sierra-research/tau-bench.git
+[submodule "datasets/tb-leaderboard"]
+	path = datasets/tb-leaderboard
+	url = https://github.com/laude-institute/terminal-bench-leaderboard.git
+[submodule "datasets/terminal-bench"]
+	path = datasets/terminal-bench
+	url = https://github.com/harbor-framework/terminal-bench.git
+[submodule "datasets/ToolSandbox"]
+	path = datasets/ToolSandbox
+	url = https://github.com/apple/ToolSandbox.git

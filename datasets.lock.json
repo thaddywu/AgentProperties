@@ -1,0 +1,104 @@
+{
+  "comment": "Pinned provenance for datasets/. Nothing under datasets/ is stored in this repo; git-submodule entries are gitlinks, the rest are refetched by scripts/fetch_datasets.sh.",
+  "total_approx_size": "~40G",
+  "generated_on_branch": "archive-tsm-fs-spec",
+  "datasets": [
+    {
+      "name": "AgentBench",
+      "path": "datasets/AgentBench",
+      "kind": "git-submodule",
+      "url": "https://github.com/THUDM/AgentBench.git",
+      "revision": "d1e4a10db08c87075c78972e48ecc182be03e2d5",
+      "approx_size": "74M"
+    },
+    {
+      "name": "agentdojo",
+      "path": "datasets/agentdojo",
+      "kind": "git-submodule",
+      "url": "https://github.com/ethz-spylab/agentdojo.git",
+      "revision": "089ed468cf3ed0322acc66b0211f26d9d90dbf60",
+      "approx_size": "529M"
+    },
+    {
+      "name": "RestBench",
+      "path": "datasets/RestBench",
+      "kind": "git-submodule",
+      "url": "https://github.com/Yifan-Song793/RestGPT",
+      "revision": "d99012860cb45323975bf5780152d7aa44f390f5",
+      "approx_size": "3.2M"
+    },
+    {
+      "name": "tau-bench",
+      "path": "datasets/tau-bench",
+      "kind": "git-submodule",
+      "url": "https://github.com/sierra-research/tau-bench.git",
+      "revision": "59a200c6d575d595120f1cb70fea53cef0632f6b",
+      "approx_size": "66M"
+    },
+    {
+      "name": "tb-leaderboard",
+      "path": "datasets/tb-leaderboard",
+      "kind": "git-submodule",
+      "url": "https://github.com/laude-institute/terminal-bench-leaderboard.git",
+      "revision": "3c08c2e1291e2e5562c0d89da250530ccd6d5119",
+      "approx_size": "442M"
+    },
+    {
+      "name": "terminal-bench",
+      "path": "datasets/terminal-bench",
+      "kind": "git-submodule",
+      "url": "https://github.com/harbor-framework/terminal-bench.git",
+      "revision": "d28711d0da2675d0bb1d56de45ae5df6082438a3",
+      "approx_size": "867M"
+    },
+    {
+      "name": "ToolSandbox",
+      "path": "datasets/ToolSandbox",
+      "kind": "git-submodule",
+      "url": "https://github.com/apple/ToolSandbox.git",
+      "revision": "165848b9a78cead7ca7fe7c89c688b58e6501219",
+      "approx_size": "1.8M"
+    },
+    {
+      "name": "Open-SWE-Traces",
+      "path": "datasets/Open-SWE-Traces",
+      "kind": "huggingface-dataset",
+      "repo_id": "nvidia/Open-SWE-Traces",
+      "revision": "9c0e4579a4ee0effa3e5f7a552494a045f29377d",
+      "approx_size": "18G",
+      "verified": "revision resolves on the HF API and its file manifest matches the local tree",
+      "note": "Not a submodule: the local copy is an hf snapshot_download with no .git. Refetching costs 18G."
+    },
+    {
+      "name": "ToolBench",
+      "path": "datasets/ToolBench",
+      "kind": "huggingface-dataset",
+      "repo_id": "nullwwg/toolbench-data",
+      "revision": "f31e7988f2ddf5d2d1633c6614cce45834d24f86",
+      "approx_size": "21G (data.zip 1.76G + reproduction_data.zip, expanded)",
+      "verified": "revision resolves on the HF API; repo root is exactly data.zip + reproduction_data.zip, matching the cached LFS metadata",
+      "post_fetch": "unzip data.zip and reproduction_data.zip in place, then remove the archives",
+      "note": "Not a submodule: hf snapshot_download, no .git, and the tracked tree is the unzipped form."
+    },
+    {
+      "name": "TRAIL",
+      "path": "datasets/TRAIL",
+      "kind": "huggingface-dataset",
+      "repo_id": "PatronusAI/TRAIL",
+      "revision": null,
+      "approx_size": "179M",
+      "verified": "repo exists on the HF API",
+      "note": "No local revision was recorded at download time, so this one is UNPINNED - refetching gives you current main, not necessarily the bytes used here."
+    },
+    {
+      "name": "ha-ultimate",
+      "path": "datasets/ha-ultimate",
+      "kind": "skill-snapshot",
+      "url": "https://github.com/openclaw/skills",
+      "revision": "134f128e1cbfbf07b33b528ebe1a7644423b3be9",
+      "approx_size": "104K",
+      "verified": "commit recorded in the snapshot's own _meta.json (version 1.0.2)",
+      "note": "A single skill directory extracted from the openclaw/skills monorepo, not a benchmark corpus."
+    }
+  ]
+}

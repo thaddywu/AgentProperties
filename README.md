@@ -1,55 +1,59 @@
-# Dynamic security properties in multi-agent applications
+# AgentProperties — archived pre-rewrite work
 
-One research question:
+This branch is a frozen snapshot. Active development restarted from an empty
+root on `master`; nothing here is maintained.
 
-> **When does a natural-language security policy fail to induce the runtime checks required
-> to enforce a dynamic security property?**
+## Why it was archived
 
-```
-Security intent  ->  Natural-language policy  ->  Operational specification
-                 ->  Agent execution          ->  Runtime property
-```
+Every application study on this branch shared one defect: **the policy handed to
+the model was itself unsound** — ambiguous, under-specified, or internally
+inconsistent. The agent was then scored against those rules, so the numbers
+measure prompt defects rather than agent behavior. That is not fixable by
+re-running; the policy specification has to be built correctly first, which is
+what `master` starts over on.
 
-Each application in `applications/` is a self-contained instance of the same shape: a fact
-is established by one principal, silently invalidated by another, and relied upon by an
-acting agent that must re-check it. Every application varies the same two axes independently
-— **what the agent is told** (policy level L0/L1/L3) and **what the workflow asks it to do**
-(unsafe protocol vs protocol repair) — and reports the same table.
+Read the results here as a record of what was tried, not as findings.
 
-| | | |
-|---|---|---|
-| [`applications/opsdesk/`](applications/opsdesk/) | expiring access to customer data | the reference application, frozen results ([map](applications/opsdesk/CONTENTS.md)) |
-| [`applications/filesystem/`](applications/filesystem/) | a reviewed release artifact that drifts | feasibility prototype |
-| [`applications/cloud/`](applications/cloud/) | an approved infrastructure plan that goes stale | feasibility prototype |
-| [`shared/`](shared/) | clock/trace, prompt grid, episode runner, condition sweep | [what is and is not shared](shared/README.md) |
-| [`survey/`](survey/) | the earlier survey of existing agent benchmarks, and why none expressed this property | background |
+## Layout
 
-The morning report comparing the three applications is
-[`REPORT.md`](REPORT.md).
+| Path | What it is |
+| --- | --- |
+| `applications/` | Six application studies: `opsdesk` (the most developed), plus `cloud`, `consent`, `filesystem`, `incident`, `payout`. Each has its own `DESIGN.md`/`README.md`, prompts, protocols, and recorded traces. |
+| `applications/*/results/` | Sweep outputs and per-run JSONL traces. Directories were deliberately made read-only to keep runs from being overwritten. |
+| `shared/` | The common harness: `agentloop.py`, `promptgrid.py`, `sweep.py`, `trace.py`, `diagnose.py`, `recompute.py`. |
+| `survey/` | Literature and benchmark survey. `dataset.md` and `pointer.md` carry the per-benchmark notes and file-level pointers into `datasets/`. |
+| `examples/` | Curated per-benchmark trace excerpts referenced by `survey/pointer.md` (`open-swe-traces/`, `trail/`). |
+| `REPORT.md`, `3apps.md`, `1.md` | Working write-ups. |
 
-## Running things
+`examples/toolbench/` (~64M, 7.8k files) is *not* tracked — it is a bulk
+extraction regenerable from `datasets/ToolBench`.
 
-Everything runs as a module from this directory. Nothing but the LLM conditions needs an API.
+## Datasets (~40G, none of it stored in this repo)
 
-```
-python3 -m applications.opsdesk.demo             # matched pair, deterministic
-python3 -m applications.opsdesk.test_opsdesk     # 51 assertions
-python3 -m applications.filesystem.demo          # matched pair, deterministic
-python3 -m applications.cloud.demo               # matched pair, deterministic
+`datasets/` is third-party benchmark corpora. It is never vendored here.
+Provenance and exact revisions live in [`datasets.lock.json`](datasets.lock.json).
 
-OPENAI_API_KEY=dummy OPENAI_BASE_URL=http://127.0.0.1:18080/v1 \
-  python3 -m applications.cloud.run --n 6        # A/B/C, real episodes
+Seven upstream checkouts are **git submodules**, pinned to the commits actually used:
+
+```sh
+git submodule update --init          # ~2G
 ```
 
-## Adding an application
+The other four have no upstream `.git` (they were `snapshot_download`ed or
+copied), so they are pinned by repo id + revision and refetched by script:
 
-1. `applications/<name>/DESIGN.md` — answer the seven questions before writing code:
-   what fact becomes stale, who established it, who invalidates it, who must observe it,
-   which runtime check is required, what happens if it is skipped, what protocol repair
-   removes the need for the reasoning.
-2. `world.py` — domain state and tools, on `shared.trace.TraceMixin`.
-3. `protocols.py` — the unsafe protocol and the repair, differing by **one** operation.
-4. `prompts/base_<protocol>.txt` + `prompts/rules/L{0,1,3,3_nolex}.txt` — the two base
-   prompts must differ by exactly one hunk, and that hunk must not mention the property.
-5. `check.py` — deterministic, trace-only, assigns no fault.
-6. `demo.py` (scripted matched pair) and `run.py` (`shared.sweep` A/B/C grid).
+```sh
+./scripts/fetch_datasets.sh              # everything, ~40G
+./scripts/fetch_datasets.sh submodules   # just the submodules, ~2G
+./scripts/fetch_datasets.sh TRAIL        # one by name
+```
+
+| Dataset | Size | Source | Pinned |
+| --- | --- | --- | --- |
+| `Open-SWE-Traces` | 18G | HF `nvidia/Open-SWE-Traces` | `9c0e4579` — verified: revision resolves and its manifest matches the local tree |
+| `ToolBench` | 21G | HF `nullwwg/toolbench-data` | `f31e7988` — verified: repo root is exactly `data.zip` + `reproduction_data.zip`, matching the cached LFS metadata |
+| `TRAIL` | 179M | HF `PatronusAI/TRAIL` | **unpinned** — no revision was recorded at download time, so a refetch gives current `main`, not necessarily these bytes |
+| `ha-ultimate` | 104K | `github.com/openclaw/skills` | `134f128e` (v1.0.2), from the snapshot's own `_meta.json` |
+
+`ToolBench` ships as zips upstream; the layout used here is the expanded form,
+and the fetch script expands it for you.
