@@ -20,14 +20,14 @@ import os
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(HERE, "..", "code"))
+sys.path.insert(0, os.path.join(HERE, "code"))
 import checker  # noqa: E402
 
 from . import demo  # noqa: E402
 from .protocols import independent_review as IND  # noqa: E402
 from .protocols import transfer_review as TR  # noqa: E402
-from .shared import prompts  # noqa: E402
-from .shared.world import ROWS, TTL, World  # noqa: E402
+from .core import prompts  # noqa: E402
+from .core.world import ROWS, TTL, World  # noqa: E402
 
 FAILS = []
 WEST = ["r40", "r41", "r42", "r43", "r44", "r45"]
@@ -72,7 +72,7 @@ def test_shared_semantics():
           TR.TransferReviewDesk(0).salt, IND.IndependentReviewDesk(0).salt)
     check("same TTL", TTL, 1800)
 
-    sys.path.insert(0, os.path.join(HERE, "..", "code"))
+    sys.path.insert(0, os.path.join(HERE, "code"))
     import desk
     check("ROWS match the frozen code/desk.py", list(ROWS), list(desk.ROWS))
 
@@ -93,7 +93,7 @@ def test_shared_semantics():
 
 def test_prompt_grid():
     print("prompt grid (policy axis x protocol axis)")
-    sys.path.insert(0, os.path.join(HERE, "..", "code"))
+    sys.path.insert(0, os.path.join(HERE, "code"))
     import agent_llm
     want = {"L0": agent_llm.SYSTEM, "L1": agent_llm.SYSTEM_L1,
             "L3": agent_llm.SYSTEM_EXPLICIT, "L3_nolex": agent_llm.SYSTEM_L3NOLEX}

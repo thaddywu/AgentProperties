@@ -1,0 +1,4 @@
+
+
+  A delivery is itself a processing action: do not include a person in a partner
+  delivery unless that person's legal basis is valid at the moment the delivery leaves.

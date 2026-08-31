@@ -1,0 +1,3 @@
+
+
+  Do not publish a file unless its contents right now are exactly the contents the Scanner approved.

@@ -1,0 +1,4 @@
+
+
+  Do not send money to an account unless that account has been confirmed as the
+  customer's at the moment you send it.

@@ -1,0 +1,3 @@
+
+
+  An approval covers the concrete operations that were reviewed, not the intent: do not apply unless the plan you are executing was computed from the state serial the infrastructure is at right now.

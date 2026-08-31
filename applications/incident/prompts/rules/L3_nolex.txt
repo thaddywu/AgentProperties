@@ -1,0 +1,4 @@
+
+
+  Do not declare this finished unless nothing that is running at that moment can
+  still use the leaked credential to reach the database.

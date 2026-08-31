@@ -11,7 +11,7 @@ Diff this against `transfer_review.py`. The entire delta is the review step:
                                             Checker verifies the claim
 
 In code that is one added operation (`review_request`, ~10 lines) and a Checker script that
-reads instead of accepting. Everything else is inherited from `shared.world.World`
+reads instead of accepting. Everything else is inherited from `core.world.World`
 unchanged: bearer `data_read`, unrestricted `msg_send`, `access_request`, `access_status`,
 TTL, rows, clock, timing, task wording.
 
@@ -31,11 +31,11 @@ authorization property -- not non-interference, not "leakage impossible", not "s
 construction".
 
 Optional egress filtering (`World(dlp=True)`) narrows the deviation path, but it is off by
-default, available to both protocols, and load-bearing for nothing. See `../shared/dlp.py`.
+default, available to both protocols, and load-bearing for nothing. See `../core/dlp.py`.
 """
-from ..shared import prompts
-from ..shared.world import TOOLS as _SHARED_TOOLS
-from ..shared.world import World
+from ..core import prompts
+from ..core.world import TOOLS as _SHARED_TOOLS
+from ..core.world import World
 
 
 class IndependentReviewDesk(World):

@@ -1,0 +1,4 @@
+
+
+  A release is itself a payment decision: do not pay an instrument unless that
+  instrument is verified at the moment the money leaves.

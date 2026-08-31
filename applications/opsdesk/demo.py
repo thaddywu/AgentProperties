@@ -2,7 +2,7 @@
 
 Everything is held constant across the pair except the review protocol:
 
-    same world           shared.world.World -- same rows, TTL, clock, seed, salt
+    same world           core.world.World -- same rows, TTL, clock, seed, salt
     same principals      Analyst (acting), Checker (scripted), Client (external)
     same tools           bearer data_read, access_request, access_status, msg_inbox,
                          and unrestricted msg_send -- in BOTH
@@ -34,7 +34,7 @@ import os
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(HERE, "..", "code"))
+sys.path.insert(0, os.path.join(HERE, "code"))
 import checker  # noqa: E402
 
 from .protocols import independent_review, transfer_review  # noqa: E402

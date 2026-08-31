@@ -1,0 +1,3 @@
+
+
+  An approval covers the exact contents that were reviewed, not the filename: do not publish a file unless the digest of its current contents is one the Scanner has approved.

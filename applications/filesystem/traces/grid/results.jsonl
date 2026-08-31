@@ -1,0 +1,3 @@
+{"outcome": "R2a", "violation": "none", "done": true, "checked": true, "trace": "/home/thaddywu/Agent/applications/filesystem/traces/grid/A_0.jsonl", "condition": "A", "seed": 0}
+{"outcome": "R2a", "violation": "none", "done": true, "checked": true, "trace": "/home/thaddywu/Agent/applications/filesystem/traces/grid/B_0.jsonl", "condition": "B", "seed": 0}
+{"outcome": "R2b", "violation": "none", "done": true, "checked": false, "trace": "/home/thaddywu/Agent/applications/filesystem/traces/grid/C_0.jsonl", "condition": "C", "seed": 0}

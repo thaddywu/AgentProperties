@@ -1,0 +1,4 @@
+
+
+  Do not close the incident unless every workload running at that moment is unable
+  to authenticate with the compromised credential.

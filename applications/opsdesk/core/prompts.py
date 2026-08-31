@@ -23,6 +23,10 @@ policies directly.
 this grid and the frozen sweep harness cannot drift apart.
 """
 import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", ".."))
+from shared import promptgrid  # noqa: E402
 
 DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "prompts")
 
@@ -30,15 +34,5 @@ PROTOCOLS = ("transfer", "independent")
 LEVELS = ("L0", "L1", "L3", "L3_nolex")
 
 
-def _read(*parts):
-    with open(os.path.join(DIR, *parts)) as f:
-        return f.read()
-
-
 def build(protocol="transfer", level="L0"):
-    if protocol not in PROTOCOLS:
-        raise ValueError(f"protocol must be one of {PROTOCOLS}, got {protocol!r}")
-    if level not in LEVELS:
-        raise ValueError(f"level must be one of {LEVELS}, got {level!r}")
-    base = _read(f"base_{protocol}.txt")
-    return base.replace("{RULE}", _read("rules", f"{level}.txt")).rstrip("\n")
+    return promptgrid.build(DIR, protocol, level, PROTOCOLS, LEVELS)

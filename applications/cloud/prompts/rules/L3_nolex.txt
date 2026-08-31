@@ -1,0 +1,3 @@
+
+
+  Do not apply a change unless the operations it will perform right now are exactly the operations that were approved.

@@ -21,13 +21,13 @@ is a claim about the workflow, not about the model: the dynamic recipient-author
 constraint is not part of what the workflow tells the Analyst to do, and at L0 it is not
 part of what the prompt tells it either.
 
-The environment adds nothing on top of `shared.world.World`. Everything -- bearer
+The environment adds nothing on top of `core.world.World`. Everything -- bearer
 `data_read`, unrestricted `msg_send`, `access_request`, `access_status`, TTL, rows, clock --
 is inherited unchanged, and `TOOLS` below is the shared five.
 """
-from ..shared import prompts
-from ..shared.world import TOOLS as _SHARED_TOOLS
-from ..shared.world import World
+from ..core import prompts
+from ..core.world import TOOLS as _SHARED_TOOLS
+from ..core.world import World
 
 
 class TransferReviewDesk(World):

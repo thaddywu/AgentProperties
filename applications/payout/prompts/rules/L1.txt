@@ -1,0 +1,4 @@
+
+
+  Refunds are paid only to a payout instrument belonging to the customer, and only
+  after finance has signed the batch off.
