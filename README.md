@@ -57,3 +57,12 @@ copied), so they are pinned by repo id + revision and refetched by script:
 
 `ToolBench` ships as zips upstream; the layout used here is the expanded form,
 and the fetch script expands it for you.
+
+### Where the local copy went
+
+The ~40G working copy was moved out of the repo on 2026-08-31 to keep the
+checkout small; it now lives at `~/Agent-datasets/datasets`, with the
+`examples/toolbench` bulk extraction beside it at `~/Agent-datasets/examples`.
+The seven submodule checkouts moved with it and are intact at the pinned
+commits, so you can point tooling at that path instead of refetching. A fresh
+clone that just wants the data should use the commands above.

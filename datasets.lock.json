@@ -100,5 +100,9 @@
       "verified": "commit recorded in the snapshot's own _meta.json (version 1.0.2)",
       "note": "A single skill directory extracted from the openclaw/skills monorepo, not a benchmark corpus."
     }
-  ]
+  ],
+  "local_copy": {
+    "path": "~/Agent-datasets/datasets",
+    "note": "The ~40G working copy was moved out of the repo on 2026-08-31 to keep the checkout small. examples/toolbench was moved alongside it to ~/Agent-datasets/examples. Point tooling there, or refetch into datasets/ with scripts/fetch_datasets.sh."
+  }
 }
