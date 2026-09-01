@@ -1,0 +1,59 @@
+[
+  {
+    "event_id": "inbox-0001",
+    "source_kind": "email_inbox",
+    "kind": "ADD_REQUEST",
+    "new_request": {
+      "source_reference": "message-0001",
+      "applicant_name": "Ada Lovelace",
+      "application_description": "MIT EECS PhD application",
+      "purpose": "PHD_APPLICATION",
+      "channel": "EMAIL",
+      "destination": "phd-admissions@example.edu",
+      "deadline": "2026-12-01T23:59:00-05:00"
+    }
+  },
+  {
+    "event_id": "inbox-0002",
+    "source_kind": "email_inbox",
+    "kind": "ADD_REQUEST",
+    "new_request": {
+      "source_reference": "message-0002",
+      "applicant_name": "Ada Lovelace",
+      "application_description": "Stanford CS PhD application",
+      "purpose": "PHD_APPLICATION",
+      "channel": "PORTAL",
+      "destination": "https://portal.example.edu/recommendations/9f21",
+      "deadline": "2026-12-08T23:59:00-08:00"
+    }
+  },
+  {
+    "event_id": "inbox-0003",
+    "source_kind": "email_inbox",
+    "kind": "ADD_REQUEST",
+    "new_request": {
+      "source_reference": "message-0003",
+      "applicant_name": "Grace Hopper",
+      "application_description": "NSF Graduate Research Fellowship",
+      "purpose": "FELLOWSHIP",
+      "channel": "EMAIL",
+      "destination": "fellowships@example.org",
+      "deadline": "2026-11-03T17:00:00-05:00"
+    }
+  },
+  {
+    "event_id": "inbox-0004",
+    "source_kind": "email_inbox",
+    "kind": "REPLACE_REQUEST",
+    "target_source_reference": "message-0001",
+    "new_request": {
+      "source_reference": "message-0004",
+      "applicant_name": "Ada Lovelace",
+      "application_description": "MIT EECS PhD application (deadline extended)",
+      "purpose": "PHD_APPLICATION",
+      "channel": "EMAIL",
+      "destination": "phd-admissions@example.edu",
+      "deadline": "2026-12-15T23:59:00-05:00"
+    }
+  }
+]

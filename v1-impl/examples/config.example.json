@@ -1,0 +1,30 @@
+{
+  "database_path": "recsub.sqlite3",
+  "professor_email": "professor@example.edu",
+  "display_time_zone": "America/New_York",
+
+  "request_sources": [
+    {
+      "factory": "recsub.testing.doubles:json_file_request_source",
+      "options": {
+        "source_kind": "email_inbox",
+        "events_path": "events.example.json"
+      }
+    }
+  ],
+
+  "email_gateway": {
+    "factory": "recsub.testing.doubles:recording_email_gateway",
+    "options": { "log_path": "outbound.jsonl" }
+  },
+
+  "portal_agent": {
+    "factory": "recsub.testing.doubles:recording_portal_agent",
+    "options": { "log_path": "outbound.jsonl" }
+  },
+
+  "clock": {
+    "factory": "recsub.testing.doubles:fixed_clock",
+    "options": { "instant": "2026-11-01T12:00:00Z" }
+  }
+}
