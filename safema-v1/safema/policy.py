@@ -1,72 +1,84 @@
-"""Policy evaluation over normalized effects and SafeMA-owned metadata."""
+"""Interpreter for the intentionally small declarative SafeMA policy language."""
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import Any
 
-from .loader import indexed
-from .registry import MetadataRegistry
-from .types import Decision, NormalizedEffect
+from .errors import ModelError
+from .registry import MetadataRegistry, canonical_json
+from .selectors import select
+from .types import Decision, Effect
+
+
+def _collection(value: Any, where: str) -> list[Any]:
+    if isinstance(value, (str, bytes)) or not isinstance(value, Sequence):
+        raise ModelError(f"{where} expected a collection, got {type(value).__name__}")
+    return list(value)
+
+
+def evaluate_expression(expression: dict[str, Any], environment: Mapping[str, Any]) -> Any:
+    operator, operand = next(iter(expression.items()))
+    if operator == "select":
+        return select(operand, environment)
+    if operator == "literal":
+        return operand
+    if operator == "eq":
+        left, right = operand
+        return evaluate_expression(left, environment) == evaluate_expression(right, environment)
+    if operator == "subset":
+        left, right = operand
+        actual = _collection(evaluate_expression(left, environment), "subset left operand")
+        allowed = _collection(evaluate_expression(right, environment), "subset right operand")
+        return {canonical_json(item) for item in actual}.issubset(
+            {canonical_json(item) for item in allowed}
+        )
+    if operator in {"exists", "all", "any"} and isinstance(operand, dict):
+        values = _collection(
+            evaluate_expression(operand["in"], environment), f"{operator}.in"
+        )
+        outcomes = []
+        for value in values:
+            nested = dict(environment)
+            nested[operand["as"]] = value
+            outcomes.append(bool(evaluate_expression(operand["satisfies"], nested)))
+        if operator == "exists" or operator == "any":
+            return any(outcomes)
+        return all(outcomes)
+    if operator in {"all", "any"}:
+        outcomes = [bool(evaluate_expression(item, environment)) for item in operand]
+        return all(outcomes) if operator == "all" else any(outcomes)
+    raise ModelError(f"unsupported policy operator {operator!r}")
 
 
 class PolicyEvaluator:
-    """Evaluate the small generic policy vocabulary declared for v1."""
-
-    def __init__(self, document: dict[str, Any], registry: MetadataRegistry) -> None:
-        policies = indexed(document.get("policies"), "policies")
-        if len(policies) != 1:
-            raise ValueError("SafeMA v1 requires exactly one policy")
-        self.declaration = next(iter(policies.values()))
-        self.policy_id = self.declaration["id"]
+    def __init__(
+        self, policies: dict[str, dict[str, Any]], registry: MetadataRegistry
+    ) -> None:
+        self.policies = policies
         self.registry = registry
 
-    def evaluate(self, effect: NormalizedEffect) -> Decision:
-        applies = self.declaration["applies_to"]
-        covered_classes = set(applies["resource_classes"])
-        if effect.kind != applies["effect_kind"]:
-            return Decision(True, "policy not applicable to effect kind", self.policy_id)
-
-        covered = [item for item in effect.resources if item.resource_class in covered_classes]
-        if not covered:
-            return Decision(True, "no policy-covered resources", self.policy_id)
-
-        actual = set(effect.destinations)
-        if not actual:
-            return Decision(False, "covered disclosure has no destination", self.policy_id)
-
-        resolved = []
-        for reference in covered:
-            metadata, explanation = self.registry.resolve_resource(
-                resolver_id=reference.resolver,
-                resource_class=reference.resource_class,
-                path=reference.value,
-            )
-            if metadata is None:
-                return Decision(
-                    False,
-                    f"resource {reference.value!r} unresolved: {explanation}",
-                    self.policy_id,
-                )
-            resolved.append(metadata)
-
-        for metadata in resolved:
-            contexts = self.registry.matching_contexts(
-                principal=metadata.principal,
-                channel=effect.channel,
-                actual_destinations=actual,
-            )
-            if not contexts:
-                return Decision(
-                    False,
-                    "no active trusted destination context authorizes "
-                    f"principal={metadata.principal!r}, channel={effect.channel!r}, "
-                    f"destinations={sorted(actual)!r}",
-                    self.policy_id,
-                )
-
-        binding_ids = [item.binding_id for item in resolved]
-        return Decision(
-            True,
-            f"all covered resources authorized; binding_ids={binding_ids}",
-            self.policy_id,
-        )
+    def evaluate(self, effect: Effect) -> Decision:
+        applicable = [
+            declaration
+            for declaration in self.policies.values()
+            if declaration["effect_kind"] == effect.kind
+        ]
+        if not applicable:
+            return Decision(False, "no policy applies to this effect kind", ())
+        environment = {
+            "effect": effect,
+            "metadata": {
+                "resources": self.registry.all_resources(),
+                "contexts": self.registry.all_contexts(),
+            },
+        }
+        evaluated = []
+        for declaration in applicable:
+            allowed = bool(evaluate_expression(declaration["allow"], environment))
+            evaluated.append((declaration["id"], allowed))
+        denied = [identifier for identifier, allowed in evaluated if not allowed]
+        identifiers = tuple(identifier for identifier, _ in evaluated)
+        if denied:
+            return Decision(False, f"declarative policies denied: {denied}", identifiers)
+        return Decision(True, f"declarative policies allowed: {list(identifiers)}", identifiers)

@@ -1,129 +1,56 @@
-# SafeMA v1 Model Declarations
+# SafeMA v1 executable model language
 
-This directory contains Stage 7 declarations for the frozen v1 Base App. It is
-outside `v1-impl/`; the generated Base App remains unchanged.
+The three YAML schemas are intentionally small. There are no descriptive
+fields inside the executable documents; prose belongs in this file.
 
-The two YAML files intentionally describe different things:
+## API models
 
-- `api-effects-v1.yaml` describes how concrete outbound API invocations become
-  normalized external effects.
-- `trusted-origins-v1.yaml` describes which configured, trusted operations may
-  mint or update metadata used when those effects are evaluated.
+Each model contains exactly `id`, `target`, and `effect`. `target.callable` is
+a fully-qualified Python class method. An effect contains:
 
-Neither file contains the policy decision itself. The initial application
-policy evaluated over their outputs is conceptually:
+- `kind`: normalized effect kind;
+- `resources`: a value expression, `one` or `many`, an object class, and an
+  optional identity resolver (`exact_string` or `file_sha256`);
+- `contexts`: the actual recipients or target locations, with cardinality and
+  class;
+- `attributes`: trusted model literals derived from which API was invoked.
 
-```text
-for every policy-covered resource in a DISCLOSE effect:
-    resource.principal == destination_context.principal
-    AND destination_context.state == active
-    AND actual_destinations is a subset of allowed_destinations
-```
+Value expressions support exactly `select`, `literal`, `list`, `tuple`,
+`union`, and `coalesce`. Selectors start from `$call.args`, `$receiver`,
+`$return`, or `$item`. API models may select application values only for
+resource/context operands. Effect attributes must be model literals, so an
+application claim cannot silently become authorization metadata. API models do
+not mint trusted resource or Context attributes.
 
-The SafeMA core must not contain the terms `recommendation_letter`, `applicant`,
-`EMAIL`, or `PORTAL` as hard-coded cases. They are declaration values in this
-application-specific model package.
+For example, the email model maps attachments to resources and `To union CC`
+to contexts. The portal model maps `file_path` to a resource and
+`submission_url` to a context. Neither model reads `correlation_id`.
 
-## Reading `api-effects-v1.yaml`
+## Origin models
 
-Read each model from top to bottom:
+An origin has `id`, `target`, and either an `events` declaration or
+`inherit_events`. The only operations are:
 
-1. `target.callable` is the concrete Python method patched by the runtime.
-2. `bind.strategy: inspect_signature` means positional and keyword arguments
-   are first bound to their declared Python parameter names.
-3. `effect.kind` and `effect.channel` add constant semantic attributes.
-4. `resources` selects the artifacts affected by the call.
-5. `destinations` selects the external recipients or target contexts.
-6. `correlation` preserves an application correlation value for audit; it is
-   not itself trusted identity metadata.
+- `put_context`: create or replace generic Context metadata;
+- `patch_context`: update declared attributes on one Context identity;
+- `transaction`: execute multiple operations atomically.
 
-Selectors use a small, read-only path notation:
+The RecSub source model maps ADD to `put_context`, CANCEL to a patch setting
+the application-specific `active` attribute false, and REPLACE to an atomic
+patch plus put. Resource registration is deliberately absent: it belongs to
+the separate SafeMA trusted control plane.
 
-- `$receiver` is the method receiver (`self`).
-- `$call.args.NAME` is a signature-bound argument.
-- `$return` is a successful return value.
-- `$item` is the current element of an event stream.
-- `[*]` selects every element of a sequence.
-- `union` concatenates selected sets; it does not decide whether equality or
-  subset membership is required. That is a policy decision.
+## Policies
 
-For the email model, To and CC are simply normalized as the actual destination
-set. The Effect Model does not say that CC is forbidden. The current policy and
-trusted destination context determine whether those actual recipients are
-allowed.
+A policy contains exactly `id`, `effect_kind`, and `allow`. The executable
+operators are:
 
-The email model declares every attachment position in this Base App's gateway
-to contain a policy-covered recommendation-letter resource. An empty attachment
-sequence, such as a reminder, produces no covered file resources. A selected
-attachment that cannot be resolved through `registered_file_v1` is an
-interpretation failure and is denied before the raw call. This classification
-is specific to the frozen Recommendation Submission System; a general email
-application would need a different resource-classification declaration.
+- `eq: [left, right]`;
+- `subset: [actual, allowed]`;
+- `exists`, `all`, and `any` quantifiers with `in`, `as`, and `satisfies`;
+- `all` and `any` over a list of boolean expressions;
+- `select` and `literal` values.
 
-## Normalized effects
-
-The email declaration produces an object equivalent to:
-
-```yaml
-kind: DISCLOSE
-channel: EMAIL
-correlation: REQ-000001
-resources:
-  - resource_ref: /absolute/path/to/letter.pdf
-    resource_class: recommendation_letter
-destinations:
-  - admissions@example.edu
-```
-
-The portal declaration produces the same normalized shape with `channel:
-PORTAL`, a file selected from the portal call, and the portal URL as its single
-destination.
-
-These examples show normalized data only. They do not imply an allow or deny
-decision.
-
-## Reading `trusted-origins-v1.yaml`
-
-The letter-registration origin is observed only after the Base App operation
-returns successfully. It records an immutable resource version using both a
-canonical path and a SHA-256 content fingerprint. A later same-path content
-change therefore fails resource resolution instead of silently inheriting the
-old binding.
-
-The request-source origins are trusted only because deployment configuration
-places the concrete adapters and their backing mock world in the trusted
-computing base. SafeMA consumes their normalized events directly. It does not
-mint destination bindings from values later read from the Base App's SQLite
-database.
-
-`ADD_REQUEST`, `CANCEL_REQUEST`, and `REPLACE_REQUEST` respectively activate,
-deactivate, and atomically replace destination contexts. Purpose is retained as
-an auxiliary claim for possible later policies, but the first SafeMA policy
-subset does not evaluate it.
-
-## Current concrete targets
-
-The outbound targets are the actual local doubles used by the executable Base
-App configuration:
-
-- `recsub.testing.doubles.RecordingEmailGateway.send`
-- `recsub.testing.doubles.RecordingPortalAgent.submit`
-
-The trusted metadata origins are:
-
-- `recsub.service.Application.register_letter`
-- `recsub.testing.doubles.JsonFileRequestSource.scan`
-- `recsub.testing.doubles.ScriptedRequestSource.scan`
-
-A real email gateway, portal agent, or request-source adapter requires a new
-target declaration. Adding a target does not require changing the SafeMA core.
-
-## Failure semantics
-
-Interpretation occurs before the raw outbound API call. When a model-selected,
-policy-covered resource requires metadata and cannot be resolved, or when a
-required selector cannot be evaluated, the decision is `DENY`. A denied call
-must not invoke the saved raw callable.
-
-Calls through APIs without registered models remain outside the SafeMA v1
-guarantee boundary.
+The interpreter has no knowledge of recommendation letters, applicants,
+principals, active state, channels, or allowed destinations. All such names
+occur only as YAML-selected attributes.

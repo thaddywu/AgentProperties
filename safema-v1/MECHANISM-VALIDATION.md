@@ -1,25 +1,19 @@
-# Stage 9 mechanism validation
+# Mechanism validation
 
-The tests in `tests/test_runtime.py` validate the instrumentation mechanism,
-not merely the Base App's native policy:
+The SafeMA tests establish that:
 
-- concrete email and portal methods are mediated before their raw bodies;
-- signature-bound arguments are normalized according to YAML selectors;
-- trusted registration and request-source returns populate a separate SQLite
-  sidecar;
-- resource resolution binds both canonical path and SHA-256 content version;
-- missing metadata, changed file content, and unauthorized destinations deny
-  closed;
-- denied effects leave recording adapters with zero calls;
-- valid email, portal, and no-attachment reminder calls still reach raw APIs;
-- request cancellation deactivates its destination context;
-- the external runner preserves sidecar metadata across separate `sync`,
-  `register-letter`, and `process` CLI processes;
-- baseline fault injection demonstrates that the tested denials come from
-  SafeMA rather than the Base App's own guard.
+- legal RecSub email and portal effects invoke the raw adapter;
+- wrong actual email and portal destinations are denied before the raw body;
+- Base App letter registration cannot create a trusted resource binding;
+- a forged Base App applicant cannot override control-plane attributes;
+- misleading correlation does not authorize and garbage correlation does not
+  prevent a valid effect;
+- an API with no correlation field can be modeled and authorized;
+- replacing only policy YAML `subset` with `eq` changes behavior;
+- replacing bytes at a registered path changes identity and denies;
+- trusted cancellation updates the generic Context `active` attribute;
+- unknown YAML fields fail at startup;
+- the external control plane and runtime preserve metadata across separate CLI
+  processes.
 
-Run with:
-
-```bash
-PYTHONPATH=safema-v1:v1-impl python -m pytest -q safema-v1/tests
-```
+The frozen Base App test suite remains an independent regression suite.

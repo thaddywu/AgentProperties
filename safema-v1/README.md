@@ -1,45 +1,84 @@
-# SafeMA v1 prototype
+# SafeMA focused core prototype
 
-This directory is deliberately outside `v1-impl/`. SafeMA patches configured
-concrete effect APIs at runtime; the frozen Base App source remains unchanged.
+SafeMA intercepts modeled effectful APIs, maps their actual operands into a
+small security-effect representation, resolves security attributes from
+independently trusted origins, and evaluates executable declarative policies
+before the raw effect. The frozen Base App in `v1-impl/` is unchanged.
 
-## The three declarations
+## Trust boundary
 
-- `models/api-effects-v1.yaml`: how concrete Python calls become normalized
-  effects (`DISCLOSE`, resources, destinations, channel).
-- `models/trusted-origins-v1.yaml`: which successful calls may create trusted
-  resource and destination metadata.
-- `policies/same-principal-active-destination-v1.yaml`: the rule applied to the
-  normalized effect and metadata.
+The Base App and every identifier or claim it supplies are untrusted for
+authorization. In particular, `Application.register_letter(...)`, request IDs,
+letter IDs, and correlation IDs cannot mint SafeMA metadata.
 
-Keeping effect interpretation separate from trust origins matters because a
-sink describes where data is about to flow, while an origin describes who is
-allowed to assert identity. They can evolve independently and neither is the
-policy itself.
+Two explicitly trusted administrative inputs exist in this local prototype:
 
-## Run the unchanged Base App under SafeMA
+1. `TrustedControlPlane.register_resource(...)`, invoked by the professor or
+   experiment harness outside the Base App. It computes file identity itself
+   as canonical path plus SHA-256 and writes resource attributes to the SafeMA
+   sidecar.
+2. Request-source adapters listed in `trusted-origins-v1.yaml`. Deployment is
+   assumed to control those adapters and their backing world. Their returned
+   ADD/CANCEL/REPLACE events mint or update trusted Context metadata.
 
-From the repository root, install the local package (or set `PYTHONPATH`):
+This prototype does not cryptographically authenticate the administrative
+caller and does not isolate the sidecar with OS capabilities. Those are stated
+deployment assumptions, not properties of Python monkey-patching.
+
+## Three separate executable models
+
+- `models/api-effects-v1.yaml` says which concrete method to intercept and how
+  its actual arguments become Effect resources, contexts, and attributes.
+- `models/trusted-origins-v1.yaml` says which configured source methods can
+  mint Context metadata and how their lifecycle events update it.
+- `policies/recommendation-disclosure-v1.yaml` contains the complete
+  recommendation-disclosure authorization expression.
+
+Every YAML field is strictly validated. Unknown fields, unsupported operators,
+unsupported identity resolvers, and modeled effect kinds without a policy fail
+during runtime startup.
+
+## Generic IR
+
+```text
+Resource { identity, class, attributes }
+Context  { identity, class, attributes }
+Effect   { kind, resources, contexts, attributes }
+```
+
+`applicant`, `purpose`, `active`, `channel`, and `allowed_destinations` are
+RecSub policy attributes, not SafeMA core fields. Correlation is absent from
+the security Effect.
+
+## Local workflow
+
+Install the package, then use one persistent sidecar path for every command:
 
 ```bash
 python -m pip install -e ./safema-v1
-python -m safema.recsub_runner \
-  --metadata-db ./safema-sidecar.sqlite3 -- \
-  --config ./v1-impl/examples/config.json daily-run
+
+safema-recsub --metadata-db ./safema.sqlite3 -- \
+  --config ./config.json sync
+
+safema-recsub --metadata-db ./safema.sqlite3 -- \
+  --config ./config.json register-letter \
+  --path ./alice.pdf --applicant Alice --purpose PHD_APPLICATION
+
+safema-register-resource --metadata-db ./safema.sqlite3 \
+  --path ./alice.pdf --resource-class recommendation_letter \
+  --attributes-json '{"applicant":"Alice","purpose":"PHD_APPLICATION"}'
+
+safema-recsub --metadata-db ./safema.sqlite3 -- \
+  --config ./config.json process
 ```
 
-The arguments after `--` are the ordinary RecSub CLI arguments. Use the same
-wrapper for `sync`, `register-letter`, and `process-pending`: trusted metadata
-persists in the SafeMA sidecar across invocations. The Base App keeps owning
-its own independent SQLite database.
+The Base App registration is still needed for its matching workflow, but it
+does not authorize disclosure. Only the separate SafeMA control-plane command
+mints the trusted resource attributes.
 
-## Verify
+## Verification
 
 ```bash
 PYTHONPATH=safema-v1:v1-impl python -m pytest -q safema-v1/tests
 PYTHONPATH=safema-v1:v1-impl python safema-v1/evaluation/run_v1.py
 ```
-
-The evaluation writes deterministic machine-readable results to
-`evaluation/results-v1.json` and a human-readable execution trace to
-`evaluation/TRACE.md`.

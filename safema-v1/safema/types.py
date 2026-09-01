@@ -1,46 +1,38 @@
-"""Normalized values exchanged by the generic SafeMA core."""
+"""Small generic security-effect representation used by SafeMA."""
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from typing import Any
 
 
 @dataclass(frozen=True)
-class ResourceRef:
-    value: str
-    resource_class: str
-    resolver: str
-    metadata_required: bool
+class Resource:
+    identity: Any
+    object_class: str
+    attributes: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
-class NormalizedEffect:
-    model_id: str
-    target: str
+class Context:
+    identity: Any
+    object_class: str
+    attributes: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class Effect:
     kind: str
-    channel: str
-    correlation: str
-    resources: tuple[ResourceRef, ...]
-    destinations: tuple[str, ...]
+    resources: tuple[Resource, ...]
+    contexts: tuple[Context, ...]
+    attributes: dict[str, Any] = field(default_factory=dict)
 
     def as_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
 @dataclass(frozen=True)
-class ResourceMetadata:
-    binding_id: int
-    resolver_id: str
-    resource_class: str
-    canonical_path: str
-    fingerprint: str
-    principal: str
-    attributes: dict[str, Any]
-
-
-@dataclass(frozen=True)
 class Decision:
     allowed: bool
     reason: str
-    policy_id: str
+    policy_ids: tuple[str, ...]

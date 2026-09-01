@@ -1,74 +1,44 @@
-schema: safema.api_effect_models/v1alpha1
-
-# These defaults describe mediation behavior, not application policy.
-defaults:
-  decision_point: before_raw_call
-  on_interpretation_error: deny
-  invoke_raw_api_on_deny: false
+schema: safema.api_effect_models/v1
 
 models:
-  - id: recsub.recording_email_gateway.send.v1
-    description: >-
-      Interpret an invocation of the Base App's current email-gateway double as
-      a disclosure. Email attachments occupy policy-covered resource positions;
-      an attachment must therefore resolve through the named trusted resolver.
-      A message with no attachments produces a disclosure with no covered file
-      resources, as is the case for a deadline reminder.
+  - id: recsub.email.send.v1
     target:
-      kind: python_method
       callable: recsub.testing.doubles.RecordingEmailGateway.send
-      method: send
-    bind:
-      strategy: inspect_signature
     effect:
-      kind:
-        constant: DISCLOSE
-      channel:
-        constant: EMAIL
-      correlation:
-        select: $call.args.message.correlation_id
-        required: true
+      kind: DISCLOSE
       resources:
-        select: $call.args.message.attachments[*]
+        from:
+          select: $call.args.message.attachments[*]
         cardinality: many
-        resource_class: recommendation_letter
-        resolver: registered_file_v1
-        metadata_required: true
-      destinations:
-        union:
-          - select: $call.args.message.to[*]
-          - select: $call.args.message.cc[*]
+        class: recommendation_letter
+        identity_resolver: file_sha256
+      contexts:
+        from:
+          union:
+            - select: $call.args.message.to[*]
+            - select: $call.args.message.cc[*]
         cardinality: many
-        destination_kind: email_address
-        normalization: exact_trimmed_string
+        class: external_destination
+      attributes:
+        channel:
+          literal: EMAIL
 
-  - id: recsub.recording_portal_agent.submit.v1
-    description: >-
-      Interpret an invocation of the Base App's current portal-agent double as
-      disclosure of one policy-covered file resource to one portal destination.
+  - id: recsub.portal.submit.v1
     target:
-      kind: python_method
       callable: recsub.testing.doubles.RecordingPortalAgent.submit
-      method: submit
-    bind:
-      strategy: inspect_signature
     effect:
-      kind:
-        constant: DISCLOSE
-      channel:
-        constant: PORTAL
-      correlation:
-        select: $call.args.correlation_id
-        required: true
+      kind: DISCLOSE
       resources:
-        select: $call.args.file_path
+        from:
+          select: $call.args.file_path
         cardinality: one
-        resource_class: recommendation_letter
-        resolver: registered_file_v1
-        metadata_required: true
-      destinations:
-        select: $call.args.submission_url
+        class: recommendation_letter
+        identity_resolver: file_sha256
+      contexts:
+        from:
+          select: $call.args.submission_url
         cardinality: one
-        destination_kind: portal_url
-        normalization: exact_trimmed_string
-
+        class: external_destination
+      attributes:
+        channel:
+          literal: PORTAL

@@ -1,32 +1,22 @@
-"""Runtime patching, effect normalization, metadata capture, and mediation."""
+"""Model-driven Python interception, normalization, and effect mediation."""
 
 from __future__ import annotations
 
 import functools
 import importlib
 import inspect
-from enum import Enum
 from pathlib import Path
 from typing import Any, Callable
 
 from .errors import ModelError, OriginError, SafeMADenied
-from .loader import indexed, load_yaml
+from .loader import load_api_models, load_origin_models, load_policies
 from .policy import PolicyEvaluator
 from .registry import MetadataRegistry
-from .selectors import many, member, select
-from .types import NormalizedEffect, ResourceRef
-
-
-def _text(value: Any) -> str:
-    if isinstance(value, Enum):
-        value = value.value
-    if not isinstance(value, str) or not value.strip():
-        raise ModelError(f"expected a non-empty string, got {value!r}")
-    return value.strip()
+from .types import Context, Effect, Resource
+from .values import evaluate_value, resolve_identity, text
 
 
 def _resolve_owner(callable_name: str) -> tuple[Any, str, Callable[..., Any]]:
-    """Resolve ``package.module.Class.method`` without importing application code early."""
     parts = callable_name.split(".")
     module = None
     split = 0
@@ -41,25 +31,38 @@ def _resolve_owner(callable_name: str) -> tuple[Any, str, Callable[..., Any]]:
         raise ModelError(f"cannot resolve callable {callable_name!r}")
     owner: Any = module
     for name in parts[split:-1]:
-        owner = getattr(owner, name)
+        try:
+            owner = getattr(owner, name)
+        except AttributeError:
+            raise ModelError(f"cannot resolve callable {callable_name!r}") from None
     attribute = parts[-1]
-    original = getattr(owner, attribute)
+    original = getattr(owner, attribute, None)
     if not callable(original):
         raise ModelError(f"target {callable_name!r} is not callable")
     return owner, attribute, original
 
 
-def _call_environment(original: Callable[..., Any], args: tuple[Any, ...], kwargs: dict[str, Any]) -> dict[str, Any]:
-    bound = inspect.signature(original).bind(*args, **kwargs)
+def _call_environment(
+    original: Callable[..., Any], args: tuple[Any, ...], kwargs: dict[str, Any]
+) -> dict[str, Any]:
+    signature = inspect.signature(original)
+    bound = signature.bind(*args, **kwargs)
     bound.apply_defaults()
     arguments = dict(bound.arguments)
-    receiver = arguments.pop(next(iter(inspect.signature(original).parameters)), None)
+    first_parameter = next(iter(signature.parameters), None)
+    receiver = arguments.pop(first_parameter, None) if first_parameter else None
     return {"receiver": receiver, "call": {"args": arguments}}
 
 
-class SafeMARuntime:
-    """One installed set of method interceptors and a persistent sidecar registry."""
+def _cardinality(value: Any, cardinality: str) -> list[Any]:
+    if cardinality == "one":
+        return [value]
+    if isinstance(value, (str, bytes)) or not isinstance(value, (list, tuple)):
+        raise ModelError(f"cardinality many expected a sequence, got {type(value).__name__}")
+    return list(value)
 
+
+class SafeMARuntime:
     def __init__(
         self,
         *,
@@ -68,25 +71,29 @@ class SafeMARuntime:
         policy_path: str | Path,
         metadata_db: str | Path,
     ) -> None:
-        self.effect_document = load_yaml(
-            effect_models_path, "safema.api_effect_models/v1alpha1"
-        )
-        self.origin_document = load_yaml(
-            origins_path, "safema.trusted_metadata_origins/v1alpha1"
-        )
-        policy_document = load_yaml(policy_path, "safema.policies/v1alpha1")
+        self.effect_models = load_api_models(effect_models_path)
+        self.origins = load_origin_models(origins_path)
+        policies = load_policies(policy_path)
+        effect_kinds = {
+            declaration["effect"]["kind"] for declaration in self.effect_models.values()
+        }
+        policy_kinds = {declaration["effect_kind"] for declaration in policies.values()}
+        uncovered = effect_kinds - policy_kinds
+        if uncovered:
+            raise ModelError(
+                f"modeled effect kinds have no policy and would be unmediated: {sorted(uncovered)}"
+            )
         self.registry = MetadataRegistry(metadata_db)
-        self.evaluator = PolicyEvaluator(policy_document, self.registry)
+        self.evaluator = PolicyEvaluator(policies, self.registry)
         self._restorations: list[tuple[Any, str, Callable[..., Any]]] = []
         self._installed = False
 
     def install(self) -> "SafeMARuntime":
         if self._installed:
             return self
-        origins = indexed(self.origin_document.get("origins"), "origins")
-        for declaration in origins.values():
-            self._patch_origin(declaration, origins)
-        for declaration in indexed(self.effect_document.get("models"), "models").values():
+        for declaration in self.origins.values():
+            self._patch_origin(declaration)
+        for declaration in self.effect_models.values():
             self._patch_effect(declaration)
         self._installed = True
         return self
@@ -107,10 +114,13 @@ class SafeMARuntime:
     def __exit__(self, *exc_info: Any) -> None:
         self.close()
 
-    def _set_wrapper(self, callable_name: str, factory: Callable[[Callable[..., Any]], Callable[..., Any]]) -> None:
+    def _set_wrapper(
+        self,
+        callable_name: str,
+        factory: Callable[[Callable[..., Any]], Callable[..., Any]],
+    ) -> None:
         owner, attribute, current = _resolve_owner(callable_name)
-        wrapped = factory(current)
-        setattr(owner, attribute, wrapped)
+        setattr(owner, attribute, factory(current))
         self._restorations.append((owner, attribute, current))
 
     def _patch_effect(self, declaration: dict[str, Any]) -> None:
@@ -122,28 +132,37 @@ class SafeMARuntime:
                 effect = None
                 try:
                     environment = _call_environment(original, args, kwargs)
-                    effect = self._normalize_effect(declaration, environment)
+                    effect = self._normalize_effect(declaration["effect"], environment)
                     decision = self.evaluator.evaluate(effect)
                 except Exception as exc:
                     if isinstance(exc, SafeMADenied):
                         raise
                     reason = f"effect interpretation failed closed: {type(exc).__name__}: {exc}"
                     decision_id = self.registry.record_decision(
-                        effect, model_id=declaration["id"], target=callable_name,
-                        allowed=False, reason=reason,
+                        effect,
+                        model_id=declaration["id"],
+                        target=callable_name,
+                        observability={},
+                        allowed=False,
+                        reason=reason,
                     )
                     raise SafeMADenied(decision_id, reason) from exc
-
                 decision_id = self.registry.record_decision(
-                    effect, model_id=declaration["id"], target=callable_name,
-                    allowed=decision.allowed, reason=decision.reason,
+                    effect,
+                    model_id=declaration["id"],
+                    target=callable_name,
+                    observability={},
+                    allowed=decision.allowed,
+                    reason=decision.reason,
                 )
                 if not decision.allowed:
                     raise SafeMADenied(decision_id, decision.reason)
                 try:
                     result = original(*args, **kwargs)
                 except BaseException as exc:
-                    self.registry.mark_raw_invoked(decision_id, f"RAISED:{type(exc).__name__}")
+                    self.registry.mark_raw_invoked(
+                        decision_id, f"RAISED:{type(exc).__name__}"
+                    )
                     raise
                 self.registry.mark_raw_invoked(decision_id, "RETURNED")
                 return result
@@ -154,45 +173,49 @@ class SafeMARuntime:
 
     def _normalize_effect(
         self, declaration: dict[str, Any], environment: dict[str, Any]
-    ) -> NormalizedEffect:
-        spec = declaration["effect"]
-        resources_spec = spec["resources"]
-        raw_resources = many(
-            select(resources_spec["select"], environment), resources_spec["cardinality"]
+    ) -> Effect:
+        resource_model = declaration["resources"]
+        resource_values = _cardinality(
+            evaluate_value(resource_model["from"], environment),
+            resource_model["cardinality"],
         )
         resources = tuple(
-            ResourceRef(
-                value=_text(value),
-                resource_class=resources_spec["resource_class"],
-                resolver=resources_spec["resolver"],
-                metadata_required=bool(resources_spec["metadata_required"]),
+            Resource(
+                identity=resolve_identity(
+                    value, resource_model.get("identity_resolver", "exact_string")
+                ),
+                object_class=resource_model["class"],
             )
-            for value in raw_resources
+            for value in resource_values
         )
-        destination_spec = spec["destinations"]
-        raw_destinations: list[Any] = []
-        if "union" in destination_spec:
-            for branch in destination_spec["union"]:
-                raw_destinations.extend(many(select(branch["select"], environment), "many"))
-        else:
-            raw_destinations = many(
-                select(destination_spec["select"], environment),
-                destination_spec["cardinality"],
+        context_model = declaration["contexts"]
+        context_values = _cardinality(
+            evaluate_value(context_model["from"], environment),
+            context_model["cardinality"],
+        )
+        contexts = tuple(
+            Context(
+                identity=resolve_identity(value, "exact_string"),
+                object_class=context_model["class"],
             )
-        return NormalizedEffect(
-            model_id=declaration["id"],
-            target=declaration["target"]["callable"],
-            kind=_text(spec["kind"]["constant"]),
-            channel=_text(spec["channel"]["constant"]),
-            correlation=_text(select(spec["correlation"]["select"], environment)),
+            for value in context_values
+        )
+        attributes = {
+            name: evaluate_value(expression, environment)
+            for name, expression in declaration["attributes"].items()
+        }
+        return Effect(
+            kind=declaration["kind"],
             resources=resources,
-            destinations=tuple(_text(value) for value in raw_destinations),
+            contexts=contexts,
+            attributes=attributes,
         )
 
-    def _patch_origin(
-        self, declaration: dict[str, Any], origins: dict[str, dict[str, Any]]
-    ) -> None:
+    def _patch_origin(self, declaration: dict[str, Any]) -> None:
         callable_name = declaration["target"]["callable"]
+        events = declaration.get("events")
+        if events is None:
+            events = self.origins[declaration["inherit_events"]]["events"]
 
         def factory(original: Callable[..., Any]) -> Callable[..., Any]:
             @functools.wraps(original)
@@ -201,17 +224,10 @@ class SafeMARuntime:
                 result = original(*args, **kwargs)
                 environment["return"] = result
                 try:
-                    if "emits" in declaration:
-                        self._observe_resource(declaration, environment)
-                    else:
-                        stream = declaration.get("event_stream")
-                        if stream is None:
-                            inherited = declaration.get("inherits_event_stream")
-                            stream = origins[inherited]["event_stream"]
-                        self._observe_events(declaration, stream, environment)
+                    self._observe_events(declaration["id"], events, environment)
                 except Exception as exc:
                     raise OriginError(
-                        f"trusted origin {declaration['id']} produced unusable metadata: {exc}"
+                        f"trusted origin {declaration['id']} returned invalid metadata: {exc}"
                     ) from exc
                 return result
 
@@ -219,112 +235,63 @@ class SafeMARuntime:
 
         self._set_wrapper(callable_name, factory)
 
-    def _observe_resource(self, declaration: dict[str, Any], environment: dict[str, Any]) -> None:
-        emits = declaration["emits"]
-        resource = emits["resource"]
-        attributes = {
-            key: _text(select(value["select"], environment))
-            for key, value in emits.get("attributes", {}).items()
-        }
-        self.registry.bind_resource(
-            resolver_id=resource["resolver_id"],
-            resource_class=resource["resource_class"],
-            path=_text(select(resource["select"], environment)),
-            principal=_text(select(emits["principal"]["select"], environment)),
-            attributes=attributes,
-            origin_id=declaration["id"],
-            application_resource_id=attributes.get("application_letter_id"),
-        )
-
     def _observe_events(
         self,
+        origin_id: str,
         declaration: dict[str, Any],
-        stream: dict[str, Any],
         environment: dict[str, Any],
     ) -> None:
-        items = select(stream["items"], environment)
-        source_kind = _text(select(stream["source_kind"]["select"], environment))
-        # One scan is one trusted observation: do not retain a prefix if a
-        # later event in the same returned batch cannot be interpreted.
+        items = evaluate_value(declaration["items"], environment)
+        if isinstance(items, (str, bytes)) or not isinstance(items, (list, tuple)):
+            raise OriginError("events.items must evaluate to a sequence")
         with self.registry.transaction():
             for item in items:
                 item_environment = dict(environment, item=item)
-                event_id = _text(select(stream["event_id"]["select"], item_environment))
-                if self.registry.origin_event_seen(declaration["id"], source_kind, event_id):
+                event_identity = evaluate_value(declaration["id"], item_environment)
+                if self.registry.origin_event_seen(origin_id, event_identity):
                     continue
-                discriminator = _text(
-                    select(stream["discriminator"]["select"], item_environment)
-                )
-                variant = stream["variants"].get(discriminator)
-                if variant is None:
-                    raise OriginError(f"unsupported trusted event variant {discriminator!r}")
-                operation = variant["operation"]
-                if operation == "ACTIVATE_DESTINATION_CONTEXT":
-                    self._activate_context(declaration["id"], variant, item_environment, source_kind)
-                elif operation == "DEACTIVATE_DESTINATION_CONTEXT":
-                    self.registry.deactivate_context(
-                        self._context_key(variant["context_key"], item_environment, source_kind)
-                    )
-                elif operation == "REPLACE_DESTINATION_CONTEXT":
-                    self.registry.deactivate_context(
-                        self._context_key(
-                            variant["deactivate_context_key"], item_environment, source_kind
-                        )
-                    )
-                    self._activate_context(
-                        declaration["id"],
-                        {**variant, "context_key": variant["activate_context_key"]},
-                        item_environment,
-                        source_kind,
-                    )
-                else:
-                    raise OriginError(f"unsupported metadata operation {operation!r}")
-                self.registry.record_origin_event(declaration["id"], source_kind, event_id)
+                kind = text(evaluate_value(declaration["kind"], item_environment))
+                operation = declaration["variants"].get(kind)
+                if operation is None:
+                    raise OriginError(f"unsupported trusted event kind {kind!r}")
+                self._execute_origin_operation(operation, item_environment, origin_id)
+                self.registry.record_origin_event(origin_id, event_identity)
 
-    def _context_key(
-        self, declaration: dict[str, Any], environment: dict[str, Any], source_kind: str
-    ) -> str:
-        values = []
-        for expression in declaration["tuple"]:
-            if expression == "$receiver.source_kind":
-                values.append(source_kind)
-            elif expression.startswith("coalesce("):
-                inner = expression[len("coalesce("):-1].split(",")
-                first = select(inner[0].strip(), environment)
-                values.append(_text(first) if first else source_kind)
-            else:
-                values.append(_text(select(expression, environment)))
-        if len(values) != 2:
-            raise OriginError("v1 destination context keys must contain two values")
-        return self.registry.context_key(values[0], values[1])
-
-    def _activate_context(
+    def _execute_origin_operation(
         self,
-        origin_id: str,
-        variant: dict[str, Any],
+        operation: dict[str, Any],
         environment: dict[str, Any],
-        source_kind: str,
+        origin_id: str,
     ) -> None:
-        claims = variant["claims"]
-        principal = _text(select(claims["principal"]["select"], environment))
-        channel = _text(select(claims["channel"]["select"], environment))
-        allowed_expression = claims["allowed_destinations"]["singleton"]
-        allowed = [_text(select(allowed_expression, environment))]
-        attributes = {
-            key: _text(select(value["select"], environment))
-            for key, value in claims.items()
-            if key not in {"principal", "channel", "allowed_destinations"}
-        }
-        self.registry.activate_context(
-            context_key=self._context_key(
-                variant["context_key"], environment, source_kind
-            ),
-            principal=principal,
-            channel=channel,
-            allowed_destinations=allowed,
-            attributes=attributes,
-            origin_id=origin_id,
-        )
+        kind, declaration = next(iter(operation.items()))
+        if kind == "put_context":
+            attributes = {
+                name: evaluate_value(expression, environment)
+                for name, expression in declaration["attributes"].items()
+            }
+            self.registry.put_context(
+                Context(
+                    identity=evaluate_value(declaration["identity"], environment),
+                    object_class=declaration["class"],
+                    attributes=attributes,
+                ),
+                origin_id=origin_id,
+            )
+            return
+        if kind == "patch_context":
+            attributes = {
+                name: evaluate_value(expression, environment)
+                for name, expression in declaration["set"].items()
+            }
+            self.registry.patch_context(
+                evaluate_value(declaration["identity"], environment), attributes
+            )
+            return
+        if kind == "transaction":
+            for step in declaration:
+                self._execute_origin_operation(step, environment, origin_id)
+            return
+        raise OriginError(f"unsupported origin operation {kind!r}")
 
 
 def install(

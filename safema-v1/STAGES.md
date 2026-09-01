@@ -11,4 +11,6 @@
 9. Instrumentation mechanism validation — complete
 10. Baseline/treatment evaluation — complete
 
+Focused core cleanup and trust-boundary refactor — complete
+
 Progress: `[██████████] 10/10`

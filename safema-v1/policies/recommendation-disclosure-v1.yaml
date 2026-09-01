@@ -1,0 +1,47 @@
+schema: safema.policies/v1
+
+policies:
+  - id: recommendation_disclosure.v1
+    effect_kind: DISCLOSE
+    allow:
+      all:
+        in:
+          select: $effect.resources[*]
+        as: operand
+        satisfies:
+          exists:
+            in:
+              select: $metadata.resources[*]
+            as: resource
+            satisfies:
+              all:
+                - eq:
+                    - select: $operand.identity
+                    - select: $resource.identity
+                - eq:
+                    - select: $operand.object_class
+                    - select: $resource.object_class
+                - eq:
+                    - select: $resource.object_class
+                    - literal: recommendation_letter
+                - exists:
+                    in:
+                      select: $metadata.contexts[*]
+                    as: context
+                    satisfies:
+                      all:
+                        - eq:
+                            - select: $context.object_class
+                            - literal: recommendation_submission_authority
+                        - eq:
+                            - select: $resource.attributes.applicant
+                            - select: $context.attributes.applicant
+                        - eq:
+                            - select: $effect.attributes.channel
+                            - select: $context.attributes.channel
+                        - eq:
+                            - select: $context.attributes.active
+                            - literal: true
+                        - subset:
+                            - select: $effect.contexts[*].identity
+                            - select: $context.attributes.allowed_destinations[*]

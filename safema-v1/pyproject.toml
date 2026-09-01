@@ -11,6 +11,7 @@ dependencies = ["PyYAML>=6"]
 
 [project.scripts]
 safema-recsub = "safema.recsub_runner:main"
+safema-register-resource = "safema.control_plane:main"
 
 [project.optional-dependencies]
 test = ["pytest>=7"]

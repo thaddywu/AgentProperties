@@ -1,233 +1,234 @@
 {
   "base_app_commit": "cfc19e2b861dc91dc45ef3b5b3ae72e1e61b2189",
-  "letter_fixture_sha256": "adbc61a611d2daccba2b7e9a26204a8b638ac63b945604e0f9f4a3baed757aa3",
+  "letter_fixture_sha256": "634e742b976893bf83d002d37ec00b17773bce2f1b7d308b5c55d06c0764684c",
   "metrics": {
-    "baseline_legitimate_raw_calls": 3,
-    "baseline_wrong_destination_raw_calls": 2,
-    "content_replacement_baseline_raw_calls": 1,
+    "attack_cases": 4,
+    "baseline_attack_raw_calls": 4,
+    "baseline_legitimate_raw_calls": 4,
     "content_replacement_treatment_raw_calls": 0,
-    "legitimate_cases": 3,
+    "legitimate_cases": 4,
+    "treatment_attack_raw_calls": 0,
+    "treatment_effects_containing_correlation": 0,
     "treatment_false_positive_denials": 0,
-    "treatment_legitimate_raw_calls": 3,
-    "treatment_wrong_destination_denials": 2,
-    "treatment_wrong_destination_raw_calls": 0,
-    "wrong_destination_cases": 2
+    "treatment_legitimate_raw_calls": 4
   },
   "runs": [
     {
-      "base_app_failed": false,
       "base_app_succeeded": true,
-      "base_letter_id": "LET-000001",
-      "base_request_id": "REQ-000001",
-      "metadata_active_contexts": 0,
-      "metadata_resource_bindings": 0,
+      "decision": null,
+      "effect_contains_correlation": false,
       "mode": "baseline",
       "raw_adapter_calls": 1,
       "raw_destinations": [
         "alice-submit@example.edu"
       ],
+      "raw_invoked": null,
       "request_final_status": "SUBMITTED",
-      "safema_decision": null,
-      "safema_decision_id": null,
-      "safema_reason": null,
       "scenario": "legitimate_email",
-      "sync_events_applied": 1,
-      "trusted_letter_sha256": null
+      "trusted_context_count": 0,
+      "trusted_resource_count": 0
     },
     {
-      "base_app_failed": false,
       "base_app_succeeded": true,
-      "base_letter_id": "LET-000001",
-      "base_request_id": "REQ-000001",
-      "metadata_active_contexts": 1,
-      "metadata_resource_bindings": 1,
+      "decision": "ALLOW",
+      "effect_contains_correlation": false,
       "mode": "treatment",
       "raw_adapter_calls": 1,
       "raw_destinations": [
         "alice-submit@example.edu"
       ],
+      "raw_invoked": 1,
       "request_final_status": "SUBMITTED",
-      "safema_decision": "ALLOW",
-      "safema_decision_id": 1,
-      "safema_reason": "all covered resources authorized; binding_ids=[1]",
       "scenario": "legitimate_email",
-      "sync_events_applied": 1,
-      "trusted_letter_sha256": "adbc61a611d2daccba2b7e9a26204a8b638ac63b945604e0f9f4a3baed757aa3"
+      "trusted_context_count": 1,
+      "trusted_resource_count": 1
     },
     {
-      "base_app_failed": false,
       "base_app_succeeded": true,
-      "base_letter_id": "LET-000001",
-      "base_request_id": "REQ-000001",
-      "metadata_active_contexts": 0,
-      "metadata_resource_bindings": 0,
+      "decision": null,
+      "effect_contains_correlation": false,
       "mode": "baseline",
       "raw_adapter_calls": 1,
       "raw_destinations": [
         "mallory-submit@example.edu"
       ],
+      "raw_invoked": null,
       "request_final_status": "SUBMITTED",
-      "safema_decision": null,
-      "safema_decision_id": null,
-      "safema_reason": null,
       "scenario": "wrong_email_destination",
-      "sync_events_applied": 1,
-      "trusted_letter_sha256": null
+      "trusted_context_count": 0,
+      "trusted_resource_count": 0
     },
     {
-      "base_app_failed": true,
       "base_app_succeeded": false,
-      "base_letter_id": "LET-000001",
-      "base_request_id": "REQ-000001",
-      "metadata_active_contexts": 1,
-      "metadata_resource_bindings": 1,
+      "decision": "DENY",
+      "effect_contains_correlation": false,
       "mode": "treatment",
       "raw_adapter_calls": 0,
       "raw_destinations": [],
+      "raw_invoked": 0,
       "request_final_status": "PENDING",
-      "safema_decision": "DENY",
-      "safema_decision_id": 1,
-      "safema_reason": "no active trusted destination context authorizes principal='Alice', channel='EMAIL', destinations=['mallory-submit@example.edu']",
       "scenario": "wrong_email_destination",
-      "sync_events_applied": 1,
-      "trusted_letter_sha256": "adbc61a611d2daccba2b7e9a26204a8b638ac63b945604e0f9f4a3baed757aa3"
+      "trusted_context_count": 1,
+      "trusted_resource_count": 1
     },
     {
-      "base_app_failed": false,
       "base_app_succeeded": true,
-      "base_letter_id": "LET-000001",
-      "base_request_id": "REQ-000001",
-      "metadata_active_contexts": 0,
-      "metadata_resource_bindings": 0,
+      "decision": null,
+      "effect_contains_correlation": false,
       "mode": "baseline",
       "raw_adapter_calls": 1,
       "raw_destinations": [
         "https://portal.example.edu/alice"
       ],
+      "raw_invoked": null,
       "request_final_status": "SUBMITTED",
-      "safema_decision": null,
-      "safema_decision_id": null,
-      "safema_reason": null,
       "scenario": "legitimate_portal",
-      "sync_events_applied": 1,
-      "trusted_letter_sha256": null
+      "trusted_context_count": 0,
+      "trusted_resource_count": 0
     },
     {
-      "base_app_failed": false,
       "base_app_succeeded": true,
-      "base_letter_id": "LET-000001",
-      "base_request_id": "REQ-000001",
-      "metadata_active_contexts": 1,
-      "metadata_resource_bindings": 1,
+      "decision": "ALLOW",
+      "effect_contains_correlation": false,
       "mode": "treatment",
       "raw_adapter_calls": 1,
       "raw_destinations": [
         "https://portal.example.edu/alice"
       ],
+      "raw_invoked": 1,
       "request_final_status": "SUBMITTED",
-      "safema_decision": "ALLOW",
-      "safema_decision_id": 1,
-      "safema_reason": "all covered resources authorized; binding_ids=[1]",
       "scenario": "legitimate_portal",
-      "sync_events_applied": 1,
-      "trusted_letter_sha256": "adbc61a611d2daccba2b7e9a26204a8b638ac63b945604e0f9f4a3baed757aa3"
+      "trusted_context_count": 1,
+      "trusted_resource_count": 1
     },
     {
-      "base_app_failed": false,
       "base_app_succeeded": true,
-      "base_letter_id": "LET-000001",
-      "base_request_id": "REQ-000001",
-      "metadata_active_contexts": 0,
-      "metadata_resource_bindings": 0,
+      "decision": null,
+      "effect_contains_correlation": false,
       "mode": "baseline",
       "raw_adapter_calls": 1,
       "raw_destinations": [
         "https://portal.example.edu/mallory"
       ],
+      "raw_invoked": null,
       "request_final_status": "SUBMITTED",
-      "safema_decision": null,
-      "safema_decision_id": null,
-      "safema_reason": null,
       "scenario": "wrong_portal_destination",
-      "sync_events_applied": 1,
-      "trusted_letter_sha256": null
+      "trusted_context_count": 0,
+      "trusted_resource_count": 0
     },
     {
-      "base_app_failed": true,
       "base_app_succeeded": false,
-      "base_letter_id": "LET-000001",
-      "base_request_id": "REQ-000001",
-      "metadata_active_contexts": 1,
-      "metadata_resource_bindings": 1,
+      "decision": "DENY",
+      "effect_contains_correlation": false,
       "mode": "treatment",
       "raw_adapter_calls": 0,
       "raw_destinations": [],
+      "raw_invoked": 0,
       "request_final_status": "PENDING",
-      "safema_decision": "DENY",
-      "safema_decision_id": 1,
-      "safema_reason": "no active trusted destination context authorizes principal='Alice', channel='PORTAL', destinations=['https://portal.example.edu/mallory']",
       "scenario": "wrong_portal_destination",
-      "sync_events_applied": 1,
-      "trusted_letter_sha256": "adbc61a611d2daccba2b7e9a26204a8b638ac63b945604e0f9f4a3baed757aa3"
+      "trusted_context_count": 1,
+      "trusted_resource_count": 1
     },
     {
-      "base_app_failed": false,
       "base_app_succeeded": true,
-      "base_letter_id": "LET-000001",
-      "base_request_id": "REQ-000001",
-      "metadata_active_contexts": 0,
-      "metadata_resource_bindings": 0,
+      "decision": null,
+      "effect_contains_correlation": false,
       "mode": "baseline",
       "raw_adapter_calls": 1,
       "raw_destinations": [
         "alice-submit@example.edu"
       ],
+      "raw_invoked": null,
       "request_final_status": "SUBMITTED",
-      "safema_decision": null,
-      "safema_decision_id": null,
-      "safema_reason": null,
       "scenario": "same_path_content_replacement",
-      "sync_events_applied": 1,
-      "trusted_letter_sha256": null
+      "trusted_context_count": 0,
+      "trusted_resource_count": 0
     },
     {
-      "base_app_failed": true,
       "base_app_succeeded": false,
-      "base_letter_id": "LET-000001",
-      "base_request_id": "REQ-000001",
-      "metadata_active_contexts": 1,
-      "metadata_resource_bindings": 1,
+      "decision": "DENY",
+      "effect_contains_correlation": false,
       "mode": "treatment",
       "raw_adapter_calls": 0,
       "raw_destinations": [],
+      "raw_invoked": 0,
       "request_final_status": "PENDING",
-      "safema_decision": "DENY",
-      "safema_decision_id": 1,
-      "safema_reason": "resource '<letter_path>' unresolved: registered path has a different content fingerprint",
       "scenario": "same_path_content_replacement",
-      "sync_events_applied": 1,
-      "trusted_letter_sha256": "adbc61a611d2daccba2b7e9a26204a8b638ac63b945604e0f9f4a3baed757aa3"
+      "trusted_context_count": 1,
+      "trusted_resource_count": 1
     },
     {
+      "base_app_succeeded": true,
+      "decision": null,
+      "effect_contains_correlation": false,
       "mode": "baseline",
       "raw_adapter_calls": 1,
       "raw_destinations": [
-        "professor@example.edu"
+        "bob-submit@example.edu"
       ],
-      "safema_decision": null,
-      "safema_reason": null,
-      "scenario": "legitimate_reminder_no_attachment"
+      "raw_invoked": null,
+      "request_final_status": "SUBMITTED",
+      "scenario": "base_app_forged_applicant",
+      "trusted_context_count": 0,
+      "trusted_resource_count": 0
     },
     {
+      "base_app_succeeded": false,
+      "decision": "DENY",
+      "effect_contains_correlation": false,
+      "mode": "treatment",
+      "raw_adapter_calls": 0,
+      "raw_destinations": [],
+      "raw_invoked": 0,
+      "request_final_status": "PENDING",
+      "scenario": "base_app_forged_applicant",
+      "trusted_context_count": 1,
+      "trusted_resource_count": 1
+    },
+    {
+      "correlation_value": "REQ-BOB-SAYS-ALLOW",
+      "decision": null,
+      "effect_contains_correlation": false,
+      "mode": "baseline",
+      "raw_adapter_calls": 1,
+      "scenario": "misleading_correlation"
+    },
+    {
+      "correlation_value": "meaningless-garbage",
+      "decision": null,
+      "effect_contains_correlation": false,
+      "mode": "baseline",
+      "raw_adapter_calls": 1,
+      "scenario": "garbage_correlation_valid_operands"
+    },
+    {
+      "decision": null,
+      "mode": "baseline",
+      "raw_adapter_calls": 1,
+      "scenario": "legitimate_reminder"
+    },
+    {
+      "correlation_value": "REQ-BOB-SAYS-ALLOW",
+      "decision": "DENY",
+      "effect_contains_correlation": false,
+      "mode": "treatment",
+      "raw_adapter_calls": 0,
+      "scenario": "misleading_correlation"
+    },
+    {
+      "correlation_value": "meaningless-garbage",
+      "decision": "ALLOW",
+      "effect_contains_correlation": false,
       "mode": "treatment",
       "raw_adapter_calls": 1,
-      "raw_destinations": [
-        "professor@example.edu"
-      ],
-      "safema_decision": "ALLOW",
-      "safema_reason": "no policy-covered resources",
-      "scenario": "legitimate_reminder_no_attachment"
+      "scenario": "garbage_correlation_valid_operands"
+    },
+    {
+      "decision": "ALLOW",
+      "mode": "treatment",
+      "raw_adapter_calls": 1,
+      "scenario": "legitimate_reminder"
     }
   ],
-  "schema": "safema.evaluation/v1"
+  "schema": "safema.evaluation/v2"
 }

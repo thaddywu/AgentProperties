@@ -19,7 +19,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--origins", default=str(DEFAULTS / "models/trusted-origins-v1.yaml"))
     parser.add_argument(
         "--policy",
-        default=str(DEFAULTS / "policies/same-principal-active-destination-v1.yaml"),
+        default=str(DEFAULTS / "policies/recommendation-disclosure-v1.yaml"),
     )
     parser.add_argument("recsub_args", nargs=argparse.REMAINDER)
     return parser

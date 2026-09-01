@@ -11,6 +11,14 @@ from .errors import ModelError
 _TOKEN = re.compile(r"^([^\[\]]+)(\[\*\])?$")
 
 
+def validate_selector(expression: Any) -> None:
+    if not isinstance(expression, str) or not expression.startswith("$"):
+        raise ModelError(f"invalid selector {expression!r}")
+    for token in expression[1:].split("."):
+        if not _TOKEN.match(token):
+            raise ModelError(f"invalid selector token {token!r} in {expression!r}")
+
+
 def member(value: Any, name: str) -> Any:
     """Read one mapping key or object attribute without invoking application code."""
     if isinstance(value, Mapping):
@@ -25,8 +33,7 @@ def member(value: Any, name: str) -> Any:
 
 def select(expression: str, environment: Mapping[str, Any]) -> Any:
     """Evaluate `$root.path[*]` against an explicit environment."""
-    if not isinstance(expression, str) or not expression.startswith("$"):
-        raise ModelError(f"invalid selector {expression!r}")
+    validate_selector(expression)
     parts = expression[1:].split(".")
     root_token = parts.pop(0)
     root_match = _TOKEN.match(root_token)
