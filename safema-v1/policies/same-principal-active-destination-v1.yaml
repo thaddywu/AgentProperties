@@ -1,0 +1,26 @@
+schema: safema.policies/v1alpha1
+
+policies:
+  - id: same_principal_active_destination.v1
+    description: >-
+      Every actual destination of a disclosure involving a covered resource
+      must be allowed by an active trusted destination context with the same
+      principal and channel.
+    applies_to:
+      effect_kind: DISCLOSE
+      resource_classes:
+        - recommendation_letter
+    rules:
+      resource_metadata: required
+      destination_context:
+        state: active
+        resource_claim: principal
+        context_claim: principal
+        require_equal_claims: true
+        require_equal_channel: true
+        actual_destinations: subset_of_allowed_destinations
+    decisions:
+      no_covered_resources: allow_not_applicable
+      unresolved_required_resource: deny
+      no_matching_active_context: deny
+      all_resources_authorized: allow
