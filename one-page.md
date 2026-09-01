@@ -146,26 +146,28 @@ request source turns `ADD`, `CANCEL`, and `REPLACE` events into request Context
 records containing applicant, channel, allowed destinations, and current
 state. Arbitrary Base App claims cannot create these trusted facts.
 
-For example:
+## Minimal Declarative Policy: One Portal Check
 
-```text
-trusted CANCEL event ---> metastore state: ACTIVE -> CANCELED
-                                      |
-Base App later calls portal.submit(...)
-                                      |
-SafeMA reads current state = CANCELED ---> DENY before raw API
+Suppose the Base App attempts this portal upload:
+
+```python
+portal.submit(file_path="bob.pdf",
+              submission_url="https://portal.example.edu/alice")
 ```
 
-Likewise, after one successful submission changes the trusted state to
-`SUBMITTED`, a duplicate attempt is denied even if the Base App still believes
-the request is pending.
+The API model produces a `DISCLOSE` effect containing the actual Bob PDF
+identity, the actual Alice portal URL, and `channel=PORTAL`. The trusted
+metastore contains:
 
-## Minimal Declarative Policy
+```text
+resource R_bob:   identity = actual Bob PDF identity, applicant = Bob
+context  C_alice: applicant = Alice, channel = PORTAL,
+                  allowed_destinations = [Alice portal URL], state = ACTIVE
+```
 
-The executable policy uses only generic quantifiers and comparisons. Its outer
-quantifiers bind each actual file as `$operand` and require a trusted
-`$resource` with the same identity and class. Once `$resource` is bound, this
-slice selects a compatible trusted request Context:
+The policy first binds `$operand` to the actual PDF and finds `R_bob`, whose
+identity and class match it; this record becomes `$resource`. It then iterates
+over trusted request Contexts as `$context` and evaluates this YAML slice:
 
 ```yaml
 exists:
@@ -185,9 +187,13 @@ exists:
              {literal: ACTIVE}]
 ```
 
-`$context` is bound while iterating over trusted metastore records. Therefore
-`$resource.attributes.applicant` and `$context.attributes.state` come from
-trusted metadata, not from `portal.submit` or the Base App.
+For `C_alice`, destination, channel, and state checks pass, but
+`Bob == Alice` is false. No trusted Context satisfies every condition, so
+SafeMA returns `DENY` and never invokes the raw portal API.
 
-If the policy allows the effect, SafeMA invokes the raw API. Only a successful
-return then applies the model-declared `ACTIVE -> SUBMITTED` update.
+If the actual PDF were Alice's registered letter, every check would pass and
+SafeMA would invoke the raw API. A `SUCCEEDED` return would then transition
+`C_alice` from `ACTIVE` to `SUBMITTED`. If a trusted cancellation had already
+changed it to `CANCELED`, or a previous submission had changed it to
+`SUBMITTED`, the state check would fail and the portal upload would be denied
+before the external effect.
