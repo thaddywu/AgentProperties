@@ -1,0 +1,132 @@
+schema: safema.trusted_metadata_origins/v1alpha1
+
+# Trust is granted by deployment configuration. A method is not authoritative
+# merely because it has matching argument names.
+origins:
+  - id: recsub.professor_letter_registration.v1
+    description: >-
+      Observe the professor's explicit registration operation after it returns
+      successfully. Mint an immutable resource version whose principal is the
+      canonical applicant name supplied at this trusted control-plane boundary.
+    trust_domain: professor_control_plane
+    target:
+      kind: python_method
+      callable: recsub.service.Application.register_letter
+      method: register_letter
+    observe: after_successful_return
+    emits:
+      event: BIND_RESOURCE_VERSION
+      resource:
+        select: $call.args.file_path
+        resource_class: recommendation_letter
+        identity:
+          canonical_path: absolute_real_path
+          fingerprint: sha256_file_content
+        resolver_id: registered_file_v1
+      principal:
+        select: $call.args.applicant_name
+        normalization: exact_trimmed_string
+      attributes:
+        purpose:
+          select: $call.args.purpose
+          normalization: exact_enum_string
+        application_letter_id:
+          select: $return
+      lifecycle:
+        semantics: immutable_version
+        same_path_content_change: fingerprint_mismatch
+
+  - id: recsub.json_request_source_world.v1
+    description: >-
+      Observe authenticated normalized request events returned by the configured
+      JSON-file request-source world. The source adapter and its backing mock
+      world are trusted deployment components; the Base App database is not the
+      authority for these destination claims.
+    trust_domain: authenticated_request_world
+    target:
+      kind: python_method
+      callable: recsub.testing.doubles.JsonFileRequestSource.scan
+      method: scan
+    observe: after_successful_return
+    event_stream:
+      items: $return[*]
+      access: attribute_or_mapping_key
+      source_kind:
+        select: $receiver.source_kind
+      event_id:
+        select: $item.event_id
+      discriminator:
+        select: $item.kind
+      idempotency_key:
+        tuple:
+          - $receiver.source_kind
+          - $item.event_id
+      variants:
+        ADD_REQUEST:
+          operation: ACTIVATE_DESTINATION_CONTEXT
+          context_key:
+            tuple:
+              - $receiver.source_kind
+              - $item.new_request.source_reference
+          claims:
+            principal:
+              select: $item.new_request.applicant_name
+              normalization: exact_trimmed_string
+            channel:
+              select: $item.new_request.channel
+              normalization: exact_enum_string
+            allowed_destinations:
+              singleton: $item.new_request.destination
+              normalization: exact_trimmed_string
+            purpose:
+              select: $item.new_request.purpose
+              normalization: exact_enum_string
+          state: active
+
+        CANCEL_REQUEST:
+          operation: DEACTIVATE_DESTINATION_CONTEXT
+          context_key:
+            tuple:
+              - coalesce($item.target_source_kind, $receiver.source_kind)
+              - $item.target_source_reference
+          state: inactive
+
+        REPLACE_REQUEST:
+          operation: REPLACE_DESTINATION_CONTEXT
+          atomic: true
+          deactivate_context_key:
+            tuple:
+              - coalesce($item.target_source_kind, $receiver.source_kind)
+              - $item.target_source_reference
+          activate_context_key:
+            tuple:
+              - $receiver.source_kind
+              - $item.new_request.source_reference
+          claims:
+            principal:
+              select: $item.new_request.applicant_name
+              normalization: exact_trimmed_string
+            channel:
+              select: $item.new_request.channel
+              normalization: exact_enum_string
+            allowed_destinations:
+              singleton: $item.new_request.destination
+              normalization: exact_trimmed_string
+            purpose:
+              select: $item.new_request.purpose
+              normalization: exact_enum_string
+          state: active
+
+  - id: recsub.scripted_request_source_world.v1
+    description: >-
+      Apply the same trusted request-event semantics to the in-memory scripted
+      source used by the Base App's deterministic tests and later mechanism
+      validation. This origin inherits the event-stream declaration above.
+    trust_domain: authenticated_request_world
+    target:
+      kind: python_method
+      callable: recsub.testing.doubles.ScriptedRequestSource.scan
+      method: scan
+    observe: after_successful_return
+    inherits_event_stream: recsub.json_request_source_world.v1
+
