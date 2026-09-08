@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "safema-prototype"
-version = "0.1.0"
-description = "Policy-directed runtime mediation prototype"
+name = "safema-prototype-v2"
+version = "0.2.0"
+description = "Policy-directed runtime mediation with trusted live state and exact numeric predicates"
 requires-python = ">=3.11"
 dependencies = ["PyYAML>=6"]
 

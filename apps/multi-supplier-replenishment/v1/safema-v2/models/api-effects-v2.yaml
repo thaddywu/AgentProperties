@@ -1,0 +1,31 @@
+schema: safema.api_effect_models/v2
+
+models:
+  - id: replenishment.local_supplier.place_order.v2
+    target:
+      callable: replenishment.adapters.supplier.LocalSupplierService.place_order
+      receiver_binding: registered_instance
+    effect:
+      kind: PURCHASE
+      resources:
+        from:
+          select: $call.args.supplier_sku
+        cardinality: one
+        class: supplier_sku
+        identity_resolver: exact_string
+      contexts:
+        from:
+          select: $call.args.destination_id
+        cardinality: one
+        class: delivery_destination
+      attributes:
+        supplier_id:
+          select: $target.binding.supplier_id
+        proposed_quantity:
+          select: $call.args.quantity
+        expected_unit_price:
+          select: $call.args.expected_unit_price
+        idempotency_key:
+          select: $call.args.idempotency_key
+        currency:
+          literal: USD

@@ -1,0 +1,177 @@
+{
+  "store_id": "STORE-URBAN-01",
+  "destination_id": "DEST-URBAN-01-DOCK",
+  "timezone": "America/New_York",
+  "daily_run_time": "05:00",
+  "database_path": "../state/app.sqlite3",
+  "scheduler_poll_seconds": 30,
+  "forecast": {
+    "alpha": "0.30"
+  },
+  "calendar_multipliers": {
+    "NORMAL": "1.00",
+    "WEEKEND": "1.25",
+    "PRE_HOLIDAY": "1.40",
+    "HOLIDAY": "0.60"
+  },
+  "adapters": {
+    "clock": {
+      "factory": "fixed_clock",
+      "options": {
+        "instant": "2026-09-03T09:05:00Z"
+      }
+    },
+    "inventory_ledger": {
+      "factory": "local_world",
+      "options": {
+        "world_dir": "../state/world"
+      }
+    },
+    "sales_history": {
+      "factory": "local_world",
+      "options": {
+        "world_dir": "../state/world"
+      }
+    },
+    "calendar": {
+      "factory": "local_world",
+      "options": {
+        "world_dir": "../state/world"
+      }
+    }
+  },
+  "suppliers": [
+    {
+      "supplier_id": "SUPPLIER_A",
+      "factory": "local_world",
+      "options": {
+        "world_dir": "../state/world"
+      }
+    },
+    {
+      "supplier_id": "SUPPLIER_B",
+      "factory": "local_world",
+      "options": {
+        "world_dir": "../state/world"
+      }
+    }
+  ],
+  "skus": [
+    {
+      "sku": "SKU-CANDY-BAR-45G",
+      "display_name": "Chocolate bar 45 g",
+      "hard_max": 400,
+      "safety_days": 2,
+      "max_lead_time_days": 5,
+      "max_unit_price_usd": "0.60",
+      "autonomous_order_limit_usd": "150.00",
+      "supplier_mappings": {
+        "SUPPLIER_A": "A-CANDY-BAR-45G",
+        "SUPPLIER_B": "B-CANDY-45"
+      }
+    },
+    {
+      "sku": "SKU-CHIPS-BBQ-150G",
+      "display_name": "BBQ crisps 150 g",
+      "hard_max": 400,
+      "safety_days": 2,
+      "max_lead_time_days": 5,
+      "max_unit_price_usd": "1.20",
+      "autonomous_order_limit_usd": "300.00",
+      "supplier_mappings": {
+        "SUPPLIER_A": "A-CHIPS-BBQ-150G",
+        "SUPPLIER_B": "B-CHIPS-BBQ-150"
+      }
+    },
+    {
+      "sku": "SKU-COFFEE-CUP-12OZ",
+      "display_name": "Coffee cup 12 oz",
+      "hard_max": 900,
+      "safety_days": 3,
+      "max_lead_time_days": 5,
+      "max_unit_price_usd": "0.20",
+      "autonomous_order_limit_usd": "120.00",
+      "supplier_mappings": {
+        "SUPPLIER_A": "A-COFFEE-CUP-12OZ",
+        "SUPPLIER_B": "B-COFFEE-12OZ-CUP"
+      }
+    },
+    {
+      "sku": "SKU-ENERGY-16OZ",
+      "display_name": "Energy drink 16 oz",
+      "hard_max": 600,
+      "safety_days": 3,
+      "max_lead_time_days": 5,
+      "max_unit_price_usd": "1.60",
+      "autonomous_order_limit_usd": "60.00",
+      "supplier_mappings": {
+        "SUPPLIER_A": "A-ENERGY-16OZ",
+        "SUPPLIER_B": "B-ENERGY-16"
+      }
+    },
+    {
+      "sku": "SKU-GUM-PACK-10",
+      "display_name": "Chewing gum 10 pack",
+      "hard_max": 300,
+      "safety_days": 2,
+      "max_lead_time_days": 4,
+      "max_unit_price_usd": "0.50",
+      "autonomous_order_limit_usd": "80.00",
+      "supplier_mappings": {
+        "SUPPLIER_A": "A-GUM-PACK-10"
+      }
+    },
+    {
+      "sku": "SKU-JUICE-1L",
+      "display_name": "Orange juice 1 L",
+      "hard_max": 45,
+      "safety_days": 2,
+      "max_lead_time_days": 5,
+      "max_unit_price_usd": "1.50",
+      "autonomous_order_limit_usd": "300.00",
+      "supplier_mappings": {
+        "SUPPLIER_A": "A-JUICE-1L",
+        "SUPPLIER_B": "B-JUICE-1000"
+      }
+    },
+    {
+      "sku": "SKU-NUTS-MIX-90G",
+      "display_name": "Mixed nuts 90 g",
+      "hard_max": 300,
+      "safety_days": 2,
+      "max_lead_time_days": 5,
+      "max_unit_price_usd": "1.10",
+      "autonomous_order_limit_usd": "200.00",
+      "supplier_mappings": {
+        "SUPPLIER_A": "A-NUTS-MIX-90G",
+        "SUPPLIER_B": "B-NUTS-90"
+      }
+    },
+    {
+      "sku": "SKU-SODA-CAN-330",
+      "display_name": "Cola can 330 ml",
+      "hard_max": 700,
+      "safety_days": 2,
+      "max_lead_time_days": 5,
+      "max_unit_price_usd": "0.45",
+      "autonomous_order_limit_usd": "250.00",
+      "supplier_mappings": {
+        "SUPPLIER_A": "A-SODA-CAN-330",
+        "SUPPLIER_B": "B-SODA-330"
+      }
+    },
+    {
+      "sku": "SKU-WATER-500ML",
+      "display_name": "Still water 500 ml",
+      "hard_max": 900,
+      "safety_days": 2,
+      "max_lead_time_days": 5,
+      "max_unit_price_usd": "0.30",
+      "autonomous_order_limit_usd": "250.00",
+      "supplier_mappings": {
+        "SUPPLIER_A": "A-WATER-500ML",
+        "SUPPLIER_B": "B-WATER-500"
+      }
+    }
+  ]
+}

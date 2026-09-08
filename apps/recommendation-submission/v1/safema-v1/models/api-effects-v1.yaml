@@ -1,0 +1,106 @@
+schema: safema.api_effect_models/v1
+
+models:
+  - id: recsub.email.send.v1
+    target:
+      callable: recsub.testing.doubles.RecordingEmailGateway.send
+    effect:
+      kind: DISCLOSE
+      resources:
+        from:
+          select: $call.args.message.attachments[*]
+        cardinality: many
+        class: recommendation_letter
+        identity_resolver: file_sha256
+      contexts:
+        from:
+          union:
+            - select: $call.args.message.to[*]
+            - select: $call.args.message.cc[*]
+        cardinality: many
+        class: external_destination
+      attributes:
+        channel:
+          literal: EMAIL
+      after_return: &mark_request_submitted
+        - id: recsub.request.submitted_after_success.v1
+          applies_when:
+            exists:
+              in:
+                select: $effect.resources[*]
+              as: operand
+              satisfies:
+                literal: true
+          when:
+            eq:
+              - select: $return.outcome.value
+              - literal: SUCCEEDED
+          update_context:
+            in:
+              select: $metadata.contexts[*]
+            as: context
+            cardinality: one
+            where:
+              all:
+                - eq:
+                    - select: $context.object_class
+                    - literal: recommendation_submission_authority
+                - eq:
+                    - select: $context.attributes.state
+                    - literal: ACTIVE
+                - eq:
+                    - select: $effect.attributes.channel
+                    - select: $context.attributes.channel
+                - subset:
+                    - select: $effect.contexts[*].identity
+                    - select: $context.attributes.allowed_destinations[*]
+                - all:
+                    in:
+                      select: $effect.resources[*]
+                    as: operand
+                    satisfies:
+                      exists:
+                        in:
+                          select: $metadata.resources[*]
+                        as: resource
+                        satisfies:
+                          all:
+                            - eq:
+                                - select: $operand.identity
+                                - select: $resource.identity
+                            - eq:
+                                - select: $operand.object_class
+                                - select: $resource.object_class
+                            - eq:
+                                - select: $resource.object_class
+                                - literal: recommendation_letter
+                            - eq:
+                                - select: $resource.attributes.applicant
+                                - select: $context.attributes.applicant
+            require:
+              state:
+                literal: ACTIVE
+            set:
+              state:
+                literal: SUBMITTED
+
+  - id: recsub.portal.submit.v1
+    target:
+      callable: recsub.testing.doubles.RecordingPortalAgent.submit
+    effect:
+      kind: DISCLOSE
+      resources:
+        from:
+          select: $call.args.file_path
+        cardinality: one
+        class: recommendation_letter
+        identity_resolver: file_sha256
+      contexts:
+        from:
+          select: $call.args.submission_url
+        cardinality: one
+        class: external_destination
+      attributes:
+        channel:
+          literal: PORTAL
+      after_return: *mark_request_submitted

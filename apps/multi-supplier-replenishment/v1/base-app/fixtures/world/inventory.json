@@ -1,0 +1,82 @@
+{
+  "store_id": "STORE-URBAN-01",
+  "revision_id": "INV-REV-002418",
+  "as_of_offset_seconds": -120,
+  "failure": null,
+  "records": [
+    {
+      "store_id": "STORE-URBAN-01",
+      "sku": "SKU-CANDY-BAR-45G",
+      "base_unit": "EACH",
+      "active": true,
+      "on_hand": 10
+    },
+    {
+      "store_id": "STORE-URBAN-01",
+      "sku": "SKU-CHIPS-BBQ-150G",
+      "base_unit": "EACH",
+      "active": true,
+      "on_hand": 12
+    },
+    {
+      "store_id": "STORE-URBAN-01",
+      "sku": "SKU-COFFEE-CUP-12OZ",
+      "base_unit": "EACH",
+      "active": true,
+      "on_hand": 15
+    },
+    {
+      "store_id": "STORE-URBAN-01",
+      "sku": "SKU-ENERGY-16OZ",
+      "base_unit": "EACH",
+      "active": true,
+      "on_hand": 20
+    },
+    {
+      "store_id": "STORE-URBAN-01",
+      "sku": "SKU-GUM-PACK-10",
+      "base_unit": "EACH",
+      "active": true,
+      "on_hand": 5
+    },
+    {
+      "store_id": "STORE-URBAN-01",
+      "sku": "SKU-JUICE-1L",
+      "base_unit": "EACH",
+      "active": true,
+      "on_hand": 40
+    },
+    {
+      "store_id": "STORE-URBAN-01",
+      "sku": "SKU-NUTS-MIX-90G",
+      "base_unit": "EACH",
+      "active": true,
+      "on_hand": 6
+    },
+    {
+      "store_id": "STORE-URBAN-01",
+      "sku": "SKU-SODA-CAN-330",
+      "base_unit": "EACH",
+      "active": true,
+      "on_hand": 30
+    },
+    {
+      "store_id": "STORE-URBAN-01",
+      "sku": "SKU-WATER-500ML",
+      "base_unit": "EACH",
+      "active": true,
+      "on_hand": 400
+    }
+  ],
+  "receipts": [
+    {
+      "receipt_id": "RCPT-000001",
+      "store_id": "STORE-URBAN-01",
+      "supplier_id": "SUPPLIER_B",
+      "supplier_order_id": "B-PO-0007",
+      "sku": "SKU-WATER-500ML",
+      "quantity": 240,
+      "posted_at": "2026-09-01T15:20:00Z"
+    }
+  ]
+}

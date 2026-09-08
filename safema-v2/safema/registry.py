@@ -6,6 +6,8 @@ import json
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timezone
+from decimal import Decimal
+from enum import Enum
 from pathlib import Path
 from typing import Any, Iterator
 
@@ -59,8 +61,20 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
+def _json_default(value: Any) -> Any:
+    if isinstance(value, Decimal):
+        return {"$decimal": str(value)}
+    if isinstance(value, Enum):
+        return value.value
+    if isinstance(value, datetime):
+        return value.isoformat()
+    raise TypeError(f"{type(value).__name__} is not JSON serializable")
+
+
 def canonical_json(value: Any) -> str:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"))
+    return json.dumps(
+        value, sort_keys=True, separators=(",", ":"), default=_json_default
+    )
 
 
 class MetadataRegistry:

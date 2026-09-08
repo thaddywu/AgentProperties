@@ -1,0 +1,89 @@
+schema: safema.trusted_metadata_origins/v1
+
+origins:
+  - id: recsub.json_request_source.v1
+    target:
+      callable: recsub.testing.doubles.JsonFileRequestSource.scan
+    events:
+      items:
+        select: $return[*]
+      id:
+        tuple:
+          - select: $receiver.source_kind
+          - select: $item.event_id
+      kind:
+        select: $item.kind
+      variants:
+        ADD_REQUEST:
+          put_context:
+            identity:
+              tuple:
+                - select: $receiver.source_kind
+                - select: $item.new_request.source_reference
+            class: recommendation_submission_authority
+            attributes:
+              applicant:
+                select: $item.new_request.applicant_name
+              channel:
+                select: $item.new_request.channel
+              allowed_destinations:
+                list:
+                  - select: $item.new_request.destination
+              purpose:
+                select: $item.new_request.purpose
+              state:
+                literal: ACTIVE
+
+        CANCEL_REQUEST:
+          patch_context:
+            identity:
+              tuple:
+                - coalesce:
+                    - select: $item.target_source_kind
+                    - select: $receiver.source_kind
+                - select: $item.target_source_reference
+            require:
+              state:
+                literal: ACTIVE
+            set:
+              state:
+                literal: CANCELED
+
+        REPLACE_REQUEST:
+          transaction:
+            - patch_context:
+                identity:
+                  tuple:
+                    - coalesce:
+                        - select: $item.target_source_kind
+                        - select: $receiver.source_kind
+                    - select: $item.target_source_reference
+                require:
+                  state:
+                    literal: ACTIVE
+                set:
+                  state:
+                    literal: CANCELED
+            - put_context:
+                identity:
+                  tuple:
+                    - select: $receiver.source_kind
+                    - select: $item.new_request.source_reference
+                class: recommendation_submission_authority
+                attributes:
+                  applicant:
+                    select: $item.new_request.applicant_name
+                  channel:
+                    select: $item.new_request.channel
+                  allowed_destinations:
+                    list:
+                      - select: $item.new_request.destination
+                  purpose:
+                    select: $item.new_request.purpose
+                  state:
+                    literal: ACTIVE
+
+  - id: recsub.scripted_request_source.v1
+    target:
+      callable: recsub.testing.doubles.ScriptedRequestSource.scan
+    inherit_events: recsub.json_request_source.v1

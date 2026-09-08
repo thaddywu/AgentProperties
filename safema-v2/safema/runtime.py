@@ -5,14 +5,20 @@ from __future__ import annotations
 import functools
 import importlib
 import inspect
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, Callable
 
 from .errors import ModelError, OriginError, SafeMADenied
-from .loader import load_api_models, load_origin_models, load_policies
+from .loader import (
+    load_api_models,
+    load_origin_models,
+    load_policies,
+    load_resolver_models,
+)
 from .policy import PolicyEvaluator, evaluate_expression
 from .registry import MetadataRegistry
-from .types import Context, Effect, Resource
+from .types import Context, Effect, ResolvedMetadata, Resource
 from .values import evaluate_value, resolve_identity, text
 
 
@@ -68,12 +74,25 @@ class SafeMARuntime:
         *,
         effect_models_path: str | Path,
         origins_path: str | Path,
+        resolver_models_path: str | Path,
         policy_path: str | Path,
         metadata_db: str | Path,
+        trusted_resolvers: Mapping[str, Callable[[Effect], ResolvedMetadata]],
+        denial_handler: Callable[[int, str, Effect | None], Any] | None = None,
     ) -> None:
         self.effect_models = load_api_models(effect_models_path)
         self.origins = load_origin_models(origins_path)
         policies = load_policies(policy_path)
+        self.resolver_models = load_resolver_models(resolver_models_path)
+        supplied = set(trusted_resolvers)
+        declared = set(self.resolver_models)
+        if supplied != declared:
+            raise ModelError(
+                "trusted resolver implementations do not match declarations: "
+                f"missing={sorted(declared - supplied)} extra={sorted(supplied - declared)}"
+            )
+        self.trusted_resolvers = dict(trusted_resolvers)
+        self.denial_handler = denial_handler
         effect_kinds = {
             declaration["effect"]["kind"] for declaration in self.effect_models.values()
         }
@@ -86,7 +105,27 @@ class SafeMARuntime:
         self.registry = MetadataRegistry(metadata_db)
         self.evaluator = PolicyEvaluator(policies, self.registry)
         self._restorations: list[tuple[Any, str, Callable[..., Any]]] = []
+        self._receiver_bindings: dict[int, tuple[Any, dict[str, Any]]] = {}
         self._installed = False
+
+    def bind_receiver(self, receiver: Any, attributes: Mapping[str, Any]) -> None:
+        """Bind one concrete endpoint instance to deployment-trusted attributes."""
+
+        if not attributes:
+            raise ModelError("receiver binding attributes must not be empty")
+        key = id(receiver)
+        current = self._receiver_bindings.get(key)
+        if current is not None and current[0] is not receiver:
+            raise ModelError("receiver identity collision")
+        if current is not None and current[1] != dict(attributes):
+            raise ModelError("receiver is already bound to different attributes")
+        self._receiver_bindings[key] = (receiver, dict(attributes))
+
+    def _receiver_binding(self, receiver: Any) -> dict[str, Any]:
+        registered = self._receiver_bindings.get(id(receiver))
+        if registered is None or registered[0] is not receiver:
+            raise ModelError("effect receiver is not registered by deployment")
+        return dict(registered[1])
 
     def install(self) -> "SafeMARuntime":
         if self._installed:
@@ -106,6 +145,7 @@ class SafeMARuntime:
 
     def close(self) -> None:
         self.uninstall()
+        self._receiver_bindings.clear()
         self.registry.close()
 
     def __enter__(self) -> "SafeMARuntime":
@@ -130,10 +170,21 @@ class SafeMARuntime:
             @functools.wraps(original)
             def intercepted(*args: Any, **kwargs: Any) -> Any:
                 effect = None
+                observability: dict[str, Any] = {}
                 try:
                     environment = _call_environment(original, args, kwargs)
+                    if declaration["target"].get("receiver_binding") == "registered_instance":
+                        environment["target"] = {
+                            "binding": self._receiver_binding(environment["receiver"])
+                        }
                     effect = self._normalize_effect(declaration["effect"], environment)
-                    decision = self.evaluator.evaluate(effect)
+                    resolved = self._resolve_trusted_metadata(effect)
+                    observability = resolved.observability
+                    decision = self.evaluator.evaluate(
+                        effect,
+                        resources=resolved.resources,
+                        contexts=resolved.contexts,
+                    )
                     prepared_updates = self._prepare_after_return_updates(
                         declaration["effect"].get("after_return", []), effect
                     ) if decision.allowed else []
@@ -145,20 +196,24 @@ class SafeMARuntime:
                         effect,
                         model_id=declaration["id"],
                         target=callable_name,
-                        observability={},
+                        observability=observability,
                         allowed=False,
                         reason=reason,
                     )
+                    if self.denial_handler is not None:
+                        return self.denial_handler(decision_id, reason, effect)
                     raise SafeMADenied(decision_id, reason) from exc
                 decision_id = self.registry.record_decision(
                     effect,
                     model_id=declaration["id"],
                     target=callable_name,
-                    observability={},
+                    observability=observability,
                     allowed=decision.allowed,
                     reason=decision.reason,
                 )
                 if not decision.allowed:
+                    if self.denial_handler is not None:
+                        return self.denial_handler(decision_id, decision.reason, effect)
                     raise SafeMADenied(decision_id, decision.reason)
                 try:
                     result = original(*args, **kwargs)
@@ -174,6 +229,28 @@ class SafeMARuntime:
             return intercepted
 
         self._set_wrapper(callable_name, factory)
+
+    def _resolve_trusted_metadata(self, effect: Effect) -> ResolvedMetadata:
+        resources: list[Resource] = []
+        contexts: list[Context] = []
+        observability: dict[str, Any] = {}
+        for identifier, declaration in self.resolver_models.items():
+            if declaration["effect_kind"] != effect.kind:
+                continue
+            resolved = self.trusted_resolvers[identifier](effect)
+            if not isinstance(resolved, ResolvedMetadata):
+                raise ModelError(
+                    f"trusted resolver {identifier!r} returned "
+                    f"{type(resolved).__name__}, expected ResolvedMetadata"
+                )
+            resources.extend(resolved.resources)
+            contexts.extend(resolved.contexts)
+            observability[identifier] = resolved.observability
+        return ResolvedMetadata(
+            resources=tuple(resources),
+            contexts=tuple(contexts),
+            observability=observability,
+        )
 
     def _effect_environment(self, effect: Effect) -> dict[str, Any]:
         return {
@@ -381,12 +458,18 @@ def install(
     *,
     effect_models_path: str | Path,
     origins_path: str | Path,
+    resolver_models_path: str | Path,
     policy_path: str | Path,
     metadata_db: str | Path,
+    trusted_resolvers: Mapping[str, Callable[[Effect], ResolvedMetadata]],
+    denial_handler: Callable[[int, str, Effect | None], Any] | None = None,
 ) -> SafeMARuntime:
     return SafeMARuntime(
         effect_models_path=effect_models_path,
         origins_path=origins_path,
+        resolver_models_path=resolver_models_path,
         policy_path=policy_path,
         metadata_db=metadata_db,
+        trusted_resolvers=trusted_resolvers,
+        denial_handler=denial_handler,
     ).install()

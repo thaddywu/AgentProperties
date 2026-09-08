@@ -1,0 +1,103 @@
+{
+  "supplier_id": "SUPPLIER_A",
+  "destination_id": "DEST-URBAN-01-DOCK",
+  "timezone": "America/New_York",
+  "order_id_prefix": "A",
+  "order_seq": 3,
+  "as_of_offset_seconds": -60,
+  "snapshot_complete": true,
+  "snapshot_failure": null,
+  "offers": {
+    "A-CANDY-BAR-45G": {
+      "unit_price": "0.41",
+      "pack_size": 24,
+      "available_quantity": 720,
+      "lead_time_days": 2,
+      "valid_until": "2026-12-31T00:00:00Z"
+    },
+    "A-CHIPS-BBQ-150G": {
+      "unit_price": "0.72",
+      "pack_size": 24,
+      "available_quantity": 480,
+      "lead_time_days": 2,
+      "valid_until": "2026-12-31T00:00:00Z"
+    },
+    "A-COFFEE-CUP-12OZ": {
+      "unit_price": "0.09",
+      "pack_size": 50,
+      "available_quantity": 2000,
+      "lead_time_days": 2,
+      "valid_until": "2026-12-31T00:00:00Z"
+    },
+    "A-ENERGY-16OZ": {
+      "unit_price": "1.35",
+      "pack_size": 24,
+      "available_quantity": 960,
+      "lead_time_days": 2,
+      "valid_until": "2026-12-31T00:00:00Z"
+    },
+    "A-GUM-PACK-10": {
+      "unit_price": "0.33",
+      "pack_size": 20,
+      "available_quantity": 400,
+      "lead_time_days": 1,
+      "valid_until": "2026-12-31T00:00:00Z"
+    },
+    "A-JUICE-1L": {
+      "unit_price": "1.05",
+      "pack_size": 12,
+      "available_quantity": 360,
+      "lead_time_days": 2,
+      "valid_until": "2026-12-31T00:00:00Z"
+    },
+    "A-NUTS-MIX-90G": {
+      "unit_price": "0.88",
+      "pack_size": 12,
+      "available_quantity": 240,
+      "lead_time_days": 1,
+      "valid_until": "2026-12-31T00:00:00Z"
+    },
+    "A-SODA-CAN-330": {
+      "unit_price": "0.29",
+      "pack_size": 24,
+      "available_quantity": 1200,
+      "lead_time_days": 2,
+      "valid_until": "2026-12-31T00:00:00Z"
+    },
+    "A-WATER-500ML": {
+      "unit_price": "0.17",
+      "pack_size": 24,
+      "available_quantity": 1440,
+      "lead_time_days": 2,
+      "valid_until": "2026-12-31T00:00:00Z"
+    }
+  },
+  "offer_failures": {
+    "A-COFFEE-CUP-12OZ": "unavailable"
+  },
+  "place_order_behaviors": {
+    "A-GUM-PACK-10": [
+      "reject:PRICE_CHANGED"
+    ],
+    "A-NUTS-MIX-90G": [
+      "lost_response"
+    ]
+  },
+  "lookup_behaviors": {},
+  "orders": [
+    {
+      "supplier_id": "SUPPLIER_A",
+      "supplier_order_id": "A-PO-0003",
+      "idempotency_key": "manual/2026-08-31/soda-top-up",
+      "destination_id": "DEST-URBAN-01-DOCK",
+      "supplier_sku": "A-SODA-CAN-330",
+      "quantity": 240,
+      "unit_price": "0.29",
+      "total_cost": "69.60",
+      "status": "SHIPPED",
+      "created_at": "2026-08-31T14:05:00Z",
+      "promised_delivery_date": "2026-09-04",
+      "currency": "USD"
+    }
+  ]
+}

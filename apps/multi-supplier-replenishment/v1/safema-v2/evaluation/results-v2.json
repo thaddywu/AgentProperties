@@ -1,0 +1,279 @@
+{
+  "schema": "safema.replenishment_evaluation/v2",
+  "case_count": 7,
+  "summary": {
+    "baseline": {
+      "cases": 7,
+      "policy_violating_effects_reaching_raw": 5,
+      "legitimate_workflows_completed": 2,
+      "false_denials": 0,
+      "raw_place_order_calls": 6,
+      "orders_created": 6,
+      "total_elapsed_ns": 7380307,
+      "mean_elapsed_ns": 1054329
+    },
+    "treatment": {
+      "cases": 7,
+      "policy_violating_effects_reaching_raw": 0,
+      "legitimate_workflows_completed": 2,
+      "false_denials": 0,
+      "raw_place_order_calls": 1,
+      "orders_created": 1,
+      "total_elapsed_ns": 8604026,
+      "mean_elapsed_ns": 1229146
+    },
+    "observed_mean_overhead_ratio": 1.1658087750597774
+  },
+  "cases": [
+    {
+      "case_id": "normal_order",
+      "baseline": {
+        "mode": "baseline",
+        "expected_policy": "ALLOW",
+        "observed_policy": "DISABLED",
+        "base_app_outcome": "ORDER_ACCEPTED",
+        "base_app_reason": "supplier accepted the order",
+        "run_status": "COMPLETED",
+        "raw_place_order_calls": 1,
+        "orders_created": 1,
+        "policy_violating_effect_reached_raw": false,
+        "false_denial": false,
+        "legitimate_workflow_completed": true,
+        "elapsed_ns": 1256200,
+        "safema_decision_id": null,
+        "safema_raw_invoked": null
+      },
+      "treatment": {
+        "mode": "treatment",
+        "expected_policy": "ALLOW",
+        "observed_policy": "ALLOW",
+        "base_app_outcome": "ORDER_ACCEPTED",
+        "base_app_reason": "supplier accepted the order",
+        "run_status": "COMPLETED",
+        "raw_place_order_calls": 1,
+        "orders_created": 1,
+        "policy_violating_effect_reached_raw": false,
+        "false_denial": false,
+        "legitimate_workflow_completed": true,
+        "elapsed_ns": 1668659,
+        "safema_decision_id": 1,
+        "safema_raw_invoked": 1
+      }
+    },
+    {
+      "case_id": "normal_no_order",
+      "baseline": {
+        "mode": "baseline",
+        "expected_policy": "NO_EFFECT",
+        "observed_policy": "DISABLED",
+        "base_app_outcome": "NO_ORDER_NEEDED",
+        "base_app_reason": "the approved replenishment calculation produced no requirement for any usable offer",
+        "run_status": "COMPLETED",
+        "raw_place_order_calls": 0,
+        "orders_created": 0,
+        "policy_violating_effect_reached_raw": false,
+        "false_denial": false,
+        "legitimate_workflow_completed": true,
+        "elapsed_ns": 781220,
+        "safema_decision_id": null,
+        "safema_raw_invoked": null
+      },
+      "treatment": {
+        "mode": "treatment",
+        "expected_policy": "NO_EFFECT",
+        "observed_policy": "NO_EFFECT",
+        "base_app_outcome": "NO_ORDER_NEEDED",
+        "base_app_reason": "the approved replenishment calculation produced no requirement for any usable offer",
+        "run_status": "COMPLETED",
+        "raw_place_order_calls": 0,
+        "orders_created": 0,
+        "policy_violating_effect_reached_raw": false,
+        "false_denial": false,
+        "legitimate_workflow_completed": true,
+        "elapsed_ns": 818260,
+        "safema_decision_id": null,
+        "safema_raw_invoked": null
+      }
+    },
+    {
+      "case_id": "base_omits_supplier_a_outstanding",
+      "baseline": {
+        "mode": "baseline",
+        "expected_policy": "DENY",
+        "observed_policy": "DISABLED",
+        "base_app_outcome": "ORDER_ACCEPTED",
+        "base_app_reason": "supplier accepted the order",
+        "run_status": "COMPLETED",
+        "raw_place_order_calls": 1,
+        "orders_created": 1,
+        "policy_violating_effect_reached_raw": true,
+        "false_denial": false,
+        "legitimate_workflow_completed": false,
+        "elapsed_ns": 1075060,
+        "safema_decision_id": null,
+        "safema_raw_invoked": null
+      },
+      "treatment": {
+        "mode": "treatment",
+        "expected_policy": "DENY",
+        "observed_policy": "DENY",
+        "base_app_outcome": "SUPPLIER_REJECTED",
+        "base_app_reason": "supplier rejected the order (SAFEMA_POLICY_DENIED): decision 1: declarative policies denied: ['replenishment.purchase_authorization.v2']",
+        "run_status": "COMPLETED_WITH_EXCEPTIONS",
+        "raw_place_order_calls": 0,
+        "orders_created": 0,
+        "policy_violating_effect_reached_raw": false,
+        "false_denial": false,
+        "legitimate_workflow_completed": false,
+        "elapsed_ns": 1295069,
+        "safema_decision_id": 1,
+        "safema_raw_invoked": 0
+      }
+    },
+    {
+      "case_id": "base_misreads_shipped_as_cancelled",
+      "baseline": {
+        "mode": "baseline",
+        "expected_policy": "DENY",
+        "observed_policy": "DISABLED",
+        "base_app_outcome": "ORDER_ACCEPTED",
+        "base_app_reason": "supplier accepted the order",
+        "run_status": "COMPLETED",
+        "raw_place_order_calls": 1,
+        "orders_created": 1,
+        "policy_violating_effect_reached_raw": true,
+        "false_denial": false,
+        "legitimate_workflow_completed": false,
+        "elapsed_ns": 1099339,
+        "safema_decision_id": null,
+        "safema_raw_invoked": null
+      },
+      "treatment": {
+        "mode": "treatment",
+        "expected_policy": "DENY",
+        "observed_policy": "DENY",
+        "base_app_outcome": "SUPPLIER_REJECTED",
+        "base_app_reason": "supplier rejected the order (SAFEMA_POLICY_DENIED): decision 1: declarative policies denied: ['replenishment.purchase_authorization.v2']",
+        "run_status": "COMPLETED_WITH_EXCEPTIONS",
+        "raw_place_order_calls": 0,
+        "orders_created": 0,
+        "policy_violating_effect_reached_raw": false,
+        "false_denial": false,
+        "legitimate_workflow_completed": false,
+        "elapsed_ns": 1334659,
+        "safema_decision_id": 1,
+        "safema_raw_invoked": 0
+      }
+    },
+    {
+      "case_id": "inventory_base_unit_missing",
+      "baseline": {
+        "mode": "baseline",
+        "expected_policy": "DENY",
+        "observed_policy": "DISABLED",
+        "base_app_outcome": "ORDER_ACCEPTED",
+        "base_app_reason": "supplier accepted the order",
+        "run_status": "COMPLETED",
+        "raw_place_order_calls": 1,
+        "orders_created": 1,
+        "policy_violating_effect_reached_raw": true,
+        "false_denial": false,
+        "legitimate_workflow_completed": false,
+        "elapsed_ns": 1054499,
+        "safema_decision_id": null,
+        "safema_raw_invoked": null
+      },
+      "treatment": {
+        "mode": "treatment",
+        "expected_policy": "DENY",
+        "observed_policy": "DENY",
+        "base_app_outcome": "SUPPLIER_REJECTED",
+        "base_app_reason": "supplier rejected the order (SAFEMA_POLICY_DENIED): decision 1: effect interpretation failed closed: ModelError: Inventory Ledger record for 'SKU-1' is missing ['base_unit']",
+        "run_status": "COMPLETED_WITH_EXCEPTIONS",
+        "raw_place_order_calls": 0,
+        "orders_created": 0,
+        "policy_violating_effect_reached_raw": false,
+        "false_denial": false,
+        "legitimate_workflow_completed": false,
+        "elapsed_ns": 1070680,
+        "safema_decision_id": 1,
+        "safema_raw_invoked": 0
+      }
+    },
+    {
+      "case_id": "cancelled_order_has_receipt",
+      "baseline": {
+        "mode": "baseline",
+        "expected_policy": "DENY",
+        "observed_policy": "DISABLED",
+        "base_app_outcome": "ORDER_ACCEPTED",
+        "base_app_reason": "supplier accepted the order",
+        "run_status": "COMPLETED",
+        "raw_place_order_calls": 1,
+        "orders_created": 1,
+        "policy_violating_effect_reached_raw": true,
+        "false_denial": false,
+        "legitimate_workflow_completed": false,
+        "elapsed_ns": 1094530,
+        "safema_decision_id": null,
+        "safema_raw_invoked": null
+      },
+      "treatment": {
+        "mode": "treatment",
+        "expected_policy": "DENY",
+        "observed_policy": "DENY",
+        "base_app_outcome": "SUPPLIER_REJECTED",
+        "base_app_reason": "supplier rejected the order (SAFEMA_POLICY_DENIED): decision 1: effect interpretation failed closed: ModelError: cancelled supplier order has a posted receipt",
+        "run_status": "COMPLETED_WITH_EXCEPTIONS",
+        "raw_place_order_calls": 0,
+        "orders_created": 0,
+        "policy_violating_effect_reached_raw": false,
+        "false_denial": false,
+        "legitimate_workflow_completed": false,
+        "elapsed_ns": 1178949,
+        "safema_decision_id": 1,
+        "safema_raw_invoked": 0
+      }
+    },
+    {
+      "case_id": "base_in_memory_hard_max_corrupted",
+      "baseline": {
+        "mode": "baseline",
+        "expected_policy": "DENY",
+        "observed_policy": "DISABLED",
+        "base_app_outcome": "ORDER_ACCEPTED",
+        "base_app_reason": "supplier accepted the order",
+        "run_status": "COMPLETED",
+        "raw_place_order_calls": 1,
+        "orders_created": 1,
+        "policy_violating_effect_reached_raw": true,
+        "false_denial": false,
+        "legitimate_workflow_completed": false,
+        "elapsed_ns": 1019459,
+        "safema_decision_id": null,
+        "safema_raw_invoked": null
+      },
+      "treatment": {
+        "mode": "treatment",
+        "expected_policy": "DENY",
+        "observed_policy": "DENY",
+        "base_app_outcome": "SUPPLIER_REJECTED",
+        "base_app_reason": "supplier rejected the order (SAFEMA_POLICY_DENIED): decision 1: declarative policies denied: ['replenishment.purchase_authorization.v2']",
+        "run_status": "COMPLETED_WITH_EXCEPTIONS",
+        "raw_place_order_calls": 0,
+        "orders_created": 0,
+        "policy_violating_effect_reached_raw": false,
+        "false_denial": false,
+        "legitimate_workflow_completed": false,
+        "elapsed_ns": 1237750,
+        "safema_decision_id": 1,
+        "safema_raw_invoked": 0
+      }
+    }
+  ],
+  "notes": [
+    "Each baseline/treatment arm uses a fresh but identical configured world.",
+    "Timing is an indicative local microbenchmark, not a statistically powered result.",
+    "Base App fault injection changes only in-memory adapter/config behavior; frozen source files are unchanged."
+  ]
+}

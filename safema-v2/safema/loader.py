@@ -1,4 +1,4 @@
-"""Strict loaders for the complete SafeMA v1 executable configuration."""
+"""Strict loaders for the complete SafeMA v2 executable configuration."""
 
 from __future__ import annotations
 
@@ -11,7 +11,22 @@ from .errors import ModelError
 from .selectors import validate_selector
 
 VALUE_OPERATORS = {"select", "literal", "list", "tuple", "union", "coalesce"}
-POLICY_OPERATORS = {"select", "literal", "eq", "subset", "exists", "all", "any"}
+POLICY_OPERATORS = {
+    "select",
+    "literal",
+    "eq",
+    "subset",
+    "exists",
+    "all",
+    "any",
+    "add",
+    "mul",
+    "mod",
+    "gt",
+    "gte",
+    "lt",
+    "lte",
+}
 IDENTITY_RESOLVERS = {"exact_string", "file_sha256"}
 
 
@@ -77,12 +92,22 @@ def validate_value(expression: Any, where: str) -> None:
 
 
 def load_api_models(path: str | Path) -> dict[str, dict[str, Any]]:
-    document = _read(path, "safema.api_effect_models/v1", "models")
+    document = _read(path, "safema.api_effect_models/v2", "models")
     models = _entries(document["models"], "models")
     for identifier, model in models.items():
         _keys(model, {"id", "target", "effect"}, set(), f"model {identifier}")
-        _keys(model["target"], {"callable"}, set(), f"model {identifier}.target")
+        _keys(
+            model["target"],
+            {"callable"},
+            {"receiver_binding"},
+            f"model {identifier}.target",
+        )
         _identifier(model["target"]["callable"], f"model {identifier}.target.callable")
+        receiver_binding = model["target"].get("receiver_binding")
+        if receiver_binding not in {None, "registered_instance"}:
+            raise ModelError(
+                f"model {identifier}.target.receiver_binding is unsupported"
+            )
         effect = model["effect"]
         _keys(effect, {"kind", "resources", "contexts", "attributes"}, {"after_return"},
               f"model {identifier}.effect")
@@ -104,11 +129,6 @@ def load_api_models(path: str | Path) -> dict[str, dict[str, Any]]:
         for name, expression in effect["attributes"].items():
             _identifier(name, f"model {identifier}.effect.attributes key")
             validate_value(expression, f"model {identifier}.effect.attributes.{name}")
-            if next(iter(expression)) != "literal":
-                raise ModelError(
-                    f"model {identifier}.effect.attributes.{name} must be a model literal; "
-                    "application claims cannot become authorization attributes"
-                )
         after_return = effect.get("after_return", [])
         if not isinstance(after_return, list):
             raise ModelError(f"model {identifier}.effect.after_return must be a list")
@@ -181,7 +201,7 @@ def _validate_operation(operation: Any, where: str) -> None:
 
 
 def load_origin_models(path: str | Path) -> dict[str, dict[str, Any]]:
-    document = _read(path, "safema.trusted_metadata_origins/v1", "origins")
+    document = _read(path, "safema.trusted_metadata_origins/v2", "origins")
     origins = _entries(document["origins"], "origins")
     for identifier, origin in origins.items():
         if "inherit_events" in origin:
@@ -223,9 +243,14 @@ def validate_policy_expression(expression: Any, where: str) -> None:
             validate_selector(operand)
         except ModelError as exc:
             raise ModelError(f"{where}.select is invalid: {exc}") from exc
-    elif operator in {"eq", "subset"}:
+    elif operator in {"eq", "subset", "gt", "gte", "lt", "lte", "mod"}:
         if not isinstance(operand, list) or len(operand) != 2:
             raise ModelError(f"{where}.{operator} must contain exactly two expressions")
+        for index, item in enumerate(operand):
+            validate_policy_expression(item, f"{where}.{operator}[{index}]")
+    elif operator in {"add", "mul"}:
+        if not isinstance(operand, list) or not operand:
+            raise ModelError(f"{where}.{operator} must contain a non-empty list")
         for index, item in enumerate(operand):
             validate_policy_expression(item, f"{where}.{operator}[{index}]")
     elif operator in {"exists", "all", "any"} and isinstance(operand, dict):
@@ -243,10 +268,19 @@ def validate_policy_expression(expression: Any, where: str) -> None:
 
 
 def load_policies(path: str | Path) -> dict[str, dict[str, Any]]:
-    document = _read(path, "safema.policies/v1", "policies")
+    document = _read(path, "safema.policies/v2", "policies")
     policies = _entries(document["policies"], "policies")
     for identifier, policy in policies.items():
         _keys(policy, {"id", "effect_kind", "allow"}, set(), f"policy {identifier}")
         _identifier(policy["effect_kind"], f"policy {identifier}.effect_kind")
         validate_policy_expression(policy["allow"], f"policy {identifier}.allow")
     return policies
+
+
+def load_resolver_models(path: str | Path) -> dict[str, dict[str, Any]]:
+    document = _read(path, "safema.trusted_state_resolvers/v2", "resolvers")
+    resolvers = _entries(document["resolvers"], "resolvers")
+    for identifier, resolver in resolvers.items():
+        _keys(resolver, {"id", "effect_kind"}, set(), f"resolver {identifier}")
+        _identifier(resolver["effect_kind"], f"resolver {identifier}.effect_kind")
+    return resolvers

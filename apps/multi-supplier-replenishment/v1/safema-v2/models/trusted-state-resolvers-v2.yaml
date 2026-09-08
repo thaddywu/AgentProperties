@@ -1,0 +1,5 @@
+schema: safema.trusted_state_resolvers/v2
+
+resolvers:
+  - id: replenishment.authoritative_purchase_state.v2
+    effect_kind: PURCHASE

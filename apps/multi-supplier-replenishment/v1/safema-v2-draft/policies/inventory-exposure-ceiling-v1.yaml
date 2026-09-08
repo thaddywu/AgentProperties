@@ -1,0 +1,80 @@
+schema: safema.policies/v2-draft
+
+policies:
+  - id: replenishment.inventory_exposure_ceiling.v1
+    effect_kind: PURCHASE
+    allow:
+      all:
+        - gt:
+            - select: $effect.attributes.proposed_quantity
+            - literal: 0
+        - all:
+            in:
+              select: $effect.contexts[*]
+            as: actual_destination
+            satisfies:
+              exists:
+                in:
+                  select: $metadata.contexts[*]
+                as: trusted_destination
+                satisfies:
+                  all:
+                    - eq:
+                        - select: $actual_destination.object_class
+                        - literal: delivery_destination
+                    - eq:
+                        - select: $trusted_destination.object_class
+                        - literal: replenishment_destination_authority
+                    - eq:
+                        - select: $actual_destination.identity
+                        - select: $trusted_destination.identity
+                    - all:
+                        in:
+                          select: $effect.resources[*]
+                        as: actual_supplier_sku
+                        satisfies:
+                          exists:
+                            in:
+                              select: $metadata.resources[*]
+                            as: trusted_mapping
+                            satisfies:
+                              all:
+                                - eq:
+                                    - select: $actual_supplier_sku.object_class
+                                    - literal: supplier_sku
+                                - eq:
+                                    - select: $trusted_mapping.object_class
+                                    - literal: supplier_sku_mapping
+                                - eq:
+                                    - select: $actual_supplier_sku.identity
+                                    - select: $trusted_mapping.identity
+                                - eq:
+                                    - select: $effect.attributes.supplier_id
+                                    - select: $trusted_mapping.attributes.supplier_id
+                                - exists:
+                                    in:
+                                      select: $metadata.resources[*]
+                                    as: trusted_inventory
+                                    satisfies:
+                                      all:
+                                        - eq:
+                                            - select: $trusted_inventory.object_class
+                                            - literal: inventory_exposure
+                                        - eq:
+                                            - select: $trusted_inventory.identity
+                                            - select: $trusted_mapping.attributes.store_sku
+                                        - eq:
+                                            - select: $trusted_inventory.attributes.store_id
+                                            - select: $trusted_destination.attributes.store_id
+                                        - eq:
+                                            - select: $trusted_inventory.attributes.active
+                                            - literal: true
+                                        - eq:
+                                            - select: $trusted_inventory.attributes.base_unit
+                                            - literal: EACH
+                                        - lte:
+                                            - add:
+                                                - select: $trusted_inventory.attributes.on_hand
+                                                - select: $trusted_inventory.attributes.outstanding
+                                                - select: $effect.attributes.proposed_quantity
+                                            - select: $trusted_inventory.attributes.hard_max

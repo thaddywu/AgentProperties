@@ -1,0 +1,101 @@
+{
+  "supplier_id": "SUPPLIER_B",
+  "destination_id": "DEST-URBAN-01-DOCK",
+  "timezone": "America/New_York",
+  "order_id_prefix": "B",
+  "order_seq": 8,
+  "as_of_offset_seconds": -60,
+  "snapshot_complete": true,
+  "snapshot_failure": null,
+  "offers": {
+    "B-CANDY-45": {
+      "unit_price": "0.39",
+      "pack_size": 36,
+      "available_quantity": 360,
+      "lead_time_days": 3,
+      "valid_until": "2026-12-31T00:00:00Z"
+    },
+    "B-CHIPS-BBQ-150": {
+      "unit_price": "0.78",
+      "pack_size": 12,
+      "available_quantity": 240,
+      "lead_time_days": 1,
+      "valid_until": "2026-12-31T00:00:00Z"
+    },
+    "B-COFFEE-12OZ-CUP": {
+      "unit_price": "0.10",
+      "pack_size": 40,
+      "available_quantity": 1600,
+      "lead_time_days": 1,
+      "valid_until": "2026-12-31T00:00:00Z"
+    },
+    "B-ENERGY-16": {
+      "unit_price": "1.42",
+      "pack_size": 24,
+      "available_quantity": 480,
+      "lead_time_days": 3,
+      "valid_until": "2026-12-31T00:00:00Z"
+    },
+    "B-JUICE-1000": {
+      "unit_price": "1.02",
+      "pack_size": 24,
+      "available_quantity": 240,
+      "lead_time_days": 3,
+      "valid_until": "2026-12-31T00:00:00Z"
+    },
+    "B-NUTS-90": {
+      "unit_price": "0.91",
+      "pack_size": 24,
+      "available_quantity": 240,
+      "lead_time_days": 4,
+      "valid_until": "2026-12-31T00:00:00Z"
+    },
+    "B-SODA-330": {
+      "unit_price": "0.31",
+      "pack_size": 24,
+      "available_quantity": 960,
+      "lead_time_days": 1,
+      "valid_until": "2026-12-31T00:00:00Z"
+    },
+    "B-WATER-500": {
+      "unit_price": "0.16",
+      "pack_size": 24,
+      "available_quantity": 960,
+      "lead_time_days": 2,
+      "valid_until": "2026-12-31T00:00:00Z"
+    }
+  },
+  "offer_failures": {},
+  "place_order_behaviors": {},
+  "lookup_behaviors": {},
+  "orders": [
+    {
+      "supplier_id": "SUPPLIER_B",
+      "supplier_order_id": "B-PO-0007",
+      "idempotency_key": "replenishment/RUN-000042/SKU-WATER-500ML/SUPPLIER_B",
+      "destination_id": "DEST-URBAN-01-DOCK",
+      "supplier_sku": "B-WATER-500",
+      "quantity": 240,
+      "unit_price": "0.16",
+      "total_cost": "38.40",
+      "status": "DELIVERED",
+      "created_at": "2026-08-28T10:00:00Z",
+      "promised_delivery_date": "2026-08-31",
+      "currency": "USD"
+    },
+    {
+      "supplier_id": "SUPPLIER_B",
+      "supplier_order_id": "B-PO-0008",
+      "idempotency_key": "manual/2026-09-01/candy-restock",
+      "destination_id": "DEST-URBAN-01-DOCK",
+      "supplier_sku": "B-CANDY-45",
+      "quantity": 108,
+      "unit_price": "0.39",
+      "total_cost": "42.12",
+      "status": "DELIVERED",
+      "created_at": "2026-09-01T09:30:00Z",
+      "promised_delivery_date": "2026-09-02",
+      "currency": "USD"
+    }
+  ]
+}
