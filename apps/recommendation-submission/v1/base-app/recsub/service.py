@@ -52,6 +52,8 @@ ONE_DAY_WINDOW = timedelta(hours=24)
 #: file; the application records the failure without contacting anything.
 LETTER_FILE_MISSING = "LETTER_FILE_MISSING"
 
+import safema
+safema.install(..yaml)
 
 class Application:
     """The single-user recommendation submission application."""
