@@ -1,0 +1,13 @@
+# Local Python environments and generated artifacts
+.venv/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Local runtime state
+**/state/
+
+# Large local datasets
+datasets/
+examples/toolbench/
