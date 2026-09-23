@@ -1,0 +1,221 @@
+.policy-layout {
+  height: 100%;
+  display: flex;
+  min-height: 0;
+  background: var(--background);
+  color: var(--foreground);
+}
+.policy-agents {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 218px;
+  flex-shrink: 0;
+  padding: 26px 14px;
+  border-right: 1px solid var(--border);
+  background: var(--sidebar);
+}
+.policy-agent {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 9px;
+  text-align: left;
+  border-radius: 9px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.policy-agent:hover {
+  background: var(--muted);
+}
+.policy-agent small {
+  display: block;
+  font-size: 10px;
+  color: var(--muted-foreground);
+  margin-top: 4px;
+}
+.policy-stream {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+}
+.policy-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 26px;
+}
+.policy-controls {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+}
+.policy-events {
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+  padding: 22px 26px;
+}
+.policy-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 70px 15px;
+}
+.policy-event {
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  overflow: hidden;
+  margin-bottom: 16px;
+  background: var(--card);
+}
+.policy-selected {
+  box-shadow: 0 0 0 1px var(--foreground);
+}
+.policy-denied {
+  border-color: var(--destructive);
+}
+.policy-selected.policy-denied {
+  box-shadow: 0 0 0 1px var(--destructive);
+}
+.policy-event-top {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--muted);
+  padding: 9px 15px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+.policy-event-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(150px, 0.7fr);
+  padding: 17px;
+  gap: 20px;
+}
+.policy-id {
+  font-size: 10px;
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+  display: block;
+  margin-bottom: 10px;
+}
+.policy-attached {
+  border-left: 1px solid var(--border);
+  padding-left: 16px;
+}
+.policy-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+}
+.policy-facts li {
+  font-size: 10px;
+  line-height: 1.6;
+  background: var(--muted);
+  padding: 6px 8px;
+  border-radius: 6px;
+  overflow-wrap: anywhere;
+}
+.policy-deny-note {
+  padding: 9px 15px;
+  font-size: 11px;
+  color: var(--destructive);
+  border-top: 1px solid var(--border);
+}
+.policy-timeline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 20px;
+  border-top: 1px solid var(--border);
+}
+.policy-timeline input {
+  flex: 1;
+  min-width: 30px;
+  accent-color: var(--foreground);
+}
+.policy-store {
+  width: 330px;
+  flex-shrink: 0;
+  overflow: auto;
+  padding: 23px 20px;
+  border-left: 1px solid var(--border);
+  background: var(--background);
+}
+.policy-select {
+  border: 1px solid var(--border);
+  background: var(--background);
+  width: 100%;
+  border-radius: 7px;
+  padding: 8px;
+  font-size: 12px;
+}
+.policy-section {
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
+  margin-top: 20px;
+}
+.policy-section h3 {
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.policy-store-shade {
+  display: none;
+}
+@media (max-width: 1150px) {
+  .policy-store {
+    display: none;
+  }
+  .policy-store-open {
+    display: block;
+    position: fixed;
+    inset: 0 0 0 auto;
+    width: min(360px, 95vw);
+    z-index: 60;
+  }
+  .policy-store-shade {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 55;
+    background: color-mix(in oklch, var(--foreground) 20%, transparent);
+  }
+}
+@media (max-width: 650px) {
+  .policy-agents {
+    display: none;
+  }
+  .policy-heading {
+    padding: 18px;
+  }
+  .policy-controls {
+    padding: 12px;
+    flex-wrap: wrap;
+  }
+  .policy-events {
+    padding: 16px;
+  }
+  .policy-event-body {
+    grid-template-columns: 1fr;
+  }
+  .policy-attached {
+    border-left: 0;
+    border-top: 1px solid var(--border);
+    padding: 12px 0 0;
+  }
+  .policy-timeline {
+    padding: 10px;
+    gap: 5px;
+  }
+}

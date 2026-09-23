@@ -80,6 +80,7 @@ import {
   IntegrationProviderConfigSchema,
   IntegrationSetupStateSchema,
 } from "./integration-settings.js";
+import { PolicySession } from "./policy.js";
 import { MessageReactionSchema } from "./reactions.js";
 import { RunsListOutputSchema } from "./runs.js";
 import { SearchQueryOutputSchema } from "./search.js";
@@ -144,6 +145,13 @@ const threadSendInput = threadTarget
   });
 
 export const appContract = {
+  policySessions: {
+    get: oc.input(z.object({ id: z.string().optional() })).output(PolicySession.nullable()),
+    create: oc.input(z.object({})).output(PolicySession),
+    advance: oc
+      .input(z.object({ id: z.string(), revision: z.number().int().nonnegative() }))
+      .output(PolicySession),
+  },
   aiConsent: {
     status: oc.input(AiConsentQuerySchema).output(AiConsentStatusSchema),
     allow: oc

@@ -380,6 +380,8 @@ export interface AgentRunRequest {
   history: Array<{ id?: string; role: "user" | "assistant" | "system"; content: string }>;
   currentTurnImages?: AgentInputImage[];
   tools: ConnectorTool[];
+  /** Disable implicit builtins when an isolated computation deliberately exposes no tools. */
+  useBuiltinTools?: boolean;
   model: AgentRunModel;
   /** Resolve an explicitly requested helper model within the active user and space scope. */
   resolveModel?: (provider: string, modelId: string) => Promise<AgentRunModel>;

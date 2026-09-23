@@ -163,6 +163,7 @@ import {
   promptFocus,
   startOnboarding,
 } from "./onboarding.js";
+import { advancePolicySession, createPolicySession, getPolicySession } from "./policy-sessions.js";
 import { listSpaceRuns } from "./runs.js";
 import { addScreenProxyCapability } from "./screen-proxy.js";
 import { querySpaceSearch } from "./search.js";
@@ -498,6 +499,17 @@ export function createRouter(deps: RouterDeps) {
   });
 
   return os.router({
+    policySessions: {
+      get: authed.policySessions.get.handler(({ context, input }) =>
+        getPolicySession(deps, context.actor, input.id),
+      ),
+      create: authed.policySessions.create.handler(({ context }) =>
+        createPolicySession(deps, context.actor),
+      ),
+      advance: authed.policySessions.advance.handler(({ context, input }) =>
+        advancePolicySession(deps, context.actor, input.id, input.revision),
+      ),
+    },
     aiConsent: {
       status: authed.aiConsent.status.handler(({ context, input }) =>
         aiConsentStatus(deps, context.actor, input),

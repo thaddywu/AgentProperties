@@ -214,6 +214,7 @@ model Space {
 }
 
 model SpaceMember {
+  policySessions PolicySession[]
   id               String                 @id
   spaceId          String
   organizationId   String
@@ -1316,4 +1317,19 @@ model IntegrationProviderConfig {
   updatedAt  DateTime @updatedAt
 
   @@map("integration_provider_configs")
+}
+
+// Isolated App 2 execution state. Mode is fixed; these rows never mutate native bot state.
+model PolicySession {
+  id String @id @default(cuid())
+  userId String
+  spaceId String
+  member SpaceMember @relation(fields: [spaceId, userId], references: [spaceId, userId], onDelete: Cascade)
+  revision Int @default(0)
+  state Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([spaceId, userId, createdAt])
+  @@map("policy_sessions")
 }

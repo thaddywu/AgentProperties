@@ -4,6 +4,7 @@ import { Button, Skeleton } from "@rakazo/ui-web";
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Navigate, Route, Routes, useSearchParams } from "react-router-dom";
 import { LoadingState } from "./components/ai/primitives";
+import { PolicyWorkspace } from "./features/policy/PolicyWorkspace";
 import { authClient } from "./lib/auth";
 import { markAfterPaint, markOnce } from "./lib/performance";
 import {
@@ -108,14 +109,41 @@ function SessionApp() {
               )
             }
           />
-          <Route path="/app" element={user ? <ShellPage /> : <Navigate to="/sign-in" replace />} />
+          <Route
+            path="/app"
+            element={
+              user ? (
+                <PolicyWorkspace key={user.id} userId={user.id}>
+                  <ShellPage />
+                </PolicyWorkspace>
+              ) : (
+                <Navigate to="/sign-in" replace />
+              )
+            }
+          />
           <Route
             path="/app/g/:groupId"
-            element={user ? <ShellPage /> : <Navigate to="/sign-in" replace />}
+            element={
+              user ? (
+                <PolicyWorkspace key={user.id} userId={user.id}>
+                  <ShellPage />
+                </PolicyWorkspace>
+              ) : (
+                <Navigate to="/sign-in" replace />
+              )
+            }
           />
           <Route
             path="/app/:botId"
-            element={user ? <ShellPage /> : <Navigate to="/sign-in" replace />}
+            element={
+              user ? (
+                <PolicyWorkspace key={user.id} userId={user.id}>
+                  <ShellPage />
+                </PolicyWorkspace>
+              ) : (
+                <Navigate to="/sign-in" replace />
+              )
+            }
           />
         </Routes>
       </Suspense>

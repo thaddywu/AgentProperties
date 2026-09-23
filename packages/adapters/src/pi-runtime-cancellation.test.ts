@@ -93,6 +93,20 @@ async function microtasks() {
 }
 
 describe("Pi runtime cancellation", () => {
+  it.each([false, undefined])(
+    "respects explicit builtin tool isolation: %s",
+    async (useBuiltinTools) => {
+      const stream = new PiAgentRuntime()
+        .run({ ...request, useBuiltinTools })
+        [Symbol.asyncIterator]();
+      await stream.next();
+      const agent = fake.state.agents[0]!;
+      if (useBuiltinTools === false) expect(agent.tools).toEqual([]);
+      else expect(agent.tools.some((tool) => tool.name === "run_subagent")).toBe(true);
+      agent.release.resolve();
+      await stream.return!();
+    },
+  );
   beforeEach(() => {
     fake.state.agents = [];
     fake.state.delegate = false;

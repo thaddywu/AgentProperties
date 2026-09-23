@@ -188,7 +188,10 @@ export class PiAgentRuntime implements AgentRuntime {
           return;
         }
         const { models, model, apiKey } = selectedModel;
-        const toolDefs = request.tools.length ? request.tools : builtinAgentTools;
+        const toolDefs =
+          request.tools.length || request.useBuiltinTools === false
+            ? request.tools
+            : builtinAgentTools;
         const nestedAgents = new Set<Agent>();
         const completionModel = modelForCompletion(model, request.model.maxTokens);
         trackedBudget = toolCallBudgetFor(request.runId);
