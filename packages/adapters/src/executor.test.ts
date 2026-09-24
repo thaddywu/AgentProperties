@@ -358,6 +358,7 @@ describe("steering attachment hydration", () => {
       {
         artifacts: { get: vi.fn(async () => new Uint8Array([1])) },
         prisma: {
+          policySession: { findUnique: vi.fn().mockResolvedValue(null) },
           artifact: {
             findMany: vi.fn(async () => [{ id: "image-1", storageKey: "one.png" }]),
           },
@@ -438,6 +439,7 @@ describe("steering attachment hydration", () => {
           }),
         },
         prisma: {
+          policySession: { findUnique: vi.fn().mockResolvedValue(null) },
           artifact: {
             findMany: vi.fn(async () => [
               { id: "image-1", storageKey: "one.png" },
@@ -477,6 +479,7 @@ describe("steering attachment hydration", () => {
         {
           artifacts: { get: vi.fn(async () => Promise.reject(cancellation)) },
           prisma: {
+            policySession: { findUnique: vi.fn().mockResolvedValue(null) },
             artifact: {
               findMany: vi.fn(async () => [{ id: "image-1", storageKey: "one.png" }]),
             },
@@ -592,7 +595,10 @@ describe("run notification preference", () => {
       thread: { groupId: null },
     };
     const findFirst = vi.fn(async () => source);
-    const prisma = { run: { findFirst } } as unknown as PrismaClient;
+    const prisma = {
+      policySession: { findUnique: vi.fn().mockResolvedValue(null) },
+      run: { findFirst },
+    } as unknown as PrismaClient;
 
     await expect(
       runNotificationsEnabled(prisma, {
@@ -688,6 +694,7 @@ describe("createRunExecutor", () => {
     const taskCreate = vi.fn(async () => ({ id: "task-1" }));
     const runCreate = vi.fn(async () => ({ id: "run-1" }));
     const prisma = {
+      policySession: { findUnique: vi.fn().mockResolvedValue(null) },
       routine: {
         findUnique: vi.fn(async () => ({
           id: "routine-1",
@@ -760,6 +767,7 @@ describe("createRunExecutor", () => {
     const append = vi.fn(async () => undefined);
     const findFirst = vi.fn(async () => ({ id: "group-thread-1" }));
     const prisma = {
+      policySession: { findUnique: vi.fn().mockResolvedValue(null) },
       routine: {
         findUnique: vi.fn(async () => ({
           id: "routine-1",
@@ -825,6 +833,7 @@ describe("createRunExecutor", () => {
     const append = vi.fn(async () => undefined);
     const findFirst = vi.fn(async () => ({ id: "dm-thread-1" }));
     const prisma = {
+      policySession: { findUnique: vi.fn().mockResolvedValue(null) },
       routine: {
         findUnique: vi.fn(async () => ({
           id: "routine-1",
@@ -899,6 +908,7 @@ description: Prepare standup notes
 1. Summarize wins.
 `;
     const prisma = {
+      policySession: { findUnique: vi.fn().mockResolvedValue(null) },
       routine: {
         findUnique: vi.fn(async () => ({
           id: "routine-1",
@@ -959,6 +969,7 @@ description: Prepare standup notes
     });
     const updateMany = vi.fn(async () => ({ count: 1 }));
     const prisma = {
+      policySession: { findUnique: vi.fn().mockResolvedValue(null) },
       routine: {
         findUnique: vi.fn(async () => ({
           id: "routine-1",
@@ -1015,6 +1026,7 @@ description: Prepare standup notes
     const deleteTaskMany = vi.fn(async () => ({ count: 1 }));
     let transactionCalls = 0;
     const prisma = {
+      policySession: { findUnique: vi.fn().mockResolvedValue(null) },
       routine: {
         findUnique: vi.fn(async () => ({
           id: "routine-1",
@@ -1080,6 +1092,7 @@ description: Prepare standup notes
   it("consumes a persisted takeover checkpoint when claiming the run", async () => {
     const updateMany = vi.fn(async () => ({ count: 0 }));
     const prisma = {
+      policySession: { findUnique: vi.fn().mockResolvedValue(null) },
       run: {
         findUnique: vi.fn(async () => ({
           id: "run-1",
@@ -1133,6 +1146,7 @@ description: Prepare standup notes
       return { count: matchesClaim(args.where, row) ? 1 : 0 };
     });
     const prisma = {
+      policySession: { findUnique: vi.fn().mockResolvedValue(null) },
       run: {
         findUnique: vi.fn(async () => ({
           id: "run-1",
@@ -1173,6 +1187,7 @@ description: Prepare standup notes
     );
     const enqueue = vi.fn(async () => undefined);
     const prisma = {
+      policySession: { findUnique: vi.fn().mockResolvedValue(null) },
       run: {
         findUnique: vi.fn(async () => ({
           id: "run-1",
@@ -1232,6 +1247,7 @@ description: Prepare standup notes
     );
     const enqueue = vi.fn(async () => undefined);
     const prisma = {
+      policySession: { findUnique: vi.fn().mockResolvedValue(null) },
       run: {
         findUnique: vi.fn(async () => ({
           id: "run-1",
@@ -1289,6 +1305,7 @@ description: Prepare standup notes
     );
     const enqueue = vi.fn(async () => undefined);
     const prisma = {
+      policySession: { findUnique: vi.fn().mockResolvedValue(null) },
       run: {
         findUnique: vi.fn(async () => ({
           id: "run-1",
@@ -1360,6 +1377,7 @@ description: Prepare standup notes
           },
     );
     const prisma = {
+      policySession: { findUnique: vi.fn().mockResolvedValue(null) },
       run: {
         findUnique: vi.fn(async () => run),
         findUniqueOrThrow: vi.fn(async () => ({ status: "leased", startedAt: null })),
@@ -1441,6 +1459,7 @@ description: Prepare standup notes
       },
     );
     const prisma = {
+      policySession: { findUnique: vi.fn().mockResolvedValue(null) },
       bot: {
         findFirst: vi.fn(async () => ({
           modelProvider: "xai",
@@ -1491,6 +1510,7 @@ description: Prepare standup notes
       },
     );
     const prisma = {
+      policySession: { findUnique: vi.fn().mockResolvedValue(null) },
       spaceModelPreference: { findFirst },
       userModelCredential: { findFirst: vi.fn(async () => null) },
       secret: { findFirst: vi.fn(async () => null), findUnique: vi.fn(async () => null) },
@@ -1540,6 +1560,7 @@ description: Prepare standup notes
       },
     );
     const prisma = {
+      policySession: { findUnique: vi.fn().mockResolvedValue(null) },
       spaceModelPreference: { findFirst },
       userModelCredential: { findFirst: vi.fn(async () => null) },
       secret: { findFirst: vi.fn(async () => null), findUnique: vi.fn(async () => null) },
@@ -1587,6 +1608,7 @@ description: Prepare standup notes
       thinkingLevel: null,
     };
     const prisma = {
+      policySession: { findUnique: vi.fn().mockResolvedValue(null) },
       bot: { findFirst: vi.fn(async () => bot) },
       spaceModelPreference: { findFirst },
       userModelCredential: { findFirst: vi.fn(async () => null) },
@@ -1641,6 +1663,7 @@ description: Prepare standup notes
       },
     );
     const prisma = {
+      policySession: { findUnique: vi.fn().mockResolvedValue(null) },
       bot: {
         findFirst: vi.fn(async () => ({
           modelProvider: "xai",
@@ -1685,6 +1708,7 @@ description: Prepare standup notes
 
   it("withholds the deployment key when settings name a different provider", async () => {
     const prisma = {
+      policySession: { findUnique: vi.fn().mockResolvedValue(null) },
       bot: { findFirst: vi.fn(async () => null) },
       spaceModelPreference: { findFirst: vi.fn(async () => null) },
       userModelCredential: { findFirst: vi.fn(async () => null) },
@@ -1720,6 +1744,7 @@ description: Prepare standup notes
       });
     });
     const prisma = {
+      policySession: { findUnique: vi.fn().mockResolvedValue(null) },
       bot: {
         findFirst: vi.fn(async () => ({
           modelProvider: null,

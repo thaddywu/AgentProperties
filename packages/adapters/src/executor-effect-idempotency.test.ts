@@ -105,6 +105,7 @@ function fixture(runId = "run-1") {
     ),
   };
   const prisma = {
+    policySession: { findUnique: vi.fn().mockResolvedValue(null) },
     run: {
       findUnique: vi.fn(async () => run),
       findUniqueOrThrow: vi.fn(async () => run),

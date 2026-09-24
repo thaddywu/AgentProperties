@@ -1,47 +1,53 @@
-# Nova Budget Audit: distributed Datalog policy
+# Nova Budget Audit policy in native Rakazo chat
 
-This version adds a server-backed, isolated App 2 episode to Rakazo. Enable **Use Our Policy** to open it. Original Rakazo chats and policy sessions have independent state. Switching views preserves both; leaving policy mode pauses the episode after an already-started step finishes. It never changes a session's policy mode. All interface text is English.
+Enable **Use Our Policy** to use the original Rakazo sidebar, bot chats, peer-message view, composer, and background run queue with App 2 enforcement. There is no separate policy dashboard. All interface and generated agent text is English.
 
-## Scope
+- Hover over a message to see its directional delivery ID and attached Carries facts.
+- Click the small dot below a message or completed message_bot call to inspect the historical local store. The inspector defaults to After and can show Before, each principal's facts, accessible artifact bodies, and denial witnesses.
+- **Start audit** initializes a new episode. **New audit** creates another independent workspace; it preserves the previous one.
+- Switching policy off returns to the previous original workspace and chat. Switching back returns to the policy chat. Original navigation hides policy workspaces; policy navigation shows only the current policy workspace. Background runs may finish while another workspace is being viewed, as in original Rakazo.
 
-Five principals participate: Executive Board, Procurement, Facility, Hiring, and Auditor A. The application fixes the task order and destinations; the connected default model generates requests, replies, and the report. A shared backend protocol decides every delivery. Decisions are not model judgments or scripted outcomes.
+The first UI-only dashboard and its saved legacy sessions are no longer used by this view. This version creates real native bots, threads, tasks, runs, peer receipts, and realtime events.
 
-Policy agents run through Rakazo's Pi adapter with no tools, implicit builtin tools, native chat history, sandbox files, shared memory, or subagents. This is a bounded experimental runtime, not a global security patch for arbitrary original Rakazo bots. Original mode remains unrestricted by this policy. The web interface also works in Electron's web surface; the native mobile app does not yet expose the policy console.
+## Execution boundary
 
-The authenticated observer can inspect all principals and denied payloads. Agents cannot read that observer state. API sessions belong to one user and space. Only the server can initialize sources, record dependencies, attach facts, or advance the protocol; RPC clients cannot submit replacement states or facts.
+The native worker detects a policy workspace before acquiring a computer or loading native memory/files/history. It uses the existing connected model resolver and Pi runtime. Policy turns expose **only `message_bot`** and explicitly disable implicit builtin tools. The dispatcher also rejects any other tool name, even if a runtime tries to invoke it. There are no shell, file, browser, web, memory, MCP, or subagent tools.
 
-There is **no sanitization or declassification**. The policy models explicit artifact dependence conservatively. It does not prove that an LLM cannot guess a secret or measure timing/control-channel leakage. A generic delivery-failure notice is intentionally visible to the auditor; it contains neither the blocked body nor its restricted facts.
+The existing `message_bot` entry point dispatches policy sends through the transaction-bound receive gate. Calling the unrestricted send path from a policy workspace is rejected. Ordinary Rakazo workspaces retain their normal execution path and tools.
 
-## Facts and their lifetimes
+The model sees only its principal's accessible artifacts, the public directory, its own outgoing destinations, and application instructions. It never receives the observer metadata attached to native chat messages. The observer is the authenticated workspace owner and can inspect all five stores and attempted deliveries. Policy inputs are loaded from protocol state, not by replaying observer-visible messages or their annotations.
 
-| Fact | Created by | Location and lifetime | Transported? |
+## Facts and lifetimes
+
+| Fact | Created by | Persistent location | Sent with the payload? |
 | --- | --- | --- | --- |
-| `Carries(M,P,C)` | Trusted source initialization, then Datalog propagation | Source/output owner's store; successful receiver's store | Yes, attached to that immutable artifact |
-| `DerivedFrom(Y,X)` | Runtime records every artifact supplied to a computation | Computing principal's persistent store | No |
-| `Received(A,M)` | Receive enforcement after permission succeeds | Receiver's persistent store | No |
-| `Knows(A,P,C)` | Local Datalog closure over Received and Carries | Receiver's persistent store | No |
-| `Incoming(A,M)` | Receive gate | Temporary candidate evaluation | No |
-| `New(A,M,P,C)` | Stratified evaluation against existing Knows | Temporary candidate evaluation | No |
-| `Deny(A,M,R)` | Receive rules, with rule identifier R for inspection | Temporary candidate evaluation; observer retains a decision witness | No |
+| `Carries(M,P,C)` | Trusted source ingestion, then Datalog propagation | Artifact owner's store and successful receivers | Yes |
+| `DerivedFrom(Y,X)` | Runtime, for every accessible computation input | Computing principal | No |
+| `Received(A,M)` | Receive gate after Allow | Receiver | No |
+| `Knows(A,P,C)` | Local closure over Received and Carries | Receiver | No |
+| `Incoming(A,M)` | Receive gate | Temporary evaluation only | No |
+| `New(A,M,P,C)` | Stratified evaluation against existing Knows | Temporary evaluation only | No |
+| `Deny(A,M,R)` | Receive rules; R identifies the matching rule | Temporary evaluation; observer keeps a witness | No |
 
-`M` identifies an immutable artifact within a session. A delivery has a separate directional message ID. Its pair counter is shared by both directions, counts denied attempts, and is saved atomically. For example: `msg_A_to_B_1`, `msg_B_to_A_2`, `msg_A_to_B_3`. The UI shows the delivery ID and attached `Carries` facts naming the artifact; resending an artifact would preserve its identity.
+An artifact ID is immutable and session-local. Each delivery has a separate directional ID, with a shared unordered-pair counter: `msg_A_to_B_1`, `msg_B_to_A_2`, `msg_A_to_B_3`. Denied attempts count too. Retries of a committed native run cannot create duplicate deliveries; run fencing and the session transaction decide whether a turn can commit.
 
-`Knows` means conservative policy knowledge, not a claim that the recipient literally saw the secret sentence. A budget-only reply derived from a restricted reason counts as knowing that component.
+`Knows` is conservative policy knowledge, not a claim that the secret sentence was literally disclosed. A budget-only output computed with a restricted reason still carries that component.
 
-## Execution protocol
+## Protocol
 
-1. **Create.** Trusted initialization creates three public budget artifacts ($8M, $3M, $5M), three restricted Nova reason artifacts, and a public audit assignment. Only reason artifacts receive initial Carries labels. This is source ingestion, not a Board LLM computation over all of Board's history. Board can receive without the combination restriction, but cannot sanitize.
-2. **Compute.** The runtime retrieves all artifacts owned by or successfully delivered to the principal, including previous outputs and runtime notices. Exactly that complete set is supplied as model context. The runtime independently records DerivedFrom edges for every input. Local Datalog derives output Carries; model wording cannot remove or forge tags. An empty or failed result aborts the step.
-3. **Send.** Verify the sender can access the immutable artifact, assign the next shared pair counter, and record the send event. The logical envelope contains routing/identity, payload, and only the artifact's Carries facts. The sender's Knows, Received, and dependency graph do not travel.
-4. **Evaluate receive.** Under the session's database row lock, combine the receiver's current local facts with temporary Incoming and candidate Carries. Compute the stratified closure and denial rules before exposing the body to the receiver.
-5. **Allow.** Add the artifact to the receiver's accessible set, add Received and transported Carries, and close local Knows. Commit them together with the trace and revision.
-6. **Deny.** Leave the receiver's store exactly unchanged: no payload, Received, Carries, or Knows from the candidate is committed. Record the attempted delivery and rule witness only for the observer. The application can subsequently issue a separate generic failure notice.
+1. **Create:** trusted Board source ingestion creates public budgets ($8M, $3M, $5M), three restricted Nova reasons, and a public audit task. Only reasons get initial Carries. This is source ingestion, not a Board LLM computation over its entire history. Models cannot create or remove policy labels.
+2. **Compute:** every artifact owned by or successfully delivered to the principal is supplied to the model. The runtime independently records DerivedFrom for the complete accessible set and derives output Carries. Earlier tool-generated messages within the same turn remain dependencies of later outputs. No wording-based tag removal occurs.
+3. **Send:** the model calls the original `message_bot` tool. The runtime records the computed artifact and passes its body, routing/identity, and Carries to the receive gate. Sender Knows, Received, and dependency graphs do not travel.
+4. **Evaluate:** under a per-session database row lock, combine the receiver's local facts with temporary Incoming and candidate Carries. Evaluate the executable stratified Datalog rules before writing any receiver payload.
+5. **Allow:** add the artifact, Received, and transported Carries; derive Knows; write native sender and recipient receipts; queue a native recipient run. All state and chat writes commit together.
+6. **Deny:** preserve the receiver's store exactly at the receive event. Do not write the candidate into the receiver's chat body or model inputs. Persist the attempted send and denied tool completion in the sender's chat. A separate generic failure notice may subsequently enter the receiver's store and wake it; that notice is a distinct event and contains no blocked body or restricted facts.
+7. **Finish:** persist the final model reply and its snapshot, complete the native run/task, and publish realtime notifications. Cancelled, failed, timed-out, or stale-fence turns roll back message/store changes. Provider work may have already occurred even if the transaction rolls back.
 
-Every step is one database transaction. Same-session operations serialize; the expected revision makes duplicated/retried advance requests no-ops. Model calls have a 45-second timeout inside a 60-second transaction. If a call or transaction fails, no step state is committed, though the provider may already have processed/billed the request. Sessions persist across browser reloads. **New session** creates another row; completed sessions remain stored.
+A model computation has a 60-second timeout inside a 75-second transaction. Session locking prevents concurrent recipients from both accepting a third component against stale state. Native turns have a four-message tool-call cap. The application's automatic audit sends each request/reply/report once per intended recipient, and redundant wakeups complete without regenerating the same work. This is application scheduling, separate from Datalog Allow/Deny. Explicit user-directed turns can still attempt new sends, subject to the same receive gate.
 
-## Executable rules
+## Rules
 
-The UI renders the actual rule AST from `packages/core/src/policy/datalog.ts`; the same AST drives the finite, function-free, stratified evaluator. The notation below omits the diagnostic argument on Deny for readability.
+The executable AST is in `packages/core/src/policy/datalog.ts`. Its evaluator is finite, function-free, and stratified. These rules omit the diagnostic rule-name argument on Deny for readability:
 
 ```prolog
 Carries(Y,P,C) :- DerivedFrom(Y,X), Carries(X,P,C).
@@ -51,37 +57,26 @@ New(A,M,P,C) :- Incoming(A,M), Carries(M,P,C), not Knows(A,P,C).
 % R3a: three new components
 Deny(A,M) :- New(A,M,P,C1), New(A,M,P,C2), New(A,M,P,C3),
              A != board, C1 != C2, C1 != C3, C2 != C3.
-% R3b: two new components and one already known
+% R3b: two new components, one already known
 Deny(A,M) :- New(A,M,P,C1), New(A,M,P,C2), Knows(A,P,C3),
              A != board, C1 != C2, C1 != C3, C2 != C3.
-% R3c: one new component and two already known
+% R3c: one new component, two already known
 Deny(A,M) :- New(A,M,P,C1), Knows(A,P,C2), Knows(A,P,C3),
              A != board, C1 != C2, C1 != C3, C2 != C3.
 ```
 
-All three components must belong to the same project. Duplicate or already-known labels do not count as new knowledge. Starting from valid source state, no non-Board principal can acquire all three Nova components through receiving.
+All three components must be distinct and from the same project. Board is receive-exempt. **There is no sanitization or declassification.**
 
-## The rejection to inspect
+## What to observe
 
-Board distributes budgets before reasons. Auditor A issues all three requests before receiving department replies, so those requests are public. Each department then answers using its complete history, including its restricted reason. Even a one-sentence budget-only answer inherits that department's label.
+Board distributes budgets and reasons. Auditor A asks all three departments for budgets through actual model tool calls. Department replies use their full local histories, so even budget-only replies inherit the restricted reason's component. The first two replies succeed; the third is rejected by R3c. Worker scheduling determines which department is third. Auditor A then sends an incomplete report to Board.
 
-Procurement's reply adds the first component. Facility's adds the second. Hiring's `msg_hiring_to_auditor_a_2` brings a third: **R3c denies it**. Select that receive event and compare Auditor A's Before/After local stores: they are identical. A later failure-notice event is distinct. The final report is generated without Hiring's blocked body, inherits only Procurement and Facility labels, and is allowed to Board. The audit remains incomplete.
+Open the third department's chat, find `message_bot → Auditor A · Denied (R3c)`, and click its dot. Auditor A's Before and After stores at that receive event are identical. Hover shows the attempted message's Carries and delivery ID. The generic failure notice is a later event; the denied body remains absent from Auditor A's inputs.
 
-The event timeline exposes Create, Compute, Send, Receive, and Notice events. Every event snapshots all five stores. Select an event, a principal, and Before/After to inspect historical facts and accessible artifact bodies. The decision inspector includes temporary inputs and matched rule witnesses.
+## Limits and validation
 
-## Running and verification
+This is an App 2 messaging protocol, not a general policy for arbitrary computer tools. Native mobile does not yet expose the inspector; web and Electron share the chat implementation. Source initialization and runtime-created user/control notices are trusted ingestion paths. Generic delivery status is intentionally observable; timing/control-channel noninterference and LLM guessing are outside this version's guarantees.
 
-Use the existing Rakazo model connection and data-sharing consent. This first version supports API-key and OpenAI-compatible credentials. Choose your model in Original Rakazo, enable Use Our Policy, then select **Run episode** or **Next step**. The protocol's deterministic tests require no provider.
+Deterministic tests cover R3a/R3b/R3c, transitive propagation, duplicate labels, project separation, immutable snapshots, native peer receipts, worker tasks, denied payload exclusion, forbidden-tool rejection, and transaction rollback. Existing peer-message, thread-event, and pagination tests check compatibility. The browser test covers the original chat surface, hover tags, snapshot dots, mode switching, and narrow-screen layout. Live local OpenAI-compatible runs verify actual `message_bot` generation and receiver-side rejection.
 
-```sh
-pnpm --filter @rakazo/db exec prisma migrate deploy
-pnpm --filter @rakazo/db generate
-pnpm exec vitest run packages/core/src/policy/protocol.test.ts packages/adapters/src/pi-runtime-cancellation.test.ts
-pnpm --filter @rakazo/api check
-pnpm --filter @rakazo/web check
-pnpm --filter @rakazo/web build
-```
-
-The migration adds only `policy_sessions`; it does not rewrite original bots, chats, or messages. A normal source build includes the new API and UI. The optional `infra/compose/Dockerfile.policy` layers the changed sources onto a matching published Rakazo image for a local Compose installation; use `docker-compose.policy.yml` after the normal image Compose file.
-
-Validation covers all three denial rules, project separation and duplicate labels, transitive propagation, unauthorized sources/forwarding, exact computation inputs, immutable snapshots, shared direction counters, builtin-tool isolation, transaction rollback/retries, and session ownership. The browser test checks message facts, unchanged denied-receive stores, mode preservation, the rule viewer, and the narrow-screen inspector. A live local OpenAI-compatible run also completed through the UI's New session / Run episode controls: seven model computations, 43 trace events, one R3c denial, and an incomplete report delivered to Board.
+The new migration adds message observation metadata and native workspace bindings. It does not rewrite original chats. The local Compose overlay must update **api, worker, and web** together.

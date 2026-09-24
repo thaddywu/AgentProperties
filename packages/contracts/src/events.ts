@@ -2,6 +2,7 @@ import * as z from "zod";
 import { BotSecretDestination } from "./bot-secrets.js";
 import { Id } from "./ids.js";
 import { McpTransportSchema } from "./mcp.js";
+import { PolicyObservation } from "./policy.js";
 
 export const ProductEventType = z.enum([
   "thread.message.created",
@@ -283,6 +284,7 @@ export const ProductEventSchema = z.object({
 export type ProductEvent = z.infer<typeof ProductEventSchema>;
 
 export const ThreadMessageSchema = z.object({
+  policy: PolicyObservation.optional(),
   id: Id,
   threadId: Id,
   seq: z.number().int().nonnegative(),

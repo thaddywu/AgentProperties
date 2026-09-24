@@ -1,4 +1,4 @@
-import type { MessageBlock } from "@rakazo/contracts";
+import type { MessageBlock, PolicyObservation } from "@rakazo/contracts";
 import type { Prisma, PrismaClient } from "./client.js";
 
 /** Group turns use channel inputs and their own outputs, never private thread history. */
@@ -40,6 +40,7 @@ export function loadRunHistoryMessages(
 }
 
 export interface CreateThreadMessageInput {
+  policy?: PolicyObservation;
   threadId: string;
   role: "user" | "bot" | "system";
   blocks: MessageBlock[];
@@ -76,6 +77,7 @@ export async function createThreadMessageInTransaction(
       seq: thread.nextMessageSeq - 1,
       role: input.role,
       blocks: input.blocks as Prisma.InputJsonValue,
+      policy: input.policy as Prisma.InputJsonValue | undefined,
       botId: input.botId,
       replyToMessageId: input.replyToMessageId,
       replyQuote: input.replyQuote,

@@ -80,7 +80,7 @@ import {
   IntegrationProviderConfigSchema,
   IntegrationSetupStateSchema,
 } from "./integration-settings.js";
-import { PolicySession } from "./policy.js";
+import { NativePolicyContext, PolicySession } from "./policy.js";
 import { MessageReactionSchema } from "./reactions.js";
 import { RunsListOutputSchema } from "./runs.js";
 import { SearchQueryOutputSchema } from "./search.js";
@@ -145,6 +145,11 @@ const threadSendInput = threadTarget
   });
 
 export const appContract = {
+  policyNative: {
+    context: oc.input(z.object({})).output(NativePolicyContext),
+    enable: oc.input(z.object({ fresh: z.boolean().optional() })).output(NativePolicyContext),
+    start: oc.input(z.object({})).output(NativePolicyContext),
+  },
   policySessions: {
     get: oc.input(z.object({ id: z.string().optional() })).output(PolicySession.nullable()),
     create: oc.input(z.object({})).output(PolicySession),

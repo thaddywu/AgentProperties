@@ -3,6 +3,7 @@ import { ChatMarkdown } from "@rakazo/chat-ui/web";
 import type { ThreadMessage } from "@rakazo/contracts";
 import { BotAvatar, Button, Dialog, DialogClose, DialogContent, DialogTitle } from "@rakazo/ui-web";
 import { useEffect, useMemo, useState } from "react";
+import { PolicyMessageDetails, policyHoverText } from "../features/policy/PolicyMessageDetails";
 import { loadPeerHistory } from "../lib/peer-history";
 import { peerConversations } from "../lib/peer-messages";
 import { rpc } from "../lib/rpc";
@@ -135,7 +136,17 @@ export function PeerMessagesOverlay({
                       {sent ? botName : peerBotName}
                     </div>
                     <div className="text-[14.5px] leading-[1.5] text-foreground/90" dir="auto">
-                      <ChatMarkdown>{peerMessage.text}</ChatMarkdown>
+                      <div
+                        className="group/message relative"
+                        title={policyHoverText(
+                          messages.find((m) => m.id === peerMessage.messageId)?.policy,
+                        )}
+                      >
+                        <ChatMarkdown>{peerMessage.text}</ChatMarkdown>
+                        <PolicyMessageDetails
+                          policy={messages.find((m) => m.id === peerMessage.messageId)?.policy}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>

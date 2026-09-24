@@ -62,6 +62,7 @@ function deps(
   };
   let transactionAttempts = 0;
   const prisma = {
+    policySession: { findUnique: vi.fn().mockResolvedValue(null) },
     bot: {
       findMany: vi
         .fn()

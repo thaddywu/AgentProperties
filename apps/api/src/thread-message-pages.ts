@@ -93,10 +93,9 @@ export async function loadAllMessages(
   return pages.reverse().flat();
 }
 
-async function withoutPeerRunMessages<T extends { runId: string | null; blocks: Prisma.JsonValue }>(
-  prisma: MessageDb,
-  rows: T[],
-): Promise<T[]> {
+async function withoutPeerRunMessages<
+  T extends { runId: string | null; blocks: Prisma.JsonValue; policy?: Prisma.JsonValue },
+>(prisma: MessageDb, rows: T[]): Promise<T[]> {
   const runIds = [...new Set(rows.flatMap((row) => (row.runId ? [row.runId] : [])))];
   if (runIds.length === 0) return rows;
   const peerRuns = await prisma.run.findMany({
@@ -105,7 +104,7 @@ async function withoutPeerRunMessages<T extends { runId: string | null; blocks: 
   });
   const peerRunIds = new Set(peerRuns.map((run) => run.id));
   return rows.filter((row) => {
-    if (!row.runId || !peerRunIds.has(row.runId)) return true;
+    if (row.policy || !row.runId || !peerRunIds.has(row.runId)) return true;
     // Keep peer receipts (chips), ask cards, and the bot's own text reply.
     const blocks = row.blocks as MessageBlock[];
     return blocks.some(
@@ -137,7 +136,7 @@ export async function isPeerRun(
 /** Peer-run SSE events that must still reach an open thread (terminals, waits, receipts, asks, text). */
 export function shouldForwardPeerThreadEvent(event: {
   type: string;
-  payload: { blocks?: unknown };
+  payload: { blocks?: unknown; policy?: unknown };
 }): boolean {
   if (
     event.type === "run.completed" ||
@@ -151,6 +150,7 @@ export function shouldForwardPeerThreadEvent(event: {
   if (event.type !== "thread.message.created" && event.type !== "thread.message.updated") {
     return false;
   }
+  if (event.payload.policy) return true;
   const blocks = event.payload.blocks;
   return (
     Array.isArray(blocks) &&
@@ -173,6 +173,7 @@ function toThreadMessage(row: {
   seq: number;
   role: string;
   blocks: Prisma.JsonValue;
+  policy?: Prisma.JsonValue;
   botId: string | null;
   replyToMessageId: string | null;
   replyQuote: string | null;
@@ -185,6 +186,7 @@ function toThreadMessage(row: {
     seq: row.seq,
     role: row.role as ThreadMessage["role"],
     blocks: row.blocks as ThreadMessage["blocks"],
+    policy: row.policy ? (row.policy as ThreadMessage["policy"]) : undefined,
     botId: row.botId ?? undefined,
     replyToMessageId: row.replyToMessageId ?? undefined,
     replyQuote: row.replyQuote ?? undefined,

@@ -54,3 +54,21 @@ export const PolicySession = z.object({
   state: PolicyState,
 });
 export type PolicySession = z.infer<typeof PolicySession>;
+
+export const PolicyObservation = z.object({
+  sessionId: z.string(),
+  event: PolicyEvent,
+  facts: z.array(PolicyFact),
+  artifacts: z.record(z.string(), PolicyArtifact),
+});
+export type PolicyObservation = z.infer<typeof PolicyObservation>;
+export const NativePolicyContext = z.object({
+  enabled: z.boolean(),
+  sessionId: z.string().optional(),
+  originalSpaceId: z.string(),
+  policySpaceId: z.string().optional(),
+  bots: z.record(z.string(), z.string()),
+  started: z.boolean(),
+});
+
+export type NativePolicyContext = z.infer<typeof NativePolicyContext>;

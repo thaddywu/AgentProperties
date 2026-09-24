@@ -17,6 +17,8 @@ import {
 } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 import type { ExecutorDeps } from "./executor.js";
+import type { NativePolicyExecution } from "./native-policy.js";
+import { nativePolicyTool } from "./native-policy.js";
 
 /**
  * The hop the current run sits at, read back from the message that woke this
@@ -77,7 +79,7 @@ export async function messageBot(
     intent?: BotMessageIntent;
     deliveryKey?: string;
   },
-  options?: { allowTerminalSource?: boolean },
+  options?: { allowTerminalSource?: boolean; policyContext?: NativePolicyExecution },
 ) {
   const message = String(input.message ?? "").trim();
   if (!message) return { ok: false as const, error: "message is required" };
@@ -88,6 +90,13 @@ export async function messageBot(
     };
   }
 
+  if (options?.policyContext) return nativePolicyTool(options.policyContext, run, input);
+  if (await deps.prisma.policySession.findUnique({ where: { nativeSpaceId: run.spaceId } })) {
+    return {
+      ok: false as const,
+      error: "Policy messages must pass the restricted runtime receive gate.",
+    };
+  }
   const sourceContext = await loadBotMessageContext(deps.prisma, run.sourceMessageId);
   const intent = input.intent ?? "request";
   const hop = nextBotMessageHop(sourceContext?.hop);

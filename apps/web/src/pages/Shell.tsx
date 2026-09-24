@@ -143,6 +143,7 @@ import { SkillDraftCard } from "../components/teach/SkillDraftCard";
 import { TeachCaptureOverlay } from "../components/teach/TeachCaptureOverlay";
 import { TeachComputerOverlayControl } from "../components/teach/TeachComputerOverlay";
 import { TeachRecordingChrome, TeachStopButton } from "../components/teach/TeachRecordingChrome";
+import { PolicyMessageDetails, policyHoverText } from "../features/policy/PolicyMessageDetails";
 import { readActivityMode, writeActivityMode } from "../lib/activity-mode";
 import type { ArtifactTarget } from "../lib/artifact-open";
 import { authClient } from "../lib/auth";
@@ -4608,7 +4609,12 @@ const Transcript = memo(function Transcript({
             <div
               key={message.id}
               data-message-id={message.id}
-              className={peerReceipt ? "relative py-0.5" : "group/message relative hover:z-20"}
+              title={policyHoverText(message.policy)}
+              className={
+                peerReceipt
+                  ? "group/message relative py-0.5 hover:z-20"
+                  : "group/message relative hover:z-20"
+              }
             >
               {!peerReceipt && !message.id.startsWith("progress:") ? (
                 <time
@@ -4685,6 +4691,7 @@ const Transcript = memo(function Transcript({
                   />
                 </div>
               </div>
+              <PolicyMessageDetails policy={message.policy} />
               {!peerReceipt && messageReactions ? (
                 <div
                   data-testid="message-reactions"

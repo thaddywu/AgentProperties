@@ -156,6 +156,7 @@ import {
   serializeSpaceMemoryConfig,
   updateMemoryProviderDefaultScope,
 } from "./memory-provider-config.js";
+import { enableNativePolicy, nativePolicyContext, startNativePolicy } from "./native-policy.js";
 import {
   chooseFocus,
   dismissFocus,
@@ -499,6 +500,17 @@ export function createRouter(deps: RouterDeps) {
   });
 
   return os.router({
+    policyNative: {
+      context: authed.policyNative.context.handler(({ context }) =>
+        nativePolicyContext(deps, context.actor),
+      ),
+      enable: authed.policyNative.enable.handler(({ context, input }) =>
+        enableNativePolicy(deps, context.actor, input.fresh),
+      ),
+      start: authed.policyNative.start.handler(({ context }) =>
+        startNativePolicy(deps, context.actor),
+      ),
+    },
     policySessions: {
       get: authed.policySessions.get.handler(({ context, input }) =>
         getPolicySession(deps, context.actor, input.id),
@@ -4737,8 +4749,19 @@ async function spaceNavigationDto(
     select: { organizationId: true },
   });
   if (!currentSpace) throw new IsolationError();
+  const policySpaces = (
+    await deps.prisma.policySession.findMany({
+      where: { userId: actor.userId, nativeSpaceId: { not: null } },
+      select: { nativeSpaceId: true },
+    })
+  ).map((row) => row.nativeSpaceId!);
+  const inPolicy = policySpaces.includes(actor.spaceId);
   const memberships = await deps.prisma.spaceMember.findMany({
-    where: { userId: actor.userId, organizationId: currentSpace.organizationId },
+    where: {
+      userId: actor.userId,
+      organizationId: currentSpace.organizationId,
+      spaceId: inPolicy ? actor.spaceId : { notIn: policySpaces },
+    },
     select: {
       spaceId: true,
       role: true,

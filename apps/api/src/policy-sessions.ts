@@ -17,7 +17,7 @@ const dto = (row: { id: string; revision: number; state: unknown }): PolicySessi
 });
 export async function getPolicySession(deps: RouterDeps, actor: Actor, id?: string) {
   const row = await deps.prisma.policySession.findFirst({
-    where: { userId: actor.userId, spaceId: actor.spaceId, ...(id ? { id } : {}) },
+    where: { userId: actor.userId, spaceId: actor.spaceId, nativeSpaceId: null, ...(id ? { id } : {}) },
     orderBy: { createdAt: "desc" },
   });
   if (id && !row) throw new ORPCError("NOT_FOUND");

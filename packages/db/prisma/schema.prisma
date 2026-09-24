@@ -490,6 +490,7 @@ model Thread {
 }
 
 model Message {
+  policy Json?
   id               String    @id @default(cuid())
   threadId         String
   thread           Thread    @relation(fields: [threadId], references: [id], onDelete: Cascade)
@@ -1321,6 +1322,8 @@ model IntegrationProviderConfig {
 
 // Isolated App 2 execution state. Mode is fixed; these rows never mutate native bot state.
 model PolicySession {
+  nativeSpaceId String? @unique
+  nativeBots Json?
   id String @id @default(cuid())
   userId String
   spaceId String

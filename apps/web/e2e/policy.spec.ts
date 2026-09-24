@@ -1,9 +1,9 @@
 import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
-import { advanceNova, NOVA_PHASES, newNovaSession } from "@rakazo/core";
+import { advanceNova, messageFacts, NOVA_PHASES, newNovaSession } from "@rakazo/core";
 import { captureScreenshot, completeOnboarding, signup } from "./helpers";
 
-test("policy facts, historical stores, denial and original mode remain independent", async ({
+test("native chat exposes policy tags and event snapshots without replacing its view", async ({
   page,
 }, testInfo) => {
   const authFile = process.env.POLICY_E2E_AUTH_FILE;
@@ -15,51 +15,93 @@ test("policy facts, historical stores, denial and original mode remain independe
     expect(response.ok()).toBe(true);
     await page.goto("/app");
   } else {
-    await signup(page, `policy-${Date.now()}@rakazo.test`, "password12", "Policy Observer");
+    await signup(page, `native-policy-${Date.now()}@rakazo.test`, "password12", "Policy observer");
     await completeOnboarding(page);
   }
-  // Deterministic UI fixture uses the actual protocol; the live canary reads the saved backend episode.
-  const state = newNovaSession();
-  for (let i = 0; i < NOVA_PHASES.length; i++) {
-    await advanceNova(state, async () => ({ text: "Budget reply fixture", model: "offline" }));
+  const response = await page.request.post("/rpc/policyNative/enable", { data: { json: {} } });
+  expect(response.ok()).toBe(true);
+  const context = (await response.json()).json;
+  const live = process.env.POLICY_E2E_LIVE === "1";
+  if (!live) {
+    const state = newNovaSession();
+    for (let i = 0; i < NOVA_PHASES.length; i++)
+      await advanceNova(state, async () => ({ text: "Budget-only reply", model: "offline" }));
+    const event = state.events.find((e) => e.decision === "deny")!;
+    await page.route(/\/rpc\/(threads\/get|bootstrap)$/, async (route) => {
+      const res = await route.fetch();
+      const body = await res.json();
+      const snapshot = body.json.thread ?? body.json;
+      snapshot.messages = [
+        {
+          id: "policy-fixture",
+          threadId: snapshot.threadId,
+          seq: 0,
+          role: "bot",
+          botId: context.bots.hiring,
+          blocks: [{ kind: "meta", text: "message_bot → Auditor A · Denied (R3c)" }],
+          createdAt: new Date().toISOString(),
+          policy: {
+            sessionId: "fixture",
+            event,
+            facts: messageFacts(state.artifacts[event.artifactId]!),
+            artifacts: state.artifacts,
+          },
+        },
+      ];
+      await route.fulfill({ response: res, json: body });
+    });
   }
-  if (process.env.POLICY_E2E_LIVE !== "1") {
-    await page.route("**/rpc/policySessions/get", (route) =>
-      route.fulfill({
-        json: { json: { id: "policy-fixture", revision: 11, state } },
-      }),
-    );
+  let inspectedBot = context.bots.hiring;
+  if (live) {
+    await expect
+      .poll(
+        async () => {
+          for (const principal of ["procurement", "facility", "hiring"]) {
+            const response = await page.request.post("/rpc/threads/messages", {
+              headers: { "x-rakazo-space-id": context.policySpaceId },
+              data: { json: { botId: context.bots[principal], includePeerRuns: true } },
+            });
+            const body = (await response.json()).json;
+            if (body?.messages?.some((m: any) => m.policy?.event?.decision === "deny")) {
+              inspectedBot = context.bots[principal];
+              return true;
+            }
+          }
+          return false;
+        },
+        { timeout: 90000 },
+      )
+      .toBe(true);
   }
+  await page.evaluate(
+    (spaceId) => localStorage.setItem("rakazo:space-id", spaceId),
+    context.policySpaceId,
+  );
+  await page.goto(`/app/${inspectedBot}`);
   const toggle = page.getByRole("switch", { name: "Use Our Policy" });
-  await expect(toggle).toBeVisible();
-  if ((await toggle.getAttribute("aria-checked")) === "true") await toggle.click();
-  await expect(page.getByTestId("policy-console")).not.toBeVisible();
-  await toggle.click();
-  await expect(page.getByText("Audit incomplete — policy enforced")).toBeVisible();
-  const denied = page.locator(".policy-denied");
+  await expect(toggle).toBeChecked();
+  await expect(page.getByTestId("policy-console")).toHaveCount(0);
+  const denied = page.locator("[data-message-id]").filter({ hasText: "Denied (R3c)" });
   await expect(denied).toHaveCount(1);
-  await expect(denied).toContainText("msg_hiring_to_auditor_a_2");
-  await expect(denied).toContainText("Carries(reply_hiring, nova, hiring)");
-  await denied.getByRole("button").click();
-  await expect(page.getByTestId("policy-decision")).toContainText("R3c");
-  const facts = page.getByTestId("local-facts");
-  const after = await facts.textContent();
+  await denied.hover();
+  await expect(denied.getByTestId("policy-hover-tags")).toContainText("Carries(");
+  await denied.getByRole("button", { name: /Local store after event/ }).click();
+  await expect(page.getByLabel("Snapshot principal")).toHaveValue("auditor_a");
+  const store = page.getByTestId("policy-local-store");
+  const after = await store.textContent();
   await page.getByRole("button", { name: "Before", exact: true }).click();
-  expect(await facts.textContent()).toBe(after);
-  await expect(facts).not.toContainText("Received(auditor_a, reply_hiring)");
-  await expect(facts).toContainText("Knows(auditor_a, nova, procurement)");
-  await captureScreenshot(page, testInfo, "policy-denied-receive");
-  await toggle.click();
-  await expect(page.getByTestId("policy-console")).not.toBeVisible();
-  await expect(page.getByText("Local store", { exact: true })).not.toBeVisible();
-  await toggle.click();
-  await expect(page.getByTestId("policy-decision")).toContainText("R3c");
-  expect(await facts.textContent()).toBe(after);
-  await page.getByRole("button", { name: "Protocol & rules" }).click();
-  await expect(page.getByRole("dialog")).toContainText("DerivedFrom");
+  expect(await store.textContent()).toBe(after);
+  await expect(store).toContainText("Knows · 2");
+  await captureScreenshot(page, testInfo, "native-policy-denied");
   await page.keyboard.press("Escape");
+  await toggle.click();
+  await expect(toggle).not.toBeChecked();
+  await expect(page.getByTestId("policy-observation")).toHaveCount(0);
+  await toggle.click();
+  await expect(toggle).toBeChecked();
+  await expect(denied).toHaveCount(1);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole("button", { name: "Open local store" }).click();
-  await expect(page.getByRole("combobox", { name: "Principal" })).toBeVisible();
-  await captureScreenshot(page, testInfo, "policy-mobile-store");
+  await denied.getByRole("button", { name: /Local store after event/ }).click();
+  await expect(page.getByLabel("Snapshot principal")).toBeVisible();
+  await captureScreenshot(page, testInfo, "native-policy-mobile");
 });

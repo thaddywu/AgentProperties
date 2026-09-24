@@ -9,6 +9,7 @@ COPY packages/adapters/src/ packages/adapters/src/
 COPY packages/contracts/src/ packages/contracts/src/
 COPY packages/core/src/ packages/core/src/
 COPY packages/db/prisma/ packages/db/prisma/
+COPY packages/db/src/messages.ts packages/db/src/messages.ts
 COPY apps/api/src/ apps/api/src/
 COPY apps/web/src/ apps/web/src/
 RUN pnpm --filter @rakazo/db generate && pnpm --filter @rakazo/web build
