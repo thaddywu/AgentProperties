@@ -146,6 +146,18 @@ const threadSendInput = threadTarget
 
 export const appContract = {
   policyNative: {
+    inspect: oc.input(z.object({})).output(PolicySession),
+    query: oc
+      .input(
+        z.object({
+          revision: z.number().int(),
+          event: z.number().int().optional(),
+          side: z.enum(["before", "after"]),
+          scope: z.string(),
+          program: z.string().max(20_000),
+        }),
+      )
+      .output(z.object({ columns: z.array(z.string()), rows: z.array(z.array(z.string())) })),
     context: oc.input(z.object({})).output(NativePolicyContext),
     enable: oc.input(z.object({ fresh: z.boolean().optional() })).output(NativePolicyContext),
     start: oc.input(z.object({})).output(NativePolicyContext),

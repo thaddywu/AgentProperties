@@ -3,7 +3,7 @@ import type { NativePolicyExecution } from "@rakazo/adapters";
 import { flushNativePolicy, initializeNativePolicy, POLICY_NAMES } from "@rakazo/adapters";
 import type { Actor, PolicyPrincipal } from "@rakazo/contracts";
 import { PolicyState } from "@rakazo/contracts";
-import { emptyPolicyState } from "@rakazo/core";
+import { emptyPolicyState, queryPolicyStores } from "@rakazo/core";
 import type { Prisma } from "@rakazo/db";
 import { createSpaceForMember } from "@rakazo/db";
 import { aiConsentStatus } from "./ai-consent.js";
@@ -106,4 +106,41 @@ export async function startNativePolicy(deps: RouterDeps, actor: Actor) {
   );
   await flushNativePolicy(deps, actor.spaceId, queued);
   return nativePolicyContext(deps, actor);
+}
+
+export async function inspectNativePolicy(deps: RouterDeps, actor: Actor) {
+  const session = await findSession(deps, actor);
+  if (!session || session.nativeSpaceId !== actor.spaceId) throw new ORPCError("NOT_FOUND");
+  return { id: session.id, revision: session.revision, state: PolicyState.parse(session.state) };
+}
+export async function queryNativePolicy(
+  deps: RouterDeps,
+  actor: Actor,
+  input: {
+    revision: number;
+    event?: number;
+    side: "before" | "after";
+    scope: string;
+    program: string;
+  },
+) {
+  const session = await inspectNativePolicy(deps, actor);
+  if (session.revision !== input.revision)
+    throw new ORPCError("CONFLICT", {
+      message: "Snapshot changed. Refresh and run the query again.",
+    });
+  const event =
+    input.event === undefined ? undefined : session.state.events.find((e) => e.seq === input.event);
+  if (input.event !== undefined && !event) throw new ORPCError("NOT_FOUND");
+  try {
+    return queryPolicyStores(
+      event ? event[input.side] : session.state.local,
+      input.scope,
+      input.program,
+    );
+  } catch (e) {
+    throw new ORPCError("BAD_REQUEST", {
+      message: e instanceof Error ? e.message : "Invalid query.",
+    });
+  }
 }

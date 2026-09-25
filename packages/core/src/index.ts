@@ -49,3 +49,5 @@ export * from "./tool-activity.js";
 export * from "./policy/datalog.js";
 export * from "./policy/protocol.js";
 export * from "./policy/nova.js";
+
+export * from "./policy/query.js";

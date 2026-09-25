@@ -1,6 +1,12 @@
 import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
-import { advanceNova, messageFacts, NOVA_PHASES, newNovaSession } from "@rakazo/core";
+import {
+  advanceNova,
+  messageFacts,
+  NOVA_PHASES,
+  newNovaSession,
+  queryPolicyStores,
+} from "@rakazo/core";
 import { captureScreenshot, completeOnboarding, signup } from "./helpers";
 
 test("native chat exposes policy tags and event snapshots without replacing its view", async ({
@@ -27,6 +33,17 @@ test("native chat exposes policy tags and event snapshots without replacing its 
     for (let i = 0; i < NOVA_PHASES.length; i++)
       await advanceNova(state, async () => ({ text: "Budget-only reply", model: "offline" }));
     const event = state.events.find((e) => e.decision === "deny")!;
+    await page.route(/\/rpc\/policyNative\/inspect$/, (route) =>
+      route.fulfill({ json: { json: { id: "fixture", revision: 1, state } } }),
+    );
+    await page.route(/\/rpc\/policyNative\/query$/, async (route) => {
+      const input = route.request().postDataJSON().json;
+      const selected = state.events.find((e) => e.seq === input.event);
+      const stores = selected ? selected[input.side as "before" | "after"] : state.local;
+      await route.fulfill({
+        json: { json: queryPolicyStores(stores, input.scope, input.program) },
+      });
+    });
     await page.route(/\/rpc\/(threads\/get|bootstrap)$/, async (route) => {
       const res = await route.fetch();
       const body = await res.json();
@@ -86,22 +103,35 @@ test("native chat exposes policy tags and event snapshots without replacing its 
   await denied.hover();
   await expect(denied.getByTestId("policy-hover-tags")).toContainText("Carries(");
   await denied.getByRole("button", { name: /Local store after event/ }).click();
-  await expect(page.getByLabel("Snapshot principal")).toHaveValue("auditor_a");
-  const store = page.getByTestId("policy-local-store");
+  await expect(page.getByLabel("Store scope")).toHaveValue("auditor_a");
+  const store = page.getByTestId("inspector-facts");
   const after = await store.textContent();
   await page.getByRole("button", { name: "Before", exact: true }).click();
   expect(await store.textContent()).toBe(after);
   await expect(store).toContainText("Knows · 2");
   await captureScreenshot(page, testInfo, "native-policy-denied");
-  await page.keyboard.press("Escape");
+  await page
+    .getByLabel("Datalog program")
+    .fill("KnownPart(C) :- Knows(auditor_a, P, C).\n?- KnownPart(C).");
+  await page.getByRole("button", { name: "Run query", exact: true }).click();
+  const terminal = page.getByRole("region", { name: "Datalog Query" });
+  await expect(terminal).toContainText("2 result(s)");
+  await page.getByLabel("Store scope").selectOption("global");
+  await page.getByLabel("Datalog program").fill("?- Store_Knows(Owner, A, P, C).");
+  await page.getByRole("button", { name: "Run query", exact: true }).click();
+  await expect(terminal.locator("table").first()).toContainText("procurement");
+  await captureScreenshot(page, testInfo, "native-policy-inspector-query");
+  await page.getByRole("button", { name: "Close", exact: true }).click();
   await toggle.click();
   await expect(toggle).not.toBeChecked();
   await expect(page.getByTestId("policy-observation")).toHaveCount(0);
+  await expect(page.getByRole("complementary", { name: "Store Inspector" })).toHaveCount(0);
   await toggle.click();
   await expect(toggle).toBeChecked();
   await expect(denied).toHaveCount(1);
+  await page.getByRole("button", { name: "Close", exact: true }).click();
   await page.setViewportSize({ width: 390, height: 844 });
   await denied.getByRole("button", { name: /Local store after event/ }).click();
-  await expect(page.getByLabel("Snapshot principal")).toBeVisible();
+  await expect(page.getByLabel("Store scope")).toBeVisible();
   await captureScreenshot(page, testInfo, "native-policy-mobile");
 });

@@ -15,7 +15,16 @@ const resolve = (term: string, bindings: Record<string, string>) =>
   variable(term) ? bindings[term] : term;
 
 /** Finite, function-free stratified Datalog. No user text is executable policy. */
-export function evaluateDatalog(input: PolicyFact[], rules: Rule[]) {
+export function evaluateDatalog(
+  input: PolicyFact[],
+  rules: Rule[],
+  limits?: { operations: number; facts: number },
+) {
+  let operations = 0;
+  const tick = () => {
+    if (limits && (++operations > limits.operations || facts.size > limits.facts))
+      throw new Error("Query limit exceeded. Narrow the query or reduce the program.");
+  };
   const facts = new Map(input.map((fact) => [factKey(fact), fact]));
   const proofs = new Map<string, Proof>();
   for (const stratum of [...new Set(rules.map((rule) => rule.stratum))].sort((a, b) => a - b)) {
@@ -23,23 +32,30 @@ export function evaluateDatalog(input: PolicyFact[], rules: Rule[]) {
     while (changed) {
       changed = false;
       for (const rule of rules.filter((item) => item.stratum === stratum)) {
+        tick();
         let matches: { bindings: Record<string, string>; premises: PolicyFact[] }[] = [
           { bindings: {}, premises: [] },
         ];
         for (const atom of rule.body) {
-          const candidates = [...facts.values()].filter(
-            (fact) => fact.predicate === atom.predicate && fact.args.length === atom.args.length,
-          );
+          tick();
+          const candidates = [...facts.values()].filter((fact) => {
+            tick();
+            return fact.predicate === atom.predicate && fact.args.length === atom.args.length;
+          });
           matches = matches.flatMap((match) => {
             if (atom.negative) {
               const terms = atom.args.map((term) => resolve(term, match.bindings));
               if (terms.some((term) => term === undefined))
                 throw new Error(`Unsafe negative atom in ${rule.id}`);
-              return candidates.some((fact) => fact.args.every((term, i) => term === terms[i]))
+              return candidates.some((fact) => {
+                tick();
+                return fact.args.every((term, i) => term === terms[i]);
+              })
                 ? []
                 : [match];
             }
             return candidates.flatMap((fact) => {
+              tick();
               const bindings = { ...match.bindings };
               for (let i = 0; i < atom.args.length; i++) {
                 const term = atom.args[i]!;

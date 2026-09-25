@@ -80,3 +80,37 @@ This is an App 2 messaging protocol, not a general policy for arbitrary computer
 Deterministic tests cover R3a/R3b/R3c, transitive propagation, duplicate labels, project separation, immutable snapshots, native peer receipts, worker tasks, denied payload exclusion, forbidden-tool rejection, and transaction rollback. Existing peer-message, thread-event, and pagination tests check compatibility. The browser test covers the original chat surface, hover tags, snapshot dots, mode switching, and narrow-screen layout. Live local OpenAI-compatible runs verify actual `message_bot` generation and receiver-side rejection.
 
 The new migration adds message observation metadata and native workspace bindings. It does not rewrite original chats. The local Compose overlay must update **api, worker, and web** together.
+
+### Store Inspector and Datalog Query
+
+The native chat has a collapsible right-hand Store Inspector (an overlay on narrow
+screens). Scope selects Global or a principal. Latest follows the current session;
+a message's observation dot selects its event and actor. Before/After inspects the
+persisted event snapshots, including denied deliveries whose receiver is unchanged.
+Global shows the union of stored facts with owner annotations, not a new shared
+agent store. Artifacts and denial witnesses remain available.
+
+The read-only terminal accepts temporary ground facts, new predicates, safe rules,
+positive recursion, stratified `not`, `!=`, anonymous `_`, and one `?-` query. Each
+statement ends with a period. Uppercase identifiers are variables; double-quoted
+strings support constants of any capitalization. Function terms, unsafe rules and
+recursion through negation are rejected. Programs are limited to 20,000 characters,
+100 rules, 10,000 derived facts and 500,000 evaluation operations. Limit errors
+return no partial result. These limits apply only to observer queries.
+
+Local queries use the real policy rules and selected local facts, together with
+the temporary program. Global computes the real policy closure separately for
+each principal before combining results; it never derives policy knowledge from
+mixing stores. `Store_<Predicate>(Owner, ...)` relations preserve ownership.
+Explicit user analysis rules can join across these relations. For example:
+
+```prolog
+Observed(A, P, C) :- Store_Knows(Owner, A, P, C).
+?- Observed(A, P, C).
+```
+
+Query results retain their scope, event/revision, program and variable bindings in
+panel history. Queries are authorized against the active user's native policy
+session, reject stale revisions, and never persist facts or change live enforcement.
+Incoming/New/Deny are receive-gate temporaries, not durable local-store relations;
+users may introduce hypothetical Incoming facts in a local query to explore a gate.

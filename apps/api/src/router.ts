@@ -156,7 +156,13 @@ import {
   serializeSpaceMemoryConfig,
   updateMemoryProviderDefaultScope,
 } from "./memory-provider-config.js";
-import { enableNativePolicy, nativePolicyContext, startNativePolicy } from "./native-policy.js";
+import {
+  enableNativePolicy,
+  inspectNativePolicy,
+  nativePolicyContext,
+  queryNativePolicy,
+  startNativePolicy,
+} from "./native-policy.js";
 import {
   chooseFocus,
   dismissFocus,
@@ -501,6 +507,12 @@ export function createRouter(deps: RouterDeps) {
 
   return os.router({
     policyNative: {
+      inspect: authed.policyNative.inspect.handler(({ context }) =>
+        inspectNativePolicy(deps, context.actor),
+      ),
+      query: authed.policyNative.query.handler(({ context, input }) =>
+        queryNativePolicy(deps, context.actor, input),
+      ),
       context: authed.policyNative.context.handler(({ context }) =>
         nativePolicyContext(deps, context.actor),
       ),
