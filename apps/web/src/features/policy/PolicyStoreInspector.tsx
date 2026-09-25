@@ -1,11 +1,9 @@
-import type { PolicyObservation, PolicySession } from "@rakazo/contracts";
+import type { PolicySession } from "@rakazo/contracts";
 import { APP2_DATALOG, formatFact } from "@rakazo/core";
 import { Button } from "@rakazo/ui-web";
-import { createContext, useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { rpc } from "../../lib/rpc";
 
-export const StoreInspection = createContext<(p: PolicyObservation) => void>(() => {});
-export const useStoreInspection = () => useContext(StoreInspection);
 const names: Record<string, string> = {
   global: "Global",
   board: "Board",
@@ -15,13 +13,7 @@ const names: Record<string, string> = {
   auditor_a: "Auditor A",
 };
 const example = `// Add temporary facts and rules here.\nHasReason(A, C) :- Knows(A, nova, C).\n?- HasReason(A, C).`;
-export function PolicyStoreInspector({
-  selected,
-  onClose,
-}: {
-  selected: PolicyObservation | null;
-  onClose: () => void;
-}) {
+export function PolicyStoreInspector({ onClose }: { onClose: () => void }) {
   const [session, setSession] = useState<PolicySession | null>(null);
   const [error, setError] = useState("");
   const [scope, setScope] = useState("global");
@@ -52,13 +44,6 @@ export function PolicyStoreInspector({
       clearInterval(timer);
     };
   }, []);
-  useEffect(() => {
-    if (selected) {
-      setEventId(String(selected.event.seq));
-      setSide("after");
-      setScope(selected.event.actor);
-    }
-  }, [selected]);
   const event =
     eventId === "latest" ? undefined : session?.state.events.find((e) => String(e.seq) === eventId);
   const stores = event ? event[side] : eventId === "latest" ? session?.state.local : undefined;
@@ -133,8 +118,8 @@ export function PolicyStoreInspector({
             ))}
           </select>
         </label>
-        <label>
-          Snapshot
+        <label className="col-span-2 min-w-0">
+          Message / event
           <select
             aria-label="Store snapshot"
             value={eventId}
@@ -144,7 +129,7 @@ export function PolicyStoreInspector({
             <option value="latest">Latest</option>
             {session?.state.events.map((e) => (
               <option key={e.seq} value={e.seq}>
-                Event {e.seq} · {e.kind}
+                {`Event ${e.seq} · ${e.messageId ?? e.artifactId} · ${e.kind} · ${names[e.actor]}${e.decision ? ` · ${e.decision === "deny" ? "Denied" : "Delivered"}` : ""}`}
               </option>
             ))}
           </select>
@@ -164,6 +149,23 @@ export function PolicyStoreInspector({
           </div>
         )}
       </div>
+      {event && (
+        <div className="border-b border-border px-3 pb-3" data-testid="inspector-event">
+          <code className="block break-all">{event.messageId ?? event.artifactId}</code>
+          <p className="mt-1 text-muted-foreground">
+            {event.from && event.to
+              ? `${names[event.from]} → ${names[event.to]}`
+              : names[event.actor]}
+            {` · ${event.kind} · ${side === "before" ? "Before" : "After"}`}
+          </p>
+          <details className="mt-2">
+            <summary className="cursor-pointer">Message / artifact</summary>
+            <p className="mt-1 max-h-32 overflow-auto whitespace-pre-wrap">
+              {session?.state.artifacts[event.artifactId]?.text}
+            </p>
+          </details>
+        </div>
+      )}
       {error && (
         <p role="alert" className="px-3 text-destructive">
           {error}

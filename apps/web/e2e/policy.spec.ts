@@ -102,7 +102,15 @@ test("native chat exposes policy tags and event snapshots without replacing its 
   await expect(denied).toHaveCount(1);
   await denied.hover();
   await expect(denied.getByTestId("policy-hover-tags")).toContainText("Carries(");
-  await denied.getByRole("button", { name: /Local store after event/ }).click();
+  await expect(page.getByRole("button", { name: /Local store after event/ })).toHaveCount(0);
+  await page.getByLabel("Store scope").selectOption("auditor_a");
+  const deniedEvent = await page
+    .getByLabel("Store snapshot")
+    .locator("option")
+    .filter({ hasText: /receive.*Denied/ })
+    .first()
+    .getAttribute("value");
+  await page.getByLabel("Store snapshot").selectOption(deniedEvent!);
   await expect(page.getByLabel("Store scope")).toHaveValue("auditor_a");
   const store = page.getByTestId("inspector-facts");
   const after = await store.textContent();
@@ -131,7 +139,9 @@ test("native chat exposes policy tags and event snapshots without replacing its 
   await expect(denied).toHaveCount(1);
   await page.getByRole("button", { name: "Close", exact: true }).click();
   await page.setViewportSize({ width: 390, height: 844 });
-  await denied.getByRole("button", { name: /Local store after event/ }).click();
+  await page.getByRole("button", { name: "Stores", exact: true }).click();
+  await page.getByLabel("Store scope").selectOption("auditor_a");
+  await page.getByLabel("Store snapshot").selectOption(deniedEvent!);
   await expect(page.getByLabel("Store scope")).toBeVisible();
   await captureScreenshot(page, testInfo, "native-policy-mobile");
 });

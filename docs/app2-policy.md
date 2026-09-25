@@ -3,7 +3,7 @@
 Enable **Use Our Policy** to use the original Rakazo sidebar, bot chats, peer-message view, composer, and background run queue with App 2 enforcement. There is no separate policy dashboard. All interface and generated agent text is English.
 
 - Hover over a message to see its directional delivery ID and attached Carries facts.
-- Click the small dot below a message or completed message_bot call to inspect the historical local store. The inspector defaults to After and can show Before, each principal's facts, accessible artifact bodies, and denial witnesses.
+- Use the right-hand Store Inspector to select a principal and message/event to inspect the historical local store. The inspector defaults to After and can show Before, each principal's facts, accessible artifact bodies, and denial witnesses.
 - **Start audit** initializes a new episode. **New audit** creates another independent workspace; it preserves the previous one.
 - Switching policy off returns to the previous original workspace and chat. Switching back returns to the policy chat. Original navigation hides policy workspaces; policy navigation shows only the current policy workspace. Background runs may finish while another workspace is being viewed, as in original Rakazo.
 
@@ -71,13 +71,13 @@ All three components must be distinct and from the same project. Board is receiv
 
 Board distributes budgets and reasons. Auditor A asks all three departments for budgets through actual model tool calls. Department replies use their full local histories, so even budget-only replies inherit the restricted reason's component. The first two replies succeed; the third is rejected by R3c. Worker scheduling determines which department is third. Auditor A then sends an incomplete report to Board.
 
-Open the third department's chat, find `message_bot → Auditor A · Denied (R3c)`, and click its dot. Auditor A's Before and After stores at that receive event are identical. Hover shows the attempted message's Carries and delivery ID. The generic failure notice is a later event; the denied body remains absent from Auditor A's inputs.
+Open the third department's chat, find `message_bot → Auditor A · Denied (R3c)`, then select its denied receive event in the Store Inspector. Auditor A's Before and After stores at that receive event are identical. Hover shows the attempted message's Carries and delivery ID. The generic failure notice is a later event; the denied body remains absent from Auditor A's inputs.
 
 ## Limits and validation
 
 This is an App 2 messaging protocol, not a general policy for arbitrary computer tools. Native mobile does not yet expose the inspector; web and Electron share the chat implementation. Source initialization and runtime-created user/control notices are trusted ingestion paths. Generic delivery status is intentionally observable; timing/control-channel noninterference and LLM guessing are outside this version's guarantees.
 
-Deterministic tests cover R3a/R3b/R3c, transitive propagation, duplicate labels, project separation, immutable snapshots, native peer receipts, worker tasks, denied payload exclusion, forbidden-tool rejection, and transaction rollback. Existing peer-message, thread-event, and pagination tests check compatibility. The browser test covers the original chat surface, hover tags, snapshot dots, mode switching, and narrow-screen layout. Live local OpenAI-compatible runs verify actual `message_bot` generation and receiver-side rejection.
+Deterministic tests cover R3a/R3b/R3c, transitive propagation, duplicate labels, project separation, immutable snapshots, native peer receipts, worker tasks, denied payload exclusion, forbidden-tool rejection, and transaction rollback. Existing peer-message, thread-event, and pagination tests check compatibility. The browser test covers the original chat surface, hover tags, direct snapshot selection, mode switching, and narrow-screen layout. Live local OpenAI-compatible runs verify actual `message_bot` generation and receiver-side rejection.
 
 The new migration adds message observation metadata and native workspace bindings. It does not rewrite original chats. The local Compose overlay must update **api, worker, and web** together.
 
@@ -85,7 +85,7 @@ The new migration adds message observation metadata and native workspace binding
 
 The native chat has a collapsible right-hand Store Inspector (an overlay on narrow
 screens). Scope selects Global or a principal. Latest follows the current session;
-a message's observation dot selects its event and actor. Before/After inspects the
+the Message / event selector identifies snapshots by delivery/artifact ID, actor, event kind and decision. Messages retain hover facts and have no store-navigation button. Before/After inspects the
 persisted event snapshots, including denied deliveries whose receiver is unchanged.
 Global shows the union of stored facts with owner annotations, not a new shared
 agent store. Artifacts and denial witnesses remain available.
