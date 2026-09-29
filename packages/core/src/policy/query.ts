@@ -193,3 +193,29 @@ export function queryPolicyStores(stores: PolicyStores, scope: string, source: s
     rows: result.facts.filter((f) => f.predicate === "QueryResult").map((f) => f.args.map(decode)),
   };
 }
+
+/** Parse editable input records with the same grammar as the terminal. */
+export function parseGroundFacts(source: string): PolicyFact[] {
+  const parsed = parseProgram(`${source}\n?- ParserSentinel().`);
+  if (parsed.rules.length !== 1) throw new Error("Expected ground input facts, not rules.");
+  return parsed.facts.map((f) => ({ ...f, args: f.args.map(decode) }));
+}
+
+/** Read-only general query over an executable policy's INPUT state.
+ * Policy-derived predicates cannot be injected or overridden by a query program.
+ */
+export function queryDatalog(input: PolicyFact[], policy: Rule[], source: string) {
+  const parsed = parseProgram(source);
+  const protectedHeads = new Set(policy.map((r) => r.head.predicate));
+  for (const f of [...parsed.facts, ...parsed.rules.map((r) => r.head)])
+    if (protectedHeads.has(f.predicate))
+      throw new Error(`Derived predicate ${f.predicate} is read-only.`);
+  const facts = [...input.map(encodeFact), ...parsed.facts];
+  const rules = [...policy.map(encodeRule), ...parsed.rules];
+  validateAndStratify(facts, rules);
+  const result = evaluateDatalog(facts, rules, limits);
+  return {
+    columns: parsed.columns,
+    rows: result.facts.filter((f) => f.predicate === "QueryResult").map((f) => f.args.map(decode)),
+  };
+}

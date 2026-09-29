@@ -8,7 +8,11 @@ export type Rule = {
   distinct: [string, string][];
   stratum: number;
 };
-export type Proof = { rule: string; premises: PolicyFact[] };
+export type Proof = {
+  rule: string;
+  premises: PolicyFact[];
+  checks?: { kind: "absence" | "comparison"; text: string }[];
+};
 export const factKey = (fact: PolicyFact) => JSON.stringify([fact.predicate, ...fact.args]);
 const variable = (term: string) => /^[A-Z]/.test(term);
 const resolve = (term: string, bindings: Record<string, string>) =>
@@ -87,7 +91,22 @@ export function evaluateDatalog(
           const key = factKey(fact);
           if (!facts.has(key)) {
             facts.set(key, fact);
-            proofs.set(key, { rule: rule.id, premises: match.premises });
+            proofs.set(key, {
+              rule: rule.id,
+              premises: match.premises,
+              checks: [
+                ...rule.body
+                  .filter((a) => a.negative)
+                  .map((a) => ({
+                    kind: "absence" as const,
+                    text: `not ${a.predicate}(${a.args.map((t) => resolve(t, match.bindings)).join(", ")})`,
+                  })),
+                ...rule.distinct.map(([a, b]) => ({
+                  kind: "comparison" as const,
+                  text: `${resolve(a, match.bindings)} != ${resolve(b, match.bindings)}`,
+                })),
+              ],
+            });
             changed = true;
           }
         }
