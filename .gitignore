@@ -11,3 +11,25 @@ __pycache__/
 # Large local datasets
 datasets/
 examples/toolbench/
+
+# Frontend dependencies and build output
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Separate checkouts and private local runtime data
+/rakazo/
+/rakazo-policy/
+/.rakazo-local/
+.env
+.env.*
+!.env.example
+
+# LaTeX build output (main.tex is the editable source)
+/main.aux
+/main.fdb_latexmk
+/main.fls
+/main.log
+/main.out
+/main.pdf
+/main.synctex.gz
