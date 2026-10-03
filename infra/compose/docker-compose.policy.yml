@@ -1,0 +1,10 @@
+# Build from the repository root:
+# docker build -f infra/compose/Dockerfile.policy -t rakazo:policy-local .
+# Apply after docker-compose.images.yml with the normal self-host .env.
+services:
+  api:
+    image: rakazo:policy-local
+  worker:
+    image: rakazo:policy-local
+  web:
+    image: rakazo:policy-local

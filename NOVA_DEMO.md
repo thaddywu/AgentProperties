@@ -1,16 +1,17 @@
-# Executable Nova demo
+# Current Nova workspace
 
-The existing Rakazo facts inspector and Datalog terminal are in the adjacent
-`../rakazo-policy-clean` checkout. The executable demo based on this workspace's
-`main.tex` is implemented there using the existing UI and Datalog evaluator.
+The master branch contains the Rakazo-based Policy UI, store inspector, Datalog
+terminal, and executable Nova runtime. Run from the repository root:
 
 ```bash
-cd ../rakazo-policy-clean
-./scripts/nova-demo.sh
+./nova-demo.sh
 ```
 
 Open http://127.0.0.1:5180/nova.html.
 
-See [architecture, semantics, tests, and commands](../rakazo-policy-clean/docs/nova-reasoning-demo.md).
+- [Architecture, semantics, tests, and commands](docs/nova-reasoning-demo.md)
+- [TeX design source](docs/research/main.tex)
+- [Research documents](docs/research/README.md)
 
-Git backup: [nova-reasoning-demo branch](https://github.com/thaddywu/AgentProperties/tree/nova-reasoning-demo).
+The previous standalone React/Vite Relay frontend, including both the underground
+coordination and budget audit demos, is preserved on branch archive-two-demo.

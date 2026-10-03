@@ -1,31 +1,57 @@
-# Local Python environments and generated artifacts
-.venv/
-.pytest_cache/
+.deepsec/
+node_modules
 __pycache__/
 *.py[cod]
-*.egg-info/
-
-# Local runtime state
-**/state/
-
-# Large local datasets
-datasets/
-examples/toolbench/
-
-# Frontend dependencies and build output
-node_modules/
-dist/
+.turbo
+dist
+build
+coverage
+.playwright-report
+.playwright-cli
+test-results
+playwright-report
 *.tsbuildinfo
-
-# Separate checkouts and private local runtime data
-/rakazo/
-/rakazo-policy/
-/.rakazo-local/
 .env
-.env.*
-!.env.example
+.env.local
+.env.*.local
+data
+apps/**/data
+.tmp
+.DS_Store
+apps/web/dist
+apps/desktop/dist
+apps/desktop/out
+apps/desktop/e2e/screenshots
+apps/mobile/.expo
+apps/mobile/dist
+apps/mobile/android
+apps/mobile/ios
+packages/db/src/generated
+infra/sandboxes/supervisor/dist
+*.log
+.vercel
+.cache
+artifacts
+backups
+test-report
+verify-report
+.astro
+.deploy.lock
+.last-deployed-revision
+design/
+PRODUCT_PLAN.md
 
-# LaTeX build output (main.tex is the editable source)
+# Lingui compiled catalogs — Vite plugin compiles .po at build time
+apps/web/src/locales/**/*.mjs
+apps/web/src/locales/**/*.js
+apps/web/scripts/msgids.json
+playwright-report-www
+
+# Private local services and compose overrides
+/.rakazo-local/
+/infra/compose/docker-compose.local.yml
+
+# Research document build output
 /main.aux
 /main.fdb_latexmk
 /main.fls

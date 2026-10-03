@@ -1,0 +1,16 @@
+# Use a published image matching the source checkout; dependencies remain unchanged.
+ARG BASE_IMAGE=ghcr.io/elie222/rakazo/app:edge
+FROM ${BASE_IMAGE}
+USER root
+WORKDIR /app
+ENV RAYON_NUM_THREADS=4 TOKIO_WORKER_THREADS=4
+COPY packages/adapter-kit/src/ packages/adapter-kit/src/
+COPY packages/adapters/src/ packages/adapters/src/
+COPY packages/contracts/src/ packages/contracts/src/
+COPY packages/core/src/ packages/core/src/
+COPY packages/db/prisma/ packages/db/prisma/
+COPY packages/db/src/messages.ts packages/db/src/messages.ts
+COPY apps/api/src/ apps/api/src/
+COPY apps/web/src/ apps/web/src/
+RUN pnpm --filter @rakazo/db generate && pnpm --filter @rakazo/web build
+USER node

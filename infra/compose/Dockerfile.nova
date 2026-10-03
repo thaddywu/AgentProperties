@@ -1,0 +1,8 @@
+FROM rakazo:policy-local
+USER root
+ADD https://github.com/souffle-lang/souffle/releases/download/2.5/x86_64-ubuntu-2204-souffle-2.5-Linux.deb /tmp/souffle.deb
+RUN echo 'c21e2f8153c140499f5b2aa30a148dddec7be5663e36071466cdc225a6682f9fe699b939241c7c28258ee96d1e2c2fe5585e9e8e6b74fb20172f06d2b40774da  /tmp/souffle.deb' | sha512sum -c - \
+    && dpkg-deb -x /tmp/souffle.deb /opt/souffle \
+    && ln -s /opt/souffle/usr/bin/souffle /usr/local/bin/souffle \
+    && rm /tmp/souffle.deb \
+    && souffle --version
