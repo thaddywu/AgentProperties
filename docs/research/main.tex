@@ -1,6 +1,6 @@
 \documentclass[10pt]{article}
 \usepackage[margin=0.75in]{geometry}
-\usepackage{amsmath,amssymb,booktabs,tabularx,xcolor,tcolorbox,listings,microtype}
+\usepackage{amsmath,amssymb,booktabs,tabularx,longtable,xcolor,tcolorbox,listings,microtype}
 \usepackage[hidelinks]{hyperref}
 \usepackage{enumitem,tikz}
 \title{\vspace{-1.5em}Distributed Policy Reasoning for Multi-Agent Systems}
@@ -23,19 +23,20 @@ state are represented as Datalog facts and rules.
 \begin{mainbox}
 \centering
 \textbf{Distributed facts + Datalog policies}\\[5pt]
-\begin{tabular}{c@{\quad}c@{\quad}c@{\quad}c}
-\textbf{Why} & \textbf{What-if} & \textbf{Minimal prevention} & \textbf{Speculation}\\
-proof of denial & change input facts & smallest prevention & safe completion
+\small
+\begin{tabular}{ccccc}
+\textbf{Query} & \textbf{Why} & \textbf{What-if} & \textbf{Min-prevention} & \textbf{Planning}\\
+matching facts & proof & changed inputs & fewest prevented events & path to a goal
 \end{tabular}
 \end{mainbox}
 
-The same representation supports four analyses:
-
+The same representation supports five analysis modes:
 \begin{itemize}
-\item \textbf{Why.} Ask for a proof of a fact such as \texttt{DenyReceive(A,M)}. The proof gives a derivation tree back to input facts.
-\item \textbf{What-if.} Add or remove input facts, recompute the Datalog closure, and ask whether the same denial is still derived.
-\item \textbf{Minimal prevention.} Find the smallest set of prior input events whose prevention removes the denial.
-\item \textbf{Speculative analysis.} Search future task-relevant actions and ask whether some trace can finish the task without triggering a denial.
+\item \textbf{Query.} Find facts matching a user-supplied query.
+\item \textbf{Why.} Explain why a selected fact holds, tracing a proof back to inputs.
+\item \textbf{What-if.} Add or remove input facts and ask whether a selected fact still holds.
+\item \textbf{Min-prevention.} Find the smallest sets of preventable events whose removal makes a selected fact no longer hold.
+\item \textbf{Planning.} Find a path to a goal using the allowed actions.
 \end{itemize}
 
 Facts do not need to be stored globally. Each principal stores its local facts. Messages
@@ -65,112 +66,154 @@ complete once each part has been received by an authorized auditor for review.
 
 \subsection{Tuples}
 
-Input tuples record configuration, source labels, and runtime events; derived tuples
-capture information flow, policy decisions, and audit progress. In the schemas below,
-\texttt{P} is a principal, \texttt{A} an auditor, \texttt{M} a message,
-\texttt{Proj} a project, \texttt{Part} a rationale part, and \texttt{Cap} a capability.
-\texttt{Min} and \texttt{Mout} denote input and output messages.
+Input tuples record configuration, source labels, communication inputs, and runtime
+ events; derived tuples capture information flow, policy decisions, and audit progress.
+In the schemas below, \texttt{P} is a principal, \texttt{A} an auditor, \texttt{M} a
+message, \texttt{Tag} a knowledge label, \texttt{Group} a protected group, and
+\texttt{Cap} a capability. \texttt{Min} and \texttt{Mout} denote input and output messages.
+All arguments are represented as Souffl\'e symbols. The current implementation uses
+single tags such as \texttt{nova\_hiring}; \texttt{TagGroup} associates tags with Nova.
 
-Storage is either \emph{global} (shared configuration replicated across principals),
-\emph{local at} a named owner, or \emph{temporary} (used while checking a proposed
-receive). A message's holder is a principal that stores it; labels accompany messages
-when transferred. Each auditor records its own progress, and the board collects these
-progress facts to determine whether the audit is complete.
+Every input record belongs to a principal's local store. Shared configuration is
+explicitly replicated into those stores. Records also carry source, lifetime, and
+optional event metadata; these are runtime metadata rather than Datalog arguments.
+Derived tuples are recomputed from local inputs. The prototype hosts all stores in
+one service and persists them in one checkpoint; locality is enforced at evaluation,
+not by separate machines or databases. The observer's union of stores is for inspection,
+not a global join used to decide delivery.
 
-\textbf{Input tuples.}
+\textbf{Input tuples (13 predicates).}
 \begin{center}\small
 \setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.15}
-\begin{tabularx}{\linewidth}{@{}p{0.32\linewidth} >{\raggedright\arraybackslash}p{0.10\linewidth} >{\raggedright\arraybackslash}p{0.16\linewidth} >{\raggedright\arraybackslash}X@{}}
+\begin{tabularx}{\linewidth}{@{}p{0.34\linewidth} >{\raggedright\arraybackslash}p{0.16\linewidth} >{\raggedright\arraybackslash}X@{}}
 \toprule
-\textbf{Schema} & \textbf{Source} & \textbf{Storage} & \textbf{Meaning}\\
+\textbf{Schema} & \textbf{Placement} & \textbf{Meaning / source}\\
 \midrule
-\texttt{Auditor(A)} & config & global & \texttt{A} is authorized to act as an auditor.\\
-\texttt{HasCap(P, Cap)} & config & local at \texttt{P} & \texttt{P} holds capability \texttt{Cap}.\\
-\texttt{Requires(Proj, Part, Cap)} & config & global & Receiving \texttt{Part} of \texttt{Proj} requires capability \texttt{Cap}.\\
-\texttt{TrustedCarry(M, Proj, Part)} & trusted app & local at sender of \texttt{M} & The trusted application attaches a sink tag to \texttt{M}, identifying \texttt{Part} of \texttt{Proj}.\\
-\texttt{Sender(P, M)} & runtime & local at \texttt{P} & \texttt{P} sent message \texttt{M}.\\
-\texttt{Receiver(P, M)} & runtime & local at \texttt{P} & \texttt{P} received message \texttt{M}; this event is used to track dependencies.\\
-\texttt{Before(Min, Mout)} & runtime & local at \texttt{P} & \texttt{P} received \texttt{Min} before sending \texttt{Mout}.\\
-\texttt{Received(P, M)} & runtime & local at \texttt{P} & \texttt{P} completed an allowed receive of \texttt{M}, updating its information state.\\
-\texttt{Incoming(P, M)} & runtime & temporary & A receive of \texttt{M} by \texttt{P} is proposed and awaits a policy check.\\
+\texttt{Auditor(A)} & replicated & Config: \texttt{A} is an auditor.\\
+\texttt{HasCap(P, Cap)} & local at \texttt{P} & Config: \texttt{P} holds \texttt{Cap}.\\
+\texttt{Requires(Tag, Cap)} & replicated & Config: receiving \texttt{Tag} requires \texttt{Cap}.\\
+\texttt{TagGroup(Tag, Group)} & replicated & Config: \texttt{Tag} belongs to \texttt{Group}.\\
+\texttt{AuditGoal(Group, T1, T2, T3)} & replicated & Config: these three tags must be audited.\\
+\texttt{TrustedSource(M, Tag)} & Board only & Trusted application labels a source assignment.\\
+\texttt{TransportTag(M, Tag)} & receiver & Protocol imports a message label; temporary until allowed.\\
+\texttt{AuditReceipt(A, Tag)} & Board only & Protocol imports auditor \texttt{A}'s progress.\\
+\texttt{Sender(P, M)} & local at \texttt{P} & Runtime records a send.\\
+\texttt{Receiver(P, M)} & local at \texttt{P} & Runtime records a successful receive for dependency tracking.\\
+\texttt{Before(Min, Mout)} & sender of \texttt{Mout} & Runtime records that \texttt{Min} was received before this send.\\
+\texttt{Received(P, M)} & local at \texttt{P} & Runtime records successful delivery for knowledge and progress.\\
+\texttt{Incoming(P, M)} & local at \texttt{P} & Temporary runtime input for a proposed receive.\\
 \bottomrule
 \end{tabularx}
 \end{center}
 
-\textbf{Derived tuples.}
+\textbf{Derived tuples (6 predicates).}
 \begin{center}\small
-\setlength{\tabcolsep}{4pt}
-\renewcommand{\arraystretch}{1.15}
-\begin{tabularx}{\linewidth}{@{}p{0.32\linewidth} >{\raggedright\arraybackslash}p{0.10\linewidth} >{\raggedright\arraybackslash}p{0.16\linewidth} >{\raggedright\arraybackslash}X@{}}
+\begin{tabularx}{\linewidth}{@{}l >{\raggedright\arraybackslash}X@{}}
 \toprule
-\textbf{Schema} & \textbf{Source} & \textbf{Storage} & \textbf{Meaning}\\
+\textbf{Schema} & \textbf{Meaning / placement}\\
 \midrule
-\texttt{DependsOn(Mout, Min)} & derived & local at sender of \texttt{Mout} & \texttt{Mout} may depend on an earlier message \texttt{Min} received by its sender.\\
-\texttt{Carries(M, Proj, Part)} & derived & local at holder of \texttt{M} & \texttt{M} carries \texttt{Part} of \texttt{Proj}, directly or through a dependency.\\
-\texttt{Knows(P, Proj, Part)} & derived & local at \texttt{P} & \texttt{P} has acquired \texttt{Part} of \texttt{Proj} through an allowed receive.\\
-\texttt{DenyReceive(P, M)} & derived & temporary & The proposed receive of \texttt{M} by \texttt{P} violates a policy and must be blocked.\\
-\texttt{Audited(Proj, Part)} & derived & local at \texttt{A}, board & An auditor has received \texttt{Part} of \texttt{Proj} for review; the board collects this progress fact.\\
-\texttt{Finished(Proj)} & derived & local at board & All three required rationale parts of \texttt{Proj} have been received by auditors for review.\\
+\texttt{DependsOn(Mout, Min)} & Possible dependency, local at the sender of \texttt{Mout}.\\
+\texttt{Propagated(M, Tag)} & Source, imported, or inherited label in the current store.\\
+\texttt{Knows(P, Tag)} & \texttt{P}'s knowledge after successful delivery, local at \texttt{P}.\\
+\texttt{DenyReceive(P, M)} & Denial of a pending receive, local at \texttt{P}.\\
+\texttt{Audited(Tag)} & Local auditor progress, or progress reconstructed from receipts at Board.\\
+\texttt{Finished(Group)} & All tags in the audit goal are covered; derived only at Board.\\
 \bottomrule
 \end{tabularx}
 \end{center}
 
-\textbf{\texttt{TrustedCarry}: sink tags.} Here, a sink tag marks the project
-information assigned to a department. When the board sends task message \texttt{m0}
-to HR, the trusted application attaches \texttt{TrustedCarry(m0, nova, hiring)}.
-This tag identifies the hiring part of Nova and seeds the IFC labels propagated to
-subsequent messages; agents cannot assign trusted tags themselves.
+\textbf{Trusted source labels and propagation.} The trusted application supplies
+\texttt{TrustedSource(m0, nova\_hiring)} at Board. Agents cannot assign trusted source
+labels. For ordinary sends, the runtime records dependencies on all earlier successful
+receives by the sender. Datalog propagates tags along those dependencies. Source
+assignments are trusted ingestion, not computations over Board's entire history.
 
-\textbf{IFC: runtime facts and label propagation.} The messaging runtime records
-\texttt{Sender} on a send, \texttt{Receiver} and \texttt{Received} on an allowed
-receive, and \texttt{Before} when a received message precedes an outgoing message.
-These facts establish a conservative \texttt{DependsOn} relation: an outgoing message
-may depend on any earlier message received by its sender. \texttt{Carries} propagates
-tags along these dependencies, while \texttt{Knows} records the parts a principal has
-acquired. Thus, HR's reply to an auditor inherits the hiring tag from \texttt{m0}.
+\textbf{Communication boundary: \texttt{TransportTag} versus \texttt{Received}.}
+The sender derives \texttt{Propagated(M, Tag)}. The runtime exports these labels with
+the message and imports them into the receiver's store as \texttt{TransportTag(M, Tag)}.
+This input says what the message carries, not that delivery has succeeded. Rule R2
+turns it into a local derived \texttt{Propagated} tuple. The separate name distinguishes
+protocol inputs from derived facts; it introduces no additional knowledge category.
 
-\textbf{\texttt{DenyReceive}: enforcement.} Before delivering \texttt{M} to
-\texttt{P}, the runtime creates \texttt{Incoming(P, M)} and evaluates the rules.
-If \texttt{DenyReceive(P, M)} is derived, delivery is blocked: \texttt{P} either lacks
-a required capability or would acquire a third distinct part. Otherwise, delivery
-proceeds and \texttt{Received(P, M)} is recorded. The incoming fact and denial are
-temporary; a blocked receive does not update \texttt{Knows}.
+Before checking delivery, the receiver has \texttt{Incoming(P, M)} and temporary
+\texttt{TransportTag} records, but no \texttt{Received(P, M)} for this message. If local
+inference derives \texttt{DenyReceive(P, M)}, the runtime discards the incoming intent
+and its imported tags without recording a receive. Otherwise it retains the tags,
+removes \texttt{Incoming}, and records both \texttt{Receiver} and \texttt{Received}.
+Only then can the message contribute to \texttt{Knows}. Missing inputs or an engine
+failure abort evaluation rather than permit delivery. There is no explicit
+\texttt{AllowReceive} predicate.
 
-\textbf{\texttt{Finished}: task completion.} \texttt{Audited(Proj, Part)} means
-that an auditor has received that part for review. The board derives
-\texttt{Finished(Proj)} once Procurement, Facility, and Hiring are all covered,
-possibly by different auditors. This example models completion as successful delivery
-for review; it does not model the auditors' subsequent budget judgments.
-
-Only input facts are changed by analysis. Derived facts are recomputed using the
-following rules.
+\textbf{Audit progress across stores.} An auditor derives \texttt{Audited(Tag)} after
+successful receipt. The runtime sends this progress to Board as the input
+\texttt{AuditReceipt(A, Tag)}; Board derives its own \texttt{Audited(Tag)} and then
+\texttt{Finished(Group)}. Tag transport and audit receipts are runtime protocol
+operations, not Datalog rules that read another store. Completion means receipt for
+review, not completion of a subsequent budget judgment.
 
 \subsection{Datalog Rules}
 
-\begin{rulebox}
+The following are the 12 information-flow, communication, and audit rules, in Souffl\'e syntax (\texttt{!} denotes
+negation; quoted values are constants). Each evaluation uses one owner's inputs.
+For \texttt{Knows} and \texttt{DenyReceive}, the principal variable in the rule head
+is bound to that owner. The \texttt{Finished} rule runs only at Board. Board is exempt
+from the three-tag constraint, but not from capability requirements.
+
 \begin{lstlisting}
-% IFC: label trusted sources and propagate labels through possible dependencies.
-Carries(M, Proj, Part) :- TrustedCarry(M, Proj, Part).
-DependsOn(Mout, Min) :- Receiver(P, Min), Sender(P, Mout), Before(Min, Mout).
-Carries(Mout, Proj, Part) :- DependsOn(Mout, Min), Carries(Min, Proj, Part).
+% R1: trusted-label
+Propagated(M, Tag) :- TrustedSource(M, Tag).
 
-% Local information state after an allowed receive.
-Knows(P, Proj, Part) :- Received(P, M), Carries(M, Proj, Part).
+% R2: message-label
+Propagated(M, Tag) :- TransportTag(M, Tag).
 
-% Capability control: block a receive if a required capability is absent.
-DenyReceive(P, M) :- Incoming(P, M), Carries(M, Proj, Part),
-    Requires(Proj, Part, Cap), not HasCap(P, Cap).
+% R3: audit-receipt
+Audited(Tag) :- AuditReceipt(A, Tag).
 
-% Three-Part Exposure Policy: block a third distinct part; the board is exempt.
-DenyReceive(P, M) :- P != board, Incoming(P, M), Carries(M, Proj, C3),
-    Knows(P, Proj, C1), Knows(P, Proj, C2), C1 != C2, C1 != C3, C2 != C3.
+% R4: runtime-dependency
+DependsOn(Mout, Min) :-
+    Receiver(P, Min), Sender(P, Mout), Before(Min, Mout).
 
-% Task progress: a part counts once an auditor has received it for review.
-Audited(Proj, Part) :- Auditor(A), Received(A, M), Carries(M, Proj, Part).
-Finished(Proj) :- Audited(Proj, procurement), Audited(Proj, facility), Audited(Proj, hiring).
+% R5: label-propagation
+Propagated(Mout, Tag) :- DependsOn(Mout, Min), Propagated(Min, Tag).
+
+% R6: knowledge
+Knows(P, Tag) :- Received(P, M), Propagated(M, Tag).
+
+% R7: capability
+DenyReceive(P, M) :-
+    Incoming(P, M), Propagated(M, Tag), Requires(Tag, Cap),
+    !HasCap(P, Cap).
+
+% R8: three-tag-exposure (two known tags, one incoming)
+DenyReceive(P, M) :-
+    Incoming(P, M), Propagated(M, T3),
+    Knows(P, T1), Knows(P, T2),
+    TagGroup(T1, Group), TagGroup(T2, Group), TagGroup(T3, Group),
+    P != "board", T1 != T2, T1 != T3, T2 != T3.
+
+% R9: three-tag-two-incoming (one known tag, two incoming)
+DenyReceive(P, M) :-
+    Incoming(P, M), Propagated(M, T2), Propagated(M, T3),
+    Knows(P, T1),
+    TagGroup(T1, Group), TagGroup(T2, Group), TagGroup(T3, Group),
+    P != "board", T1 != T2, T1 != T3, T2 != T3.
+
+% R10: three-tag-all-incoming
+DenyReceive(P, M) :-
+    Incoming(P, M),
+    Propagated(M, T1), Propagated(M, T2), Propagated(M, T3),
+    TagGroup(T1, Group), TagGroup(T2, Group), TagGroup(T3, Group),
+    P != "board", T1 != T2, T1 != T3, T2 != T3.
+
+% R11: audit-progress
+Audited(Tag) :- Auditor(A), Received(A, M), Propagated(M, Tag).
+
+% R12: finished
+Finished(Group) :-
+    AuditGoal(Group, T1, T2, T3),
+    Audited(T1), Audited(T2), Audited(T3).
 \end{lstlisting}
-\end{rulebox}
 
 \subsection{Example State}
 
@@ -183,7 +226,11 @@ to receive its own tagged task from the board.
 Auditor(auditor_a).  Auditor(auditor_b).
 HasCap(auditor_a, hr_review).
 HasCap(hr, hr_review).
-Requires(nova, hiring, hr_review).
+Requires(nova_hiring, hr_review).
+TagGroup(nova_procurement, nova).
+TagGroup(nova_facility, nova).
+TagGroup(nova_hiring, nova).
+AuditGoal(nova, nova_procurement, nova_facility, nova_hiring).
 \end{lstlisting}
 
 \textbf{Messages so far.} The board has sent each department its task with the
@@ -191,149 +238,202 @@ corresponding tag: \texttt{mP0} to Procurement, \texttt{mF0} to Facility, and
 \texttt{m0} to HR. Procurement and Facility have already sent their budget rationales
 \texttt{mP} and \texttt{mF} to Auditor A for review. HR is now sending its hiring
 rationale \texttt{mH} to A; delivery is pending a policy check. The relevant input
-facts are:
+facts are shown by owner below. Shared configuration is replicated; each capability
+fact resides only with its holder. Constants are shown unquoted in these illustrative
+snapshots and query templates:
 
 \begin{lstlisting}
-% Board assignments and their sink tags
-TrustedCarry(mP0, nova, procurement).
-TrustedCarry(mF0, nova, facility).
-TrustedCarry(m0, nova, hiring).
-Sender(board, mP0).  Receiver(procurement, mP0).  Received(procurement, mP0).
-Sender(board, mF0).  Receiver(facility, mF0).      Received(facility, mF0).
-Sender(board, m0).   Receiver(hr, m0).            Received(hr, m0).
+% Board store: assignments and trusted source labels
+TrustedSource(mP0, nova_procurement).
+TrustedSource(mF0, nova_facility).
+TrustedSource(m0, nova_hiring).
+Sender(board, mP0).  Sender(board, mF0).  Sender(board, m0).
 
-% Department replies follow receipt of the corresponding assignments
+% Procurement store
+TransportTag(mP0, nova_procurement).
+Receiver(procurement, mP0).  Received(procurement, mP0).
 Sender(procurement, mP).  Before(mP0, mP).
-Sender(facility, mF).     Before(mF0, mF).
-Sender(hr, mH).           Before(m0, mH).
 
-% A has received Procurement and Facility; Hiring is pending
+% Facility store
+TransportTag(mF0, nova_facility).
+Receiver(facility, mF0).  Received(facility, mF0).
+Sender(facility, mF).  Before(mF0, mF).
+
+% HR store
+TransportTag(m0, nova_hiring).
+Receiver(hr, m0).  Received(hr, m0).
+Sender(hr, mH).  Before(m0, mH).
+
+% Auditor A store: Procurement and Facility received; Hiring pending
+TransportTag(mP, nova_procurement).
+TransportTag(mF, nova_facility).
+TransportTag(mH, nova_hiring).  % temporary until delivery is allowed
 Receiver(auditor_a, mP).  Received(auditor_a, mP).
 Receiver(auditor_a, mF).  Received(auditor_a, mF).
 Incoming(auditor_a, mH).
+
+% Board store: progress received from Auditor A
+AuditReceipt(auditor_a, nova_procurement).
+AuditReceipt(auditor_a, nova_facility).
 \end{lstlisting}
 
 \textbf{Derived result.} The IFC rules propagate the board's tags to the department
 replies. A already knows the Procurement and Facility parts, so receiving the Hiring
 part would violate the Three-Part Exposure Policy. The rules therefore derive
 \texttt{DenyReceive(auditor\_a, mH)}, even though A holds \texttt{hr\_review}.
-The closure includes:
+The union of independently evaluated local closures includes:
 
 \begin{lstlisting}
-DependsOn(mP, mP0).  Carries(mP, nova, procurement).
-DependsOn(mF, mF0).  Carries(mF, nova, facility).
-DependsOn(mH, m0).   Carries(mH, nova, hiring).
-Knows(auditor_a, nova, procurement).
-Knows(auditor_a, nova, facility).
-Audited(nova, procurement).
-Audited(nova, facility).
+DependsOn(mP, mP0).  Propagated(mP, nova_procurement).
+DependsOn(mF, mF0).  Propagated(mF, nova_facility).
+DependsOn(mH, m0).   Propagated(mH, nova_hiring).
+Knows(auditor_a, nova_procurement).
+Knows(auditor_a, nova_facility).
+Audited(nova_procurement).
+Audited(nova_facility).
 DenyReceive(auditor_a, mH).
 \end{lstlisting}
 
-The runtime blocks \texttt{mH}, so neither \texttt{Audited(nova, hiring)} nor
+The runtime blocks \texttt{mH}, so neither \texttt{Audited(nova\_hiring)} nor
 \texttt{Finished(nova)} is derived.
 
-\section{Queries}
 
-Let \(E\) be the input facts and \(\mathrm{Closure}(E)\) their Datalog closure.
-The following templates explain a denial, evaluate a proposed change, identify minimal
-prevention, and synthesize a safe completion trace.
+\section{Resource Lifecycle Foundation}
+
+Resource lifecycle is an independent modeling component, not an additional Nova
+workflow. An application supplies resources and tools whose effects change resource
+state. A shared state machine is defined by resource type; each resource retains
+its own current state and action history:
+\begin{lstlisting}
+ResourceType(Resource, Type).
+ResourceState(Resource, State).
+Transition(Type, Action, From, To).
+ActionTaken(Event, Resource, Action, From, To).
+\end{lstlisting}
+These are input predicate schemas. The same transition rules apply to every matching
+resource, while an action event identifies the concrete resource affected. Evaluation
+rejects conflicting current states or types and ambiguous transitions for the same
+type, action, and source state. The following predicates are derived:
+
+\begin{lstlisting}
+EnabledAction(R, From, Action) :-
+    ResourceType(R, Type), Transition(Type, Action, From, To).
+ReachableState(R, From, To) :-
+    ResourceType(R, Type), Transition(Type, Action, From, To).
+ReachableState(R, From, To) :-
+    ReachableState(R, From, Mid),
+    ResourceType(R, Type), Transition(Type, Action, Mid, To).
+\end{lstlisting}
+
+\texttt{EnabledAction(R, State, Action)} describes actions enabled by the FSM in a
+specified state, whether or not that state is current. Likewise,
+\texttt{ReachableState(R, From, To)} describes reachability from a specified state,
+independently of the current state. Reachability requires at least one transition;
+a state reaches itself only through a nonempty cycle. To ask about the current state,
+join with the input predicate explicitly:
+\begin{lstlisting}
+?- ResourceState(R, State), EnabledAction(R, State, Action).
+?- ResourceState(R, From), ReachableState(R, From, Target).
+\end{lstlisting}
+
+These rules check the supplied FSM structure. They neither produce action paths nor
+execute tools, check permissions, or predict resource contention. The application
+executes actions, updates current state, and records successful effects. No resource
+workflow is connected to Nova; the UI exposes only general lifecycle templates.
+
+Changing current state changes the results of the joins above, not the machine's
+state-indexed enabled actions or reachability. Historical action records remain.
+Explaining a past action requires its pre-action facts and the rule version used then,
+rather than today's resource state.
+
+\section{High-Level Analysis Questions}\label{sec:analysis-questions}
+
+Let \(E=(E_P)_P\) be the collection of local input stores. For a local query,
+\(\mathrm{Closure}(E)\) denotes the selected owner's closure; a Board completion query
+uses Board's closure. Analysis never runs the policy on a union of all input stores.
+The five UI tabs describe analysis methods, independently of any particular agent,
+message, or application. Users supply the query or target fact, the selected store
+and snapshot, and any changes or candidate actions. A violation is one possible
+target, not a restriction on Why, What-if, or Min-prevention. The Nova examples below
+instantiate these templates; their constants are editable example values.
+
+\subsection{Query}
+\textbf{Question.} What facts match this query?
+\textbf{Inputs:} a Datalog program, store scope, and snapshot.
+The result is a set of variable bindings, or a Boolean for a ground query.
+For example, \texttt{?- Knows(P, nova\_hiring).} returns principals associated
+with that tag in the chosen view. A local query reads one store; Debug queries
+operate on the union of independently computed local closures.
+
 
 \subsection{Why}
 
-\textbf{Question.} Why was this receive denied? A derivation tree identifies the
-policy and prior events responsible, helping users understand and diagnose the denial.
+\textbf{Question.} Why does this fact hold?
+\textbf{Inputs:} a ground \texttt{FACT}, store scope, and snapshot.
+A derivation tree identifies the rules and inputs supporting the target, whether it
+describes a denial, information propagation, or another derived result.
 \textbf{Template:} \(\operatorname{proof}_E(q)\), where \(q\) is a derived fact.
-For \texttt{DenyReceive(auditor\_a, mH)}, the proof is below; \texttt{A} abbreviates
-\texttt{auditor\_a}. Leaves are input facts or satisfied comparisons.
+For \texttt{DenyReceive(auditor\_a, mH)}, the proof uses only Auditor A's
+local store. Here \texttt{A} abbreviates \texttt{auditor\_a}; indentation denotes
+premises. Imported tags are input leaves, not remote derivations fetched from HR or Board.
 
-\begin{center}
-\begin{tikzpicture}[x=0.48cm,y=0.40cm,
-  every node/.style={anchor=west,font=\ttfamily\small,inner sep=1pt},
-  every path/.style={draw=black!55,line width=0.4pt}]
-\node (n0) at (0, 0) {DenyReceive(A, mH)};
-\node (n1) at (1, -1) {Incoming(A, mH)};
-\node (n2) at (1, -2) {Carries(mH, nova, hiring)};
-\node (n3) at (2, -3) {Carries(m0, nova, hiring)};
-\node (n4) at (3, -4) {TrustedCarry(m0, nova, hiring)};
-\node (n5) at (2, -5) {DependsOn(mH, m0)};
-\node (n6) at (3, -6) {Receiver(hr, m0)};
-\node (n7) at (3, -7) {Sender(hr, mH)};
-\node (n8) at (3, -8) {Before(m0, mH)};
-\node (n9) at (1, -9) {Knows(A, nova, procurement)};
-\node (n10) at (2, -10) {Received(A, mP)};
-\node (n11) at (2, -11) {Carries(mP, nova, procurement)};
-\node (n12) at (3, -12) {Carries(mP0, nova, procurement)};
-\node (n13) at (4, -13) {TrustedCarry(mP0, nova, procurement)};
-\node (n14) at (3, -14) {DependsOn(mP, mP0)};
-\node (n15) at (4, -15) {Receiver(procurement, mP0)};
-\node (n16) at (4, -16) {Sender(procurement, mP)};
-\node (n17) at (4, -17) {Before(mP0, mP)};
-\node (n18) at (1, -18) {Knows(A, nova, facility)};
-\node (n19) at (2, -19) {Received(A, mF)};
-\node (n20) at (2, -20) {Carries(mF, nova, facility)};
-\node (n21) at (3, -21) {Carries(mF0, nova, facility)};
-\node (n22) at (4, -22) {TrustedCarry(mF0, nova, facility)};
-\node (n23) at (3, -23) {DependsOn(mF, mF0)};
-\node (n24) at (4, -24) {Receiver(facility, mF0)};
-\node (n25) at (4, -25) {Sender(facility, mF)};
-\node (n26) at (4, -26) {Before(mF0, mF)};
-\node (n27) at (1, -27.4) {\shortstack[l]{A != board; procurement != facility;\\procurement != hiring; facility != hiring}};
-\draw (n0.south west) ++(0.14,0) |- (n1.west);
-\draw (n0.south west) ++(0.14,0) |- (n2.west);
-\draw (n2.south west) ++(0.14,0) |- (n3.west);
-\draw (n3.south west) ++(0.14,0) |- (n4.west);
-\draw (n2.south west) ++(0.14,0) |- (n5.west);
-\draw (n5.south west) ++(0.14,0) |- (n6.west);
-\draw (n5.south west) ++(0.14,0) |- (n7.west);
-\draw (n5.south west) ++(0.14,0) |- (n8.west);
-\draw (n0.south west) ++(0.14,0) |- (n9.west);
-\draw (n9.south west) ++(0.14,0) |- (n10.west);
-\draw (n9.south west) ++(0.14,0) |- (n11.west);
-\draw (n11.south west) ++(0.14,0) |- (n12.west);
-\draw (n12.south west) ++(0.14,0) |- (n13.west);
-\draw (n11.south west) ++(0.14,0) |- (n14.west);
-\draw (n14.south west) ++(0.14,0) |- (n15.west);
-\draw (n14.south west) ++(0.14,0) |- (n16.west);
-\draw (n14.south west) ++(0.14,0) |- (n17.west);
-\draw (n0.south west) ++(0.14,0) |- (n18.west);
-\draw (n18.south west) ++(0.14,0) |- (n19.west);
-\draw (n18.south west) ++(0.14,0) |- (n20.west);
-\draw (n20.south west) ++(0.14,0) |- (n21.west);
-\draw (n21.south west) ++(0.14,0) |- (n22.west);
-\draw (n20.south west) ++(0.14,0) |- (n23.west);
-\draw (n23.south west) ++(0.14,0) |- (n24.west);
-\draw (n23.south west) ++(0.14,0) |- (n25.west);
-\draw (n23.south west) ++(0.14,0) |- (n26.west);
-\draw (n0.south west) ++(0.14,0) |- (n27.west);
-\end{tikzpicture}
-\end{center}
+\begin{lstlisting}
+DenyReceive(A, mH)                         [R8]
+  Incoming(A, mH)
+  Propagated(mH, nova_hiring)              [R2]
+    TransportTag(mH, nova_hiring)
+  Knows(A, nova_procurement)               [R6]
+    Received(A, mP)
+    Propagated(mP, nova_procurement)       [R2]
+      TransportTag(mP, nova_procurement)
+  Knows(A, nova_facility)                  [R6]
+    Received(A, mF)
+    Propagated(mF, nova_facility)          [R2]
+      TransportTag(mF, nova_facility)
+  TagGroup(nova_procurement, nova)
+  TagGroup(nova_facility, nova)
+  TagGroup(nova_hiring, nova)
+  A != board
+  nova_procurement != nova_facility
+  nova_procurement != nova_hiring
+  nova_facility != nova_hiring
+\end{lstlisting}
+
+The sender has its own proof for the exported tag: HR derives
+\texttt{Propagated(mH, nova\_hiring)} from a local dependency on \texttt{m0}
+and the imported \texttt{TransportTag(m0, nova\_hiring)}. Connecting these proofs
+across machines would require additional provenance transport; the current receiver's
+proof does not claim that cross-store derivation.
 
 \subsection{What-if}
 
-\textbf{Question.} Would a proposed change remove the denial? This checks a specific
-counterfactual before changing the system. \textbf{Template:} specify input facts to
-\texttt{REMOVE}, facts to \texttt{ADD}, and a fact to \texttt{QUERY}; evaluate the query
+\textbf{Question.} Would this fact still hold if we changed these inputs?
+\textbf{Inputs:} \texttt{REMOVE}, \texttt{ADD}, and a ground \texttt{FACT}.
+This evaluates a counterfactual on a copy without changing the live runtime.
+\textbf{Template:} specify input facts to
+\texttt{REMOVE}, facts to \texttt{ADD}, and a target \texttt{FACT}; evaluate it
 in \(\mathrm{Closure}((E\setminus R)\cup A)\).
 If A had not received Facility:
 
 \begin{lstlisting}
 REMOVE { Receiver(auditor_a, mF), Received(auditor_a, mF) }
 ADD    { }
-QUERY  DenyReceive(auditor_a, mH)
+FACT   DenyReceive(auditor_a, mH)
 RESULT false
 \end{lstlisting}
 
 Both records of the Facility receive are removed. A would then acquire only a second
-part and holds the required HR review capability, so neither denial rule applies.
+part and holds the required HR review capability, so no denial rule applies.
 
-\subsection{Minimal Prevention}
+\subsection{Min-prevention}
 
-\textbf{Question.} What is the smallest set of earlier events whose prevention would
-have avoided this denial? This identifies minimal interventions without requiring the
-user to guess a counterfactual. \textbf{Template:} given input state \(E\), a denial
-\(q\), and a configurable \emph{preventable events set} \(\mathcal{P}\), return a
-minimum-cardinality subset \(\Delta\subseteq\mathcal{P}\) whose prevention removes \(q\).
+\textbf{Question.} What is the smallest set of events to prevent so this fact no longer holds?
+\textbf{Inputs:} \texttt{EVENTS}, each with its input records, and a ground \texttt{FACT}.
+\textbf{Template:} given input state \(E\), target fact \(q\), and a configurable
+preventable event set \(\mathcal{P}\), return all minimum-cardinality subsets
+\(\Delta\subseteq\mathcal{P}\) whose prevention removes \(q\). The target is not
+restricted to a denial. This operation removes event records and recomputes closure;
+it does not replay or repair an entire alternative execution history.
 
 Each event \(e\) has input records \(R(e)\); preventing it removes those records and
 recomputes derived facts. In this example, only A's two earlier audit receives are
@@ -344,7 +444,7 @@ fixed:
 PREVENTABLE EVENTS P = { eP, eF }
 R(eP) = { Receiver(auditor_a, mP), Received(auditor_a, mP) }
 R(eF) = { Receiver(auditor_a, mF), Received(auditor_a, mF) }
-QUERY q = DenyReceive(auditor_a, mH)
+FACT q = DenyReceive(auditor_a, mH)
 \end{lstlisting}
 
 The objective is
@@ -358,15 +458,17 @@ Enumerating subsets of \(\mathcal{P}\) gives two minimum solutions:
 \texttt{eP} and \texttt{eF}. Preventing either receive avoids the third-part denial.
 This objective removes the specified denial; it does not require the audit to finish.
 
-\subsection{Speculative Dead-End Analysis}
+\subsection{Planning}
 
-\textbf{Question.} Can the remaining work finish without any denied receive, and which
-next actions preserve that possibility? A locally allowed action may still leave the
-task impossible to complete. \textbf{Template:} given a starting state \(E_0\), a goal
-\(G\), and a configurable action set \(\mathcal{A}\), synthesize a finite trace
-\(\pi=(a_1,\ldots,a_k)\) such that every receive is allowed and
-\(G\in\mathrm{Closure}(E_k)\). A state is a dead end if no such trace exists within
-the configured action set.
+\textbf{Question.} Can we reach this goal using the allowed actions?
+\textbf{Inputs:} a starting state, \texttt{GOAL}, and \texttt{ACTIONS}.
+A locally allowed action may still leave the goal unreachable.
+\textbf{Template:} given \(E_0\), goal \(G\), and action set \(\mathcal{A}\), find
+\(\pi=(a_1,\ldots,a_k)\) such that every action is allowed and
+\(G\in\mathrm{Closure}(E_k)\). A dead end is relative to this action set.
+The current Nova planner implements department-to-auditor deliveries; editable inputs
+do not make it a general planner for arbitrary tool calls. The independent resource
+foundation derives FSM reachability only; action-path queries are not implemented.
 
 Here, start earlier: A has received only Procurement, while Facility and Hiring remain
 unaudited. The goal is \texttt{Finished(nova)}. The configured actions deliver each
@@ -412,5 +514,82 @@ with no legal receiver: A would acquire a third part, and B lacks \texttt{hr\_re
 That successor is a dead end. Sending Facility to B instead admits the completion
 trace \texttt{[Facility -> B, Hiring -> A]}, which derives \texttt{Finished(nova)}
 without a denial.
+
+
+\section{Question Templates by Category}\label{sec:question-catalog}
+
+The categories below describe \emph{what} is being inspected; the analysis modes in
+Section~\ref{sec:analysis-questions} describe \emph{how} to answer. For example,
+information-flow provenance and communication denials both use Why. The English
+questions stay general when the example values are edited.
+
+Braces such as \texttt{\{message\}} denote user-supplied parameters. Unbraced
+variables such as \texttt{M}, \texttt{Tag}, and \texttt{Cap} are query outputs.
+Bare predicates denote Query patterns (entered with \texttt{?-} in the UI).
+\texttt{WHY}, \texttt{WHAT-IF}, and \texttt{MIN-PREVENT} denote analysis operations,
+not additional Datalog predicates: they take a target fact, plus \texttt{REMOVE}/
+\texttt{ADD} or \texttt{EVENTS} as appropriate. Store scope and snapshot are also
+inputs, omitted from the table for readability.
+
+\begingroup
+\small
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.2}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.15\linewidth} >{\raggedright\arraybackslash}p{0.39\linewidth} >{\raggedright\arraybackslash}p{0.42\linewidth}@{}}
+\caption{English question templates mapped to parameterized queries.}\label{tab:question-catalog}\\
+\toprule
+\textbf{Category} & \textbf{English question} & \textbf{Parameterized query}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Category} & \textbf{English question} & \textbf{Parameterized query}\\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+Information flow & Which messages are sources of this information? & {\ttfamily\footnotesize TrustedSource(\allowbreak M,\allowbreak \{tag\})} \\
+\addlinespace[4pt]
+Information flow & Which agents have received this information? & {\ttfamily\footnotesize Knows(\allowbreak P,\allowbreak \{tag\})} \\
+\addlinespace[4pt]
+Information flow & Which tags are attached to this message? & {\ttfamily\footnotesize Propagated(\allowbreak \{message\},\allowbreak Tag)} \\
+\addlinespace[4pt]
+Capability & What permissions does this agent have? & {\ttfamily\footnotesize HasCap(\allowbreak \{principal\},\allowbreak Cap)} \\
+\addlinespace[4pt]
+Capability & What permission is required to receive this information? & {\ttfamily\footnotesize Requires(\allowbreak \{tag\},\allowbreak Cap)} \\
+\addlinespace[4pt]
+Capability & Which required permissions is this agent missing? & {\ttfamily\footnotesize Requires(\allowbreak \{tag\},\allowbreak Cap),\allowbreak not HasCap(\allowbreak \{principal\},\allowbreak Cap)} \\
+\addlinespace[4pt]
+Communication & Why would this message be blocked? & {\ttfamily\footnotesize WHY DenyReceive(\allowbreak \{recipient\},\allowbreak \{message\})} \\
+\addlinespace[4pt]
+Communication & Would this message still be blocked if we changed these inputs? (look up the repr/term/convention) & {\ttfamily\footnotesize WHAT-IF(\allowbreak REMOVE,\allowbreak ADD,\allowbreak DenyReceive(\allowbreak \{recipient\},\allowbreak \{message\}))} \\
+\addlinespace[4pt]
+Communication & Which events could we prevent to allow this message? (convention) & {\ttfamily\footnotesize MIN-PREVENT(\allowbreak EVENTS,\allowbreak DenyReceive(\allowbreak \{recipient\},\allowbreak \{message\}))} \\
+\addlinespace[4pt]
+Provenance & Why does this message carry this information? & {\ttfamily\footnotesize WHY Propagated(\allowbreak \{message\},\allowbreak \{tag\})} \\
+\addlinespace[4pt]
+Provenance & Why does this agent know this information? & {\ttfamily\footnotesize WHY Knows(\allowbreak \{principal\},\allowbreak \{tag\})} \\
+\addlinespace[4pt]
+Provenance & Which earlier messages could have contributed to this message? & {\ttfamily\footnotesize DependsOn(\allowbreak \{message\},\allowbreak Min)} \\
+\addlinespace[4pt]
+Resource lifecycle & What state is this resource in? & {\ttfamily\footnotesize ResourceState(\allowbreak \{resource\},\allowbreak State)} \\
+\addlinespace[4pt]
+Resource lifecycle & Which actions are enabled for this resource in this state? & {\ttfamily\footnotesize EnabledAction(\allowbreak \{resource\},\allowbreak \{state\},\allowbreak Action)} \\
+\addlinespace[4pt]
+Resource lifecycle & Can this resource reach the target state from this state? & {\ttfamily\footnotesize ReachableState(\allowbreak \{resource\},\allowbreak \{from\},\allowbreak \{target\})} \\
+\end{longtable}
+\endgroup
+
+The first four categories have runnable Nova examples. Their agent IDs, message IDs,
+and tags belong in editable inputs, not in the question wording. For example, the
+communication What-if template can remove a prior receive, add a capability, or
+change both, while querying whether the selected denial still holds. A false result
+means that this denial is absent, not that every possible operation is authorized.
+
+Information and knowledge refer to modeled tags. \texttt{DependsOn} represents
+possible contribution under conservative dependency tracking; a Why proof ends at
+the selected store's inputs, including imported protocol facts. Resource lifecycle
+rows are general templates for the independent foundation; no resource workflow is
+connected to Nova. Reachability is derived from the FSM for a specified starting state and requires
+at least one transition; it does not return an action path.
 
 \end{document}

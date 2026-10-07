@@ -1,16 +1,17 @@
 import type { ProofNode, SearchNode } from "@rakazo/core/policy/reasoning/analysis";
+import type { QuestionTemplate } from "@rakazo/core/policy/reasoning/questions";
 import type { NovaView, Request, Selection } from "@rakazo/core/policy/reasoning/service";
 import { ACTION_PRESET, PREVENTABLE_PRESET } from "@rakazo/core/policy/reasoning/shared";
 import { Button } from "@rakazo/ui-web";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { request } from "./client";
 
 const tabs = [
-  { id: "query", label: "Terminal" },
+  { id: "query", label: "Query" },
   { id: "why", label: "Why" },
   { id: "what-if", label: "What-if" },
-  { id: "minimal", label: "Prevention" },
-  { id: "speculative", label: "Speculative" },
+  { id: "minimal", label: "Min-prevention" },
+  { id: "speculative", label: "Planning" },
 ] as const;
 type Tab = (typeof tabs)[number]["id"];
 function Field({
@@ -98,7 +99,9 @@ export function AnalysisTerminal({
   selection,
   scope,
   mutate,
+  template,
 }: {
+  template?: QuestionTemplate;
   state: NovaView;
   selection: Selection;
   scope: string;
@@ -117,6 +120,21 @@ export function AnalysisTerminal({
   const [basis, setBasis] = useState<"earlier" | "selected">("earlier");
   const [results, setResults] = useState<Partial<Record<Tab, Result>>>({});
   const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if (!template) return;
+    setTab(template.tab);
+    setResults((prev) => ({ ...prev, [template.tab]: undefined }));
+    if (template.query) {
+      if (template.tab === "query") setProgram(template.query);
+      if (template.tab === "why") setWhyQuery(template.query);
+      if (template.tab === "what-if") setWhatQuery(template.query);
+      if (template.tab === "minimal") setMinQuery(template.query);
+    }
+    if (template.tab === "what-if") {
+      setRemove(template.remove ?? "");
+      setAdd("");
+    }
+  }, [template]);
   const result = results[tab];
   const run = async () => {
     setBusy(true);
@@ -171,14 +189,11 @@ export function AnalysisTerminal({
     }
   };
   const help: Record<Tab, string> = {
-    query:
-      scope === "debug"
-        ? "Debug query: reconstruct a temporary view from all local stores."
-        : `Read-only Datalog in ${scope}’s local store.`,
-    why: "Native local proof; protocol leaves are facts received from another store.",
-    "what-if": "Evaluate (inputs − REMOVE) ∪ ADD on a copy.",
-    minimal: "Find all smallest subsets of preventable events that remove the queried fact.",
-    speculative: "Find a safe completion trace and classify every immediate progress action.",
+    query: "What facts match this query?",
+    why: "Why does this fact hold?",
+    "what-if": "Would this fact still hold if we changed these inputs?",
+    minimal: "What is the smallest set of events to prevent so this fact no longer holds?",
+    speculative: "Can we reach this goal using the allowed actions?",
   };
   return (
     <section
@@ -228,19 +243,17 @@ export function AnalysisTerminal({
             </details>
           </>
         )}
-        {tab === "why" && (
-          <Field label="PROOF query" value={whyQuery} onChange={setWhyQuery} rows={2} />
-        )}
+        {tab === "why" && <Field label="FACT" value={whyQuery} onChange={setWhyQuery} rows={2} />}
         {tab === "what-if" && (
           <>
             <Field label="REMOVE" value={remove} onChange={setRemove} />
             <Field label="ADD" value={add} onChange={setAdd} rows={2} />
-            <Field label="QUERY" value={whatQuery} onChange={setWhatQuery} rows={2} />
+            <Field label="FACT" value={whatQuery} onChange={setWhatQuery} rows={2} />
           </>
         )}
         {tab === "minimal" && (
           <>
-            <Field label="QUERY" value={minQuery} onChange={setMinQuery} rows={2} />
+            <Field label="FACT" value={minQuery} onChange={setMinQuery} rows={2} />
             <Field label="PREVENTABLE EVENTS" value={events} onChange={setEvents} rows={7} />
           </>
         )}

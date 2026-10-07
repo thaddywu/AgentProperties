@@ -1,3 +1,4 @@
+import type { QuestionTemplate } from "@rakazo/core/policy/reasoning/questions";
 import type { NovaView, Request, Selection } from "@rakazo/core/policy/reasoning/service";
 import { NAMES, PRINCIPALS } from "@rakazo/core/policy/reasoning/shared";
 import { BotAvatar, Button, Dialog, DialogContent, DialogTitle } from "@rakazo/ui-web";
@@ -15,6 +16,7 @@ import {
 import { useEffect, useState } from "react";
 import { AnalysisTerminal } from "./AnalysisTerminal";
 import { request } from "./client";
+import { QuestionCatalog } from "./QuestionCatalog";
 
 const format = (f: { predicate: string; args: string[] }) => `${f.predicate}(${f.args.join(", ")})`;
 const control = "rounded border border-border bg-background px-2 py-1.5 text-xs";
@@ -26,6 +28,8 @@ export function NovaApp() {
   const [open, setOpen] = useState(true);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [questionsOpen, setQuestionsOpen] = useState(false);
+  const [template, setTemplate] = useState<QuestionTemplate>();
   const [rules, setRules] = useState(false);
   const [protocolOpen, setProtocolOpen] = useState(false);
   const [configOpen, setConfigOpen] = useState(false);
@@ -76,6 +80,9 @@ export function NovaApp() {
         <span className="ml-auto hidden text-xs text-muted-foreground sm:inline">
           Local runtime · Datalog
         </span>
+        <Button size="sm" variant="ghost" onClick={() => setQuestionsOpen(true)}>
+          Questions
+        </Button>
         <Button size="sm" variant="ghost" onClick={() => setRules(true)}>
           <FileCode2 className="size-3.5" />
           Rules
@@ -444,10 +451,25 @@ export function NovaApp() {
                 })}
               </div>
             </div>
-            <AnalysisTerminal scope={scope} state={state} selection={selection} mutate={mutate} />
+            <AnalysisTerminal
+              template={template}
+              scope={scope}
+              state={state}
+              selection={selection}
+              mutate={mutate}
+            />
           </aside>
         )}
       </div>
+      <QuestionCatalog
+        open={questionsOpen}
+        onOpenChange={setQuestionsOpen}
+        onSelect={(q) => {
+          setTemplate({ ...q });
+          setScope(q.scope);
+          setOpen(true);
+        }}
+      />
       <Dialog open={protocolOpen} onOpenChange={setProtocolOpen}>
         <DialogContent className="max-h-[85vh] overflow-auto">
           <DialogTitle>Local stores and transfers</DialogTitle>

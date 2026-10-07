@@ -279,3 +279,36 @@ stepwise sends/receives, Before/After queries, config edits, and narrow-screen c
 and inspector behavior. It saves screenshots to `/tmp/nova-browser-review` by default
 (`NOVA_SCREENSHOTS` overrides this). `NOVA_URL`, `NOVA_CHROMIUM`, and
 `NOVA_PLAYWRIGHT_MODULE` support an existing local browser installation.
+
+## Question catalog and lifecycle foundation
+
+Questions groups examples into Information flow, Capability, Communication,
+Provenance, and Resource lifecycle. The first four categories have three runnable
+Nova examples each. The English questions and expandable query templates are general; Nova constants
+appear only in editable example inputs. Open example selects the store and fills the analysis; it does
+not run it or change the selected snapshot. Communication examples require a snapshot before the receive decision. A false denial query means the message would
+not be blocked in that counterfactual.
+
+Resource lifecycle contains general question templates only. Nova has no report
+workflow, resource state, or resource-action API. The independent foundation in
+`packages/core/src/policy/reasoning/lifecycle.ts` defines:
+
+- `ResourceType(Resource, Type)` and `ResourceState(Resource, State)`.
+- `Transition(Type, Action, From, To)`: one definition shared by resources of a type.
+- `ActionTaken(Event, Resource, Action, From, To)`: immutable execution history.
+
+`evaluateLifecycle` checks the input shape, unique state/type and deterministic
+transitions, then runs Soufflé to derive `EnabledAction(Resource, State, Action)`
+and `ReachableState(Resource, From, To)`. Both describe the FSM for specified
+states, independently of the resource's current state. Reachability requires at
+least one transition; self-reachability requires a nonempty cycle.
+
+Join either predicate with `ResourceState(Resource, State)` to query actions or
+reachability from the current state. Changing current state changes these joins,
+not the FSM relations. The foundation does not find action paths, authorize tool
+calls, execute tools, or update resources. Applications own those operations.
+
+Historical actions must retain their decision-time inputs and rule version.
+Changing current state must not remove historical actions or information already
+acquired through them. The independent tests use server resources as fixtures,
+not as a Nova scenario.

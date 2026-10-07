@@ -37,10 +37,26 @@ const selectSnapshot = async action => {
 try {
   await reset("denial");
   await page.goto(`${base}/nova.html`);
-  await page.getByRole("tab", { name: "Terminal", exact: true }).waitFor();
+  await page.getByRole("tab", { name: "Query", exact: true }).waitFor();
+  await page.getByRole("button", { name: "Questions", exact: true }).click();
+  for (const category of ["Information flow", "Capability", "Communication", "Provenance", "Resource lifecycle"]) {
+    await page.getByRole("tab", { name: category, exact: true }).click();
+    assert.equal(await page.getByRole("dialog").getByRole("button", { name: /^Open question:/ }).count(), category === "Resource lifecycle" ? 0 : 3);
+  }
+  await page.screenshot({ path: `${output}/questions.png`, fullPage: true });
+  await page.getByRole("tab", { name: "Capability", exact: true }).click();
+  await page.getByRole("button", { name: "Open question: Which required permissions is this agent missing?", exact: true }).click();
+  assert.equal(await page.getByLabel("Store scope").inputValue(), "auditor_b");
+  const missing = await clickRun("Run query");
+  assert.deepEqual(missing.result.rows, [["hr_review"]]);
+  assert.equal(await page.getByRole("region", { name: "Audit report lifecycle" }).count(), 0);
+  await page.getByRole("tab", { name: "Query", exact: true }).click();
+  await page.getByLabel("Store scope").selectOption("auditor_a");
+  console.log("PASS clear question templates and disconnected lifecycle catalog");
   await page.getByLabel("Datalog program").fill("?- Knows(auditor_a, Tag).");
   let result = await clickRun("Run query");
   assert.deepEqual(result.result.rows, [["nova_procurement"], ["nova_facility"]]);
+  assert.equal(await page.getByRole("tabpanel", { name: "Query", exact: true }).getByText("What facts match this query?", { exact: true }).count(), 1);
   console.log("PASS terminal variable query");
   await page.getByLabel("Store scope").selectOption("auditor_b");
   result = await clickRun("Run query");
@@ -74,7 +90,7 @@ try {
   await page.getByLabel("ADD", { exact: true }).fill("");
   console.log("PASS editable what-if, input isolation and derived-write rejection");
 
-  await page.getByRole("tab", { name: "Prevention", exact: true }).click();
+  await page.getByRole("tab", { name: "Min-prevention", exact: true }).click();
   result = await clickRun("Find minimum");
   assert.deepEqual(result.result.solutions, [["eP"], ["eF"]]);
   await page.getByLabel("PREVENTABLE EVENTS").fill("onlyFacility:\nReceiver(auditor_a, mF).\nReceived(auditor_a, mF).");
@@ -82,7 +98,7 @@ try {
   assert.deepEqual(result.result.solutions, [["onlyFacility"]]);
   console.log("PASS editable minimal-prevention events");
 
-  await page.getByRole("tab", { name: "Speculative", exact: true }).click();
+  await page.getByRole("tab", { name: "Planning", exact: true }).click();
   result = await clickRun("Find completion");
   assert.equal(result.result.edges.find(e => e.action.id === "facility->auditor_a").classification, "dead-ending");
   assert.equal(result.result.edges.find(e => e.action.id === "facility->auditor_b").classification, "completion-preserving");
@@ -109,7 +125,7 @@ try {
   await selectSnapshot(() => page.getByLabel("Store snapshot").selectOption("10"));
   await page.waitForTimeout(100);
   await selectSnapshot(() => page.getByRole("button", { name: "Before", exact: true }).click());
-  await page.getByRole("tab", { name: "Terminal", exact: true }).click();
+  await page.getByRole("tab", { name: "Query", exact: true }).click();
   await page.getByLabel("Datalog program").fill("?- Received(auditor_a, mF).");
   result = await clickRun("Run query");
   assert.deepEqual(result.result.rows, []);
