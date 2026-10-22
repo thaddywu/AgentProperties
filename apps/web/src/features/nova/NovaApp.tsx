@@ -14,6 +14,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { AppearanceToggle } from "../../components/AppearanceToggle";
 import { AnalysisTerminal } from "./AnalysisTerminal";
 import { request } from "./client";
 import { QuestionCatalog } from "./QuestionCatalog";
@@ -80,6 +81,7 @@ export function NovaApp() {
         <span className="ml-auto hidden text-xs text-muted-foreground sm:inline">
           Local runtime · Datalog
         </span>
+        <AppearanceToggle />
         <Button size="sm" variant="ghost" onClick={() => setQuestionsOpen(true)}>
           Questions
         </Button>
