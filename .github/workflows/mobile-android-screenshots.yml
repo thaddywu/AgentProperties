@@ -150,7 +150,7 @@ jobs:
           MOBILE_RUN_ID: ${{ github.run_id }}
           MOBILE_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           MOBILE_SHA: ${{ github.sha }}
-        run: bash scripts/publish-mobile-screenshot-gallery.sh
+        run: bash grokbot/scripts/publish-mobile-screenshot-gallery.sh
 
       - name: Upload screenshots and diagnostics
         if: always()

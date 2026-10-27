@@ -17,9 +17,9 @@
     "format": "biome check --write .",
     "db:generate": "pnpm --filter @rakazo/db generate",
     "db:migrate": "pnpm --filter @rakazo/db migrate",
-    "sandbox:build": "docker build -t rakazo/computer:local infra/sandboxes/computer",
+    "sandbox:build": "docker build -t rakazo/computer:local grokbot/infra/sandboxes/computer",
     "test": "vitest run",
-    "test:compose-smoke": "bash infra/compose/run-smokes.sh",
+    "test:compose-smoke": "bash grokbot/infra/compose/run-smokes.sh",
     "test:integration": "tsx grokbot/packages/testkit/src/cli/harness.ts --integration",
     "test:e2e": "tsx grokbot/packages/testkit/src/cli/harness.ts --e2e",
     "test:mobile-screenshots": "pnpm --filter @rakazo/db generate && tsx grokbot/packages/testkit/src/cli/mobile-screenshots.ts",
@@ -31,8 +31,8 @@
     "test:computer": "tsx grokbot/packages/testkit/src/cli/computer.ts",
     "perf:desktop": "tsx grokbot/packages/testkit/src/cli/desktop-performance.ts",
     "perf:compare": "tsx grokbot/packages/testkit/src/cli/compare-performance.ts",
-    "compose:up": "docker compose --env-file .env -f infra/compose/docker-compose.yml up --build",
-    "compose:down": "docker compose --env-file .env -f infra/compose/docker-compose.yml down -v"
+    "compose:up": "docker compose --env-file .env -f grokbot/infra/compose/docker-compose.yml up --build",
+    "compose:down": "docker compose --env-file .env -f grokbot/infra/compose/docker-compose.yml down -v"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.13",
@@ -49,7 +49,7 @@
       "react-dom": "19.2.3"
     },
     "patchedDependencies": {
-      "app-builder-lib@26.15.3": "patches/app-builder-lib@26.15.3.patch"
+      "app-builder-lib@26.15.3": "grokbot/patches/app-builder-lib@26.15.3.patch"
     }
   }
 }

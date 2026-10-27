@@ -3,9 +3,9 @@ import { existsSync, readFileSync, rmSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-const composeFile = path.resolve("infra/compose/docker-compose.yml");
-const backupScript = path.resolve("scripts/backup.sh");
-const restoreScript = path.resolve("scripts/restore.sh");
+const composeFile = path.resolve("grokbot/infra/compose/docker-compose.yml");
+const backupScript = path.resolve("grokbot/scripts/backup.sh");
+const restoreScript = path.resolve("grokbot/scripts/restore.sh");
 
 function postgresUp() {
   try {

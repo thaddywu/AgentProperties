@@ -70,7 +70,7 @@ export function stackResourceDir(input: {
   appPath: string;
 }): string {
   if (input.packaged) return path.join(input.resourcesPath, STACK_DIR_NAME);
-  return path.resolve(input.appPath, "..", "..", "..", "infra", "compose");
+  return path.resolve(input.appPath, "..", "..", "infra", "compose");
 }
 
 const STABLE_VERSION = /^\d+\.\d+\.\d+$/;

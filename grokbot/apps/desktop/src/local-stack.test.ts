@@ -25,7 +25,7 @@ import {
   stackResourceDir,
 } from "./local-stack.js";
 
-const COMPOSE_DIR = path.resolve(import.meta.dirname, "..", "..", "..", "..", "infra", "compose");
+const COMPOSE_DIR = path.resolve(import.meta.dirname, "..", "..", "..", "infra", "compose");
 const fakeHex = (bytes: number) => "ab".repeat(bytes);
 
 describe("stack locations", () => {
@@ -43,7 +43,7 @@ describe("stack locations", () => {
         resourcesPath: "/x",
         appPath: "/repo/grokbot/apps/desktop",
       }),
-    ).toBe(path.resolve("/repo/infra/compose"));
+    ).toBe(path.resolve("/repo/grokbot/infra/compose"));
   });
 });
 

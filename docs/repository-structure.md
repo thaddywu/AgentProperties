@@ -4,6 +4,10 @@
 grokbot/                 Existing host implementation, including UI customizations
   apps/                  web, api, worker, desktop, mobile, www
   packages/              host domain/adapters/contracts/database/shared UI
+  infra/                 Docker/Compose, sandbox, updater and backup services
+  scripts/               Host development, deployment and demo tooling
+  patches/               pnpm-applied dependency fixes
+  docs/                  Host setup, operations, releases and upstream updates
 apps/
   nova/
     app.md               Application specification and interaction description
@@ -15,9 +19,11 @@ apps/
     tests/
 runtime/                 Generic Datalog, queries, native provenance and lifecycle
 translation/             One-shot natural-language-to-Datalog research prototype
-infra/, scripts/         Docker/Compose, sandbox, updater, backup and operational tooling
-patches/                 Dependency fixes applied by pnpm during installation
+  output/                Ignored local experiment artifacts
+docs/                    Repository design and research documents
 ```
+
+These are the five top-level source/documentation directories. Root files configure the shared pnpm workspace, CI, formatting and tests; `nova-demo.sh` is the convenience launcher. Hidden directories and ignored dependencies/local state are tooling rather than additional modules.
 
 The dependency direction is `Grokbot UI → Nova application → policy runtime`. Translation reads an application's Markdown; its optional model adapter comes from Grokbot's existing provider-neutral connection/runtime stack. Reference policies are loaded only after model generation. Generated rules are not installed into the application.
 
@@ -29,8 +35,12 @@ Our application-description interface is app.md, policy.md, tools.md and agents/
 
 ## Infrastructure and patches
 
-`infra/compose/` builds and starts the host or the standalone Nova UI. `infra/sandboxes/` supplies computer images and the supervisor/control service; `infra/updater/` is the self-host update service; `infra/systemd/` schedules backups. These are active run/deploy components, not old experiment outputs. Nova can run without the full host/sandbox stack; its Docker launcher uses `infra/compose/Dockerfile.nova`.
+`grokbot/infra/compose/` builds and starts the host or the standalone Nova UI. `grokbot/infra/sandboxes/` supplies computer images and the supervisor/control service; `grokbot/infra/updater/` is the self-host update service; `grokbot/infra/systemd/` schedules backups. These are active run/deploy components, not old experiment outputs. Nova can run without the full host/sandbox stack; its Docker launcher uses `grokbot/infra/compose/Dockerfile.nova`.
 
-`patches/app-builder-lib@26.15.3.patch` fixes Electron's macOS signing dependency to use the keychain unlock password rather than the imported certificate password when setting key access. It is declared in root `package.json` and `pnpm-lock.yaml`; keep it until the dependency includes the fix. See [desktop release requirements](desktop-release.md).
+`grokbot/patches/app-builder-lib@26.15.3.patch` fixes Electron's macOS signing dependency to use the keychain unlock password rather than the imported certificate password when setting key access. It is declared in root `package.json` and `pnpm-lock.yaml`; keep it until the dependency includes the fix. See [desktop release requirements](../grokbot/docs/desktop-release.md).
 
 Current module READMEs and the design manuscript are the documentation sources. Superseded demo launch guides, archived Relay specifications, upstream marketing/changelog notes and redundant research indexes have been removed; Git history retains earlier versions.
+
+## Rakazo updates
+
+Grokbot preserves the upstream host's relative directory layout under one prefix. The recorded upstream baseline and [update guide](../grokbot/docs/upstream.md) provide a way to export and review subsequent upstream changes. Host changes can be applied under `grokbot/`; shared workspace configuration is reviewed separately. Policy/UI changes can still conflict, so this is a manual porting path rather than automatic synchronization.

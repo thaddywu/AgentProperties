@@ -22,7 +22,7 @@
       "!**/data",
       "!**/*.astro",
       "!**/grokbot/apps/www",
-      "!**/translation-output"
+      "!**/translation/output"
     ]
   },
   "formatter": {
@@ -85,8 +85,8 @@
       "includes": [
         "grokbot/apps/api/**",
         "grokbot/apps/worker/**",
-        "infra/sandboxes/supervisor/**",
-        "infra/updater/**",
+        "grokbot/infra/sandboxes/supervisor/**",
+        "grokbot/infra/updater/**",
         "grokbot/packages/adapters/**",
         "grokbot/packages/db/**",
         "grokbot/packages/logging/**"

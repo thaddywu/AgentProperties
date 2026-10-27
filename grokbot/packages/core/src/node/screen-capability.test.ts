@@ -35,7 +35,7 @@ describe("sealed screen capabilities", () => {
         sealScreenCapability(provider.toString(), "fake-secret", "https://app.example", scope, 100),
       );
       const html = readFileSync(
-        new URL("../../../../../infra/sandboxes/computer/embed.html", import.meta.url),
+        new URL("../../../../infra/sandboxes/computer/embed.html", import.meta.url),
         "utf8",
       );
       const script = html

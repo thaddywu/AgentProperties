@@ -40,7 +40,7 @@ import {
 } from "./compose-update.js";
 
 const target = {
-  composeFiles: ["/srv/rakazo/infra/compose/docker-compose.prod.yml"],
+  composeFiles: ["/srv/rakazo/grokbot/infra/compose/docker-compose.prod.yml"],
   envFiles: ["/srv/rakazo/.env"],
 };
 
@@ -193,11 +193,11 @@ describe("strategy and mode selection", () => {
       ...COMPOSE_MANUAL_UPGRADE_COMMANDS,
       "# Local tag (rebuild from checkout)",
       "git pull",
-      "GIT_SHA=$(git rev-parse HEAD) docker compose --env-file .env -f infra/compose/docker-compose.prod.yml up -d --wait --pull never --build api worker web",
+      "GIT_SHA=$(git rev-parse HEAD) docker compose --env-file .env -f grokbot/infra/compose/docker-compose.prod.yml up -d --wait --pull never --build api worker web",
     ]);
     expect(manualUpgradeCommands("compose", { imageTag: "local" })).toEqual([
       "git pull",
-      "GIT_SHA=$(git rev-parse HEAD) docker compose --env-file .env -f infra/compose/docker-compose.prod.yml up -d --wait --pull never --build api worker web",
+      "GIT_SHA=$(git rev-parse HEAD) docker compose --env-file .env -f grokbot/infra/compose/docker-compose.prod.yml up -d --wait --pull never --build api worker web",
     ]);
     expect(manualUpgradeCommands("compose", { imageTag: "sha-abc" })).toEqual([
       ...COMPOSE_MANUAL_UPGRADE_COMMANDS,
@@ -231,7 +231,7 @@ describe("compose argv construction", () => {
     const overlaid = {
       ...target,
       composeFiles: [
-        "/srv/rakazo/infra/compose/docker-compose.prod.yml",
+        "/srv/rakazo/grokbot/infra/compose/docker-compose.prod.yml",
         "/srv/rakazo/ops/compose/docker-compose.sandbox.yml",
       ],
     };
@@ -279,7 +279,7 @@ describe("compose argv construction", () => {
     const overlaid = {
       ...target,
       composeFiles: [
-        "/srv/rakazo/infra/compose/docker-compose.prod.yml",
+        "/srv/rakazo/grokbot/infra/compose/docker-compose.prod.yml",
         "/srv/rakazo/ops/compose/docker-compose.sandbox.yml",
       ],
       services: ["api", "worker", "web", "supervisor"],

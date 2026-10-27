@@ -4,5 +4,5 @@ packages:
   - "grokbot/packages/*"
   - "runtime"
   - "translation"
-  - "infra/sandboxes/supervisor"
-  - "infra/updater"
+  - "grokbot/infra/sandboxes/supervisor"
+  - "grokbot/infra/updater"

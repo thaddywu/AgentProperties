@@ -6,8 +6,8 @@ const describeFast = process.env.VERIFY_PROVIDERS ? describe.skip : describe;
 const repoRoot = path.resolve(import.meta.dirname, "../../../..");
 
 describeFast("compose installer smoke scripts", () => {
-  it("passes every infra/compose/*.smoke.sh", () => {
-    const runner = path.resolve(repoRoot, "infra/compose/run-smokes.sh");
+  it("passes every grokbot/infra/compose/*.smoke.sh", () => {
+    const runner = path.resolve(repoRoot, "grokbot/infra/compose/run-smokes.sh");
     const output = execFileSync("bash", [runner], {
       encoding: "utf8",
       stdio: ["ignore", "pipe", "pipe"],

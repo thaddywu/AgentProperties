@@ -3,9 +3,9 @@ import { createServer } from "node:net";
 import path from "node:path";
 import type { RunsListOutput, ThreadSnapshot } from "@rakazo/contracts";
 import { isTerminal } from "@rakazo/core";
-import { computerNetworkNameFor } from "../../../../../infra/sandboxes/supervisor/src/computer-spec.js";
+import { computerNetworkNameFor } from "../../../../infra/sandboxes/supervisor/src/computer-spec.js";
 
-const composeFile = path.resolve("infra/compose/docker-compose.topology.yml");
+const composeFile = path.resolve("grokbot/infra/compose/docker-compose.topology.yml");
 const keep = process.argv.includes("--keep");
 const skipBuild = process.argv.includes("--skip-build");
 const project = `rakazo-topology-${process.pid}-${Date.now().toString(36)}`;

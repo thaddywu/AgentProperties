@@ -31,7 +31,7 @@ export const IMAGE_TAG_ENV = "RAKAZO_IMAGE_TAG";
 export const PREVIOUS_IMAGE_TAG_ENV = "RAKAZO_IMAGE_TAG_PREVIOUS";
 
 /**
- * Matches the `name:` pinned in `infra/compose/docker-compose.prod.yml`. Used when Compose has not
+ * Matches the `name:` pinned in `grokbot/infra/compose/docker-compose.prod.yml`. Used when Compose has not
  * injected `COMPOSE_PROJECT_NAME` (it does, into running services) and no dedicated override is set.
  */
 export const DEFAULT_COMPOSE_PROJECT_NAME = "rakazo-prod";
@@ -276,7 +276,7 @@ export function resolveExecutionMode(input: {
   return {
     mode: "unavailable",
     reason:
-      "This deployment has neither an updater sidecar nor a git checkout, so it cannot update itself. Add the `updater` service from infra/compose/docker-compose.prod.yml.",
+      "This deployment has neither an updater sidecar nor a git checkout, so it cannot update itself. Add the `updater` service from grokbot/infra/compose/docker-compose.prod.yml.",
   };
 }
 
@@ -344,22 +344,22 @@ export function resolveInstallKind(input: {
   };
 }
 
-/** Exact host commands from docs/self-host.md for Compose on a published release tag. */
+/** Exact host commands from grokbot/docs/self-host.md for Compose on a published release tag. */
 export const COMPOSE_PULL_UPGRADE_COMMANDS = [
-  "docker compose --env-file .env -f infra/compose/docker-compose.prod.yml pull api worker web",
-  "docker compose --env-file .env -f infra/compose/docker-compose.prod.yml up -d --wait --pull never api worker web",
+  "docker compose --env-file .env -f grokbot/infra/compose/docker-compose.prod.yml pull api worker web",
+  "docker compose --env-file .env -f grokbot/infra/compose/docker-compose.prod.yml up -d --wait --pull never api worker web",
 ] as const;
 
-/** Exact host commands from docs/self-host.md for Compose on the default `local` tag. */
+/** Exact host commands from grokbot/docs/self-host.md for Compose on the default `local` tag. */
 export const COMPOSE_LOCAL_BUILD_UPGRADE_COMMANDS = [
   "git pull",
-  "GIT_SHA=$(git rev-parse HEAD) docker compose --env-file .env -f infra/compose/docker-compose.prod.yml up -d --wait --pull never --build api worker web",
+  "GIT_SHA=$(git rev-parse HEAD) docker compose --env-file .env -f grokbot/infra/compose/docker-compose.prod.yml up -d --wait --pull never --build api worker web",
 ] as const;
 
 /** @deprecated Prefer {@link COMPOSE_PULL_UPGRADE_COMMANDS}; kept for call-site clarity in tests. */
 export const COMPOSE_MANUAL_UPGRADE_COMMANDS = COMPOSE_PULL_UPGRADE_COMMANDS;
 
-/** Exact host commands from docs/self-host.md for source / `pnpm dev` installs. */
+/** Exact host commands from grokbot/docs/self-host.md for source / `pnpm dev` installs. */
 export const SOURCE_MANUAL_UPGRADE_COMMANDS = [
   "git pull",
   "pnpm --filter @rakazo/db migrate",

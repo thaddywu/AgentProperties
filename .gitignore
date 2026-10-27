@@ -27,7 +27,7 @@ grokbot/apps/mobile/dist
 grokbot/apps/mobile/android
 grokbot/apps/mobile/ios
 grokbot/packages/db/src/generated
-infra/sandboxes/supervisor/dist
+grokbot/infra/sandboxes/supervisor/dist
 *.log
 .vercel
 .cache
@@ -35,7 +35,8 @@ artifacts
 backups
 test-report
 verify-report
-translation-output/
+translation/output/
+/grokbot/.upstream/
 .astro
 .deploy.lock
 .last-deployed-revision
@@ -50,15 +51,15 @@ playwright-report-www
 
 # Private local services and compose overrides
 /.rakazo-local/
-/infra/compose/docker-compose.local.yml
+/grokbot/infra/compose/docker-compose.local.yml
 
 # Research document build output
-/main.aux
-/main.fdb_latexmk
-/main.fls
-/main.log
-/main.out
-/main.pdf
-/main.synctex.gz
+/docs/research/main.aux
+/docs/research/main.fdb_latexmk
+/docs/research/main.fls
+/docs/research/main.log
+/docs/research/main.out
+/docs/research/main.pdf
+/docs/research/main.synctex.gz
 
 dist-nova

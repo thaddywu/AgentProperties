@@ -148,4 +148,4 @@ jobs:
           PLAYWRIGHT_SHA: ${{ github.sha }}
           PLAYWRIGHT_EVENT: ${{ github.event_name }}
           PLAYWRIGHT_BRANCH: ${{ github.ref_name }}
-        run: bash scripts/publish-playwright-report.sh
+        run: bash grokbot/scripts/publish-playwright-report.sh

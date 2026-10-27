@@ -17,13 +17,13 @@ async function main() {
       model: { type: "string" },
       "api-key-env": { type: "string" },
       "base-url": { type: "string" },
-      output: { type: "string", default: "translation-output/nova" },
+      output: { type: "string", default: "translation/output/nova" },
       help: { type: "boolean" },
     },
   });
   if (values.help) {
     console.log(
-      "pnpm policy:translate apps/nova --connection <private-models-connect.json>\nOr --provider <id> --model <id> --api-key-env <variable> [--base-url <url>]\nOutputs go to ignored translation-output/nova/<run-id>/; the app is not modified.",
+      "pnpm policy:translate apps/nova --connection <private-models-connect.json>\nOr --provider <id> --model <id> --api-key-env <variable> [--base-url <url>]\nOutputs go to ignored translation/output/nova/<run-id>/; the app is not modified.",
     );
     return;
   }

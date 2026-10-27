@@ -4,7 +4,7 @@ import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 import { captureScreenshot } from "./helpers";
 
-const computerRoot = path.resolve(import.meta.dirname, "../../../../infra/sandboxes/computer");
+const computerRoot = path.resolve(import.meta.dirname, "../../../infra/sandboxes/computer");
 
 async function openComputerEmbed(
   page: Page,

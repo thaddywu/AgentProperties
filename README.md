@@ -8,6 +8,7 @@ A workspace for multi-agent applications, policy enforcement, sensemaking querie
 | [apps/nova/](apps/nova/README.md) | Nova specification, policies, agents/tools, source and tests |
 | [runtime/](runtime/README.md) | Shared Datalog evaluation, queries, provenance and lifecycle relations |
 | [translation/](translation/README.md) | One-shot natural-language-to-Datalog prototype |
+| [docs/](docs/repository-structure.md) | Repository design and research documents |
 
 Application descriptions use `app.md`, `policy.md`, `tools.md` and `agents/`. LLM agents supply their actual system prompts; scripted agents describe their decision logic. Episodes are optional examples.
 
@@ -21,8 +22,8 @@ pnpm --filter @rakazo/nova start        # Nova without UI; Soufflé + prlimit re
 pnpm policy:translate apps/nova --connection /path/to/private-connection.json
 ```
 
-See [Nova setup and commands](apps/nova/README.md), [model connections](translation/README.md), and [full Grokbot host setup](docs/self-host.md).
+See [Nova setup and commands](apps/nova/README.md), [model connections](translation/README.md), and [full Grokbot host setup](grokbot/docs/self-host.md).
 
-`infra/` contains active Docker/Compose, sandbox, updater and backup tooling. `patches/` contains the pnpm-applied Electron signing dependency fix; neither directory is an archive.
+`grokbot/infra/` contains active Docker/Compose, sandbox, updater and backup tooling. `grokbot/patches/` contains the pnpm-applied Electron signing dependency fix; neither directory is an archive.
 
 [Repository boundaries](docs/repository-structure.md) · [Translation experiments](docs/translation-model-comparison.md) · [Research design](docs/research/main.tex) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [Apache 2.0 license](LICENSE)

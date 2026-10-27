@@ -9,7 +9,7 @@ import { chromium, expect, test } from "@playwright/test";
 const execute = promisify(execFile);
 const helper = path.resolve(
   import.meta.dirname,
-  "../../../../infra/sandboxes/computer/rakazo-page-browser",
+  "../../../infra/sandboxes/computer/rakazo-page-browser",
 );
 
 test("live page helper preserves identity, masks passwords, and reports partial actions", async () => {

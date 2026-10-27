@@ -24,6 +24,8 @@ test-results
 verify-report
 *.log
 
-translation-output
+translation/output
+grokbot/.upstream
+.rakazo-local
 
 dist-nova

@@ -109,7 +109,7 @@ jobs:
           gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip" > "$RUNNER_TEMP/playwright-artifacts.zip"
           # Keep untrusted files outside the checkout, dependencies, configuration,
           # and generated dashboard consumed by the comment step.
-          python3 scripts/extract-playwright-artifacts.py \
+          python3 grokbot/scripts/extract-playwright-artifacts.py \
             "$RUNNER_TEMP/playwright-artifacts.zip" "$RUNNER_TEMP/playwright-artifacts"
       - name: Publish trusted Playwright screenshot gallery
         id: publish
@@ -134,7 +134,7 @@ jobs:
           PLAYWRIGHT_PUBLISH_REPORT: ${{ github.event.workflow_run.event == 'push' }}
           PLAYWRIGHT_REPORT_DIR: ${{ runner.temp }}/playwright-artifacts/playwright-report
           PLAYWRIGHT_TEST_RESULTS_DIR: ${{ runner.temp }}/playwright-artifacts/grokbot/apps/web/test-results
-        run: bash scripts/publish-playwright-report.sh
+        run: bash grokbot/scripts/publish-playwright-report.sh
       - name: Link screenshot gallery from pull request
         if: >-
           github.event.workflow_run.event == 'pull_request' &&

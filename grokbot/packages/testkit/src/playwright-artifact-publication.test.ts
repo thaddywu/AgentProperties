@@ -15,7 +15,7 @@ import { PNG } from "pngjs";
 import { afterEach, describe, expect, it } from "vitest";
 
 const repoRoot = path.resolve(import.meta.dirname, "../../../..");
-const extractor = path.join(repoRoot, "scripts/extract-playwright-artifacts.py");
+const extractor = path.join(repoRoot, "grokbot/scripts/extract-playwright-artifacts.py");
 const workflow = readFileSync(
   path.join(repoRoot, ".github/workflows/publish-playwright-report.yml"),
   "utf8",
@@ -90,7 +90,7 @@ describe("Playwright artifact publication boundary", () => {
       'gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip" > "$RUNNER_TEMP/playwright-artifacts.zip"',
     );
     expect(workflow).toContain(
-      'python3 scripts/extract-playwright-artifacts.py \\\n            "$RUNNER_TEMP/playwright-artifacts.zip" "$RUNNER_TEMP/playwright-artifacts"',
+      'python3 grokbot/scripts/extract-playwright-artifacts.py \\\n            "$RUNNER_TEMP/playwright-artifacts.zip" "$RUNNER_TEMP/playwright-artifacts"',
     );
     expect(workflow).toContain(
       "PLAYWRIGHT_REPORT_DIR: ${{ runner.temp }}/playwright-artifacts/playwright-report",
@@ -100,7 +100,7 @@ describe("Playwright artifact publication boundary", () => {
     );
     expect(workflow).toContain("ref: ${{ github.event.repository.default_branch }}");
     expect(workflow).toContain("persist-credentials: false");
-    expect(workflow).toContain("run: bash scripts/publish-playwright-report.sh");
+    expect(workflow).toContain("run: bash grokbot/scripts/publish-playwright-report.sh");
     expect(workflow).not.toContain("working-directory:");
   });
 
@@ -147,7 +147,7 @@ describe("Playwright artifact publication boundary", () => {
       const isPr = scenario !== "push";
       const trustedFiles = [
         "package.json",
-        "scripts/publish-playwright-report.sh",
+        "grokbot/scripts/publish-playwright-report.sh",
         "grokbot/packages/testkit/src/cli/generate-playwright-report-dashboard.ts",
         "grokbot/packages/testkit/src/cli/build-playwright-pr-screenshot-comment.ts",
         "grokbot/packages/testkit/src/playwright-report-dashboard.ts",
@@ -167,7 +167,7 @@ describe("Playwright artifact publication boundary", () => {
             ".tmp/playwright-dashboard/screenshots/review.json",
           ].map((file) => [file, "untrusted replacement"]),
         );
-        replacements["scripts/publish-playwright-report.sh"] =
+        replacements["grokbot/scripts/publish-playwright-report.sh"] =
           'printf "%s" "$AWS_SECRET_ACCESS_KEY" > "$ATTACK_MARKER"; exit 90';
         replacements["grokbot/packages/testkit/src/cli/build-playwright-pr-screenshot-comment.ts"] =
           'import { writeFileSync } from "node:fs"; writeFileSync(process.env.ATTACK_MARKER, process.env.GH_TOKEN);';
@@ -229,7 +229,7 @@ else:
         FAKE_STORAGE: storage,
         ATTACK_MARKER: path.join(root, "executed-untrusted-code"),
       };
-      execFileSync("bash", ["scripts/publish-playwright-report.sh"], {
+      execFileSync("bash", ["grokbot/scripts/publish-playwright-report.sh"], {
         cwd: checkout,
         env,
         stdio: "pipe",

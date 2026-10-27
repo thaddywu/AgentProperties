@@ -34,9 +34,9 @@ function fixture() {
   const snapshots = path.join(root, "snapshots");
   const bin = path.join(root, "bin");
   for (const script of [
-    "scripts/backup.sh",
-    "scripts/restore.sh",
-    "infra/compose/backup-prod.sh",
+    "grokbot/scripts/backup.sh",
+    "grokbot/scripts/restore.sh",
+    "grokbot/infra/compose/backup-prod.sh",
   ]) {
     let source = readFileSync(path.join(repoRoot, script), "utf8");
     if (script.endsWith("backup-prod.sh")) {
@@ -155,7 +155,7 @@ describe("development backup failures", () => {
     const f = fixture();
     if (!hasEnv) rmSync(path.join(f.checkout, ".env"));
     write(path.join(f.checkout, "data/home.txt"), "example home");
-    expect(f.run("scripts/backup.sh", ["example"]).status).toBe(0);
+    expect(f.run("grokbot/scripts/backup.sh", ["example"]).status).toBe(0);
     const output = path.join(f.checkout, "backups/example");
     expect(readFileSync(path.join(output, "rakazo.sql"), "utf8")).toContain("CREATE TABLE");
     expect(contents(path.join(output, "homes.tgz"))).toContain("data/home.txt");
@@ -166,7 +166,7 @@ describe("development backup failures", () => {
   it.each(["absent", "skipped"])("allows an empty archive when data is %s", (scenario) => {
     const f = fixture();
     if (scenario === "skipped") write(path.join(f.checkout, "data/home.txt"), "example home");
-    const result = f.run("scripts/backup.sh", ["example"], {
+    const result = f.run("grokbot/scripts/backup.sh", ["example"], {
       RAKAZO_BACKUP_SKIP_HOMES: scenario === "skipped" ? "1" : "0",
     });
     expect(result.status, result.stderr).toBe(0);
@@ -178,7 +178,7 @@ describe("development backup failures", () => {
     const data = path.join(f.checkout, "data");
     if (kind === "file") write(data, "not a directory");
     else symlinkSync(path.join(f.root, "missing"), data);
-    const result = f.run("scripts/backup.sh", ["example"]);
+    const result = f.run("grokbot/scripts/backup.sh", ["example"]);
     expect(result.status).not.toBe(0);
     expect(result.stdout).not.toContain("Backup written");
   });
@@ -186,7 +186,7 @@ describe("development backup failures", () => {
   it.each([1, 2])("propagates tar exit %s without replacing the failed archive", (code) => {
     const f = fixture();
     write(path.join(f.checkout, "data/home.txt"), "example home");
-    const result = f.run("scripts/backup.sh", ["example"], { FAIL_TAR: String(code) });
+    const result = f.run("grokbot/scripts/backup.sh", ["example"], { FAIL_TAR: String(code) });
     expect(result.status).toBe(code);
     expect(result.stderr).toContain("simulated archive read failure");
     expect(result.stdout).not.toContain("Backup written");
@@ -195,7 +195,7 @@ describe("development backup failures", () => {
 
   it("does not archive files or report success after pg_dump fails", () => {
     const f = fixture();
-    const result = f.run("scripts/backup.sh", ["example"], { FAIL_DUMP: "1" });
+    const result = f.run("grokbot/scripts/backup.sh", ["example"], { FAIL_DUMP: "1" });
     expect(result.status).toBe(2);
     expect(result.stdout).not.toContain("Backup written");
     expect(existsSync(path.join(f.checkout, "backups/example/homes.tgz"))).toBe(false);
@@ -206,7 +206,7 @@ describe("development restore failures", () => {
   function restoreFixture() {
     const f = fixture();
     write(path.join(f.checkout, "data/home.txt"), "backed-up home");
-    expect(f.run("scripts/backup.sh", ["example"]).status).toBe(0);
+    expect(f.run("grokbot/scripts/backup.sh", ["example"]).status).toBe(0);
     write(path.join(f.checkout, "data/home.txt"), "current home");
     return f;
   }
@@ -215,9 +215,13 @@ describe("development restore failures", () => {
     "restores files and starts services only after SQL succeeds: %s",
     (fail) => {
       const f = restoreFixture();
-      const result = f.run("scripts/restore.sh", [path.join(f.checkout, "backups/example")], {
-        FAIL_SQL: fail ? "1" : "0",
-      });
+      const result = f.run(
+        "grokbot/scripts/restore.sh",
+        [path.join(f.checkout, "backups/example")],
+        {
+          FAIL_SQL: fail ? "1" : "0",
+        },
+      );
       expect(result.status).toBe(fail ? 3 : 0);
       const command = f.commands().find((args) => args.includes("psql"));
       expect(command).toEqual(
@@ -241,7 +245,7 @@ describe("development restore failures", () => {
   it("fails rather than starting services after an invalid homes archive", () => {
     const f = restoreFixture();
     write(path.join(f.checkout, "backups/example/homes.tgz"), "invalid archive");
-    const result = f.run("scripts/restore.sh", [path.join(f.checkout, "backups/example")]);
+    const result = f.run("grokbot/scripts/restore.sh", [path.join(f.checkout, "backups/example")]);
     expect(result.status).not.toBe(0);
     expect(result.stdout).not.toContain("Restore complete");
     expect(f.commands().some((args) => args.slice(-2).join(" ") === "up -d")).toBe(false);
@@ -253,7 +257,7 @@ describe("production backup deployment and archive behavior", () => {
     const f = fixture();
     const deployment = custom ? f.checkout : "/srv/rakazo";
     const result = f.run(
-      "infra/compose/backup-prod.sh",
+      "grokbot/infra/compose/backup-prod.sh",
       [],
       custom ? { RAKAZO_DEPLOY_DIR: deployment } : {},
     );
@@ -265,14 +269,14 @@ describe("production backup deployment and archive behavior", () => {
         "--env-file",
         path.join(deployment, ".env"),
         "-f",
-        path.join(deployment, "infra/compose/docker-compose.prod.yml"),
+        path.join(deployment, "grokbot/infra/compose/docker-compose.prod.yml"),
       ]);
     }
   });
 
   it("provides optional systemd configuration for installed copies", () => {
     const service = readFileSync(
-      path.join(repoRoot, "infra/systemd/rakazo-backup.service"),
+      path.join(repoRoot, "grokbot/infra/systemd/rakazo-backup.service"),
       "utf8",
     );
     expect(service).toContain("EnvironmentFile=-/etc/rakazo/backup.env");
@@ -280,7 +284,9 @@ describe("production backup deployment and archive behavior", () => {
 
   it("rejects relative deployment paths before any backup commands", () => {
     const f = fixture();
-    const result = f.run("infra/compose/backup-prod.sh", [], { RAKAZO_DEPLOY_DIR: "relative" });
+    const result = f.run("grokbot/infra/compose/backup-prod.sh", [], {
+      RAKAZO_DEPLOY_DIR: "relative",
+    });
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain("absolute path");
     expect(f.commands()).toEqual([]);
@@ -289,7 +295,7 @@ describe("production backup deployment and archive behavior", () => {
 
   it("preserves host archiving and the live-file warning allowance from PR #618", () => {
     const f = fixture();
-    const result = f.run("infra/compose/backup-prod.sh", [], { CHANGED_TAR: "1" });
+    const result = f.run("grokbot/infra/compose/backup-prod.sh", [], { CHANGED_TAR: "1" });
     expect(result.status, result.stderr).toBe(0);
     expect(result.stderr).toContain("file changed as we read it");
     expect(result.stdout).toContain("Verified Rakazo backup");
@@ -304,7 +310,7 @@ describe("production backup deployment and archive behavior", () => {
     "does not report a verified snapshot after failure: %j",
     (failure) => {
       const f = fixture();
-      const result = f.run("infra/compose/backup-prod.sh", [], failure);
+      const result = f.run("grokbot/infra/compose/backup-prod.sh", [], failure);
       expect(result.status).not.toBe(0);
       expect(result.stdout).not.toContain("Verified Rakazo backup");
     },

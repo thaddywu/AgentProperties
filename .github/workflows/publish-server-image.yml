@@ -12,9 +12,12 @@ on:
       - ".dockerignore"
       - ".github/workflows/publish-server-image.yml"
       - "apps/**"
-      - "infra/compose/**"
-      - "infra/sandboxes/computer/**"
-      - "infra/updater/**"
+      - "grokbot/apps/**"
+      - "grokbot/patches/**"
+      - "grokbot/scripts/**"
+      - "grokbot/infra/compose/**"
+      - "grokbot/infra/sandboxes/computer/**"
+      - "grokbot/infra/updater/**"
       - "grokbot/packages/**"
       - "runtime/**"
       - "apps/nova/**"
@@ -46,7 +49,7 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           persist-credentials: false
-      - run: bash infra/compose/run-smokes.sh
+      - run: bash grokbot/infra/compose/run-smokes.sh
 
   validate:
     name: Validate ${{ matrix.name }} image
@@ -60,14 +63,14 @@ jobs:
       matrix:
         include:
           - name: app
-            dockerfile: infra/compose/Dockerfile
+            dockerfile: grokbot/infra/compose/Dockerfile
             context: .
           - name: updater
-            dockerfile: infra/updater/Dockerfile
+            dockerfile: grokbot/infra/updater/Dockerfile
             context: .
           - name: computer
-            dockerfile: infra/sandboxes/computer/Dockerfile
-            context: infra/sandboxes/computer
+            dockerfile: grokbot/infra/sandboxes/computer/Dockerfile
+            context: grokbot/infra/sandboxes/computer
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
@@ -96,7 +99,7 @@ jobs:
     if: github.event_name != 'pull_request'
     # Each architecture builds natively on its own runner and pushes by digest only.
     # No QEMU: GitHub hosts native arm64 runners, and emulated arm64 took hours for the
-    # desktop-sized computer image. See docs/self-host.md (Published images and tags).
+    # desktop-sized computer image. See grokbot/docs/self-host.md (Published images and tags).
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 90
     permissions:
@@ -111,14 +114,14 @@ jobs:
           # Only the updater image contains the Docker CLI; the application image stays unprivileged.
           # The supervisor is not a separate published image: it runs from `app` on the internal network.
           - name: app
-            dockerfile: infra/compose/Dockerfile
+            dockerfile: grokbot/infra/compose/Dockerfile
             context: .
           - name: updater
-            dockerfile: infra/updater/Dockerfile
+            dockerfile: grokbot/infra/updater/Dockerfile
             context: .
           - name: computer
-            dockerfile: infra/sandboxes/computer/Dockerfile
-            context: infra/sandboxes/computer
+            dockerfile: grokbot/infra/sandboxes/computer/Dockerfile
+            context: grokbot/infra/sandboxes/computer
           - arch: amd64
             runner: ubuntu-latest
           - arch: arm64
