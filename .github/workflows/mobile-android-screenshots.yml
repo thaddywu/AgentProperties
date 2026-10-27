@@ -44,13 +44,16 @@ jobs:
         uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
         with:
           path: grokbot/apps/mobile/android/app/build/outputs/apk/release/app-release.apk
-          key: mobile-android-apk-v2-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'package.json', 'pnpm-workspace.yaml', 'grokbot/config/turbo.json', 'runtime/tsconfig.base.json', 'grokbot/tsconfig.base.json', '.github/workflows/mobile-android-screenshots.yml', 'grokbot/apps/mobile/package.json', 'grokbot/apps/mobile/app.json', 'grokbot/apps/mobile/app.config.ts', 'grokbot/apps/mobile/metro.config.js', 'grokbot/apps/mobile/metro-resolver.js', 'grokbot/apps/mobile/assets/**', 'grokbot/apps/mobile/app/**', 'grokbot/apps/mobile/components/**', 'grokbot/apps/mobile/lib/**', 'grokbot/apps/mobile/modules/**', 'grokbot/apps/mobile/plugins/**', 'grokbot/packages/chat-ui/**', 'grokbot/packages/contracts/**', 'grokbot/packages/core/**', 'grokbot/packages/ui-tokens/**') }}
+          key: mobile-android-apk-v2-${{ runner.os }}-${{ hashFiles('grokbot/pnpm-lock.yaml', 'grokbot/package.json', 'grokbot/pnpm-workspace.yaml', 'runtime/tsconfig.base.json', 'grokbot/tsconfig.base.json', '.github/workflows/mobile-android-screenshots.yml', 'grokbot/apps/mobile/package.json', 'grokbot/apps/mobile/app.json', 'grokbot/apps/mobile/app.config.ts', 'grokbot/apps/mobile/metro.config.js', 'grokbot/apps/mobile/metro-resolver.js', 'grokbot/apps/mobile/assets/**', 'grokbot/apps/mobile/app/**', 'grokbot/apps/mobile/components/**', 'grokbot/apps/mobile/lib/**', 'grokbot/apps/mobile/modules/**', 'grokbot/apps/mobile/plugins/**', 'grokbot/packages/chat-ui/**', 'grokbot/packages/contracts/**', 'grokbot/packages/core/**', 'grokbot/packages/ui-tokens/**') }}
 
       - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          package_json_file: grokbot/package.json
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 22
           cache: pnpm
+          cache-dependency-path: grokbot/pnpm-lock.yaml
       - uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
         with:
           distribution: temurin
@@ -61,7 +64,7 @@ jobs:
           cache-read-only: false
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm --dir '${{ github.workspace }}/grokbot' install --frozen-lockfile
 
       - name: Restore Maestro CLI
         id: maestro-cache
@@ -99,7 +102,7 @@ jobs:
       - name: Generate Android project
         if: steps.screenshot-apk.outputs.cache-hit != 'true'
         run: |
-          pnpm --filter @rakazo/mobile exec expo prebuild --platform android --no-install
+          pnpm --dir '${{ github.workspace }}/grokbot' --filter @rakazo/mobile exec expo prebuild --platform android --no-install
           sed -i 's/<application /<application android:usesCleartextTraffic="true" /' \
             grokbot/apps/mobile/android/app/src/main/AndroidManifest.xml
           sed -i 's/MaxMetaspaceSize=512m/MaxMetaspaceSize=1g/' \

@@ -14,13 +14,14 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends git ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
-COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
+COPY grokbot/pnpm-workspace.yaml grokbot/pnpm-lock.yaml grokbot/package.json ./grokbot/
 COPY grokbot/patches grokbot/patches
 COPY grokbot/packages/contracts grokbot/packages/contracts
 COPY grokbot/packages/core grokbot/packages/core
 COPY runtime runtime
 COPY grokbot/packages/logging grokbot/packages/logging
 COPY grokbot/infra/updater grokbot/infra/updater
+WORKDIR /app/grokbot
 RUN corepack enable && pnpm install --frozen-lockfile --prod --filter "@rakazo/updater..."
 WORKDIR /app/grokbot/infra/updater
 ARG GIT_SHA

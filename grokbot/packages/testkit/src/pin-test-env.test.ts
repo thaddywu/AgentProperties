@@ -27,11 +27,11 @@ describeFast("pnpm test emulator pin", () => {
 
   it("exposes one test command family and no leftover verify/e2e aliases", () => {
     const pkg = JSON.parse(
-      readFileSync(path.resolve(import.meta.dirname, "../../../../package.json"), "utf8"),
+      readFileSync(path.resolve(import.meta.dirname, "../../../package.json"), "utf8"),
     ) as {
       scripts: Record<string, string>;
     };
-    expect(pkg.scripts.test).toBe("vitest run --config grokbot/config/vitest.config.ts");
+    expect(pkg.scripts.test).toBe("vitest run --config config/vitest.config.ts");
     expect(pkg.scripts["test:integration"]).toContain("harness.ts --integration");
     expect(pkg.scripts["test:e2e"]).toContain("harness.ts --e2e");
     expect(pkg.scripts["test:topology"]).toContain("cli/topology.ts");

@@ -78,11 +78,14 @@ async function main() {
     process.env.SIGNUP_ALLOWLIST = "";
     process.env.CI = "1";
 
-    execSync("pnpm --filter @rakazo/db generate", { stdio: "inherit", env: process.env });
-    execSync("pnpm --filter @rakazo/db exec prisma migrate deploy", {
+    execSync("pnpm --dir grokbot --filter @rakazo/db generate", {
       stdio: "inherit",
       env: process.env,
-      cwd: path.resolve("grokbot/packages/db"),
+    });
+    execSync("pnpm --dir grokbot --filter @rakazo/db exec prisma migrate deploy", {
+      stdio: "inherit",
+      env: process.env,
+      cwd: path.resolve("."),
     });
 
     if (integration) {
@@ -132,7 +135,7 @@ async function main() {
         const suiteUrl = new URL(databaseUrl);
         suiteUrl.pathname = `/${database}`;
         try {
-          await runProcess("pnpm", ["test", suite], {
+          await runProcess("pnpm", ["--dir", path.resolve("grokbot"), "test", suite], {
             ...process.env,
             DATABASE_URL: suiteUrl.toString(),
             REALTIME_DATABASE_URL: suiteUrl.toString(),
@@ -209,6 +212,8 @@ async function main() {
         await runProcess(
           "pnpm",
           [
+            "--dir",
+            path.resolve("grokbot"),
             "--filter",
             "@rakazo/web",
             "exec",

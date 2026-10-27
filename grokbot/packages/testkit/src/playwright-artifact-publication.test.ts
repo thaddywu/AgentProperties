@@ -146,7 +146,8 @@ describe("Playwright artifact publication boundary", () => {
       const hasArtifact = scenario !== "timed_out";
       const isPr = scenario !== "push";
       const trustedFiles = [
-        "package.json",
+        "grokbot/package.json",
+        "grokbot/scripts/repository-command.mjs",
         "grokbot/scripts/publish-playwright-report.sh",
         "grokbot/packages/testkit/src/cli/generate-playwright-report-dashboard.ts",
         "grokbot/packages/testkit/src/cli/build-playwright-pr-screenshot-comment.ts",
@@ -161,6 +162,7 @@ describe("Playwright artifact publication boundary", () => {
         const replacements = Object.fromEntries(
           [
             ...trustedFiles,
+            "package.json",
             "tsconfig.json",
             ".npmrc",
             "node_modules/tsx/package.json",
@@ -182,7 +184,7 @@ describe("Playwright artifact publication boundary", () => {
         );
       }
       // Dependencies are trusted and remain outside the extraction tree.
-      for (const directory of ["node_modules", "grokbot/packages/testkit/node_modules"]) {
+      for (const directory of ["grokbot/node_modules", "grokbot/packages/testkit/node_modules"]) {
         symlinkSync(path.join(repoRoot, directory), path.join(checkout, directory), "dir");
       }
       const bin = path.join(root, "bin");
@@ -251,9 +253,9 @@ else:
         const changedPaths = path.join(root, "changed-paths.txt");
         write(changedPaths, "grokbot/apps/web/src/example.tsx\n");
         const comment = execFileSync(
-          "pnpm",
+          process.execPath,
           [
-            "exec",
+            "grokbot/scripts/repository-command.mjs",
             "tsx",
             "grokbot/packages/testkit/src/cli/build-playwright-pr-screenshot-comment.ts",
             path.join(checkout, ".tmp/playwright-dashboard/screenshots/review.json"),

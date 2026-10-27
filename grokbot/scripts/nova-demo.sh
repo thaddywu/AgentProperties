@@ -3,7 +3,7 @@ set -euo pipefail
 nova_root="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$nova_root"
 # Native Soufflé is pinned in Dockerfile.nova; evaluations run locally.
-nova_image="${NOVA_IMAGE:-rakazo:nova-workspace}"
+nova_image="${NOVA_IMAGE:-rakazo:nova-host}"
 nova_port="${NOVA_PORT:-5180}"
 nova_container="${NOVA_CONTAINER:-nova-reasoning-demo}"
 nova_volume="${NOVA_STATE_VOLUME:-nova-reasoning-state}"
@@ -43,8 +43,8 @@ JS
 }
 case "$mode" in
   setup) exec docker build -t "$nova_image" -f grokbot/infra/compose/Dockerfile.nova . ;;
-  test) exec docker run --rm --network none --user 0 "${mounts[@]}" "$nova_image" /app/node_modules/.bin/vitest run --config /app/grokbot/config/vitest.config.ts apps/nova/tests runtime/tests grokbot/packages/core/src/policy/query.test.ts grokbot/packages/core/src/policy/protocol.test.ts ;;
-  check) exec docker run --rm --network none --user 0 "${mounts[@]}" "$nova_image" /app/node_modules/.bin/tsc --noEmit -p /app/grokbot/apps/web/tsconfig.json ;;
+  test) exec docker run --rm --network none --user 0 "${mounts[@]}" "$nova_image" /app/grokbot/node_modules/.bin/vitest run --config /app/grokbot/config/vitest.config.ts apps/nova/tests runtime/tests grokbot/packages/core/src/policy/query.test.ts grokbot/packages/core/src/policy/protocol.test.ts ;;
+  check) exec docker run --rm --network none --user 0 "${mounts[@]}" "$nova_image" /app/grokbot/node_modules/.bin/tsc --noEmit -p /app/grokbot/apps/web/tsconfig.json ;;
   build) exec docker run --rm --network none --user 0 "${mounts[@]}" --workdir /app/grokbot/apps/web "$nova_image" /app/grokbot/apps/web/node_modules/.bin/vite build --config vite.nova.config.ts ;;
   logs) exec docker logs --tail 80 --follow "$nova_container" ;;
   status)

@@ -7,7 +7,7 @@ import { loadRootEnv } from "@rakazo/core/node/load-root-env";
 
 /** Offline by default. Only explicit --live --record loads a model key for a manual capture. */
 async function main() {
-  const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../..");
+  const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../../..");
   const imageArg = process.argv.slice(2).find((arg) => arg.startsWith("--image="));
   const subnetArg = process.argv.slice(2).find((arg) => arg.startsWith("--subnet="));
   const recordArg = process.argv.slice(2).find((arg) => arg.startsWith("--record="));
@@ -75,7 +75,7 @@ async function main() {
       const child = spawn(
         process.execPath,
         [
-          path.join(root, "node_modules/vitest/vitest.mjs"),
+          path.join(root, "grokbot/node_modules/vitest/vitest.mjs"),
           "run",
           "--config",
           path.join(root, "grokbot/config/vitest.config.ts"),

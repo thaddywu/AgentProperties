@@ -4,11 +4,15 @@
 grokbot/                 Existing host implementation, including UI customizations
   apps/                  web, api, worker, desktop, mobile, www
   packages/              host domain/adapters/contracts/database/shared UI
-  config/                Workspace test, build and formatting configuration
+  config/                Workspace test configuration
   infra/                 Docker/Compose, sandbox, updater and backup services
   scripts/               Host development, deployment and demo tooling
   patches/               pnpm-applied dependency fixes
   docs/                  Host setup, operations, releases and upstream updates
+  package.json           Workspace commands and shared development tools
+  pnpm-workspace.yaml    Host and adjacent application/runtime package membership
+  pnpm-lock.yaml         Preserved dependency resolutions
+  node_modules/          Ignored dependency installation
 apps/
   nova/
     app.md               Application specification and interaction description
@@ -22,16 +26,27 @@ apps/
 runtime/                 Generic Datalog, queries, native provenance and lifecycle
 translation/             One-shot natural-language-to-Datalog research prototype
   output/                Ignored local experiment artifacts
-docs/                    Repository design and research documents
+docs/                    README, LICENSE, repository design and research documents
 ```
 
-The root has five source/documentation directories and seven visible files: `README.md`, `LICENSE`, `AGENTS.md`, `CLAUDE.md`, `package.json`, `pnpm-workspace.yaml` and `pnpm-lock.yaml`. The three pnpm files keep dependency installation and workspace commands at the repository root. Four tracked dotfiles remain: `.gitignore` excludes local state and secrets, `.gitattributes` controls line endings/binary handling, `.dockerignore` filters the root Docker build context, and `.npmrc` configures workspace installation. `node_modules/` is ignored installation output. The inherited CodeRabbit configuration has been removed; repository configuration does not manage any externally installed review bot.
+The repository root contains the five module/documentation directories plus `AGENTS.md` and `CLAUDE.md` for coding-agent instructions. Project files live with their owner:
 
-Build/test/formatter configuration lives in `grokbot/config/`, shared TypeScript settings in `runtime/tsconfig.base.json`, the host environment template in `grokbot/.env.example`, contribution/security guidance in `.github/`, and skill metadata in `.agents/`. Run `./apps/nova/run.sh` for the UI. `pnpm test`, `pnpm check`, `pnpm lint` and package-level test commands select the relocated configurations explicitly.
+| Location | Contents |
+| --- | --- |
+| `docs/README.md`, `docs/LICENSE` | Workspace introduction and preserved Apache license |
+| `grokbot/package.json`, `grokbot/pnpm-workspace.yaml`, `grokbot/pnpm-lock.yaml`, `grokbot/.npmrc` | Installation, scripts, package membership and locked dependency versions |
+| `grokbot/node_modules/` | Ignored installation output |
+| `grokbot/config/`, module `biome.json` files | Tests and module-scoped formatting |
+| `runtime/tsconfig.base.json` | Shared TypeScript settings |
+| `apps/nova/run.sh` | Nova UI entry point |
+
+The host workspace explicitly includes adjacent `../apps/*`, `../runtime` and `../translation` packages. Use `pnpm --dir grokbot ...` from the checkout root. Recursive pnpm build/check commands replace Turbo, which does not support workspace packages outside its root. `repository-command.mjs` keeps repository-wide CLI file paths relative to the checkout while resolving tools from the host installation. Vitest caches also stay under the host installation. Formatting runs separately inside the host, Nova, runtime and translation modules, avoiding local state outside those module roots. Each module points formatting at the Git root and force-ignores private debug state and translation output; see [Biome configuration](https://biomejs.dev/reference/configuration/#vcsroot).
+
+Only `.gitignore`, `.gitattributes` and `.dockerignore` remain as tracked root dotfiles: they govern repository-wide exclusion/line endings and the root Docker build context. GitHub automation and agent skills remain in their conventional hidden directories. Local private debug state is ignored and is separate from the module layout.
 
 The dependency direction is `Grokbot UI → Nova application → policy runtime`. Translation reads an application's Markdown; its optional model adapter comes from Grokbot's existing provider-neutral connection/runtime stack. Reference policies are loaded only after model generation. Generated rules are not installed into the application.
 
-The UI remains in Grokbot. Nova can also run without it using `pnpm --filter @rakazo/nova start`. The runtime package has no dependency on Grokbot or Nova. Nova-specific action search and local-store coordination remain with the application because their available actions, principals and protocol are domain-specific; generic evaluation/provenance live in `runtime/`.
+The UI remains in Grokbot. Nova can also run without it using `pnpm --dir grokbot --filter @rakazo/nova start`. The runtime package has no dependency on Grokbot or Nova. Nova-specific action search and local-store coordination remain with the application because their available actions, principals and protocol are domain-specific; generic evaluation/provenance live in `runtime/`.
 
 For future student applications, this separates requirements/source code from a runtime binding. We have not defined a universal porting API, forced a coordinator/workflow, or implemented automatic source-code conversion. A future binding must identify trusted observations, actions, the enforcement point and any domain-specific analysis actions. The present Nova binding is evidence for that design, not a finalized standard.
 
@@ -41,7 +56,7 @@ Our application-description interface is app.md, policy.md, tools.md and agents/
 
 `grokbot/infra/compose/` builds and starts the host or the standalone Nova UI. `grokbot/infra/sandboxes/` supplies computer images and the supervisor/control service; `grokbot/infra/updater/` is the self-host update service; `grokbot/infra/systemd/` schedules backups. These are active run/deploy components, not old experiment outputs. Nova can run without the full host/sandbox stack; its Docker launcher uses `grokbot/infra/compose/Dockerfile.nova`.
 
-`grokbot/patches/app-builder-lib@26.15.3.patch` fixes Electron's macOS signing dependency to use the keychain unlock password rather than the imported certificate password when setting key access. It is declared in root `package.json` and `pnpm-lock.yaml`; keep it until the dependency includes the fix. See [desktop release requirements](../grokbot/docs/desktop-release.md).
+`grokbot/patches/app-builder-lib@26.15.3.patch` fixes Electron's macOS signing dependency to use the keychain unlock password rather than the imported certificate password when setting key access. It is declared in `grokbot/package.json` and `grokbot/pnpm-lock.yaml`; keep it until the dependency includes the fix. See [desktop release requirements](../grokbot/docs/desktop-release.md).
 
 Current module READMEs and the design manuscript are the documentation sources. Superseded demo launch guides, archived Relay specifications, upstream marketing/changelog notes and redundant research indexes have been removed; Git history retains earlier versions.
 

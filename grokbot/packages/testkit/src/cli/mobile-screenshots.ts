@@ -38,11 +38,24 @@ async function main() {
   await mkdir(REPORT_DIR, { recursive: true });
   await mkdir(DATA_DIR, { recursive: true });
 
-  execFileSync("pnpm", ["--filter", "@rakazo/db", "exec", "prisma", "migrate", "deploy"], {
-    cwd: path.join(ROOT, "packages", "db"),
-    env: process.env,
-    stdio: "inherit",
-  });
+  execFileSync(
+    "pnpm",
+    [
+      "--dir",
+      path.resolve("grokbot"),
+      "--filter",
+      "@rakazo/db",
+      "exec",
+      "prisma",
+      "migrate",
+      "deploy",
+    ],
+    {
+      cwd: path.join(ROOT, "packages", "db"),
+      env: process.env,
+      stdio: "inherit",
+    },
+  );
   const thirdParties = new ThirdPartyConnectorEmulator();
   const pipedream = new PipedreamConnector(
     {

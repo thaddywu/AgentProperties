@@ -21,15 +21,14 @@ try {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   const expectTheme = async (theme) => {
-    await page.waitForFunction(
-      (value) => document.documentElement.dataset.theme === value,
-      theme,
-    );
+    await page.waitForFunction((value) => document.documentElement.dataset.theme === value, theme);
     assert.equal(await page.locator("html").evaluate((el) => el.style.colorScheme), theme);
-    await page.getByRole("button", {
-      name: theme === "light" ? "Switch to dark mode" : "Switch to light mode",
-      exact: true,
-    }).waitFor();
+    await page
+      .getByRole("button", {
+        name: theme === "light" ? "Switch to dark mode" : "Switch to light mode",
+        exact: true,
+      })
+      .waitFor();
   };
   await page.goto(`${base}/nova.html`);
   await page.getByRole("tab", { name: "Query", exact: true }).waitFor();
@@ -38,7 +37,8 @@ try {
   await expectTheme("light");
   await page.emulateMedia({ colorScheme: "dark" });
   await expectTheme("dark");
-  const background = () => page.locator("main").evaluate((el) => getComputedStyle(el).backgroundColor);
+  const background = () =>
+    page.locator("main").evaluate((el) => getComputedStyle(el).backgroundColor);
   const darkBackground = await background();
   await page.getByRole("button", { name: "Switch to light mode", exact: true }).click();
   await expectTheme("light");

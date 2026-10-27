@@ -11,27 +11,27 @@ required secrets, and startup commands.
 
 | Command | When to run |
 | --- | --- |
-| `pnpm test` | Default. Units, properties, and in-process contracts. Scripted runtime, fake sandbox, in-memory wakeup — no live connector or model-provider calls. |
-| `pnpm test:integration` | Postgres via Testcontainers: product journeys, authorization, executor lifecycle, Graphile / LISTEN/NOTIFY. Needs Docker. |
-| `pnpm test:e2e` | Playwright against the emulated API. Needs Docker. |
-| `pnpm test:topology` | Local product-path smoke: Docker computer + Graphile worker recovery. Needs Docker. Not PR CI. |
-| `pnpm test:canary` | Live provider canaries. Needs keys. Not PR CI. |
-| `pnpm test:pi` | Real Pi against a local HTTP model fixture: streaming, tool round trips, failures and cancellation. No keys. |
-| `pnpm test:computer-replay` | Real Pi and Docker Chromium against a local model fixture. Needs the computer image; no keys or Electron windows. |
-| `pnpm test:evals --list` | List agent-quality cases. Add `--live` and a model connection to measure repeated real-model task success. |
-| `pnpm test:computer` | Real vision model + E2B desktop. Needs keys; see [computer verification](../grokbot/docs/computer-runtime.md#verification). Not PR CI. |
-| `pnpm check` | TypeScript (`tsc`) across the monorepo. |
-| `pnpm lint` | Biome lint and format check. |
+| `pnpm --dir grokbot test` | Default. Units, properties, and in-process contracts. Scripted runtime, fake sandbox, in-memory wakeup — no live connector or model-provider calls. |
+| `pnpm --dir grokbot test:integration` | Postgres via Testcontainers: product journeys, authorization, executor lifecycle, Graphile / LISTEN/NOTIFY. Needs Docker. |
+| `pnpm --dir grokbot test:e2e` | Playwright against the emulated API. Needs Docker. |
+| `pnpm --dir grokbot test:topology` | Local product-path smoke: Docker computer + Graphile worker recovery. Needs Docker. Not PR CI. |
+| `pnpm --dir grokbot test:canary` | Live provider canaries. Needs keys. Not PR CI. |
+| `pnpm --dir grokbot test:pi` | Real Pi against a local HTTP model fixture: streaming, tool round trips, failures and cancellation. No keys. |
+| `pnpm --dir grokbot test:computer-replay` | Real Pi and Docker Chromium against a local model fixture. Needs the computer image; no keys or Electron windows. |
+| `pnpm --dir grokbot test:evals --list` | List agent-quality cases. Add `--live` and a model connection to measure repeated real-model task success. |
+| `pnpm --dir grokbot test:computer` | Real vision model + E2B desktop. Needs keys; see [computer verification](../grokbot/docs/computer-runtime.md#verification). Not PR CI. |
+| `pnpm --dir grokbot check` | TypeScript (`tsc`) across the monorepo. |
+| `pnpm --dir grokbot lint` | Biome lint and format check. |
 
-CI runs `pnpm lint`, `pnpm check`, production builds (including Electron preload smoke), `pnpm test`, `pnpm test:integration`, and `pnpm test:e2e` on every PR.
+CI runs `pnpm --dir grokbot lint`, `pnpm --dir grokbot check`, production builds (including Electron preload smoke), `pnpm --dir grokbot test`, `pnpm --dir grokbot test:integration`, and `pnpm --dir grokbot test:e2e` on every PR.
 
 ## Adding a UI language
 
 The web and Electron-hosted UI use Lingui catalogs. To add a locale, register it in
 `grokbot/apps/web/lingui.config.ts`, `grokbot/apps/web/src/lib/ui-locale.ts`, and
-`grokbot/apps/web/src/lib/i18n.ts`, then run `pnpm --filter @rakazo/web intl:extract`, fill the new
+`grokbot/apps/web/src/lib/i18n.ts`, then run `pnpm --dir grokbot --filter @rakazo/web intl:extract`, fill the new
 `grokbot/apps/web/src/locales/<locale>/messages.po` catalog, and validate it with
-`pnpm --filter @rakazo/web intl:compile`. Keep message IDs, placeholders, JSX markers, and
+`pnpm --dir grokbot --filter @rakazo/web intl:compile`. Keep message IDs, placeholders, JSX markers, and
 ICU plural branches intact; do not commit generated `*.js`/`*.mjs` catalog files.
 
 Expo mobile has its own catalog and locale registry. Add the locale to
@@ -50,9 +50,9 @@ The default Playwright suite uses the fake sandbox. To run the same scripted-age
 real computers, set the matching `E2B_API_KEY`, `DAYTONA_API_KEY`, or `BOX_API_KEY` and choose a provider:
 
 ```bash
-pnpm test:e2e -- --sandbox=e2b
-pnpm test:e2e -- --sandbox=daytona
-pnpm test:e2e -- --sandbox=box
+pnpm --dir grokbot test:e2e -- --sandbox=e2b
+pnpm --dir grokbot test:e2e -- --sandbox=daytona
+pnpm --dir grokbot test:e2e -- --sandbox=box
 ```
 
 The Playwright workflow also accepts these providers through its manual **Sandbox provider** input.
@@ -77,7 +77,7 @@ capability config, fixtures, logs, or snapshots; use the encrypted secret store 
 
 - Keep PRs small and easy to review.
 - Target the `main` branch.
-- Describe why the change is needed, what changed, and **how you tested** (e.g. `pnpm test`, manual steps).
+- Describe why the change is needed, what changed, and **how you tested** (e.g. `pnpm --dir grokbot test`, manual steps).
 - Link related issues when applicable.
 
 ## Contact

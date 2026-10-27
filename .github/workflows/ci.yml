@@ -20,12 +20,15 @@ jobs:
         with:
           persist-credentials: false
       - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: grokbot/package.json
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm lint
+          cache-dependency-path: grokbot/pnpm-lock.yaml
+      - run: pnpm --dir '${{ github.workspace }}/grokbot' install --frozen-lockfile
+      - run: pnpm --dir '${{ github.workspace }}/grokbot' lint
 
   check:
     name: Typecheck
@@ -35,15 +38,18 @@ jobs:
         with:
           persist-credentials: false
       - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: grokbot/package.json
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm db:generate
+          cache-dependency-path: grokbot/pnpm-lock.yaml
+      - run: pnpm --dir '${{ github.workspace }}/grokbot' install --frozen-lockfile
+      - run: pnpm --dir '${{ github.workspace }}/grokbot' db:generate
         env:
           DATABASE_URL: postgres://rakazo:rakazo@127.0.0.1:5433/rakazo
-      - run: pnpm check
+      - run: pnpm --dir '${{ github.workspace }}/grokbot' check
 
   build:
     name: Production builds
@@ -54,18 +60,21 @@ jobs:
         with:
           persist-credentials: false
       - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: grokbot/package.json
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm build
+          cache-dependency-path: grokbot/pnpm-lock.yaml
+      - run: pnpm --dir '${{ github.workspace }}/grokbot' install --frozen-lockfile
+      - run: pnpm --dir '${{ github.workspace }}/grokbot' build
         env:
           DATABASE_URL: postgres://rakazo:rakazo@127.0.0.1:5433/rakazo
           BETTER_AUTH_SECRET: ci-build-auth-secret-at-least-32-characters
           ENCRYPTION_KEY: ci-build-encryption-key-at-least-32-characters
       - name: Electron smoke
-        run: xvfb-run --auto-servernum pnpm --filter @rakazo/desktop exec playwright test --config e2e/playwright.config.ts
+        run: xvfb-run --auto-servernum pnpm --dir '${{ github.workspace }}/grokbot' --filter @rakazo/desktop exec playwright test --config e2e/playwright.config.ts
       - name: Upload desktop setup screenshots
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -82,15 +91,18 @@ jobs:
         with:
           persist-credentials: false
       - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: grokbot/package.json
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm db:generate
+          cache-dependency-path: grokbot/pnpm-lock.yaml
+      - run: pnpm --dir '${{ github.workspace }}/grokbot' install --frozen-lockfile
+      - run: pnpm --dir '${{ github.workspace }}/grokbot' db:generate
         env:
           DATABASE_URL: postgres://rakazo:rakazo@127.0.0.1:5433/rakazo
-      - run: pnpm test
+      - run: pnpm --dir '${{ github.workspace }}/grokbot' test
 
   test-integration:
     name: Postgres journeys
@@ -101,12 +113,15 @@ jobs:
         with:
           persist-credentials: false
       - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: grokbot/package.json
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm test:integration
+          cache-dependency-path: grokbot/pnpm-lock.yaml
+      - run: pnpm --dir '${{ github.workspace }}/grokbot' install --frozen-lockfile
+      - run: pnpm --dir '${{ github.workspace }}/grokbot' test:integration
 
   test-e2e:
     name: Web E2E
@@ -151,11 +166,11 @@ jobs:
             git diff --name-only "$base" "$GITHUB_SHA" -- \
               .github/workflows/ci.yml \
               grokbot/apps/mobile \
-              package.json \
+              grokbot/package.json \
               grokbot/packages/chat-ui \
               grokbot/packages/contracts \
               grokbot/packages/core \
-              pnpm-lock.yaml
+              grokbot/pnpm-lock.yaml
           )
 
           publish=false
@@ -226,12 +241,15 @@ jobs:
           fi
 
       - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          package_json_file: grokbot/package.json
         if: steps.ota.outputs.publish == 'true'
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         if: steps.ota.outputs.publish == 'true'
         with:
           node-version: 24
           cache: pnpm
+          cache-dependency-path: grokbot/pnpm-lock.yaml
       - name: Set up Expo
         if: steps.ota.outputs.publish == 'true'
         uses: expo/expo-github-action@eab7a230208c952974db8c3245cfd78402c7b385 # v9
@@ -241,10 +259,10 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
       - name: Install dependencies
         if: steps.ota.outputs.publish == 'true'
-        run: pnpm install --frozen-lockfile
+        run: pnpm --dir '${{ github.workspace }}/grokbot' install --frozen-lockfile
       - name: Verify mobile project
         if: steps.ota.outputs.publish == 'true'
-        run: pnpm --filter @rakazo/mobile check
+        run: pnpm --dir '${{ github.workspace }}/grokbot' --filter @rakazo/mobile check
       - name: Publish production update
         if: steps.ota.outputs.publish == 'true'
         working-directory: grokbot/apps/mobile

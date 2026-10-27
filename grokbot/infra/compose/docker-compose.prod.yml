@@ -39,7 +39,7 @@ services:
     command:
       - bash
       - -lc
-      - pnpm --filter @rakazo/db exec prisma migrate deploy && pnpm --filter @rakazo/api start
+      - pnpm --dir grokbot --filter @rakazo/db exec prisma migrate deploy && pnpm --dir grokbot --filter @rakazo/api start
     init: true
     security_opt:
       - no-new-privileges:true

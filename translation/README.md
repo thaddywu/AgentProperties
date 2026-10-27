@@ -5,8 +5,8 @@ One real LLM invocation translates the entire Markdown policy set directly into 
 Use the workspace's supported Node version and pnpm. From the repository root:
 
 ```bash
-pnpm install --frozen-lockfile
-pnpm policy:translate apps/nova --connection /path/to/private-models-connect.json
+pnpm --dir grokbot install --frozen-lockfile
+pnpm --dir grokbot policy:translate apps/nova --connection /path/to/private-models-connect.json
 ```
 
 The private connection file uses the existing `ModelConnectInputSchema` / models/connect format: `provider`, `modelId`, `apiKey`, and, for `openai-compatible`, `baseUrl`; optional `maxTokens`, `thinkingLevel`, `reasoning`, `contextWindow`. Keep it outside the public repository. API credentials are passed to the existing Pi adapter, never written to experiment metadata. This CLI does not read credentials from another application's authentication files or from the encrypted product database.
@@ -20,8 +20,8 @@ Output is JSON with a `policies` array of `{ id, datalog, notes }`. Every source
 Reference rules are imported only after generation, for a small set of local-store probes comparing observable results. Compilation or matching those probes does not prove equivalence. Payload isolation, atomic delivery and end-to-end runtime behavior are not tested by this prototype. Model runtime transport retry defaults are inherited; there is no semantic repair or second translation attempt.
 
 ```bash
-pnpm test translation/src grokbot/packages/adapters/src/policy-translation.test.ts
-pnpm --filter @rakazo/policy-translation check
+pnpm --dir grokbot test translation/src grokbot/packages/adapters/src/policy-translation.test.ts
+pnpm --dir grokbot --filter @rakazo/policy-translation check
 ```
 
 Ordinary tests are offline and use synthetic model output. They are not translation experiment results.

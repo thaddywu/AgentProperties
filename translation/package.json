@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "check": "tsc --noEmit -p tsconfig.json",
-    "test": "pnpm --workspace-root test translation/src"
+    "test": "pnpm --dir ../grokbot test translation/src",
+    "lint": "biome check .",
+    "format": "biome check --write ."
   },
   "dependencies": {
     "@rakazo/adapters": "workspace:*",
@@ -13,5 +15,12 @@
     "@rakazo/nova": "workspace:*",
     "@rakazo/policy-runtime": "workspace:*",
     "@rakazo/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "typescript": "7.0.2",
+    "vitest": "4.1.11",
+    "tsx": "4.23.13",
+    "@biomejs/biome": "2.5.13"
   }
 }

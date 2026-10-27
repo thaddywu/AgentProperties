@@ -12,6 +12,14 @@
   },
   "scripts": {
     "check": "tsc --noEmit -p tsconfig.json",
-    "test": "pnpm --workspace-root test runtime"
+    "test": "pnpm --dir ../grokbot test runtime",
+    "lint": "biome check .",
+    "format": "biome check --write ."
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "typescript": "7.0.2",
+    "vitest": "4.1.11",
+    "@biomejs/biome": "2.5.13"
   }
 }

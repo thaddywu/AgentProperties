@@ -68,7 +68,7 @@ services:
     command:
       - bash
       - -lc
-      - pnpm --filter @rakazo/db exec prisma migrate deploy && pnpm --filter @rakazo/api start
+      - pnpm --dir grokbot --filter @rakazo/db exec prisma migrate deploy && pnpm --dir grokbot --filter @rakazo/api start
     environment: &app-environment
       NODE_ENV: production
       DATABASE_URL: postgres://rakazo:topology-only-password@postgres:5432/rakazo

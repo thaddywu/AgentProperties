@@ -64,7 +64,7 @@ services:
     build:
       context: ../../..
       dockerfile: grokbot/infra/compose/Dockerfile
-    command: ["bash", "-lc", "pnpm --filter @rakazo/db exec prisma migrate deploy && pnpm --filter @rakazo/api start"]
+    command: ["bash", "-lc", "pnpm --dir grokbot --filter @rakazo/db exec prisma migrate deploy && pnpm --dir grokbot --filter @rakazo/api start"]
     env_file:
       - ../../../.env
     environment:

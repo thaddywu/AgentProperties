@@ -5,9 +5,9 @@
 From the repository root, install workspace dependencies and provide Soufflé 2.5 plus Linux `prlimit` on PATH:
 
 ```bash
-pnpm --filter @rakazo/nova start
-pnpm --filter @rakazo/nova test
-pnpm policy:translate apps/nova --connection /path/to/private-connection.json
+pnpm --dir grokbot --filter @rakazo/nova start
+pnpm --dir grokbot --filter @rakazo/nova test
+pnpm --dir grokbot policy:translate apps/nova --connection /path/to/private-connection.json
 ./apps/nova/run.sh
 ```
 
@@ -29,7 +29,7 @@ From the repository root:
 
 The background container keeps running after the terminal closes. Restart preserves the checkpoint in the `nova-reasoning-state` volume; New/Earlier/Denial explicitly reset the example state. `NOVA_PORT`, `NOVA_CONTAINER`, `NOVA_STATE_VOLUME` and `NOVA_IMAGE` select an isolated instance. The root launcher also supports `test`, `check` and `build`.
 
-Without Docker, install Soufflé 2.5 and Linux `prlimit`, then run `pnpm --filter @rakazo/web exec vite --config vite.nova.config.ts`. Set `NOVA_STATE_FILE` to persist local state. No LLM, database or episode file is needed for Nova execution.
+Without Docker, install Soufflé 2.5 and Linux `prlimit`, then run `pnpm --dir grokbot --filter @rakazo/web exec vite --config vite.nova.config.ts`. Set `NOVA_STATE_FILE` to persist local state. No LLM, database or episode file is needed for Nova execution.
 
 ## Execution and analysis
 

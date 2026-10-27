@@ -187,12 +187,25 @@ function performanceEnvironment(databaseUrl: string): NodeJS.ProcessEnv {
 }
 
 function buildProductionArtifacts(env: NodeJS.ProcessEnv) {
-  run("pnpm", ["--filter", "@rakazo/desktop", "pack:dir"], env);
+  run("pnpm", ["--dir", path.resolve("grokbot"), "--filter", "@rakazo/desktop", "pack:dir"], env);
 }
 
 function migrateDatabase(env: NodeJS.ProcessEnv) {
-  run("pnpm", ["--filter", "@rakazo/db", "generate"], env);
-  run("pnpm", ["--filter", "@rakazo/db", "exec", "prisma", "migrate", "deploy"], env);
+  run("pnpm", ["--dir", path.resolve("grokbot"), "--filter", "@rakazo/db", "generate"], env);
+  run(
+    "pnpm",
+    [
+      "--dir",
+      path.resolve("grokbot"),
+      "--filter",
+      "@rakazo/db",
+      "exec",
+      "prisma",
+      "migrate",
+      "deploy",
+    ],
+    env,
+  );
 }
 
 function run(command: string, args: string[], env: NodeJS.ProcessEnv) {
@@ -203,6 +216,8 @@ function startPreview(env: NodeJS.ProcessEnv) {
   return spawn(
     "pnpm",
     [
+      "--dir",
+      path.resolve("grokbot"),
       "--filter",
       "@rakazo/web",
       "exec",
@@ -317,7 +332,7 @@ async function seedBenchmarkThread(prisma: PrismaClient) {
             "- Measure before changing the hot path",
             "- Verify the result with deterministic tests",
             "",
-            "`pnpm check && pnpm test`",
+            "`pnpm --dir grokbot check && pnpm --dir grokbot test`",
           ].join("\n");
     await createThreadMessage(prisma, { threadId, role, blocks: [{ kind: "text", text }] });
   }

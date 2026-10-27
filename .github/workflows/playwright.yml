@@ -61,20 +61,23 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: grokbot/package.json
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
+          cache-dependency-path: grokbot/pnpm-lock.yaml
+      - run: pnpm --dir '${{ github.workspace }}/grokbot' install --frozen-lockfile
       - uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-playwright-${{ hashFiles('grokbot/pnpm-lock.yaml') }}
       - name: Install Chromium
         timeout-minutes: 5
         # Skip --with-deps: GitHub ubuntu-latest already has Chromium's OS libraries,
         # and apt-get against azure.archive.ubuntu.com can stall until the job timeout.
-        run: pnpm --filter @rakazo/web exec playwright install chromium
+        run: pnpm --dir '${{ github.workspace }}/grokbot' --filter @rakazo/web exec playwright install chromium
       - name: Validate E2B credentials
         if: inputs.sandbox_provider == 'e2b'
         env:
@@ -97,13 +100,13 @@ jobs:
           E2B_API_KEY: ${{ inputs.sandbox_provider == 'e2b' && secrets.E2B_API_KEY || '' }}
           DAYTONA_API_KEY: ${{ inputs.sandbox_provider == 'daytona' && secrets.DAYTONA_API_KEY || '' }}
           BOX_API_KEY: ${{ inputs.sandbox_provider == 'box' && secrets.BOX_API_KEY || '' }}
-        run: pnpm test:e2e -- --sandbox="$SANDBOX_TEST_PROVIDER"
+        run: pnpm --dir '${{ github.workspace }}/grokbot' test:e2e -- --sandbox="$SANDBOX_TEST_PROVIDER"
       # Marketing homepage only: separate config so product chromium does not start Astro.
       # Runs after product e2e so shared grokbot/apps/web/test-results is not wiped by the product run.
       - name: Run marketing homepage E2E
         id: www_playwright_tests
         if: always() && (steps.playwright_tests.outcome == 'success' || steps.playwright_tests.outcome == 'failure')
-        run: pnpm --filter @rakazo/www e2e
+        run: pnpm --dir '${{ github.workspace }}/grokbot' --filter @rakazo/www e2e
       - name: Record Playwright result
         if: always() && inputs.upload_artifacts
         env:

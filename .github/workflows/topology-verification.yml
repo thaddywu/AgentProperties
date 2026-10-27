@@ -16,11 +16,14 @@ jobs:
         with:
           persist-credentials: false
       - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          package_json_file: grokbot/package.json
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm test:topology
+          cache-dependency-path: grokbot/pnpm-lock.yaml
+      - run: pnpm --dir '${{ github.workspace }}/grokbot' install --frozen-lockfile
+      - run: pnpm --dir '${{ github.workspace }}/grokbot' test:topology
       - name: Replay computer tools against real Chromium without inference
-        run: pnpm test:computer-replay --image=rakazo/computer:topology
+        run: pnpm --dir '${{ github.workspace }}/grokbot' test:computer-replay --image=rakazo/computer:topology

@@ -1,5 +1,5 @@
 # Optional overlay: publish Postgres on loopback for host-side clients
-# (pnpm db:migrate, GUI tools, `pnpm dev` with API on the host).
+# (pnpm --dir grokbot db:migrate, GUI tools, `pnpm --dir grokbot dev` with API on the host).
 # Default source-checkout compose keeps Postgres network-internal only, matching
 # the images compose, so bot containers cannot reach it via host.docker.internal.
 #

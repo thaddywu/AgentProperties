@@ -23,13 +23,13 @@ async function main() {
   });
   if (values.help) {
     console.log(
-      "pnpm policy:translate apps/nova --connection <private-models-connect.json>\nOr --provider <id> --model <id> --api-key-env <variable> [--base-url <url>]\nOutputs go to ignored translation/output/nova/<run-id>/; the app is not modified.",
+      "pnpm --dir grokbot policy:translate apps/nova --connection <private-models-connect.json>\nOr --provider <id> --model <id> --api-key-env <variable> [--base-url <url>]\nOutputs go to ignored translation/output/nova/<run-id>/; the app is not modified.",
     );
     return;
   }
   if (positionals.length !== 1)
     throw new Error(
-      "Usage: pnpm policy:translate apps/nova --connection <private-models-connect.json>",
+      "Usage: pnpm --dir grokbot policy:translate apps/nova --connection <private-models-connect.json>",
     );
   const documents = await loadApplication(resolve(positionals[0]!));
   loadRootEnv();
@@ -85,7 +85,7 @@ async function main() {
     generate: async (prompt, record) => {
       if (!connection)
         throw new Error(
-          "Missing model configuration. Run pnpm policy:translate apps/nova --connection <private-models-connect.json>, or supply --provider --model --api-key-env [--base-url]. No model was called.",
+          "Missing model configuration. Run pnpm --dir grokbot policy:translate apps/nova --connection <private-models-connect.json>, or supply --provider --model --api-key-env [--base-url]. No model was called.",
         );
       // Defer the existing provider stack until input/config checks pass; no Prisma/database is required.
       const {

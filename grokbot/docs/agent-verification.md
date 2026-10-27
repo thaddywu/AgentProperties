@@ -6,13 +6,13 @@ model can demonstrate that it chooses a useful action for a natural request.
 
 | Layer | Real components | Stand-ins | Command |
 | --- | --- | --- | --- |
-| Existing fast tests | Product functions and contracts | Scripted agent, services, sandbox | `pnpm test` |
-| Pi protocol regressions | Pi agent loop, HTTP/SSE parsing, tool dispatch | Loopback model endpoint, tool effects | `pnpm test:pi` |
-| Pi product journey | API, saved model connection, Postgres, executor, Pi | Model endpoint, sandbox, connectors | `pnpm test:integration` |
-| Computer replay | Pi, browser tool handlers, page state | Model endpoint, browser and sandbox | `pnpm test` |
-| Docker computer replay | Pi, supervisor, Chromium, page helper, downloads and files | Model endpoint, local fixture website | `pnpm test:computer-replay` |
-| Agent quality | Product API, Postgres, executor, Pi, real model | Sandbox and connected services | `pnpm test:evals --live ...` |
-| Vision acceptance | Product API, Pi, real vision model, Box or E2B desktop | Fixture website | `pnpm test:computer` |
+| Existing fast tests | Product functions and contracts | Scripted agent, services, sandbox | `pnpm --dir grokbot test` |
+| Pi protocol regressions | Pi agent loop, HTTP/SSE parsing, tool dispatch | Loopback model endpoint, tool effects | `pnpm --dir grokbot test:pi` |
+| Pi product journey | API, saved model connection, Postgres, executor, Pi | Model endpoint, sandbox, connectors | `pnpm --dir grokbot test:integration` |
+| Computer replay | Pi, browser tool handlers, page state | Model endpoint, browser and sandbox | `pnpm --dir grokbot test` |
+| Docker computer replay | Pi, supervisor, Chromium, page helper, downloads and files | Model endpoint, local fixture website | `pnpm --dir grokbot test:computer-replay` |
+| Agent quality | Product API, Postgres, executor, Pi, real model | Sandbox and connected services | `pnpm --dir grokbot test:evals --live ...` |
+| Vision acceptance | Product API, Pi, real vision model, Box or E2B desktop | Fixture website | `pnpm --dir grokbot test:computer` |
 
 Default and PR tests never require paid inference. Nightly runs only the web
 tests with emulated providers. Docker topology and browser replay have a manual
@@ -49,12 +49,12 @@ Pi's image-omission behavior is checked explicitly. Vision interpretation is
 covered by the separate real-model acceptance test.
 
 ```bash
-pnpm sandbox:build
-pnpm test:computer-replay
+pnpm --dir grokbot sandbox:build
+pnpm --dir grokbot test:computer-replay
 # Or use an already built image:
-pnpm test:computer-replay --image=rakazo/computer:local
+pnpm --dir grokbot test:computer-replay --image=rakazo/computer:local
 # If Docker has exhausted its automatic address pools, choose an unused subnet:
-pnpm test:computer-replay --subnet=<unused-private-cidr>
+pnpm --dir grokbot test:computer-replay --subnet=<unused-private-cidr>
 ```
 
 Docker replay does not open Electron windows, use model credentials, or attach
@@ -74,7 +74,7 @@ To capture another successful run manually:
 
 ```bash
 # Requires OPENROUTER_API_KEY; incurs inference usage, with a local Docker sandbox.
-pnpm test:computer-replay --image=rakazo/computer:local \
+pnpm --dir grokbot test:computer-replay --image=rakazo/computer:local \
   --live --record=new-fixture.json
 ```
 
@@ -96,9 +96,9 @@ it does not measure the live model's reliability.
 Run a vision-capable model through OpenRouter against a real Box desktop:
 
 ```bash
-COMPUTER_E2E_MODEL=openai/gpt-5.6-luna pnpm test:computer
+COMPUTER_E2E_MODEL=openai/gpt-5.6-luna pnpm --dir grokbot test:computer
 # Run the same checks against E2B when provider-specific verification is needed:
-COMPUTER_E2E_MODEL=openai/gpt-5.6-luna pnpm test:computer --sandbox e2b
+COMPUTER_E2E_MODEL=openai/gpt-5.6-luna pnpm --dir grokbot test:computer --sandbox e2b
 ```
 
 Box is the default regardless of the application's sandbox setting. This opt-in
@@ -119,14 +119,14 @@ remain separate. Live runs retain error logs to diagnose provider failures.
 List the cases without inference:
 
 ```bash
-pnpm test:evals --list
+pnpm --dir grokbot test:evals --list
 ```
 
 Run through a normal provider connection, referring to an existing credential
 variable rather than placing a key on the command line:
 
 ```bash
-pnpm test:evals --live --provider openrouter --model <model-id> \
+pnpm --dir grokbot test:evals --live --provider openrouter --model <model-id> \
   --api-key-env OPENROUTER_API_KEY --trials 3
 ```
 

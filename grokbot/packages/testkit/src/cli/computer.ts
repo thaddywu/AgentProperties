@@ -41,18 +41,36 @@ async function main() {
     SIGNUP_ALLOWLIST: "",
   };
   try {
-    execFileSync("pnpm", ["--filter", "@rakazo/db", "generate"], {
+    execFileSync("pnpm", ["--dir", path.resolve("grokbot"), "--filter", "@rakazo/db", "generate"], {
       stdio: "inherit",
       env,
     });
-    execFileSync("pnpm", ["--filter", "@rakazo/db", "exec", "prisma", "migrate", "deploy"], {
-      stdio: "inherit",
-      env,
-      cwd: path.resolve("grokbot/packages/db"),
-    });
+    execFileSync(
+      "pnpm",
+      [
+        "--dir",
+        path.resolve("grokbot"),
+        "--filter",
+        "@rakazo/db",
+        "exec",
+        "prisma",
+        "migrate",
+        "deploy",
+      ],
+      {
+        stdio: "inherit",
+        env,
+        cwd: path.resolve("."),
+      },
+    );
     await runProcess(
       "pnpm",
-      ["test", "grokbot/packages/testkit/src/computer-use.e2e.test.ts"],
+      [
+        "--dir",
+        path.resolve("grokbot"),
+        "test",
+        "grokbot/packages/testkit/src/computer-use.e2e.test.ts",
+      ],
       env,
     );
   } finally {

@@ -130,14 +130,27 @@ async function main() {
       CLOUD_AGENT_PROVIDER: "",
       MODEL_API_KEY: "",
     });
-    execFileSync("pnpm", ["--filter", "@rakazo/db", "generate"], {
+    execFileSync("pnpm", ["--dir", path.resolve("grokbot"), "--filter", "@rakazo/db", "generate"], {
       stdio: "pipe",
       timeout: 120_000,
     });
-    execFileSync("pnpm", ["--filter", "@rakazo/db", "exec", "prisma", "migrate", "deploy"], {
-      stdio: "pipe",
-      timeout: 120_000,
-    });
+    execFileSync(
+      "pnpm",
+      [
+        "--dir",
+        path.resolve("grokbot"),
+        "--filter",
+        "@rakazo/db",
+        "exec",
+        "prisma",
+        "migrate",
+        "deploy",
+      ],
+      {
+        stdio: "pipe",
+        timeout: 120_000,
+      },
+    );
     // Import runtime modules only after generation; their barrel exports load Prisma.
     const { createApp } = await import("../../../../apps/api/src/app.ts");
     const { runTrial } = await import("../evals/runner.js");
