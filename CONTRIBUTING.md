@@ -4,7 +4,7 @@ Thanks for helping improve Rakazo. Keep changes focused and testable.
 
 ## Run locally
 
-Follow the [source checkout setup](README.md#local-development-source-checkout) for prerequisites,
+Follow the [source checkout setup](docs/self-host.md#local-source-checkout) for prerequisites,
 required secrets, and startup commands.
 
 ## Checks before you open a PR
