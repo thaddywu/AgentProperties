@@ -25,7 +25,7 @@ translation/             One-shot natural-language-to-Datalog research prototype
 docs/                    Repository design and research documents
 ```
 
-The root has five source/documentation directories and seven visible files: `README.md`, `LICENSE`, `AGENTS.md`, `CLAUDE.md`, `package.json`, `pnpm-workspace.yaml` and `pnpm-lock.yaml`. The three pnpm files keep dependency installation and workspace commands at the repository root. Git/tool dotfiles remain where their tools discover them; `node_modules/` is ignored installation output.
+The root has five source/documentation directories and seven visible files: `README.md`, `LICENSE`, `AGENTS.md`, `CLAUDE.md`, `package.json`, `pnpm-workspace.yaml` and `pnpm-lock.yaml`. The three pnpm files keep dependency installation and workspace commands at the repository root. Four tracked dotfiles remain: `.gitignore` excludes local state and secrets, `.gitattributes` controls line endings/binary handling, `.dockerignore` filters the root Docker build context, and `.npmrc` configures workspace installation. `node_modules/` is ignored installation output. The inherited CodeRabbit configuration has been removed; repository configuration does not manage any externally installed review bot.
 
 Build/test/formatter configuration lives in `grokbot/config/`, shared TypeScript settings in `runtime/tsconfig.base.json`, the host environment template in `grokbot/.env.example`, contribution/security guidance in `.github/`, and skill metadata in `.agents/`. Run `./apps/nova/run.sh` for the UI. `pnpm test`, `pnpm check`, `pnpm lint` and package-level test commands select the relocated configurations explicitly.
 
