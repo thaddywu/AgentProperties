@@ -16,9 +16,10 @@ RUN apt-get update \
 WORKDIR /app
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
 COPY patches patches
-COPY packages/contracts packages/contracts
-COPY packages/core packages/core
-COPY packages/logging packages/logging
+COPY grokbot/packages/contracts grokbot/packages/contracts
+COPY grokbot/packages/core grokbot/packages/core
+COPY runtime runtime
+COPY grokbot/packages/logging grokbot/packages/logging
 COPY infra/updater infra/updater
 RUN corepack enable && pnpm install --frozen-lockfile --prod --filter "@rakazo/updater..."
 WORKDIR /app/infra/updater

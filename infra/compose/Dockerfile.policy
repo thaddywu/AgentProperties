@@ -1,16 +1,17 @@
-# Use a published image matching the source checkout; dependencies remain unchanged.
-ARG BASE_IMAGE=ghcr.io/elie222/rakazo/app:edge
-FROM ${BASE_IMAGE}
-USER root
+# Build the policy host from this checkout so workspace links match the source layout.
+FROM node:22-bookworm@sha256:0557ac14e0d45d02ed563067b82856ca5e7aa3437fa28d98d4350ea9c3d9494a
+RUN corepack enable
 WORKDIR /app
-ENV RAYON_NUM_THREADS=4 TOKIO_WORKER_THREADS=4
-COPY packages/adapter-kit/src/ packages/adapter-kit/src/
-COPY packages/adapters/src/ packages/adapters/src/
-COPY packages/contracts/src/ packages/contracts/src/
-COPY packages/core/src/ packages/core/src/
-COPY packages/db/prisma/ packages/db/prisma/
-COPY packages/db/src/messages.ts packages/db/src/messages.ts
-COPY apps/api/src/ apps/api/src/
-COPY apps/web/src/ apps/web/src/
-RUN pnpm --filter @rakazo/db generate && pnpm --filter @rakazo/web build
+# Normalize modes: a restrictive host umask (e.g. 077 on hardened hosts) would otherwise
+# leave the copied tree unreadable to USER node at runtime.
+COPY --chmod=755 . .
+RUN pnpm install --frozen-lockfile
+RUN pnpm --filter @rakazo/db generate
+RUN RAKAZO_ALLOW_DEV_SECRETS=1 pnpm --filter @rakazo/web build
+RUN install -d -m 750 -o node -g node /data /app/grokbot/apps/web/node_modules/.vite-temp
+ARG GIT_SHA
+ENV NODE_ENV=production
+ENV GIT_SHA=$GIT_SHA
+EXPOSE 3100 5173 7091
 USER node
+CMD ["pnpm", "--filter", "@rakazo/api", "start"]

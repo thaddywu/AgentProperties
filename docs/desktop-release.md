@@ -43,7 +43,7 @@ gh secret set APPLE_API_KEY_P8 < AuthKey_XXXXXXXXXX.p8
 
 ## Cut a release
 
-1. Bump `version` in `apps/desktop/package.json` on `main`.
+1. Bump `version` in `grokbot/apps/desktop/package.json` on `main`.
 2. Tag that commit `v<version>` and push the tag:
 
 ```sh

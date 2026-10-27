@@ -16,7 +16,7 @@ set -euo pipefail
 : "${PLAYWRIGHT_BRANCH:?PLAYWRIGHT_BRANCH is required}"
 
 report_dir="${PLAYWRIGHT_REPORT_DIR:-playwright-report}"
-test_results_dir="${PLAYWRIGHT_TEST_RESULTS_DIR:-apps/web/test-results}"
+test_results_dir="${PLAYWRIGHT_TEST_RESULTS_DIR:-grokbot/apps/web/test-results}"
 publish_report="${PLAYWRIGHT_PUBLISH_REPORT:-true}"
 
 if [[ "$publish_report" != "true" && "$publish_report" != "false" ]]; then
@@ -174,7 +174,7 @@ PLAYWRIGHT_SCREENSHOTS_URL="$screenshots_url" \
 PLAYWRIGHT_DASHBOARD_URL="$public_base_url/index.html" \
 PLAYWRIGHT_PR_URL="$pull_request_url" \
   pnpm exec tsx \
-    packages/testkit/src/cli/generate-playwright-report-dashboard.ts \
+    grokbot/packages/testkit/src/cli/generate-playwright-report-dashboard.ts \
     "$history_path" \
     "$dashboard_path" \
     "$test_results_dir" \

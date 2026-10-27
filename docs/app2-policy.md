@@ -47,7 +47,7 @@ A model computation has a 60-second timeout inside a 75-second transaction. Sess
 
 ## Rules
 
-The executable AST is in `packages/core/src/policy/datalog.ts`. Its evaluator is finite, function-free, and stratified. These rules omit the diagnostic rule-name argument on Deny for readability:
+The executable AST is in `grokbot/packages/core/src/policy/datalog.ts`. Its evaluator is finite, function-free, and stratified. These rules omit the diagnostic rule-name argument on Deny for readability:
 
 ```prolog
 Carries(Y,P,C) :- DerivedFrom(Y,X), Carries(X,P,C).

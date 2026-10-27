@@ -3,12 +3,19 @@ set -euo pipefail
 nova_root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$nova_root"
 # Native Soufflé is pinned in Dockerfile.nova; evaluations run locally.
-nova_image="${NOVA_IMAGE:-rakazo:nova-souffle}"
+nova_image="${NOVA_IMAGE:-rakazo:nova-layout}"
 nova_port="${NOVA_PORT:-5180}"
 nova_container="${NOVA_CONTAINER:-nova-reasoning-demo}"
 nova_volume="${NOVA_STATE_VOLUME:-nova-reasoning-state}"
 mode="${1:-restart}"
-mounts=(--volume "$nova_root/packages/core/package.json:/app/packages/core/package.json:ro" --volume "$nova_root/packages/core/src:/app/packages/core/src" --volume "$nova_root/apps/web/src:/app/apps/web/src" --volume "$nova_root/apps/web/nova.html:/app/apps/web/nova.html:ro" --volume "$nova_root/apps/web/vite.nova.config.ts:/app/apps/web/vite.nova.config.ts:ro")
+mounts=(
+  --volume "$nova_root/grokbot/packages/core/src:/app/grokbot/packages/core/src"
+  --volume "$nova_root/grokbot/apps/web/src:/app/grokbot/apps/web/src"
+  --volume "$nova_root/grokbot/apps/web/nova.html:/app/grokbot/apps/web/nova.html:ro"
+  --volume "$nova_root/grokbot/apps/web/vite.nova.config.ts:/app/grokbot/apps/web/vite.nova.config.ts:ro"
+  --volume "$nova_root/apps/nova/src:/app/apps/nova/src"
+  --volume "$nova_root/runtime/src:/app/runtime/src"
+)
 health() {
   docker exec -i "$nova_container" node --input-type=module <<'JS'
 const base = "http://127.0.0.1:5180";
@@ -36,9 +43,9 @@ JS
 }
 case "$mode" in
   setup) exec docker build -t "$nova_image" -f infra/compose/Dockerfile.nova . ;;
-  test) exec docker run --rm --network none --user 0 "${mounts[@]}" "$nova_image" /app/node_modules/.bin/vitest run packages/core/src/policy/reasoning packages/core/src/policy/query.test.ts packages/core/src/policy/protocol.test.ts ;;
-  check) exec docker run --rm --network none --user 0 "${mounts[@]}" "$nova_image" /app/node_modules/.bin/tsc --noEmit -p /app/apps/web/tsconfig.json ;;
-  build) exec docker run --rm --network none --user 0 "${mounts[@]}" --workdir /app/apps/web "$nova_image" /app/apps/web/node_modules/.bin/vite build --config vite.nova.config.ts ;;
+  test) exec docker run --rm --network none --user 0 "${mounts[@]}" "$nova_image" /app/node_modules/.bin/vitest run apps/nova/tests runtime/tests grokbot/packages/core/src/policy/query.test.ts grokbot/packages/core/src/policy/protocol.test.ts ;;
+  check) exec docker run --rm --network none --user 0 "${mounts[@]}" "$nova_image" /app/node_modules/.bin/tsc --noEmit -p /app/grokbot/apps/web/tsconfig.json ;;
+  build) exec docker run --rm --network none --user 0 "${mounts[@]}" --workdir /app/grokbot/apps/web "$nova_image" /app/grokbot/apps/web/node_modules/.bin/vite build --config vite.nova.config.ts ;;
   logs) exec docker logs --tail 80 --follow "$nova_container" ;;
   status)
     docker inspect --format 'Container: {{.Name}} | status: {{.State.Status}} | started: {{.State.StartedAt}}' "$nova_container"
@@ -67,8 +74,8 @@ case "$mode" in
     echo "[3/4] Starting frontend + policy worker on port $nova_port..."
     if ! docker run --detach --init --restart unless-stopped --user 0 --name "$nova_container" \
       --volume "$nova_volume:/nova-state" --env NOVA_STATE_FILE=/nova-state/runtime.json \
-      -p "127.0.0.1:$nova_port:5180" "${mounts[@]}" --workdir /app/apps/web \
-      "$nova_image" /app/apps/web/node_modules/.bin/vite --config vite.nova.config.ts --host 0.0.0.0 >/dev/null; then
+      -p "127.0.0.1:$nova_port:5180" "${mounts[@]}" --workdir /app/grokbot/apps/web \
+      "$nova_image" /app/grokbot/apps/web/node_modules/.bin/vite --config vite.nova.config.ts --host 0.0.0.0 >/dev/null; then
       echo 'Startup failed. Check the Docker error above (for example, a port conflict).' >&2
       exit 1
     fi

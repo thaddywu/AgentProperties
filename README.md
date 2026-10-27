@@ -1,9 +1,16 @@
-# Policy and Nova workspace
+# Policy workspace
 
-This branch contains our Rakazo-based Policy and Nova implementation. Start with
-[NOVA_DEMO.md](NOVA_DEMO.md) for launch commands and
-[main.tex](docs/research/main.tex) for the research specification.
-The earlier standalone two-app Relay frontend is on branch `archive-two-demo`.
+The code is organized by responsibility:
+
+- `grokbot/`: the existing host implementation, including web/Electron/mobile UI.
+- `apps/nova/`: Nova's application specification, policies, agents/tools, implementation and tests.
+- `runtime/`: shared Datalog evaluation, queries, native provenance and lifecycle relations.
+- `translation/`: the one-shot natural-language-to-Datalog prototype.
+
+Start with [repository boundaries](docs/repository-structure.md), [Nova](apps/nova/README.md),
+[translation usage](translation/README.md), and [the UI launcher](NOVA_DEMO.md).
+Run `./nova-demo.sh` from the repository root, or `pnpm --filter @rakazo/nova start`
+for the application without a UI. Workspace configuration, infrastructure and scripts remain here.
 
 # Rakazo
 
@@ -183,7 +190,7 @@ native Electron setup/menu remain separate follow-up work.
 
 ```text
 apps/       web, api, worker, desktop, mobile, and public website
-packages/   domain, contracts, persistence, adapters, UI, and test tooling
+grokbot/packages/   domain, contracts, persistence, adapters, UI, and test tooling
 infra/      local services and computer images
 docs/       architecture, operations, and release guides
 ```

@@ -4,14 +4,14 @@ on:
     branches: [main]
     paths: &desktop-setup-paths
       - ".github/workflows/desktop-macos-screenshot.yml"
-      - "apps/desktop/e2e/setup.spec.ts"
-      - "apps/desktop/package.json"
-      - "apps/desktop/assets/**"
-      - "packages/ui-tokens/assets/**"
-      - "apps/desktop/scripts/copy-static.mjs"
-      - "apps/desktop/src/setup*"
-      - "apps/desktop/src/window-options.ts"
-      - "packages/contracts/src/desktop.ts"
+      - "grokbot/apps/desktop/e2e/setup.spec.ts"
+      - "grokbot/apps/desktop/package.json"
+      - "grokbot/apps/desktop/assets/**"
+      - "grokbot/packages/ui-tokens/assets/**"
+      - "grokbot/apps/desktop/scripts/copy-static.mjs"
+      - "grokbot/apps/desktop/src/setup*"
+      - "grokbot/apps/desktop/src/window-options.ts"
+      - "grokbot/packages/contracts/src/desktop.ts"
   pull_request:
     paths: *desktop-setup-paths
 
@@ -42,12 +42,12 @@ jobs:
         run: |
           pnpm --filter @rakazo/web build
           CSC_IDENTITY_AUTO_DISCOVERY=false pnpm --filter @rakazo/desktop exec electron-builder --mac --dir --publish never -c.mac.identity=null -c.mac.notarize=false
-          xcrun assetutil --info apps/desktop/out/mac-arm64/Rakazo.app/Contents/Resources/Assets.car > "$RUNNER_TEMP/icon-assets.json"
+          xcrun assetutil --info grokbot/apps/desktop/out/mac-arm64/Rakazo.app/Contents/Resources/Assets.car > "$RUNNER_TEMP/icon-assets.json"
           jq -e 'any(.[]; .Name == "Icon" and .AssetType == "IconImageStack") and any(.[]; .Name == "Icon_Assets/orange-bot" and .AssetType == "Image")' "$RUNNER_TEMP/icon-assets.json"
-          iconutil -c iconset apps/desktop/out/mac-arm64/Rakazo.app/Contents/Resources/icon.icns -o "$RUNNER_TEMP/fallback.iconset"
+          iconutil -c iconset grokbot/apps/desktop/out/mac-arm64/Rakazo.app/Contents/Resources/icon.icns -o "$RUNNER_TEMP/fallback.iconset"
           sips -s format png "$RUNNER_TEMP/fallback.iconset/icon_128x128@2x.png" --out "$RUNNER_TEMP/fallback-decoded.png"
           test -s "$RUNNER_TEMP/fallback-decoded.png"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIconName' apps/desktop/out/mac-arm64/Rakazo.app/Contents/Info.plist)" = Icon
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIconName' grokbot/apps/desktop/out/mac-arm64/Rakazo.app/Contents/Info.plist)" = Icon
         env:
           RAKAZO_ALLOW_DEV_SECRETS: "1"
       - name: Capture packaged macOS setup window and Dock
@@ -63,7 +63,7 @@ jobs:
         with:
           name: desktop-e2e-macos-screenshot
           path: |
-            apps/desktop/e2e/screenshots/08-setup-macos-native-controls.png
-            apps/desktop/e2e/screenshots/09-macos-dock.png
+            grokbot/apps/desktop/e2e/screenshots/08-setup-macos-native-controls.png
+            grokbot/apps/desktop/e2e/screenshots/09-macos-dock.png
           if-no-files-found: error
           retention-days: 1

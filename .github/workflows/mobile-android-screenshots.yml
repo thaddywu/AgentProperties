@@ -43,8 +43,8 @@ jobs:
         id: screenshot-apk
         uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
         with:
-          path: apps/mobile/android/app/build/outputs/apk/release/app-release.apk
-          key: mobile-android-apk-v2-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'package.json', 'pnpm-workspace.yaml', 'turbo.json', 'tsconfig*.json', '.github/workflows/mobile-android-screenshots.yml', 'apps/mobile/package.json', 'apps/mobile/app.json', 'apps/mobile/app.config.ts', 'apps/mobile/metro.config.js', 'apps/mobile/metro-resolver.js', 'apps/mobile/assets/**', 'apps/mobile/app/**', 'apps/mobile/components/**', 'apps/mobile/lib/**', 'apps/mobile/modules/**', 'apps/mobile/plugins/**', 'packages/chat-ui/**', 'packages/contracts/**', 'packages/core/**', 'packages/ui-tokens/**') }}
+          path: grokbot/apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+          key: mobile-android-apk-v2-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'package.json', 'pnpm-workspace.yaml', 'turbo.json', 'tsconfig*.json', '.github/workflows/mobile-android-screenshots.yml', 'grokbot/apps/mobile/package.json', 'grokbot/apps/mobile/app.json', 'grokbot/apps/mobile/app.config.ts', 'grokbot/apps/mobile/metro.config.js', 'grokbot/apps/mobile/metro-resolver.js', 'grokbot/apps/mobile/assets/**', 'grokbot/apps/mobile/app/**', 'grokbot/apps/mobile/components/**', 'grokbot/apps/mobile/lib/**', 'grokbot/apps/mobile/modules/**', 'grokbot/apps/mobile/plugins/**', 'grokbot/packages/chat-ui/**', 'grokbot/packages/contracts/**', 'grokbot/packages/core/**', 'grokbot/packages/ui-tokens/**') }}
 
       - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
@@ -101,20 +101,20 @@ jobs:
         run: |
           pnpm --filter @rakazo/mobile exec expo prebuild --platform android --no-install
           sed -i 's/<application /<application android:usesCleartextTraffic="true" /' \
-            apps/mobile/android/app/src/main/AndroidManifest.xml
+            grokbot/apps/mobile/android/app/src/main/AndroidManifest.xml
           sed -i 's/MaxMetaspaceSize=512m/MaxMetaspaceSize=1g/' \
-            apps/mobile/android/gradle.properties
+            grokbot/apps/mobile/android/gradle.properties
 
       - name: Build screenshot APK
         if: steps.screenshot-apk.outputs.cache-hit != 'true'
-        working-directory: apps/mobile/android
+        working-directory: grokbot/apps/mobile/android
         run: ./gradlew app:packageRelease -PreactNativeArchitectures=x86_64 --no-daemon
 
       - name: Save screenshot APK
         if: steps.screenshot-apk.outputs.cache-hit != 'true'
         uses: actions/cache/save@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
         with:
-          path: apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+          path: grokbot/apps/mobile/android/app/build/outputs/apk/release/app-release.apk
           key: ${{ steps.screenshot-apk.outputs.cache-primary-key }}
 
       - name: Enable KVM

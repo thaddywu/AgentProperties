@@ -13,15 +13,16 @@
       "!**/build",
       "!**/coverage",
       "!**/design",
-      "!**/packages/db/src/generated",
-      "!**/apps/mobile/.expo",
+      "!**/grokbot/packages/db/src/generated",
+      "!**/grokbot/apps/mobile/.expo",
       "!**/playwright-report",
       "!**/test-results",
       "!**/test-report",
       "!**/verify-report",
       "!**/data",
       "!**/*.astro",
-      "!**/apps/www"
+      "!**/grokbot/apps/www",
+      "!**/translation-output"
     ]
   },
   "formatter": {
@@ -63,7 +64,10 @@
   },
   "overrides": [
     {
-      "includes": ["packages/ui-web/src/components/ui/**", "packages/ui-web/src/shadcn.css"],
+      "includes": [
+        "grokbot/packages/ui-web/src/components/ui/**",
+        "grokbot/packages/ui-web/src/shadcn.css"
+      ],
       "linter": {
         "rules": {
           "a11y": {
@@ -79,13 +83,13 @@
     },
     {
       "includes": [
-        "apps/api/**",
-        "apps/worker/**",
+        "grokbot/apps/api/**",
+        "grokbot/apps/worker/**",
         "infra/sandboxes/supervisor/**",
         "infra/updater/**",
-        "packages/adapters/**",
-        "packages/db/**",
-        "packages/logging/**"
+        "grokbot/packages/adapters/**",
+        "grokbot/packages/db/**",
+        "grokbot/packages/logging/**"
       ],
       "linter": {
         "rules": {
@@ -96,7 +100,10 @@
       }
     },
     {
-      "includes": ["packages/logging/src/console-sink.ts", "packages/logging/src/sink-guard.ts"],
+      "includes": [
+        "grokbot/packages/logging/src/console-sink.ts",
+        "grokbot/packages/logging/src/sink-guard.ts"
+      ],
       "linter": {
         "rules": {
           "suspicious": {

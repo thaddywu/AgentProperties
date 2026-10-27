@@ -47,7 +47,7 @@ jobs:
             exit 1
           fi
 
-          version="$(node -p "require('./apps/desktop/package.json').version")"
+          version="$(node -p "require('./grokbot/apps/desktop/package.json').version")"
           if [[ "$RELEASE_TAG" != "v$version" ]]; then
             echo "Tag $RELEASE_TAG does not match desktop version $version." >&2
             exit 1
@@ -166,7 +166,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          app="apps/desktop/out/mac-universal/Rakazo.app"
+          app="grokbot/apps/desktop/out/mac-universal/Rakazo.app"
           codesign --verify --deep --strict --verbose=2 "$app"
           xcrun stapler validate "$app"
           spctl --assess --type execute --verbose=2 "$app"
@@ -198,8 +198,8 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           $executables = @(
-            Get-ChildItem "apps/desktop/out/*.exe"
-            Get-ChildItem "apps/desktop/out/win-unpacked/*.exe"
+            Get-ChildItem "grokbot/apps/desktop/out/*.exe"
+            Get-ChildItem "grokbot/apps/desktop/out/win-unpacked/*.exe"
           )
           if ($executables.Count -lt 2) { throw "Windows installer or application was not created." }
           foreach ($executable in $executables) {
@@ -208,7 +208,7 @@ jobs:
               throw "$($executable.Name) signature is $($signature.Status)."
             }
           }
-          $config = "apps/desktop/out/win-unpacked/resources/app-update.yml"
+          $config = "grokbot/apps/desktop/out/win-unpacked/resources/app-update.yml"
           if (-not (Select-String -Path $config -Pattern '^publisherName:' -Quiet)) {
             throw "Windows update config is not bound to the signing publisher."
           }
@@ -231,29 +231,29 @@ jobs:
           RELEASE_VERSION: ${{ needs.validate.outputs.version }}
         run: |
           set -euo pipefail
-          config="apps/desktop/out/linux-unpacked/resources/app-update.yml"
+          config="grokbot/apps/desktop/out/linux-unpacked/resources/app-update.yml"
           if [[ ! -f "$config" ]]; then
-            config="$(find apps/desktop/out -name app-update.yml -print -quit)"
+            config="$(find grokbot/apps/desktop/out -name app-update.yml -print -quit)"
           fi
           test -n "$config"
           test -f "$config"
           grep -Fqx "provider: github" "$config"
           grep -Fqx "owner: elie222" "$config"
           grep -Fqx "repo: rakazo" "$config"
-          test -f apps/desktop/out/latest-linux.yml
-          grep -Fqx "version: $RELEASE_VERSION" apps/desktop/out/latest-linux.yml
+          test -f grokbot/apps/desktop/out/latest-linux.yml
+          grep -Fqx "version: $RELEASE_VERSION" grokbot/apps/desktop/out/latest-linux.yml
 
       - name: Retain installers and updater metadata
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: desktop-${{ matrix.artifact }}-${{ needs.validate.outputs.sha }}
           path: |
-            apps/desktop/out/*.AppImage
-            apps/desktop/out/*.blockmap
-            apps/desktop/out/*.dmg
-            apps/desktop/out/*.exe
-            apps/desktop/out/latest*.yml
-            apps/desktop/out/*.zip
+            grokbot/apps/desktop/out/*.AppImage
+            grokbot/apps/desktop/out/*.blockmap
+            grokbot/apps/desktop/out/*.dmg
+            grokbot/apps/desktop/out/*.exe
+            grokbot/apps/desktop/out/latest*.yml
+            grokbot/apps/desktop/out/*.zip
           if-no-files-found: error
           compression-level: 0
           retention-days: 7

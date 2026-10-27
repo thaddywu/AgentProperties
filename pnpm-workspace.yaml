@@ -1,5 +1,8 @@
 packages:
   - "apps/*"
-  - "packages/*"
+  - "grokbot/apps/*"
+  - "grokbot/packages/*"
+  - "runtime"
+  - "translation"
   - "infra/sandboxes/supervisor"
   - "infra/updater"

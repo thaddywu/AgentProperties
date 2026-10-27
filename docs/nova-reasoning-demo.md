@@ -9,8 +9,9 @@ entrypoint; it does not replace the native worker's existing policy protocol.
 
 ## Run
 
-Build the pinned Soufflé 2.5 image once, using the existing `rakazo:policy-local`
-image as its base. Setup downloads the official Linux x86_64 release and verifies
+Build the pinned Soufflé 2.5 image once from this checkout. The standalone image
+installs the Grokbot web/Nova workspaces and does not require a prebuilt policy-host
+image. Setup downloads the official Linux x86_64 release and verifies
 its SHA-512 checksum. The launcher mounts the current source:
 
 ```bash
@@ -38,7 +39,7 @@ With a supported Node version, workspace dependencies, Soufflé 2.5 and Linux
 `prlimit` installed, Docker is optional (set `NOVA_STATE_FILE` to persist state):
 
 ```bash
-cd apps/web
+cd grokbot/apps/web
 node_modules/.bin/vite --config vite.nova.config.ts
 ```
 
@@ -129,17 +130,17 @@ Changes are committed only after a successful request; failed operations roll ba
 
 | Module | Responsibility |
 | --- | --- |
-| `packages/core/src/policy/reasoning/config.ts` | Default editable configuration facts |
+| `apps/nova/src/config.ts` | Default editable configuration facts |
 | `policy.ts` | Executable rule AST and input schemas; displayed rules are rendered from that AST |
 | `protocol.ts` | Global replication, local tuple patterns, restricted locations and explicit transfer definitions |
 | `local-store.ts` | Local input selection, location-bound rules, independent native evaluations and observer union |
 | `runtime.ts` | Immutable snapshot copies, owned input records, send / pending / allow / deny transitions, actual event generation, preset scheduling |
-| `souffle.ts` | Native program serialization, subprocess limits, tuple output and native JSON proof adaptation |
+| `runtime/src/souffle.ts` | Native program serialization, subprocess limits, tuple output and native JSON proof adaptation |
 | `analysis.ts` | Native explanation requests, copied-state what-if, event-subset enumeration, exhaustive progress-action search |
 | `service-process.ts`, `service-worker.ts` | HTTP/compute isolation, deadline recovery, transactional checkpoints |
 | `service.ts` | Browser-independent intent API, history selection, revision checks, configuration and witness replay |
-| `apps/web/vite.nova.config.ts` | Local HTTP adapter for the runtime and analyses; works in development and preview |
-| `apps/web/src/features/nova/` | Existing Rakazo primitives plus the facts inspector and five terminal tabs |
+| `grokbot/apps/web/vite.nova.config.ts` | Local HTTP adapter for the runtime and analyses; works in development and preview |
+| `grokbot/apps/web/src/features/nova/` | Existing Rakazo primitives plus the facts inspector and five terminal tabs |
 
 Only input records are persisted. `DependsOn`, `Propagated`, `Knows`, `DenyReceive`,
 `Audited`, and `Finished` are computed by the evaluator. Send runtime emits
@@ -291,7 +292,7 @@ not be blocked in that counterfactual.
 
 Resource lifecycle contains general question templates only. Nova has no report
 workflow, resource state, or resource-action API. The independent foundation in
-`packages/core/src/policy/reasoning/lifecycle.ts` defines:
+`runtime/src/lifecycle.ts` defines:
 
 - `ResourceType(Resource, Type)` and `ResourceState(Resource, State)`.
 - `Transition(Type, Action, From, To)`: one definition shared by resources of a type.

@@ -4,7 +4,7 @@ import { createRequire } from "node:module";
 // Override only for a preinstalled browser toolkit outside this checkout.
 const { chromium } = process.env.NOVA_PLAYWRIGHT_MODULE
   ? await import(process.env.NOVA_PLAYWRIGHT_MODULE)
-  : createRequire(new URL("../apps/web/package.json", import.meta.url))("@playwright/test");
+  : createRequire(new URL("../grokbot/apps/web/package.json", import.meta.url))("@playwright/test");
 const base = process.env.NOVA_URL ?? "http://127.0.0.1:5180";
 const output = process.env.NOVA_SCREENSHOTS ?? "/tmp/nova-browser-review";
 await mkdir(output, { recursive: true });

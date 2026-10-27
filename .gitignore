@@ -18,15 +18,15 @@ data
 apps/**/data
 .tmp
 .DS_Store
-apps/web/dist
-apps/desktop/dist
-apps/desktop/out
-apps/desktop/e2e/screenshots
-apps/mobile/.expo
-apps/mobile/dist
-apps/mobile/android
-apps/mobile/ios
-packages/db/src/generated
+grokbot/apps/web/dist
+grokbot/apps/desktop/dist
+grokbot/apps/desktop/out
+grokbot/apps/desktop/e2e/screenshots
+grokbot/apps/mobile/.expo
+grokbot/apps/mobile/dist
+grokbot/apps/mobile/android
+grokbot/apps/mobile/ios
+grokbot/packages/db/src/generated
 infra/sandboxes/supervisor/dist
 *.log
 .vercel
@@ -43,9 +43,9 @@ design/
 PRODUCT_PLAN.md
 
 # Lingui compiled catalogs — Vite plugin compiles .po at build time
-apps/web/src/locales/**/*.mjs
-apps/web/src/locales/**/*.js
-apps/web/scripts/msgids.json
+grokbot/apps/web/src/locales/**/*.mjs
+grokbot/apps/web/src/locales/**/*.js
+grokbot/apps/web/scripts/msgids.json
 playwright-report-www
 
 # Private local services and compose overrides
@@ -60,3 +60,5 @@ playwright-report-www
 /main.out
 /main.pdf
 /main.synctex.gz
+
+dist-nova

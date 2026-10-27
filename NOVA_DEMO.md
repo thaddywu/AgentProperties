@@ -1,7 +1,7 @@
 # Current Nova workspace
 
-The master branch contains the Rakazo-based Policy UI, store inspector, Datalog
-terminal, and executable Nova runtime. Run from the repository root:
+The Grokbot UI lives in `grokbot/apps/web`; Nova application source and tests live
+in `apps/nova`; generic policy/query logic lives in `runtime`. Run from the repository root:
 
 ```bash
 ./nova-demo.sh

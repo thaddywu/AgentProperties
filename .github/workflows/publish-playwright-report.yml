@@ -133,7 +133,7 @@ jobs:
           PLAYWRIGHT_REPOSITORY_URL: ${{ github.server_url }}/${{ github.repository }}
           PLAYWRIGHT_PUBLISH_REPORT: ${{ github.event.workflow_run.event == 'push' }}
           PLAYWRIGHT_REPORT_DIR: ${{ runner.temp }}/playwright-artifacts/playwright-report
-          PLAYWRIGHT_TEST_RESULTS_DIR: ${{ runner.temp }}/playwright-artifacts/apps/web/test-results
+          PLAYWRIGHT_TEST_RESULTS_DIR: ${{ runner.temp }}/playwright-artifacts/grokbot/apps/web/test-results
         run: bash scripts/publish-playwright-report.sh
       - name: Link screenshot gallery from pull request
         if: >-
@@ -168,7 +168,7 @@ jobs:
             PLAYWRIGHT_DASHBOARD_URL="$public_base_url/index.html" \
             PLAYWRIGHT_RUN_URL="$RUN_URL" \
             PLAYWRIGHT_SHA="$SHA" \
-              pnpm exec tsx packages/testkit/src/cli/build-playwright-pr-screenshot-comment.ts \
+              pnpm exec tsx grokbot/packages/testkit/src/cli/build-playwright-pr-screenshot-comment.ts \
                 "$review_path" \
                 "$changed_paths_file"
           )"

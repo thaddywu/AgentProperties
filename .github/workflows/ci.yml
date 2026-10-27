@@ -71,7 +71,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: desktop-e2e-screenshots
-          path: apps/desktop/e2e/screenshots
+          path: grokbot/apps/desktop/e2e/screenshots
           if-no-files-found: ignore
 
   test:
@@ -150,11 +150,11 @@ jobs:
           mapfile -t files < <(
             git diff --name-only "$base" "$GITHUB_SHA" -- \
               .github/workflows/ci.yml \
-              apps/mobile \
+              grokbot/apps/mobile \
               package.json \
-              packages/chat-ui \
-              packages/contracts \
-              packages/core \
+              grokbot/packages/chat-ui \
+              grokbot/packages/contracts \
+              grokbot/packages/core \
               pnpm-lock.yaml
           )
 
@@ -169,17 +169,17 @@ jobs:
 
             eligible=false
             case "$file" in
-              apps/mobile/app/*|apps/mobile/components/*|apps/mobile/lib/*)
+              grokbot/apps/mobile/app/*|grokbot/apps/mobile/components/*|grokbot/apps/mobile/lib/*)
                 case "$file" in
                   *.ts|*.tsx) eligible=true ;;
                 esac
                 ;;
-              packages/chat-ui/src/*)
+              grokbot/packages/chat-ui/src/*)
                 case "$file" in
                   *.ts|*.tsx|*.css) eligible=true ;;
                 esac
                 ;;
-              packages/contracts/src/*|packages/core/src/*)
+              grokbot/packages/contracts/src/*|grokbot/packages/core/src/*)
                 case "$file" in
                   *.ts|*.tsx) eligible=true ;;
                 esac
@@ -247,7 +247,7 @@ jobs:
         run: pnpm --filter @rakazo/mobile check
       - name: Publish production update
         if: steps.ota.outputs.publish == 'true'
-        working-directory: apps/mobile
+        working-directory: grokbot/apps/mobile
         run: |
           set -euo pipefail
           head="$(git ls-remote origin refs/heads/main | awk '{print $1}')"

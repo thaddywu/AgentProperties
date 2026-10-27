@@ -23,7 +23,7 @@ Missing live credentials mean **not run**, not a passing model evaluation.
 
 ## Deterministic Pi tests
 
-`packages/testkit/src/model-emulator.ts` serves a loopback OpenAI-compatible
+`grokbot/packages/testkit/src/model-emulator.ts` serves a loopback OpenAI-compatible
 stream through Rakazo's existing generic connection. It does not replace Pi.
 Each step validates the actual request before streaming a response, and tests
 must assert that all expected steps were consumed without unexpected requests.

@@ -18,7 +18,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-adb install -r apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+adb install -r grokbot/apps/mobile/android/app/build/outputs/apk/release/app-release.apk
 adb logcat -c
 adb logcat > "$android_log" &
 android_log_pid=$!
