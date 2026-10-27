@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { mkdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { ModelConnectInputSchema } from "@rakazo/contracts";
 import { loadRootEnv } from "@rakazo/core/node/load-root-env";
@@ -17,19 +18,19 @@ async function main() {
       model: { type: "string" },
       "api-key-env": { type: "string" },
       "base-url": { type: "string" },
-      output: { type: "string", default: "translation/output/nova" },
+      output: { type: "string" },
       help: { type: "boolean" },
     },
   });
   if (values.help) {
     console.log(
-      "pnpm --dir grokbot policy:translate apps/nova --connection <private-models-connect.json>\nOr --provider <id> --model <id> --api-key-env <variable> [--base-url <url>]\nOutputs go to ignored translation/output/nova/<run-id>/; the app is not modified.",
+      "From the repository root: pnpm --dir translation translate ../apps/nova --connection <private-models-connect.json>\nOr --provider <id> --model <id> --api-key-env <variable> [--base-url <url>]\nOutputs go to this package's ignored output/nova/<run-id>/; --output overrides it relative to your working directory. The app is not modified.",
     );
     return;
   }
   if (positionals.length !== 1)
     throw new Error(
-      "Usage: pnpm --dir grokbot policy:translate apps/nova --connection <private-models-connect.json>",
+      "Usage: pnpm --dir translation translate ../apps/nova --connection <private-models-connect.json>",
     );
   const documents = await loadApplication(resolve(positionals[0]!));
   loadRootEnv();
@@ -55,7 +56,9 @@ async function main() {
       thinkingLevel: "low",
     };
   }
-  const outputBase = resolve(values.output!);
+  const outputBase = values.output
+    ? resolve(values.output)
+    : fileURLToPath(new URL("../output/nova/", import.meta.url));
   mkdirSync(outputBase, { recursive: true, mode: 0o700 });
   const output = join(
     outputBase,
@@ -85,7 +88,7 @@ async function main() {
     generate: async (prompt, record) => {
       if (!connection)
         throw new Error(
-          "Missing model configuration. Run pnpm --dir grokbot policy:translate apps/nova --connection <private-models-connect.json>, or supply --provider --model --api-key-env [--base-url]. No model was called.",
+          "Missing model configuration. Run pnpm --dir translation translate ../apps/nova --connection <private-models-connect.json>, or supply --provider --model --api-key-env [--base-url]. No model was called.",
         );
       // Defer the existing provider stack until input/config checks pass; no Prisma/database is required.
       const {
@@ -124,7 +127,7 @@ main().catch((error: unknown) => {
   console.error(
     error instanceof Error && !("code" in error)
       ? error.message
-      : "Translation could not start. Install workspace dependencies with pnpm install --frozen-lockfile and check output permissions; use --help for usage.",
+      : "Translation could not start. Install workspace dependencies with pnpm --dir grokbot install --frozen-lockfile and check output permissions; use --help for usage.",
   );
   process.exitCode = 1;
 });

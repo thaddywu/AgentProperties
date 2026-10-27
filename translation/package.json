@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "translate": "tsx src/cli.ts",
     "check": "tsc --noEmit -p tsconfig.json",
     "test": "pnpm --dir ../grokbot test translation/src",
     "lint": "biome check .",

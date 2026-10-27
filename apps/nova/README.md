@@ -7,7 +7,7 @@ From the repository root, install workspace dependencies and provide Soufflé 2.
 ```bash
 pnpm --dir grokbot --filter @rakazo/nova start
 pnpm --dir grokbot --filter @rakazo/nova test
-pnpm --dir grokbot policy:translate apps/nova --connection /path/to/private-connection.json
+pnpm --dir translation translate ../apps/nova --connection /path/to/private-connection.json
 ./apps/nova/run.sh
 ```
 

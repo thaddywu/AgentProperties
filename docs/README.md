@@ -19,7 +19,7 @@ Run commands from the repository root. Use the Node version and pnpm declared in
 ```bash
 ./apps/nova/run.sh                         # Grokbot UI + Nova; Docker required
 pnpm --dir grokbot --filter @rakazo/nova start        # Nova without UI; Soufflé + prlimit required
-pnpm --dir grokbot policy:translate apps/nova --connection /path/to/private-connection.json
+pnpm --dir translation translate ../apps/nova --connection /path/to/private-connection.json
 ```
 
 See [Nova setup and commands](../apps/nova/README.md), [model connections](../translation/README.md), and [full Grokbot host setup](../grokbot/docs/self-host.md).

@@ -2,12 +2,16 @@
 
 One real LLM invocation translates the entire Markdown policy set directly into Datalog. This package is separate from the Nova runtime; it does not install rules or change enforcement. There is no IR, policy template, repair loop or reference-rule substitution.
 
-Use the workspace's supported Node version and pnpm. From the repository root:
+Use the workspace's supported Node version and pnpm. Install the workspace once, then run this package directly from the repository root:
 
 ```bash
 pnpm --dir grokbot install --frozen-lockfile
-pnpm --dir grokbot policy:translate apps/nova --connection /path/to/private-models-connect.json
+pnpm --dir translation translate ../apps/nova --connection /path/to/private-models-connect.json
 ```
+
+Or, from `translation/`, run `pnpm translate ../apps/nova --connection /path/to/private-models-connect.json`. Application/connection paths and an explicit `--output` are relative to that command's working directory. The default output always stays in this package's `output/nova/`, regardless of where the CLI is launched.
+
+No Grokbot UI, API, worker or database service needs to be running. The CLI still reuses Grokbot's model adapter/contracts through workspace dependencies; it is not yet a separately installable distribution without the rest of this checkout. The existing root-workspace alias `pnpm --dir grokbot policy:translate apps/nova ...` also works.
 
 The private connection file uses the existing `ModelConnectInputSchema` / models/connect format: `provider`, `modelId`, `apiKey`, and, for `openai-compatible`, `baseUrl`; optional `maxTokens`, `thinkingLevel`, `reasoning`, `contextWindow`. Keep it outside the public repository. API credentials are passed to the existing Pi adapter, never written to experiment metadata. This CLI does not read credentials from another application's authentication files or from the encrypted product database.
 
@@ -25,3 +29,26 @@ pnpm --dir grokbot --filter @rakazo/policy-translation check
 ```
 
 Ordinary tests are offline and use synthetic model output. They are not translation experiment results.
+
+The recorded GPT-6.1 Sol one-shot matched all fourteen baseline probes, while the historical-audit-receipt counterexample still failed. See the [model comparison](../docs/translation-model-comparison.md) for the limitations and the GPT-5.4 comparison; no new model invocation is performed by installing or testing this package.
+
+To repeat that model configuration, keep the following shared-connection JSON outside this repository and replace the key placeholder. The installed Pi native catalog did not include this model, so that run used the compatible adapter. The model ID and low reasoning setting are listed in the [official OpenAI documentation](https://developers.openai.com/api/docs/models/gpt-6.1-sol).
+
+```json
+{
+  "provider": "openai-compatible",
+  "modelId": "gpt-6.1-sol",
+  "baseUrl": "https://api.openai.com/v1",
+  "apiKey": "YOUR_API_KEY",
+  "reasoning": true,
+  "thinkingLevel": "low",
+  "maxTokens": 8192
+}
+```
+
+For that public endpoint, explicitly enable the existing compatible-adapter gate for this invocation:
+
+```bash
+RAKAZO_OPENAI_COMPAT_ALLOW_PUBLIC=1 pnpm --dir translation translate ../apps/nova \
+  --connection /path/to/private-models-connect.json
+```
