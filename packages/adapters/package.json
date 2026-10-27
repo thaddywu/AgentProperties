@@ -4,6 +4,7 @@
   "license": "Apache-2.0",
   "type": "module",
   "exports": {
+    "./policy-translation": "./src/policy-translation.ts",
     ".": "./src/index.ts"
   },
   "scripts": {

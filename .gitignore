@@ -35,6 +35,7 @@ artifacts
 backups
 test-report
 verify-report
+translation-output/
 .astro
 .deploy.lock
 .last-deployed-revision

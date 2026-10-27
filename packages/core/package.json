@@ -4,6 +4,7 @@
   "license": "Apache-2.0",
   "type": "module",
   "exports": {
+    "./policy/query": "./src/policy/query.ts",
     ".": {
       "types": "./src/index.ts",
       "development": "./src/index.ts",
