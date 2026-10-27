@@ -2,6 +2,7 @@
 
 ```text
 grokbot/                 Existing host implementation, including UI customizations
+  AGENTS.md              Host/client-specific development rules
   apps/                  web, api, worker, desktop, mobile, www
   packages/              host domain/adapters/contracts/database/shared UI
   config/                Workspace test configuration
@@ -42,7 +43,7 @@ The repository root contains the five module/documentation directories plus `AGE
 
 The host workspace explicitly includes adjacent `../apps/*`, `../runtime` and `../translation` packages. Use `pnpm --dir grokbot ...` from the checkout root. Recursive pnpm build/check commands replace Turbo, which does not support workspace packages outside its root. `repository-command.mjs` keeps repository-wide CLI file paths relative to the checkout while resolving tools from the host installation. Vitest caches also stay under the host installation. Formatting runs separately inside the host, Nova, runtime and translation modules, avoiding local state outside those module roots. Each module points formatting at the Git root and force-ignores private debug state and translation output; see [Biome configuration](https://biomejs.dev/reference/configuration/#vcsroot).
 
-Only `.gitignore`, `.gitattributes` and `.dockerignore` remain as tracked root dotfiles: they govern repository-wide exclusion/line endings and the root Docker build context. GitHub automation and agent skills remain in their conventional hidden directories. Local private debug state is ignored and is separate from the module layout.
+Only `.gitignore`, `.gitattributes` and `.dockerignore` remain as tracked root dotfiles: they govern repository-wide exclusion/line endings and the root Docker build context. `.github/` contains CI, platform screenshots/releases, issue templates and contribution/security guidance. GitHub workflow discovery requires that location. `.agents/` contains coding-assistant skills (`composio`, `pr-watch`); these are development helpers. Application agent specifications live in `apps/*/agents/`. The root `AGENTS.md` holds repository-wide rules; `grokbot/AGENTS.md` adds host/client rules. `CLAUDE.md` imports the root rules. Local private debug state is ignored and is separate from the module layout.
 
 The dependency direction is `Grokbot UI → Nova application → policy runtime`. Translation reads an application's Markdown; its optional model adapter comes from Grokbot's existing provider-neutral connection/runtime stack. Reference policies are loaded only after model generation. Generated rules are not installed into the application.
 
