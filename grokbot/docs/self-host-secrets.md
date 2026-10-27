@@ -29,7 +29,7 @@ openssl rand -hex 16   # POSTGRES_PASSWORD
 openssl rand -hex 32   # BETTER_AUTH_SECRET, ENCRYPTION_KEY, SCREEN_PROXY_SECRET, SANDBOX_SUPERVISOR_TOKEN
 ```
 
-Source-checkout `.env.example` also requires `POSTGRES_PASSWORD` (same
+Source-checkout `grokbot/.env.example` also requires `POSTGRES_PASSWORD` (same
 `openssl rand -hex 16` shape) for `grokbot/infra/compose/docker-compose.yml`. Put the
 same value in host-side `DATABASE_URL` when using the optional
 `docker-compose.postgres-host.yml` overlay. Keep the password URI-safe: Compose
@@ -42,7 +42,7 @@ values in `.env`, or change them in place with `ALTER ROLE` / rename. Recreate
 the volume only after a backup (or when the data is disposable);
 `docker compose down -v` deletes all Postgres state.
 
-Source-checkout `.env.example` asks for a **64-hex** `ENCRYPTION_KEY` in
+Source-checkout `grokbot/.env.example` asks for a **64-hex** `ENCRYPTION_KEY` in
 comments; published-images installer uses 32 bytes of hex (64 hex chars) via
 `openssl rand -hex 32`. Prefer long independent random values either way.
 Do not reuse one string across keys.
@@ -77,7 +77,7 @@ From `.env.images.example` (images installer). Leave blank if unused:
 | Messaging tokens (Slack, Telegram, …) | Only if you enable those surfaces |
 
 Blank optional keys are normal for a minimal published-images boot. Pipedream
-Connect keys appear only in source/Compose `.env.example`, not the images
+Connect keys appear only in source/Compose `grokbot/.env.example`, not the images
 example.
 
 ## Operator workflow

@@ -13,6 +13,8 @@ on:
       - ".github/workflows/publish-server-image.yml"
       - "apps/**"
       - "grokbot/apps/**"
+      - "grokbot/config/**"
+      - "grokbot/tsconfig.base.json"
       - "grokbot/patches/**"
       - "grokbot/scripts/**"
       - "grokbot/infra/compose/**"

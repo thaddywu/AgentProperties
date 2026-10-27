@@ -13,7 +13,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "check": "expo install --check && tsc --noEmit -p tsconfig.json",
-    "test": "vitest run --root ../../.. grokbot/apps/mobile/lib",
+    "test": "pnpm --workspace-root test grokbot/apps/mobile/lib",
     "test:e2e": "maestro test .maestro/smoke.yaml"
   },
   "dependencies": {

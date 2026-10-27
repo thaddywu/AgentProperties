@@ -20,7 +20,7 @@ Output is JSON with a `policies` array of `{ id, datalog, notes }`. Every source
 Reference rules are imported only after generation, for a small set of local-store probes comparing observable results. Compilation or matching those probes does not prove equivalence. Payload isolation, atomic delivery and end-to-end runtime behavior are not tested by this prototype. Model runtime transport retry defaults are inherited; there is no semantic repair or second translation attempt.
 
 ```bash
-pnpm exec vitest run translation/src grokbot/packages/adapters/src/policy-translation.test.ts
+pnpm test translation/src grokbot/packages/adapters/src/policy-translation.test.ts
 pnpm --filter @rakazo/policy-translation check
 ```
 

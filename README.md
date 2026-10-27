@@ -17,7 +17,7 @@ Application descriptions use `app.md`, `policy.md`, `tools.md` and `agents/`. LL
 Use the supported Node version and pnpm declared in `package.json`, then install workspace dependencies with `pnpm install --frozen-lockfile`.
 
 ```bash
-./nova-demo.sh                         # Grokbot UI + Nova; Docker required
+./apps/nova/run.sh                         # Grokbot UI + Nova; Docker required
 pnpm --filter @rakazo/nova start        # Nova without UI; Soufflé + prlimit required
 pnpm policy:translate apps/nova --connection /path/to/private-connection.json
 ```
@@ -26,4 +26,4 @@ See [Nova setup and commands](apps/nova/README.md), [model connections](translat
 
 `grokbot/infra/` contains active Docker/Compose, sandbox, updater and backup tooling. `grokbot/patches/` contains the pnpm-applied Electron signing dependency fix; neither directory is an archive.
 
-[Repository boundaries](docs/repository-structure.md) · [Translation experiments](docs/translation-model-comparison.md) · [Research design](docs/research/main.tex) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [Apache 2.0 license](LICENSE)
+[Repository boundaries](docs/repository-structure.md) · [Translation experiments](docs/translation-model-comparison.md) · [Research design](docs/research/main.tex) · [Contributing](.github/CONTRIBUTING.md) · [Security](.github/SECURITY.md) · [Apache 2.0 license](LICENSE)

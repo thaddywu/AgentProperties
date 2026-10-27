@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "check": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run --root .. translation/src"
+    "test": "pnpm --workspace-root test translation/src"
   },
   "dependencies": {
     "@rakazo/adapters": "workspace:*",

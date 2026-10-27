@@ -2,7 +2,7 @@
 
 Grokbot is a modified [Rakazo](https://github.com/elie222/rakazo) host. Its original `apps/`, `packages/`, `infra/`, `scripts/`, `patches/` and operational `docs/` now live together under `grokbot/`. Git history is preserved. `grokbot/upstream-base` records the last upstream revision incorporated before the policy-demo changes.
 
-The root workspace configuration belongs to this repository. The Nova application, policy runtime and translator are separate packages. This keeps most upstream host changes in the same relative layout, although imports, workspace links and policy/UI integration may still conflict. This is a fork with a reviewable update path; updates are not automatic.
+The root workspace configuration belongs to this repository. Upstream root build/test/formatter configuration maps to `grokbot/config/`, the source environment template to `grokbot/.env.example`, and shared TypeScript settings to `runtime/tsconfig.base.json`; contribution/security guidance lives in `.github/`. These root-file changes are included in `workspace-review.patch` for manual integration. The Nova application, policy runtime and translator are separate packages. This keeps most upstream host changes in the same relative layout, although imports, workspace links and policy/UI integration may still conflict. This is a fork with a reviewable update path; updates are not automatic.
 
 ## Prepare an update
 

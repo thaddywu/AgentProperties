@@ -9,7 +9,7 @@
   },
   "scripts": {
     "check": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run --root ../../.. grokbot/packages/chat-ui/src"
+    "test": "pnpm --workspace-root test grokbot/packages/chat-ui/src"
   },
   "dependencies": {
     "@rakazo/ui-tokens": "workspace:*",

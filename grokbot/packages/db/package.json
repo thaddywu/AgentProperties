@@ -15,7 +15,7 @@
     "migrate": "prisma migrate deploy",
     "migrate:dev": "prisma migrate dev",
     "check": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run --root ../../.. grokbot/packages/db/src"
+    "test": "pnpm --workspace-root test grokbot/packages/db/src"
   },
   "dependencies": {
     "@rakazo/adapter-kit": "workspace:*",

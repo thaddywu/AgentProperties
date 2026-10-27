@@ -12,7 +12,7 @@
   },
   "scripts": {
     "check": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run --root ../../.. grokbot/packages/memory/src"
+    "test": "pnpm --workspace-root test grokbot/packages/memory/src"
   },
   "dependencies": {
     "@rakazo/adapter-kit": "workspace:*",

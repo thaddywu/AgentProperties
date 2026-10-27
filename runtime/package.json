@@ -12,6 +12,6 @@
   },
   "scripts": {
     "check": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run --root .. runtime"
+    "test": "pnpm --workspace-root test runtime"
   }
 }

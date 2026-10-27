@@ -52,7 +52,7 @@ async function main() {
     });
     await runProcess(
       "pnpm",
-      ["exec", "vitest", "run", "grokbot/packages/testkit/src/computer-use.e2e.test.ts"],
+      ["test", "grokbot/packages/testkit/src/computer-use.e2e.test.ts"],
       env,
     );
   } finally {

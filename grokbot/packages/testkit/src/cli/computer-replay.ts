@@ -77,6 +77,8 @@ async function main() {
         [
           path.join(root, "node_modules/vitest/vitest.mjs"),
           "run",
+          "--config",
+          path.join(root, "grokbot/config/vitest.config.ts"),
           "--root",
           root,
           "grokbot/packages/testkit/src/computer-replay.docker.test.ts",

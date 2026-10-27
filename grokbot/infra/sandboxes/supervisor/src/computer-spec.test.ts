@@ -670,7 +670,7 @@ describe("computer resource limits", () => {
   });
 
   it("falls back to the defaults when a variable is blank", () => {
-    // .env.example ships these keys blank; a blank value must read as "unset".
+    // grokbot/.env.example ships these keys blank; a blank value must read as "unset".
     process.env.RAKAZO_COMPUTER_MEMORY = "";
     process.env.RAKAZO_COMPUTER_CPUS = "  ";
     process.env.RAKAZO_COMPUTER_PIDS_LIMIT = "";

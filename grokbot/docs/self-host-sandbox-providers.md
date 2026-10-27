@@ -51,7 +51,7 @@ Set `SANDBOX_PROVIDER` to exactly one of:
 | --- | --- | --- |
 | `e2b` | `E2B_API_KEY` | Hosted sandboxes |
 | `daytona` | `DAYTONA_API_KEY` | Optional `DAYTONA_API_URL`, `DAYTONA_TARGET` |
-| `box` | `BOX_API_KEY` | Optional `BOX_API_URL` (see `.env.example`) |
+| `box` | `BOX_API_KEY` | Optional `BOX_API_URL` (see `grokbot/.env.example`) |
 
 Remote paths still need a working API/worker; they do not replace Postgres or
 the web UI. They require egress to the provider. For air-gapped hosts prefer

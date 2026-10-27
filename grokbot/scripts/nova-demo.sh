@@ -3,7 +3,7 @@ set -euo pipefail
 nova_root="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$nova_root"
 # Native Soufflé is pinned in Dockerfile.nova; evaluations run locally.
-nova_image="${NOVA_IMAGE:-rakazo:nova-compact}"
+nova_image="${NOVA_IMAGE:-rakazo:nova-workspace}"
 nova_port="${NOVA_PORT:-5180}"
 nova_container="${NOVA_CONTAINER:-nova-reasoning-demo}"
 nova_volume="${NOVA_STATE_VOLUME:-nova-reasoning-state}"
@@ -43,7 +43,7 @@ JS
 }
 case "$mode" in
   setup) exec docker build -t "$nova_image" -f grokbot/infra/compose/Dockerfile.nova . ;;
-  test) exec docker run --rm --network none --user 0 "${mounts[@]}" "$nova_image" /app/node_modules/.bin/vitest run apps/nova/tests runtime/tests grokbot/packages/core/src/policy/query.test.ts grokbot/packages/core/src/policy/protocol.test.ts ;;
+  test) exec docker run --rm --network none --user 0 "${mounts[@]}" "$nova_image" /app/node_modules/.bin/vitest run --config /app/grokbot/config/vitest.config.ts apps/nova/tests runtime/tests grokbot/packages/core/src/policy/query.test.ts grokbot/packages/core/src/policy/protocol.test.ts ;;
   check) exec docker run --rm --network none --user 0 "${mounts[@]}" "$nova_image" /app/node_modules/.bin/tsc --noEmit -p /app/grokbot/apps/web/tsconfig.json ;;
   build) exec docker run --rm --network none --user 0 "${mounts[@]}" --workdir /app/grokbot/apps/web "$nova_image" /app/grokbot/apps/web/node_modules/.bin/vite build --config vite.nova.config.ts ;;
   logs) exec docker logs --tail 80 --follow "$nova_container" ;;
@@ -95,8 +95,8 @@ case "$mode" in
     docker logs --tail 8 "$nova_container"
     echo "Ready: http://127.0.0.1:$nova_port/"
     echo 'Runs in the background; closing this terminal will not stop it.'
-    echo 'Commands: ./nova-demo.sh [restart|status|logs|stop]'
+    echo 'Commands: ./apps/nova/run.sh [restart|status|logs|stop]'
     if [[ "$mode" == serve ]]; then exec docker logs --tail 20 --follow "$nova_container"; fi
     ;;
-  *) echo 'Usage: ./nova-demo.sh [restart|start|serve|status|logs|stop|setup|test|check|build]' >&2; exit 2 ;;
+  *) echo 'Usage: ./apps/nova/run.sh [restart|start|serve|status|logs|stop|setup|test|check|build]' >&2; exit 2 ;;
 esac

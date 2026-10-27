@@ -4,7 +4,7 @@ The existing Rakazo/Grokbot implementation is grouped here: `apps/` contains web
 
 Nova's UI customization remains in `apps/web/src/features/nova/`. Its application code and reference policies live in the repository's `apps/nova/`; generic policy evaluation lives in `runtime/`; natural-language translation lives in `translation/`. The host consumes these workspace packages instead of owning a second copy of Nova.
 
-`infra/`, `scripts/`, `patches/` and host documentation are grouped here with the code. Shared workspace configuration and the lockfile remain at the repository root; run `pnpm` commands and `./nova-demo.sh` there. See [repository boundaries](../docs/repository-structure.md).
+`infra/`, `scripts/`, `patches/`, `config/`, the environment template and host documentation are grouped here with the code. The pnpm workspace files remain at the repository root; run `pnpm` commands and `./apps/nova/run.sh` there. See [repository boundaries](../docs/repository-structure.md).
 
 For the full host, use [source or published-image setup](docs/self-host.md). The separate five-principal LLM chat demonstration is documented in [native policy chat](docs/native-policy.md); it is not the six-principal Nova application.
 

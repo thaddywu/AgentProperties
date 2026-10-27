@@ -22,7 +22,7 @@
   },
   "scripts": {
     "check": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run --root ../../.. grokbot/packages/logging/src"
+    "test": "pnpm --workspace-root test grokbot/packages/logging/src"
   },
   "dependencies": {
     "@axiomhq/js": "2.0.0",

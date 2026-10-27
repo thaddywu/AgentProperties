@@ -7,7 +7,7 @@
     "dev": "node ../../scripts/dev-watch.mjs src/index.ts",
     "start": "tsx src/index.ts",
     "check": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run --root ../../.. grokbot/apps/api/src"
+    "test": "pnpm --workspace-root test grokbot/apps/api/src"
   },
   "dependencies": {
     "@hono/node-server": "2.1.1",

@@ -31,7 +31,7 @@ describeFast("pnpm test emulator pin", () => {
     ) as {
       scripts: Record<string, string>;
     };
-    expect(pkg.scripts.test).toBe("vitest run");
+    expect(pkg.scripts.test).toBe("vitest run --config grokbot/config/vitest.config.ts");
     expect(pkg.scripts["test:integration"]).toContain("harness.ts --integration");
     expect(pkg.scripts["test:e2e"]).toContain("harness.ts --e2e");
     expect(pkg.scripts["test:topology"]).toContain("cli/topology.ts");

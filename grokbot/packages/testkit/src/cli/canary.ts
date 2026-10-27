@@ -49,7 +49,7 @@ async function main() {
       });
     }
     execSync(
-      "pnpm exec vitest run --no-file-parallelism grokbot/packages/testkit/src/providers.canary.test.ts grokbot/packages/testkit/src/release-watch.canary.test.ts",
+      "pnpm test --no-file-parallelism grokbot/packages/testkit/src/providers.canary.test.ts grokbot/packages/testkit/src/release-watch.canary.test.ts",
       { stdio: "inherit", env },
     );
   } finally {

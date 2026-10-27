@@ -4,6 +4,7 @@
 grokbot/                 Existing host implementation, including UI customizations
   apps/                  web, api, worker, desktop, mobile, www
   packages/              host domain/adapters/contracts/database/shared UI
+  config/                Workspace test, build and formatting configuration
   infra/                 Docker/Compose, sandbox, updater and backup services
   scripts/               Host development, deployment and demo tooling
   patches/               pnpm-applied dependency fixes
@@ -17,13 +18,16 @@ apps/
     episodes/            Optional examples; not part of the execution interface
     src/                 Nova application, reference rules, protocol and analyses
     tests/
+    run.sh               Docker/UI entry point, invoked from the repository root
 runtime/                 Generic Datalog, queries, native provenance and lifecycle
 translation/             One-shot natural-language-to-Datalog research prototype
   output/                Ignored local experiment artifacts
 docs/                    Repository design and research documents
 ```
 
-These are the five top-level source/documentation directories. Root files configure the shared pnpm workspace, CI, formatting and tests; `nova-demo.sh` is the convenience launcher. Hidden directories and ignored dependencies/local state are tooling rather than additional modules.
+The root has five source/documentation directories and seven visible files: `README.md`, `LICENSE`, `AGENTS.md`, `CLAUDE.md`, `package.json`, `pnpm-workspace.yaml` and `pnpm-lock.yaml`. The three pnpm files keep dependency installation and workspace commands at the repository root. Git/tool dotfiles remain where their tools discover them; `node_modules/` is ignored installation output.
+
+Build/test/formatter configuration lives in `grokbot/config/`, shared TypeScript settings in `runtime/tsconfig.base.json`, the host environment template in `grokbot/.env.example`, contribution/security guidance in `.github/`, and skill metadata in `.agents/`. Run `./apps/nova/run.sh` for the UI. `pnpm test`, `pnpm check`, `pnpm lint` and package-level test commands select the relocated configurations explicitly.
 
 The dependency direction is `Grokbot UI → Nova application → policy runtime`. Translation reads an application's Markdown; its optional model adapter comes from Grokbot's existing provider-neutral connection/runtime stack. Reference policies are loaded only after model generation. Generated rules are not installed into the application.
 

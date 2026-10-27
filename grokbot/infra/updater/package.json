@@ -8,7 +8,7 @@
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",
     "check": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run --root ../../.. grokbot/infra/updater/src"
+    "test": "pnpm --workspace-root test grokbot/infra/updater/src"
   },
   "dependencies": {
     "@hono/node-server": "2.1.1",

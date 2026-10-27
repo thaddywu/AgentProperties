@@ -9,7 +9,7 @@
   },
   "scripts": {
     "check": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run --root ../../.. grokbot/packages/adapters/src"
+    "test": "pnpm --workspace-root test grokbot/packages/adapters/src"
   },
   "dependencies": {
     "@asciidev/box-sdk": "0.0.34",

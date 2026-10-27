@@ -48,7 +48,7 @@
   },
   "scripts": {
     "check": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run --root ../../.. grokbot/packages/core/src"
+    "test": "pnpm --workspace-root test grokbot/packages/core/src"
   },
   "dependencies": {
     "@observablehq/plot": "0.6.17",

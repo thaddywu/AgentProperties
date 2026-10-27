@@ -8,7 +8,7 @@
     "build": "cross-env NODE_ENV=production vite build",
     "preview": "vite preview",
     "check": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run --root ../../.. grokbot/apps/web/src",
+    "test": "pnpm --workspace-root test grokbot/apps/web/src",
     "e2e": "playwright test",
     "intl:extract": "lingui extract --clean",
     "intl:compile": "lingui compile"

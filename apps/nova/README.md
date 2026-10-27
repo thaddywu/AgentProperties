@@ -8,7 +8,7 @@ From the repository root, install workspace dependencies and provide Soufflé 2.
 pnpm --filter @rakazo/nova start
 pnpm --filter @rakazo/nova test
 pnpm policy:translate apps/nova --connection /path/to/private-connection.json
-./nova-demo.sh
+./apps/nova/run.sh
 ```
 
 The first command runs the denial scenario without a UI, LLM or database. The last command opens the existing Grokbot-based UI with the same application backend. See `src/README.md` for implementation/run details and `../../docs/repository-structure.md` for boundaries.
@@ -20,11 +20,11 @@ Student applications can eventually provide a binding to the shared runtime. Nov
 From the repository root:
 
 ```bash
-./nova-demo.sh setup  # First-time image build/download
-./nova-demo.sh        # Start or restart at http://127.0.0.1:5180/
-./nova-demo.sh status
-./nova-demo.sh logs
-./nova-demo.sh stop
+./apps/nova/run.sh setup  # First-time image build/download
+./apps/nova/run.sh        # Start or restart at http://127.0.0.1:5180/
+./apps/nova/run.sh status
+./apps/nova/run.sh logs
+./apps/nova/run.sh stop
 ```
 
 The background container keeps running after the terminal closes. Restart preserves the checkpoint in the `nova-reasoning-state` volume; New/Earlier/Denial explicitly reset the example state. `NOVA_PORT`, `NOVA_CONTAINER`, `NOVA_STATE_VOLUME` and `NOVA_IMAGE` select an isolated instance. The root launcher also supports `test`, `check` and `build`.

@@ -11,7 +11,7 @@
     "pack": "pnpm --filter @rakazo/web build && pnpm build && electron-builder --mac --win --linux",
     "pack:dir": "pnpm --filter @rakazo/web build && pnpm build && electron-builder --dir",
     "check": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run --root ../../.. grokbot/apps/desktop/src",
+    "test": "pnpm --workspace-root test grokbot/apps/desktop/src",
     "test:e2e": "pnpm build && playwright test --config e2e/playwright.config.ts",
     "release": "pnpm --filter @rakazo/web build && pnpm build && electron-builder --publish never"
   },

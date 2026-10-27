@@ -4,7 +4,7 @@ The signed-in product is a long-running API, a Graphile Worker, Postgres, and a 
 
 ## Local (source checkout)
 
-Use the Node version and pnpm declared in the root `package.json`. Start in the repository root, copy `.env.example` to `.env` only if no configuration exists, and configure the required secrets described in [self-host secrets](self-host-secrets.md). Then run:
+Use the Node version and pnpm declared in the root `package.json`. Start in the repository root, copy `grokbot/.env.example` to `.env` only if no configuration exists, and configure the required secrets described in [self-host secrets](self-host-secrets.md). Then run:
 
 ```bash
 pnpm install --frozen-lockfile
@@ -94,7 +94,7 @@ supervisor at startup naming the variable, rather than surfacing later as a fail
 
 ## Docker Compose (single machine)
 
-1. Copy `.env.example` to `.env` and set `POSTGRES_PASSWORD` (`openssl rand -hex 16`), plus `BETTER_AUTH_SECRET`, `ENCRYPTION_KEY`, and `SCREEN_PROXY_SECRET` to independent long random strings (32+ characters; 64 hex for `ENCRYPTION_KEY`). Docker sandboxes also need a dedicated `SANDBOX_SUPERVISOR_TOKEN`. Keep existing `ENCRYPTION_KEY` values so stored credentials stay decryptable.
+1. Copy `grokbot/.env.example` to `.env` and set `POSTGRES_PASSWORD` (`openssl rand -hex 16`), plus `BETTER_AUTH_SECRET`, `ENCRYPTION_KEY`, and `SCREEN_PROXY_SECRET` to independent long random strings (32+ characters; 64 hex for `ENCRYPTION_KEY`). Docker sandboxes also need a dedicated `SANDBOX_SUPERVISOR_TOKEN`. Keep existing `ENCRYPTION_KEY` values so stored credentials stay decryptable.
 2. Set `OPENROUTER_API_KEY` (and `COMPOSIO_API_KEY` if you want Plugins).
 3. Build the computer image: `pnpm sandbox:build` (Compose also builds it via the `computer` service).
 4. `docker compose --env-file .env -f grokbot/infra/compose/docker-compose.yml up --build`
@@ -248,7 +248,7 @@ support. Existing token limits still apply; effort is not a separate reasoning-t
 
 Do not commit `.env`. Never put `COMPOSIO_API_KEY`, OpenRouter keys, or provider tokens in git, logs, or chat.
 
-Optional messaging platforms (iMessage, Slack, WhatsApp, Telegram, Feishu/Lark) mount when their env credentials are set — see `.env.example`. Point a Feishu/Lark bot event subscription at `/api/v1/messaging/webhook/lark` (webhook/HTTP inbound only; do not enable long connection). Groups stay iMessage-only.
+Optional messaging platforms (iMessage, Slack, WhatsApp, Telegram, Feishu/Lark) mount when their env credentials are set — see `grokbot/.env.example`. Point a Feishu/Lark bot event subscription at `/api/v1/messaging/webhook/lark` (webhook/HTTP inbound only; do not enable long connection). Groups stay iMessage-only.
 
 ## Choosing a computer provider
 

@@ -29,7 +29,7 @@ export async function request<T>(body: Request): Promise<T> {
   } catch (error) {
     if (error instanceof Error && error.name === "TimeoutError")
       throw new Error(
-        "Request timed out. Check the port forward or run ./nova-demo.sh on the server, then refresh the page.",
+        "Request timed out. Check the port forward or run ./apps/nova/run.sh on the server, then refresh the page.",
       );
     throw error;
   }

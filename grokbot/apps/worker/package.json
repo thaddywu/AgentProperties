@@ -7,7 +7,7 @@
     "dev": "node ../../scripts/dev-watch.mjs src/index.ts",
     "start": "tsx src/index.ts",
     "check": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run --passWithNoTests"
+    "test": "pnpm --workspace-root test grokbot/apps/worker/src --passWithNoTests"
   },
   "dependencies": {
     "@rakazo/adapter-kit": "workspace:*",

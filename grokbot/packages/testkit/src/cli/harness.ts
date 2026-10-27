@@ -132,7 +132,7 @@ async function main() {
         const suiteUrl = new URL(databaseUrl);
         suiteUrl.pathname = `/${database}`;
         try {
-          await runProcess("pnpm", ["exec", "vitest", "run", suite], {
+          await runProcess("pnpm", ["test", suite], {
             ...process.env,
             DATABASE_URL: suiteUrl.toString(),
             REALTIME_DATABASE_URL: suiteUrl.toString(),

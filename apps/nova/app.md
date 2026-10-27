@@ -12,4 +12,4 @@ Successful delivery of a tagged message to a designated auditor records coverage
 
 The default demonstration delivers Procurement and Facility to Auditor A, then attempts HR to A. The third delivery is refused. An alternative routes Facility to B, leaving A able to receive HR. These are example schedules, not mandatory workflows. Manual sends and different orders are supported.
 
-Agents follow scripts and runtime decisions; there are no LLM-generated agent actions or LLM system prompts. The application is implemented in `apps/nova/src/`, and the existing local UI is launched with `./nova-demo.sh`. This description is for that six-principal demo, not the separate five-principal native chat application.
+Agents follow scripts and runtime decisions; there are no LLM-generated agent actions or LLM system prompts. The application is implemented in `apps/nova/src/`, and the existing local UI is launched with `./apps/nova/run.sh`. This description is for that six-principal demo, not the separate five-principal native chat application.
