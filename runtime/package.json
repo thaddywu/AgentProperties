@@ -8,7 +8,9 @@
     "./datalog": "./src/datalog.ts",
     "./query": "./src/query.ts",
     "./souffle": "./src/souffle.ts",
-    "./lifecycle": "./src/lifecycle.ts"
+    "./lifecycle": "./src/lifecycle.ts",
+    "./application": "./src/application.ts",
+    "./binding": "./src/binding.ts"
   },
   "scripts": {
     "check": "tsc --noEmit -p tsconfig.json",

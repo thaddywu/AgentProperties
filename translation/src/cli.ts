@@ -1,19 +1,24 @@
 import { randomUUID } from "node:crypto";
-import { mkdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { ModelConnectInputSchema } from "@rakazo/contracts";
 import { loadRootEnv } from "@rakazo/core/node/load-root-env";
+import type { RuntimeBinding } from "@rakazo/policy-runtime/binding";
+import { readRuntimeBinding } from "@rakazo/policy-runtime/binding";
 import { loadApplication } from "./application.js";
-import { runExperiment } from "./experiment.js";
-import { TRANSLATION_INSTRUCTIONS } from "./prompt.js";
+import {
+  APPLICATION_TRANSLATION_INSTRUCTIONS,
+  translateApplication,
+} from "./application-translation.js";
 
 async function main() {
   const { values, positionals } = parseArgs({
     allowPositionals: true,
     options: {
       connection: { type: "string" },
+      binding: { type: "string" },
       provider: { type: "string" },
       model: { type: "string" },
       "api-key-env": { type: "string" },
@@ -24,15 +29,24 @@ async function main() {
   });
   if (values.help) {
     console.log(
-      "From the repository root: pnpm --dir translation translate ../apps/nova --connection <private-models-connect.json>\nOr --provider <id> --model <id> --api-key-env <variable> [--base-url <url>]\nOutputs go to this package's ignored output/nova/<run-id>/; --output overrides it relative to your working directory. The app is not modified.",
+      "From the repository root: pnpm --dir translation translate <app-directory> --connection <private-models-connect.json> [--binding <runtime.json>]\nThe app's runtime.json is used by default. Existing Nova experiments retain their legacy path.\nOr --provider <id> --model <id> --api-key-env <variable> [--base-url <url>]\nOutputs go to this package's ignored output/<binding-id>/<run-id>/; --output overrides it relative to your working directory. The app is not modified.",
     );
     return;
   }
   if (positionals.length !== 1)
     throw new Error(
-      "Usage: pnpm --dir translation translate ../apps/nova --connection <private-models-connect.json>",
+      "Usage: pnpm --dir translation translate <app-directory> --connection <private-models-connect.json> [--binding <runtime.json>]",
     );
-  const documents = await loadApplication(resolve(positionals[0]!));
+  const directory = resolve(positionals[0]!);
+  const documents = await loadApplication(directory);
+  const bindingPath = values.binding ? resolve(values.binding) : join(directory, "runtime.json");
+  let binding: RuntimeBinding | undefined;
+  if (values.binding || existsSync(bindingPath))
+    binding = readRuntimeBinding(JSON.parse(readFileSync(bindingPath, "utf8")));
+  else if (
+    directory !== fileURLToPath(new URL("../../apps/nova/", import.meta.url)).replace(/\/$/, "")
+  )
+    throw new Error("Provide an adapter-owned runtime.json or --binding for this application.");
   loadRootEnv();
   let rawConnection: unknown;
   if (values.connection) {
@@ -58,7 +72,7 @@ async function main() {
   }
   const outputBase = values.output
     ? resolve(values.output)
-    : fileURLToPath(new URL("../output/nova/", import.meta.url));
+    : fileURLToPath(new URL(`../output/${binding?.id ?? "nova"}/`, import.meta.url));
   mkdirSync(outputBase, { recursive: true, mode: 0o700 });
   const output = join(
     outputBase,
@@ -70,7 +84,7 @@ async function main() {
     console.error(
       "Missing model configuration. Supply --connection <private-models-connect.json> or --provider --model --api-key-env [--base-url]. No model was called.",
     );
-  const result = await runExperiment({
+  const options = {
     documents,
     output,
     metadata: {
@@ -85,10 +99,10 @@ async function main() {
       temperature: "runtime default",
       credentialsRecorded: false,
     },
-    generate: async (prompt, record) => {
+    generate: async (prompt: string, record: (text: string) => void) => {
       if (!connection)
         throw new Error(
-          "Missing model configuration. Run pnpm --dir translation translate ../apps/nova --connection <private-models-connect.json>, or supply --provider --model --api-key-env [--base-url]. No model was called.",
+          "Missing model configuration. Supply --connection <private-models-connect.json>, or --provider --model --api-key-env [--base-url]. No model was called.",
         );
       // Defer the existing provider stack until input/config checks pass; no Prisma/database is required.
       const {
@@ -114,12 +128,18 @@ async function main() {
         new PiAgentRuntime(),
         model,
         AbortSignal.timeout(120_000),
-        TRANSLATION_INSTRUCTIONS,
+        binding
+          ? APPLICATION_TRANSLATION_INSTRUCTIONS
+          : (await import("./prompt.js")).TRANSLATION_INSTRUCTIONS,
       )(prompt, record);
     },
-  });
+  };
+  const result = binding
+    ? await translateApplication({ ...options, binding })
+    : await (await import("./experiment.js")).runExperiment(options);
   console.log(`${result.status}\nArtifacts: ${output}`);
-  if (result.status !== "valid_translation_output") process.exitCode = 1;
+  if (!["valid_translation_output", "validated_policy_bundle"].includes(String(result.status)))
+    process.exitCode = 1;
 }
 
 main().catch((error: unknown) => {

@@ -15,6 +15,7 @@ grokbot/                 Existing host implementation, including UI customizatio
   pnpm-lock.yaml         Preserved dependency resolutions
   node_modules/          Ignored dependency installation
 apps/
+  document-vault/         Independent app, trusted runtime binding and gated document service
   nova/
     app.md               Application specification and interaction description
     policy.md            Natural-language application requirements
@@ -24,9 +25,9 @@ apps/
     src/                 Nova application, reference rules, protocol and analyses
     tests/
     run.sh               Docker/UI entry point, invoked from the repository root
-runtime/                 Generic Datalog, queries, native provenance and lifecycle
+runtime/                 Generic action gate, Datalog, queries, provenance and lifecycle
 translation/             One-shot natural-language-to-Datalog research prototype
-  output/                Ignored local experiment artifacts
+  output/                Ignored experiments and validated policy bundles
 docs/                    README, LICENSE, repository design and research documents
 ```
 
@@ -45,11 +46,11 @@ The host workspace explicitly includes adjacent `../apps/*`, `../runtime` and `.
 
 Only `.gitignore`, `.gitattributes` and `.dockerignore` remain as tracked root dotfiles: they govern repository-wide exclusion/line endings and the root Docker build context. `.github/` contains CI, platform screenshots/releases, issue templates and contribution/security guidance. GitHub workflow discovery requires that location. `.agents/` contains coding-assistant skills (`composio`, `pr-watch`); these are development helpers. Application agent specifications live in `apps/*/agents/`. The root `AGENTS.md` holds repository-wide rules; `grokbot/AGENTS.md` adds host/client rules. `CLAUDE.md` imports the root rules. Local private debug state is ignored and is separate from the module layout.
 
-The dependency direction is `Grokbot UI → Nova application → policy runtime`. Translation reads an application's Markdown; its optional model adapter comes from Grokbot's existing provider-neutral connection/runtime stack. Reference policies are loaded only after model generation. Generated rules are not installed into the application.
+The dependency direction is `Grokbot UI → Nova application → policy runtime`. Translation reads an application's Markdown; its optional model adapter comes from Grokbot's existing provider-neutral connection/runtime stack. The generic translation path emits a validated policy bundle which an app explicitly loads through `createPolicySession`. Document Vault runs actual callbacks through that gate and uses the same policy for query/Why/What-if. The legacy Nova experiment still loads reference rules only after generation for comparison and does not install generated rules into Nova.
 
 The UI remains in Grokbot. Nova can also run without it using `pnpm --dir grokbot --filter @rakazo/nova start`. The runtime package has no dependency on Grokbot or Nova. Nova-specific action search and local-store coordination remain with the application because their available actions, principals and protocol are domain-specific; generic evaluation/provenance live in `runtime/`.
 
-For future student applications, this separates requirements/source code from a runtime binding. We have not defined a universal porting API, forced a coordinator/workflow, or implemented automatic source-code conversion. A future binding must identify trusted observations, actions, the enforcement point and any domain-specific analysis actions. The present Nova binding is evidence for that design, not a finalized standard.
+For student applications, the first generic porting interface now accepts an adapter-owned runtime binding, a translated bundle, trusted observations and an action callback. The [runtime SDK](../runtime/README.md) supplies execute/check/query/why/whatIf; [Document Vault](../apps/document-vault/README.md) is an independent example. Its `runtime.json` describes actual instrumentation and acceptance cases; it can also be supplied separately with `--binding`, so it does not redefine student Markdown requirements. Automatic source instrumentation, distributed transactions, persistent generic sessions and general prevention/completion planning remain unimplemented.
 
 Our application-description interface is app.md, policy.md, tools.md and agents/*.md. LLM agents document their actual system prompts; scripted agents document their actual decision logic. Episodes are optional examples, not required for translation, standalone execution or a runtime binding. The existing loader and tests accept an application without episodes/. Nova keeps two illustrative examples. Course-only submission requirements do not define the framework contract; no archives are generated. Source/README and package metadata are not required translator inputs.
 

@@ -45,7 +45,6 @@ export async function loadApplication(directory: string): Promise<ApplicationDoc
       throw new Error("Empty document or application exceeds 128 KB.");
     documents.push({ path, content });
   }
-  if (extractPolicies(documents.find((doc) => doc.path === "policy.md")!.content).length < 3)
-    throw new Error("CS239 applications require at least three policies.");
+  extractPolicies(documents.find((doc) => doc.path === "policy.md")!.content);
   return documents;
 }

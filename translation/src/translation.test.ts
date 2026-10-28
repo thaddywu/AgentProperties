@@ -19,6 +19,17 @@ afterEach(async () => {
 });
 
 describe("CS239 documents and prompt", () => {
+  it("accepts a framework app with one policy and no episode directory", async () => {
+    const directory = await temporary();
+    await mkdir(join(directory, "agents"));
+    await Promise.all([
+      writeFile(join(directory, "app.md"), "A minimal app."),
+      writeFile(join(directory, "policy.md"), "P1. Only an authorized actor may read."),
+      writeFile(join(directory, "tools.md"), "read_document"),
+      writeFile(join(directory, "agents", "service.md"), "A scripted service."),
+    ]);
+    expect(await loadApplication(directory)).toHaveLength(4);
+  });
   it("loads Nova's actual six agents and five policies without requiring episodes", async () => {
     const directory = await temporary();
     await cp(example, directory, { recursive: true });
