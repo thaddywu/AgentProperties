@@ -4,6 +4,8 @@ Application-neutral function-free Datalog evaluation, safe query parsing and val
 
 Callers supply input facts and rules. The AST, predicate names and evaluation semantics are unchanged by the extraction. `runSouffle` and `explainSouffle` retain the existing native resource limits; `queryDatalog` retains bounded, read-only policy queries.
 
+`messaging-policy` supplies the fixed messaging/IFC/capability vocabulary and six foundation rules used by Nova. Application grants, tag-group membership, principals, exposure limits, audit roles and goals remain app-owned. Nova composes the foundation with its six handwritten reference rules. Event capture, principal placement and transport still live in Nova's adapter/protocol; exporting the foundation is not a generalized distributed-protocol implementation.
+
 The application interface in `src/application.ts` adds a generic in-process action gate. Applications supply a trusted binding and a translated bundle; the runtime does not import Nova, Grokbot, model adapters or app-specific predicates. [Document Vault](../apps/document-vault/README.md) exercises this interface with real document callbacks.
 
 ## Connect an application

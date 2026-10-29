@@ -1,5 +1,7 @@
 import type { PolicyFact, Rule } from "@rakazo/policy-runtime/datalog";
 import { factKey, formatFact } from "@rakazo/policy-runtime/datalog";
+import type { PredicateDefinition } from "@rakazo/policy-runtime/messaging-policy";
+import { MESSAGING_PREDICATES, MESSAGING_RULES } from "@rakazo/policy-runtime/messaging-policy";
 import { parseGroundFacts } from "@rakazo/policy-runtime/query";
 import { runSouffle, souffleProgram } from "@rakazo/policy-runtime/souffle";
 
@@ -17,32 +19,15 @@ const distinct: Rule["distinct"] = [
   ["T1", "T3"],
   ["T2", "T3"],
 ];
-export const REASONING_RULES: Rule[] = [
-  rule("trusted-label", f("Propagated", "M", "Tag"), [f("TrustedSource", "M", "Tag")]),
-  rule("message-label", f("Propagated", "M", "Tag"), [f("TransportTag", "M", "Tag")]),
+export const NOVA_PREDICATES: Record<string, PredicateDefinition> = {
+  Auditor: { args: ["Principal"], kind: "input", source: "config" },
+  AuditGoal: { args: ["Group", "Tag1", "Tag2", "Tag3"], kind: "input", source: "config" },
+  AuditReceipt: { args: ["Auditor", "Tag"], kind: "input", source: "transport" },
+  Audited: { args: ["Tag"], kind: "derived", source: "inference" },
+  Finished: { args: ["Group"], kind: "derived", source: "inference" },
+};
+export const NOVA_RULES: Rule[] = [
   rule("audit-receipt", f("Audited", "Tag"), [f("AuditReceipt", "A", "Tag")]),
-  rule("runtime-dependency", f("DependsOn", "Mout", "Min"), [
-    f("Receiver", "P", "Min"),
-    f("Sender", "P", "Mout"),
-    f("Before", "Min", "Mout"),
-  ]),
-  rule("label-propagation", f("Propagated", "Mout", "Tag"), [
-    f("DependsOn", "Mout", "Min"),
-    f("Propagated", "Min", "Tag"),
-  ]),
-  rule("knowledge", f("Knows", "P", "Tag"), [f("Received", "P", "M"), f("Propagated", "M", "Tag")]),
-  rule(
-    "capability",
-    f("DenyReceive", "P", "M"),
-    [
-      f("Incoming", "P", "M"),
-      f("Propagated", "M", "Tag"),
-      f("Requires", "Tag", "Cap"),
-      { ...f("HasCap", "P", "Cap"), negative: true },
-    ],
-    [],
-    1,
-  ),
   rule(
     "three-tag-exposure",
     f("DenyReceive", "P", "M"),
@@ -101,23 +86,45 @@ export const REASONING_RULES: Rule[] = [
     f("Audited", "T3"),
   ]),
 ];
+// Preserve the established native rule order for proofs and recorded experiments.
+export const REASONING_RULES: Rule[] = [
+  MESSAGING_RULES["trusted-label"],
+  MESSAGING_RULES["message-label"],
+  NOVA_RULES[0]!,
+  MESSAGING_RULES["runtime-dependency"],
+  MESSAGING_RULES["label-propagation"],
+  MESSAGING_RULES.knowledge,
+  MESSAGING_RULES.capability,
+  ...NOVA_RULES.slice(1),
+];
 export const RULE_TEXT = souffleProgram([], REASONING_RULES);
 export { CONFIG } from "./config.js";
-export const INPUT_ARITIES: Record<string, number> = {
-  Auditor: 1,
-  TagGroup: 2,
-  AuditGoal: 4,
-  HasCap: 2,
-  Requires: 2,
-  TrustedSource: 2,
-  TransportTag: 2,
-  AuditReceipt: 2,
-  Sender: 2,
-  Receiver: 2,
-  Before: 2,
-  Received: 2,
-  Incoming: 2,
-};
+export const PREDICATES = { ...MESSAGING_PREDICATES, ...NOVA_PREDICATES };
+export const INPUT_ARITIES: Record<string, number> = Object.fromEntries(
+  Object.entries(PREDICATES)
+    .filter(([, schema]) => schema.kind === "input")
+    .map(([name, schema]) => [name, schema.args.length]),
+);
+export const POLICY_LAYERS = [
+  {
+    id: "builtin",
+    title: "Built-in",
+    predicates: MESSAGING_PREDICATES,
+    rules: Object.values(MESSAGING_RULES),
+  },
+  { id: "nova", title: "Nova reference", predicates: NOVA_PREDICATES, rules: NOVA_RULES },
+].map((layer) => ({
+  id: layer.id,
+  title: layer.title,
+  predicates: Object.entries(layer.predicates).map(([name, schema]) => ({ name, ...schema })),
+  rules: layer.rules.map((rule) => ({
+    id: rule.id,
+    text: souffleProgram([], [rule])
+      .split("\n")
+      .filter((line) => !line.startsWith(".") && !line.startsWith("//"))
+      .join("\n"),
+  })),
+}));
 export const DERIVED = new Set(REASONING_RULES.map((r) => r.head.predicate));
 export function validateInput(fact: PolicyFact) {
   if (DERIVED.has(fact.predicate))

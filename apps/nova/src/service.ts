@@ -9,7 +9,7 @@ import {
   whatIf,
   why,
 } from "./analysis.js";
-import { parseInputs, RULE_TEXT } from "./policy.js";
+import { POLICY_LAYERS, parseInputs, RULE_TEXT } from "./policy.js";
 import { PROTOCOL } from "./protocol.js";
 import type { RuntimeState } from "./runtime.js";
 import { clone, createEpisode, NovaRuntime, REPLIES, view } from "./runtime.js";
@@ -75,6 +75,7 @@ export class NovaService {
       ...view(this.selected(selection)),
       version: this.version,
       rules: RULE_TEXT,
+      policyLayers: clone(POLICY_LAYERS),
       protocol: PROTOCOL,
       liveEvents: clone(this.runtime.state.events),
     };

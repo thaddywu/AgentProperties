@@ -18,6 +18,8 @@ The [Document Vault walkthrough](../apps/document-vault/README.md) exercises act
 
 ## Existing Nova experiment
 
+Nova's runtime and Rules dialog now distinguish the fixed messaging foundation from app-specific reference rules. This legacy experiment still asks the model to generate the whole policy; its prompt has not yet been narrowed to extensions of the foundation. Generated Nova rules remain evaluation artifacts, not the active demo policy.
+
 Use the workspace's supported Node version and pnpm. Install the workspace once, then run this package directly from the repository root:
 
 ```bash

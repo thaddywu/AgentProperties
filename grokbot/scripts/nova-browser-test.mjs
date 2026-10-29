@@ -74,6 +74,31 @@ try {
   await reset("denial");
   await page.goto(`${base}/nova.html`);
   await page.getByRole("tab", { name: "Query", exact: true }).waitFor();
+  await page.getByRole("button", { name: "Rules", exact: true }).click();
+  await page.getByRole("heading", { name: "Rules and inputs", exact: true }).waitFor();
+  const builtinPanel = page.getByRole("tabpanel", { name: "Built-in", exact: true });
+  assert.match(await builtinPanel.innerText(), /TransportTag\(Message, Tag\)/);
+  assert.match(await builtinPanel.innerText(), /capability/);
+  assert.doesNotMatch(await builtinPanel.innerText(), /three-tag-exposure|AuditGoal/);
+  await builtinPanel.getByText("App-supplied values", { exact: true }).click();
+  assert.match(await builtinPanel.innerText(), /HasCap\(auditor_a, hr_review\)/);
+  await page.screenshot({ path: `${output}/builtin-policy.png`, fullPage: true });
+  await page.getByRole("tab", { name: "Nova reference", exact: true }).click();
+  const novaPanel = page.getByRole("tabpanel", { name: "Nova reference", exact: true });
+  assert.match(await novaPanel.innerText(), /Handwritten Nova rules/);
+  assert.match(await novaPanel.innerText(), /three-tag-exposure/);
+  assert.match(await novaPanel.innerText(), /AuditGoal\(Group, Tag1, Tag2, Tag3\)/);
+  assert.doesNotMatch(await novaPanel.innerText(), /runtime-dependency/);
+  await page.screenshot({ path: `${output}/nova-policy.png`, fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  assert.equal(
+    await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    true,
+  );
+  await page.screenshot({ path: `${output}/nova-policy-narrow.png`, fullPage: true });
+  await page.setViewportSize({ width: 1500, height: 1000 });
+  await page.keyboard.press("Escape");
+  console.log("PASS built-in and Nova policy layers, EDB ownership and app configuration");
   await page.getByRole("button", { name: "Questions", exact: true }).click();
   for (const category of [
     "Information flow",

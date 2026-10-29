@@ -17,6 +17,7 @@ import { useEffect, useState } from "react";
 import { AppearanceToggle } from "../../components/AppearanceToggle";
 import { AnalysisTerminal } from "./AnalysisTerminal";
 import { loadState, request } from "./client";
+import { PolicyLayers } from "./PolicyLayers";
 import { QuestionCatalog } from "./QuestionCatalog";
 
 const format = (f: { predicate: string; args: string[] }) => `${f.predicate}(${f.args.join(", ")})`;
@@ -444,7 +445,16 @@ export function NovaApp() {
                         {rows.map((row, i) => (
                           <div key={i} className="rounded bg-muted/60 p-2">
                             <code className="break-all">{format(row.fact)}</code>
-                            <p className="mt-1 text-muted-foreground">{row.label}</p>
+                            <p className="mt-1 text-muted-foreground">
+                              {state.policyLayers.find((layer) =>
+                                layer.predicates.some(
+                                  (predicate) => predicate.name === row.fact.predicate,
+                                ),
+                              )?.id === "builtin"
+                                ? "Built-in schema"
+                                : "Nova schema"}{" "}
+                              · {row.label}
+                            </p>
                           </div>
                         ))}
                       </div>
@@ -478,14 +488,7 @@ export function NovaApp() {
           <pre className="overflow-auto text-xs">{JSON.stringify(state?.protocol, null, 2)}</pre>
         </DialogContent>
       </Dialog>
-      <Dialog open={rules} onOpenChange={setRules}>
-        <DialogContent className="max-h-[85vh] overflow-auto sm:max-w-3xl">
-          <DialogTitle>Executable policy rules</DialogTitle>
-          <pre className="whitespace-pre-wrap break-words font-mono text-xs leading-relaxed">
-            {state?.rules}
-          </pre>
-        </DialogContent>
-      </Dialog>
+      <PolicyLayers state={state} open={rules} onOpenChange={setRules} />
       <Dialog open={configOpen} onOpenChange={setConfigOpen}>
         <DialogContent>
           <DialogTitle>Application configuration</DialogTitle>

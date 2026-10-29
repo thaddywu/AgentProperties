@@ -29,3 +29,5 @@ See [Nova setup and commands](../apps/nova/README.md), [model connections](../tr
 [App → translation → runtime walkthrough](../apps/document-vault/README.md) · [Repository boundaries](repository-structure.md) · [Translation experiments](translation-model-comparison.md) · [Research design](research/main.tex) · [Contributing](../.github/CONTRIBUTING.md) · [Security](../.github/SECURITY.md) · [Apache 2.0 license](LICENSE)
 
 [Nova runtime contract proposal](nova-runtime-contract.md) inventories predicate ownership, distributed placement, adapter APIs and optional type-state support. It describes the next design, separately from the implemented interfaces above.
+
+[Distributed protocol synthesis RQ](distributed-protocol-rq.md) proposes query-style placement/transfers and a bounded study of storage, communication and inference costs. Nova's Rules dialog now separates the implemented fixed foundation from app-specific reference rules.

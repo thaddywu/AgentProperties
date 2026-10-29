@@ -1,8 +1,36 @@
 import { describe, expect, it } from "vitest";
 import { ACTION_PRESET } from "../src/analysis.js";
+import { INPUT_ARITIES, REASONING_RULES } from "../src/policy.js";
 import { NovaService } from "../src/service.js";
 
 describe("Nova local service", () => {
+  it("exposes the actual executable layers and identifies configuration as app-supplied values", () => {
+    const state = new NovaService().state();
+    const [builtin, nova] = state.policyLayers;
+    expect(builtin!.rules).toHaveLength(6);
+    expect(nova!.rules).toHaveLength(6);
+    expect(nova!.title).toBe("Nova reference");
+    expect(
+      state.policyLayers.flatMap((layer) => layer.rules.map((rule) => rule.id)).sort(),
+    ).toEqual(REASONING_RULES.map((rule) => rule.id).sort());
+    expect(
+      Object.fromEntries(
+        state.policyLayers.flatMap((layer) =>
+          layer.predicates
+            .filter((predicate) => predicate.kind === "input")
+            .map((predicate) => [predicate.name, predicate.args.length]),
+        ),
+      ),
+    ).toEqual(INPUT_ARITIES);
+    expect(builtin!.predicates.find((predicate) => predicate.name === "HasCap")).toMatchObject({
+      source: "config",
+    });
+    expect(state.configuration).toContainEqual({
+      predicate: "HasCap",
+      args: ["auditor_a", "hr_review"],
+    });
+    expect(nova!.predicates.some((predicate) => predicate.name === "Finished")).toBe(true);
+  });
   it("rejects stale requests and keeps read-only analysis input state unchanged", () => {
     const service = new NovaService(),
       before = JSON.stringify(service.runtime.state);

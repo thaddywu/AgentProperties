@@ -1,6 +1,6 @@
 # Nova-centered runtime and translation contract
 
-Status: design proposal, 2026-10-28. This inventories the current implementation and proposes the next boundary. It does not change running policies, move predicates, install translated Nova rules, or introduce a new state-machine engine. Nova remains the primary example; Document Vault is a separate proof that a translated policy can control a local callback.
+Status: contract proposal, 2026-10-28, with the first foundation extraction implemented. The six fixed IFC/capability rules and their schema now live in `runtime/src/messaging-policy.ts`; Nova's six app-specific reference rules remain in `apps/nova/src/policy.ts`. The UI exposes both layers. Executable rules, ordering and behavior are preserved. General protocol synthesis, translated Nova rule installation and a connected resource state-machine gate remain proposed. Nova remains the primary example; Document Vault is a separate proof that a translated policy can control a local callback.
 
 ## Target boundary
 
@@ -149,3 +149,5 @@ This inventory covers Nova, the new generic action interface, Document Vault and
 4. Compare reference and translated Nova through actual send/receive transitions, including denied-body isolation, envelope loss, multi-label propagation, pending interleavings, cross-store injection, duplicate attempts, failed delivery and historical receipts. Add an independent adapter conformance test to show the boundary is not Grokbot-specific.
 
 Keep the old one-shot results immutable. A translator that now relies on fixed IFC mechanisms solves a changed task; its results must not be presented as a direct accuracy improvement over the earlier prompt that asked the model to generate those mechanisms.
+
+[Distributed protocol primitives and minimal-plan RQ](distributed-protocol-rq.md) develops placement, export projections, typestate and bounded plan synthesis.
