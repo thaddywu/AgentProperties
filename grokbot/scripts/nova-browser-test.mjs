@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { mkdir } from "node:fs/promises";
 import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
 
 // Override only for a preinstalled browser toolkit outside this checkout.
 const { chromium } = process.env.NOVA_PLAYWRIGHT_MODULE
@@ -76,15 +78,15 @@ try {
   await page.getByRole("tab", { name: "Query", exact: true }).waitFor();
   await page.getByRole("button", { name: "Rules", exact: true }).click();
   await page.getByRole("heading", { name: "Rules and inputs", exact: true }).waitFor();
-  const builtinPanel = page.getByRole("tabpanel", { name: "Built-in", exact: true });
+  const builtinPanel = page.getByRole("tabpanel", { name: "Runtime", exact: true });
   assert.match(await builtinPanel.innerText(), /TransportTag\(Message, Tag\)/);
   assert.match(await builtinPanel.innerText(), /capability/);
   assert.doesNotMatch(await builtinPanel.innerText(), /three-tag-exposure|AuditGoal/);
   await builtinPanel.getByText("App-supplied values", { exact: true }).click();
   assert.match(await builtinPanel.innerText(), /HasCap\(auditor_a, hr_review\)/);
   await page.screenshot({ path: `${output}/builtin-policy.png`, fullPage: true });
-  await page.getByRole("tab", { name: "Nova reference", exact: true }).click();
-  const novaPanel = page.getByRole("tabpanel", { name: "Nova reference", exact: true });
+  await page.getByRole("tab", { name: "Golden", exact: true }).click();
+  const novaPanel = page.getByRole("tabpanel", { name: "Golden", exact: true });
   assert.match(await novaPanel.innerText(), /Handwritten Nova rules/);
   assert.match(await novaPanel.innerText(), /three-tag-exposure/);
   assert.match(await novaPanel.innerText(), /AuditGoal\(Group, Tag1, Tag2, Tag3\)/);
@@ -95,10 +97,79 @@ try {
     await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     true,
   );
+  const tabListBounds = await page
+    .getByRole("tablist", { name: "Policy walkthrough" })
+    .boundingBox();
+  const lastTabBounds = await page
+    .getByRole("tab", { name: "Prevention", exact: true })
+    .boundingBox();
+  assert.ok(lastTabBounds.y + lastTabBounds.height <= tabListBounds.y + tabListBounds.height + 1);
   await page.screenshot({ path: `${output}/nova-policy-narrow.png`, fullPage: true });
   await page.setViewportSize({ width: 1500, height: 1000 });
+  await page.getByRole("tab", { name: "Nova input", exact: true }).click();
+  await page.getByText("policy.md", { exact: true }).click();
+  assert.match(
+    await page.getByRole("tabpanel", { name: "Nova input", exact: true }).innerText(),
+    /P3\. No agent other than Board/,
+  );
+  await page.getByRole("tab", { name: "Translated", exact: true }).click();
+  await page.getByLabel("Import translation artifact").waitFor();
+  assert.match(
+    await page.getByRole("tabpanel", { name: "Translated", exact: true }).innerText(),
+    /one-shot extension command/,
+  );
+  await page.getByRole("tab", { name: "Prevention", exact: true }).click();
+  await page.getByRole("button", { name: "Check closure union", exact: true }).click();
+  await page
+    .getByText("Closure union and pending gate decisions match full-copy.", { exact: true })
+    .waitFor();
+  await page.getByRole("button", { name: "Run prevention comparison", exact: true }).click();
+  await page.getByRole("heading", { name: "Third distinct tag", exact: true }).waitFor();
+  assert.match(
+    await page.getByRole("tabpanel", { name: "Prevention", exact: true }).innerText(),
+    /Golden: passed/,
+  );
+  await page.screenshot({ path: `${output}/policy-prevention.png`, fullPage: true });
+  const fixture = execFileSync(process.execPath, [
+    "--import",
+    createRequire(new URL("../../apps/nova/package.json", import.meta.url)).resolve("tsx"),
+    fileURLToPath(new URL("../../apps/nova/tests/browser-policy-fixture.ts", import.meta.url)),
+  ]);
+  await page.getByRole("tab", { name: "Translated", exact: true }).click();
+  await page
+    .getByLabel("Import translation artifact")
+    .setInputFiles({ name: "nova-policy.json", mimeType: "application/json", buffer: fixture });
+  await page
+    .getByText("Checks passed; semantic equivalence is unproven.", { exact: true })
+    .waitFor();
+  await page.screenshot({ path: `${output}/translated-policy.png`, fullPage: true });
+  await page.getByRole("button", { name: "Start translated session", exact: true }).click();
+  await page.getByText(/^Active: Translated/).waitFor();
+  const active = await current();
+  assert.equal(active.policyIdentity.mode, "translated");
+  await api({ operation: "reset", preset: "denial", revision: active.version });
+  const pendingState = await current();
+  const deniedState = await api({ operation: "settle", id: "mH", revision: pendingState.version });
+  assert.equal(deniedState.messages.find((message) => message.id === "mH").status, "denied");
+  assert.equal(
+    deniedState.records.some(
+      (record) => record.fact.predicate === "Received" && record.fact.args[1] === "mH",
+    ),
+    false,
+  );
+  await page.reload();
+  await page.getByRole("button", { name: "Rules", exact: true }).click();
+  await page.getByText(/^Active: Translated/).waitFor();
+  await page.getByRole("tab", { name: "Golden", exact: true }).click();
+  await page.getByRole("button", { name: "Start golden session", exact: true }).click();
+  await page.getByText(/^Active: Golden/).waitFor();
   await page.keyboard.press("Escape");
-  console.log("PASS built-in and Nova policy layers, EDB ownership and app configuration");
+  await reset("denial");
+  await page.reload();
+  await page.getByRole("tab", { name: "Query", exact: true }).waitFor();
+  console.log(
+    "PASS five-part policy walkthrough, input documents, closure union and actual prevention",
+  );
   await page.getByRole("button", { name: "Questions", exact: true }).click();
   for (const category of [
     "Information flow",

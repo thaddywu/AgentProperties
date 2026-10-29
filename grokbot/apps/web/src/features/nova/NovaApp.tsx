@@ -80,7 +80,7 @@ export function NovaApp() {
         <strong className="text-sm">Nova</strong>
         <span className="text-xs text-muted-foreground">Distributed Policy Reasoning</span>
         <span className="ml-auto hidden text-xs text-muted-foreground sm:inline">
-          Local runtime · Datalog
+          {state?.policyIdentity.mode === "translated" ? "Translated" : "Golden"} · Local runtime
         </span>
         <AppearanceToggle />
         <Button size="sm" variant="ghost" onClick={() => setQuestionsOpen(true)}>
@@ -488,7 +488,14 @@ export function NovaApp() {
           <pre className="overflow-auto text-xs">{JSON.stringify(state?.protocol, null, 2)}</pre>
         </DialogContent>
       </Dialog>
-      <PolicyLayers state={state} open={rules} onOpenChange={setRules} />
+      <PolicyLayers
+        state={state}
+        open={rules}
+        onOpenChange={setRules}
+        mutate={mutate}
+        busy={busy}
+        selection={selection}
+      />
       <Dialog open={configOpen} onOpenChange={setConfigOpen}>
         <DialogContent>
           <DialogTitle>Application configuration</DialogTitle>

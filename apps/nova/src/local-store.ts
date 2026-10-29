@@ -1,10 +1,11 @@
 import type { PolicyFact } from "@rakazo/policy-runtime/datalog";
 import { factKey } from "@rakazo/policy-runtime/datalog";
 import { runSouffle } from "@rakazo/policy-runtime/souffle";
-import { DERIVED, REASONING_RULES } from "./policy.js";
+import { DERIVED } from "./policy.js";
 import { accepts, PROTOCOL } from "./protocol.js";
 import type { RuntimeState } from "./runtime.js";
 import { PRINCIPALS } from "./shared.js";
+import { rulesFor } from "./translated-policy.js";
 
 export function localInputs(state: RuntimeState, owner: string) {
   if (!PRINCIPALS.some((p) => p === owner)) throw new Error(`Unknown store: ${owner}`);
@@ -16,8 +17,8 @@ export function localInputs(state: RuntimeState, owner: string) {
   return records.map((r) => r.fact);
 }
 /** Bind location variables before evaluation, so locality also constrains recursion. */
-export function localRules(owner: string) {
-  return REASONING_RULES.flatMap((rule) => {
+export function localRules(owner: string, state: Pick<RuntimeState, "policy"> = {}) {
+  return rulesFor(state).flatMap((rule) => {
     if (PROTOCOL.onlyAt[rule.head.predicate] && PROTOCOL.onlyAt[rule.head.predicate] !== owner)
       return [];
     const pattern = PROTOCOL.local[rule.head.predicate];
@@ -28,7 +29,7 @@ export function localRules(owner: string) {
       const expected = pattern[i] === "@self" ? owner : pattern[i]!;
       const term = rule.head.args[i]!;
       if (/^[A-Z]/.test(term)) bindings.set(term, `c:${expected}`);
-      else if (term !== expected) return [];
+      else if ((term.startsWith("c:") ? term.slice(2) : term) !== expected) return [];
     }
     const bind = (value: string) => bindings.get(value) ?? value;
     return [
@@ -42,7 +43,7 @@ export function localRules(owner: string) {
   });
 }
 export function localClosure(state: RuntimeState, owner: string) {
-  return runSouffle(localInputs(state, owner), localRules(owner));
+  return runSouffle(localInputs(state, owner), localRules(owner, state));
 }
 /** Observer union of independently computed stores. Never evaluated as a policy program. */
 export function reconstructDebugView(state: RuntimeState) {

@@ -48,3 +48,5 @@ Inspection while an operation is in flight throws; await the operation first. Ca
 This interface handles observable action authorization. It does not infer trustworthy facts from prose, instrument arbitrary source code, detect semantic information leakage, or prove future task completion. The argument roles are descriptive strings with arity validation, not a rich entity type system. Acceptance cases cover only their supplied examples.
 
 Nova-specific local stores, message transport, receive gates, prevention search and completion search remain in `apps/nova`. The older native chat protocol remains in Grokbot. Both keep their existing execution paths; installing a generic bundle does not change a Nova session. General action-space planning is not part of this new interface.
+
+`messaging-protocol` exports the fixed message placement/transport declarations used by Nova. Nova still implements the hooks and composes its source authority and audit receipt route. The [Nova walkthrough](../apps/nova/README.md) supports golden and translated extension sessions over this fixed protocol; general protocol synthesis/minimization remains unimplemented.

@@ -1,24 +1,14 @@
 import type { PolicyFact } from "@rakazo/policy-runtime/datalog";
+import { MESSAGING_PROTOCOL } from "@rakazo/policy-runtime/messaging-protocol";
 
 /** @self binds to the store's principal; _ matches any value.
  * Placement governs actual local engine input/output, not just UI labels.
  * Shared config is explicitly copied into every local store.
  */
 export const PROTOCOL = {
-  replicated: ["Auditor", "Requires", "TagGroup", "AuditGoal"],
+  replicated: ["Auditor", ...MESSAGING_PROTOCOL.replicated, "AuditGoal"],
   local: {
-    HasCap: ["@self", "_"],
-    Sender: ["@self", "_"],
-    Receiver: ["@self", "_"],
-    Received: ["@self", "_"],
-    Incoming: ["@self", "_"],
-    TrustedSource: ["_", "_"],
-    TransportTag: ["_", "_"],
-    Before: ["_", "_"],
-    DependsOn: ["_", "_"],
-    Propagated: ["_", "_"],
-    Knows: ["@self", "_"],
-    DenyReceive: ["@self", "_"],
+    ...MESSAGING_PROTOCOL.local,
     Audited: ["_"],
     AuditReceipt: ["_", "_"],
     Finished: ["_"],
@@ -27,14 +17,9 @@ export const PROTOCOL = {
     string,
     string
   >,
-  temporary: ["Incoming"],
+  temporary: MESSAGING_PROTOCOL.temporary,
   transfers: {
-    message: {
-      export: "Propagated",
-      import: "TransportTag",
-      messageArgument: 0,
-      retain: "on-allow", // present temporarily for the receiver's gate, discard on deny
-    },
+    message: MESSAGING_PROTOCOL.message,
     audit: {
       export: "Audited",
       import: "AuditReceipt",

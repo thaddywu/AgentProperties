@@ -30,7 +30,7 @@ export function why(input: RuntimeState, query: string, scope = "auditor_a"): Pr
       : { [scope]: localClosure(input, scope).facts };
   const owner = Object.keys(stores).find((owner) => contains(stores[owner]!, target));
   if (!owner) return null;
-  const proof = explainSouffle(localInputs(input, owner), localRules(owner), target);
+  const proof = explainSouffle(localInputs(input, owner), localRules(owner, input), target);
   const mark = (node: ProofNode) => {
     if (
       node.kind === "input" &&

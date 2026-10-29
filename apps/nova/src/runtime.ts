@@ -13,6 +13,9 @@ import {
 } from "./store-records.js";
 import { migrateTagSchema } from "./tag-migration.js";
 
+import type { NovaPolicyArtifact } from "./translated-policy.js";
+import { readPolicyArtifact } from "./translated-policy.js";
+
 export { NAMES, PRINCIPALS } from "./shared.js";
 export type InputRecord = {
   fact: PolicyFact;
@@ -44,6 +47,7 @@ export type RuntimeEvent = {
 };
 export type LocalStores = Record<string, InputRecord[]>;
 export type RuntimeState = {
+  policy?: NovaPolicyArtifact;
   storeSchemaVersion: 1;
   protocolVersion?: 1;
   tagSchemaVersion?: 1;
@@ -84,8 +88,11 @@ export function inputRecord(
 export class NovaRuntime {
   state: RuntimeState;
   constructor(state?: RuntimeState | LegacyRuntimeState) {
+    const policy =
+      state && state.policy !== undefined ? readPolicyArtifact(state.policy) : undefined;
     if (state && "stores" in state)
       this.state = clone({
+        ...(policy ? { policy } : {}),
         storeSchemaVersion: 1,
         protocolVersion: state.protocolVersion,
         tagSchemaVersion: state.tagSchemaVersion,
@@ -107,6 +114,7 @@ export class NovaRuntime {
       const { records, events, ...rest } = legacy;
       this.state = {
         ...rest,
+        ...(policy ? { policy } : {}),
         storeSchemaVersion: 1,
         protocolVersion: 1,
         stores: partitionLegacyRecords(records),
@@ -365,8 +373,12 @@ export const REPLIES: Record<string, { tag: string; id: string; body: string }> 
   },
 };
 /** Presets schedule actual send/gate/receive calls; they never load event or derived fixtures. */
-export function createEpisode(preset: "initial" | "earlier" | "denial" = "denial") {
+export function createEpisode(
+  preset: "initial" | "earlier" | "denial" = "denial",
+  policy?: NovaPolicyArtifact,
+) {
   const runtime = new NovaRuntime();
+  if (policy) runtime.state.policy = readPolicyArtifact(policy);
   if (preset === "initial") return runtime;
   for (const assignment of assignments)
     runtime.assign(assignment.id, assignment.to, assignment.tag, assignment.body);

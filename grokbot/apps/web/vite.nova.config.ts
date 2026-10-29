@@ -32,7 +32,7 @@ async function api(req: IncomingMessage, res: ServerResponse, next: () => void) 
     let body = "";
     for await (const chunk of req) {
       body += chunk;
-      if (Buffer.byteLength(body) > 64_000) throw new Error("Request too large.");
+      if (Buffer.byteLength(body) > 256_000) throw new Error("Request too large.");
     }
     const result = await service.run(JSON.parse(body) as Request);
     res.end(JSON.stringify({ result }));

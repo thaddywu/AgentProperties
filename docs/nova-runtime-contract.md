@@ -1,6 +1,6 @@
 # Nova-centered runtime and translation contract
 
-Status: contract proposal, 2026-10-28, with the first foundation extraction implemented. The six fixed IFC/capability rules and their schema now live in `runtime/src/messaging-policy.ts`; Nova's six app-specific reference rules remain in `apps/nova/src/policy.ts`. The UI exposes both layers. Executable rules, ordering and behavior are preserved. General protocol synthesis, translated Nova rule installation and a connected resource state-machine gate remain proposed. Nova remains the primary example; Document Vault is a separate proof that a translated policy can control a local callback.
+Status: contract proposal, 2026-10-28, with the first foundation extraction implemented. The six fixed IFC/capability rules and their schema now live in `runtime/src/messaging-policy.ts`; Nova's six app-specific reference rules remain in `apps/nova/src/policy.ts`. The UI exposes both layers. The golden executable rules, ordering and behavior are preserved. Nova extension artifacts can now be reviewed and installed into fresh sessions with the fixed protocol. General protocol synthesis and a connected resource state-machine gate remain proposed. Nova remains the primary example; Document Vault is a separate proof that a translated policy can control a local callback.
 
 ## Target boundary
 

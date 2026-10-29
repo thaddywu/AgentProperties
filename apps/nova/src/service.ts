@@ -1,3 +1,5 @@
+import { MESSAGING_PROTOCOL } from "@rakazo/policy-runtime/messaging-protocol";
+import { runSouffle, souffleProgram } from "@rakazo/policy-runtime/souffle";
 import {
   ACTIONS,
   applyAction,
@@ -9,11 +11,14 @@ import {
   whatIf,
   why,
 } from "./analysis.js";
-import { POLICY_LAYERS, parseInputs, RULE_TEXT } from "./policy.js";
+import { novaDocuments } from "./documents.js";
+import { POLICY_LAYERS, parseInputs } from "./policy.js";
+import { closureConformance, comparePrevention } from "./prevention.js";
 import { PROTOCOL } from "./protocol.js";
 import type { RuntimeState } from "./runtime.js";
 import { clone, createEpisode, NovaRuntime, REPLIES, view } from "./runtime.js";
 import { allRecords } from "./store-records.js";
+import { GOLDEN_ID, readPolicyArtifact, rulesFor } from "./translated-policy.js";
 export type Selection = { event?: number; side?: "before" | "after" | "check" };
 export type Request = Selection & {
   operation: string;
@@ -33,6 +38,7 @@ export type Request = Selection & {
   body?: string;
   config?: string;
   trace?: string[];
+  artifact?: unknown;
 };
 /** Local service boundary. The browser sends intents; policy execution stays here. */
 export class NovaService {
@@ -74,7 +80,13 @@ export class NovaService {
     return {
       ...view(this.selected(selection)),
       version: this.version,
-      rules: RULE_TEXT,
+      rules: souffleProgram([], rulesFor(this.runtime.state)),
+      policyIdentity: {
+        mode: this.runtime.state.policy ? "translated" : "golden",
+        id: this.runtime.state.policy?.id ?? GOLDEN_ID,
+      },
+      documents: novaDocuments(),
+      foundationProtocol: MESSAGING_PROTOCOL,
       policyLayers: clone(POLICY_LAYERS),
       protocol: PROTOCOL,
       liveEvents: clone(this.runtime.state.events),
@@ -86,6 +98,39 @@ export class NovaService {
       throw new Error("State changed. Refresh the store and rerun.");
     const selected = this.selected(req);
     switch (req.operation) {
+      case "conformance":
+        return closureConformance(selected);
+      case "review-policy": {
+        const artifact = readPolicyArtifact(req.artifact);
+        runSouffle([], rulesFor({ policy: artifact }));
+        const cases = comparePrevention(artifact);
+        return {
+          artifact,
+          cases,
+          eligible: cases.every(
+            (test) => test.matches && test.golden.passed && test.translated?.passed,
+          ),
+          semanticCorrectness: "unproven",
+        };
+      }
+      case "prevention":
+        return comparePrevention(this.runtime.state.policy);
+      case "start-policy": {
+        const policy = req.artifact === undefined ? undefined : readPolicyArtifact(req.artifact);
+        if (policy) {
+          runSouffle([], rulesFor({ policy }));
+          if (
+            comparePrevention(policy).some(
+              (test) => !test.matches || !test.golden.passed || !test.translated?.passed,
+            )
+          )
+            throw new Error(
+              "Translated policy failed the prevention corpus. Review counterexamples; no session was replaced.",
+            );
+        }
+        this.runtime = createEpisode("initial", policy);
+        break;
+      }
       case "query":
         return terminalQuery(selected, req.query ?? "", req.scope);
       case "why":
@@ -96,14 +141,16 @@ export class NovaService {
         return minimalPrevention(selected, parsePreventable(req.events ?? ""), req.query ?? "");
       case "speculative":
         return speculative(
-          req.basis === "earlier" ? createEpisode("earlier").state : selected,
+          req.basis === "earlier"
+            ? createEpisode("earlier", this.runtime.state.policy).state
+            : selected,
           parseActions(req.actions ?? ""),
           req.goal ?? "",
         );
       case "reset": {
         if (!["initial", "earlier", "denial"].includes(req.preset ?? ""))
           throw new Error("Unknown preset.");
-        this.runtime = createEpisode(req.preset);
+        this.runtime = createEpisode(req.preset, this.runtime.state.policy);
         break;
       }
       case "send":
@@ -163,7 +210,10 @@ export class NovaService {
           if (!action) throw new Error("Unknown trace action.");
           return action;
         });
-        let next = req.basis === "earlier" ? createEpisode("earlier") : new NovaRuntime(selected);
+        let next =
+          req.basis === "earlier"
+            ? createEpisode("earlier", this.runtime.state.policy)
+            : new NovaRuntime(selected);
         for (const action of actions) {
           const result = applyAction(next.state, action);
           if (!result.allowed)

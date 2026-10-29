@@ -18,3 +18,13 @@ The installed Pi native OpenAI catalog did not contain `gpt-6.1-sol`; its existi
 Model identity and API support were checked against the [official GPT-6.1 Sol documentation](https://developers.openai.com/api/docs/models/gpt-6.1-sol). The requested model was preserved; no other model was silently substituted.
 
 The experiments were run before moving the directories to preserve the original inputs. Both generated programs were then replayed through the extracted runtime, with all fourteen results unchanged. Exact prompts, raw responses, generated Datalog and probe inputs/results remain in ignored `translation/output/nova/` run directories, outside committed source. No credential value or credential-file location is recorded in this report.
+
+## Foundation-extension experiment (2026-10-28)
+
+A separate GPT-6.1 Sol one-shot used the new `--nova-extension` path with low reasoning and the same output-token limit. This is a different prompt/task, so its result is not a controlled model-quality comparison with the whole-policy trials above. The prompt included fixed IFC/capability rules, schema, trusted configuration, protocol semantics and exact app Markdown. Golden app rules and the predefined prevention cases were excluded. Episodes were excluded.
+
+The model marked P1, P2 and P4 as builtin and generated six extension rules: four exposure rules for P3 and two audit rules for P5. JSON, schema, safety/stratification and native evaluation passed. The artifact was executed in independent diagnostic Nova runtimes through actual send/settle calls, rather than installed into an active demo session.
+
+Seven of eight predefined cases matched golden. In the historical-receipt case, delivery/denial decisions, recipient payload visibility and Finished still matched, but three Audited facts were missing from the merged closure after auditor roles were removed. The output derived Finished directly from AuditReceipt and did not reconstruct Audited from those historical receipts. This demonstrates why matching Deny and task completion alone is insufficient for closure equivalence. Normal session activation was refused; the generated output was neither repaired nor replaced.
+
+Code inspection also shows an extra known-only exposure clause and a TagGroup requirement on local Audited derivation. These differences are not established as harmless by the eight cases. Finite case success is not a universal equivalence proof or a translation accuracy estimate. Exact source snapshots, prompt, raw response, generated source, reloadable artifact and comparison evidence remain in the ignored experiment directory. No second model invocation or semantic repair was performed.

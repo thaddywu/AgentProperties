@@ -19,6 +19,7 @@ async function main() {
     options: {
       connection: { type: "string" },
       binding: { type: "string" },
+      "nova-extension": { type: "boolean" },
       provider: { type: "string" },
       model: { type: "string" },
       "api-key-env": { type: "string" },
@@ -29,7 +30,7 @@ async function main() {
   });
   if (values.help) {
     console.log(
-      "From the repository root: pnpm --dir translation translate <app-directory> --connection <private-models-connect.json> [--binding <runtime.json>]\nThe app's runtime.json is used by default. Existing Nova experiments retain their legacy path.\nOr --provider <id> --model <id> --api-key-env <variable> [--base-url <url>]\nOutputs go to this package's ignored output/<binding-id>/<run-id>/; --output overrides it relative to your working directory. The app is not modified.",
+      "From the repository root: pnpm --dir translation translate <app-directory> --connection <private-models-connect.json> [--binding <runtime.json>]\nThe app's runtime.json is used by default. Existing Nova experiments retain their legacy path; --nova-extension generates only app extensions and writes nova-policy.json.\nOr --provider <id> --model <id> --api-key-env <variable> [--base-url <url>]\nOutputs go to this package's ignored output/<binding-id>/<run-id>/; --output overrides it relative to your working directory. The app is not modified.",
     );
     return;
   }
@@ -47,6 +48,12 @@ async function main() {
     directory !== fileURLToPath(new URL("../../apps/nova/", import.meta.url)).replace(/\/$/, "")
   )
     throw new Error("Provide an adapter-owned runtime.json or --binding for this application.");
+  if (
+    values["nova-extension"] &&
+    (binding ||
+      directory !== fileURLToPath(new URL("../../apps/nova/", import.meta.url)).replace(/\/$/, ""))
+  )
+    throw new Error("--nova-extension requires the Nova application without a generic binding.");
   loadRootEnv();
   let rawConnection: unknown;
   if (values.connection) {
@@ -134,11 +141,17 @@ async function main() {
       )(prompt, record);
     },
   };
-  const result = binding
-    ? await translateApplication({ ...options, binding })
-    : await (await import("./experiment.js")).runExperiment(options);
+  const result = values["nova-extension"]
+    ? await (await import("./nova-extension.js")).translateNovaExtension(options)
+    : binding
+      ? await translateApplication({ ...options, binding })
+      : await (await import("./experiment.js")).runExperiment(options);
   console.log(`${result.status}\nArtifacts: ${output}`);
-  if (!["valid_translation_output", "validated_policy_bundle"].includes(String(result.status)))
+  if (
+    !["valid_translation_output", "validated_policy_bundle", "validated_nova_extension"].includes(
+      String(result.status),
+    )
+  )
     process.exitCode = 1;
 }
 

@@ -18,7 +18,9 @@ The [Document Vault walkthrough](../apps/document-vault/README.md) exercises act
 
 ## Existing Nova experiment
 
-Nova's runtime and Rules dialog now distinguish the fixed messaging foundation from app-specific reference rules. This legacy experiment still asks the model to generate the whole policy; its prompt has not yet been narrowed to extensions of the foundation. Generated Nova rules remain evaluation artifacts, not the active demo policy.
+Nova supports two experiments. Add `--nova-extension` to provide the immutable foundation and fixed protocol and ask for app-specific extensions only. That path writes `nova-policy.json`, which Nova can review and load into a fresh session; see the [five-part walkthrough](../apps/nova/README.md). Its generated heads are limited to DenyReceive, Audited and Finished; inputs, config, propagation rules and protocol cannot be rewritten. Unknown/unsafe/unstratified rules fail validation. One model call is made, with no repair or golden-rule substitution. Exact inputs and raw output are saved before validation, and failed behavior comparisons remain visible.
+
+The command without `--nova-extension` preserves the legacy whole-policy experiment described below. Its artifacts are not installable Nova extension bundles.
 
 Use the workspace's supported Node version and pnpm. Install the workspace once, then run this package directly from the repository root:
 
