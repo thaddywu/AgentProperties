@@ -62,6 +62,8 @@ Our application-description interface is app.md, policy.md, tools.md and agents/
 
 Current module READMEs and the design manuscript are the documentation sources. Superseded demo launch guides, archived Relay specifications, upstream marketing/changelog notes and redundant research indexes have been removed; Git history retains earlier versions.
 
+The [application porting contract](application-porting-contract.md) owns the target boundary between policies, optional builtin/FSM configuration, execution protocols and trusted EDB producers. `docs/research/main.tex` is the canonical manuscript. The root `main.tex` is its standalone Overleaf export; regenerate that copy from the canonical source instead of editing both independently. Neither the illustrative contract format nor protected resource FSM execution is implemented by the current version-1 binding.
+
 ## Rakazo updates
 
 Grokbot preserves the upstream host's relative directory layout under one prefix. The recorded upstream baseline and [update guide](../grokbot/docs/upstream.md) provide a way to export and review subsequent upstream changes. Host changes can be applied under `grokbot/`; shared workspace configuration is reviewed separately. Policy/UI changes can still conflict, so this is a manual porting path rather than automatic synchronization.

@@ -1,6 +1,6 @@
 # Nova-centered runtime and translation contract
 
-Status: contract proposal, 2026-10-28, with the first foundation extraction implemented. The six fixed IFC/capability rules and their schema now live in `runtime/src/messaging-policy.ts`; Nova's six app-specific reference rules remain in `apps/nova/src/policy.ts`. The UI exposes both layers. The golden executable rules, ordering and behavior are preserved. Nova extension artifacts can now be reviewed and installed into fresh sessions with the fixed protocol. General protocol synthesis and a connected resource state-machine gate remain proposed. Nova remains the primary example; Document Vault is a separate proof that a translated policy can control a local callback.
+Status: Nova-specific inventory, updated 2026-11-03. The [application porting contract](application-porting-contract.md) defines the framework-wide ownership, execution and EDB-source boundary, including protected FSM transitions as a required builtin mechanism for applications selecting that module. The six fixed IFC/capability rules and their schema live in `runtime/src/messaging-policy.ts`; Nova's five app-specific reference rules remain in `apps/nova/src/policy.ts`. Nova extension artifacts can be reviewed and installed into fresh sessions with the fixed protocol. General protocol synthesis and connected resource FSM execution remain unimplemented. Document Vault and the independent approval pilot exercise the existing local action SDK without Grokbot.
 
 ## Target boundary
 
@@ -37,7 +37,7 @@ Every predicate contract needs arity and argument types, EDB/IDB kind, writer au
 
 ## All current Nova predicates
 
-The current Nova profile has 13 EDB and 6 IDB predicates. “Placement” below describes today's code; “proposed ownership” is the recommendation. Parentheses describe tuple order, not a new syntax.
+The current Nova profile has 11 EDB and 6 IDB predicates. “Placement” below describes today's code; “proposed ownership” is the recommendation. Parentheses describe tuple order, not a new syntax.
 
 | Predicate | Current kind, origin and placement | Proposed ownership and translation boundary |
 | --- | --- | --- |
@@ -52,7 +52,6 @@ The current Nova profile has 13 EDB and 6 IDB predicates. “Placement” below 
 | `TagGroup(Tag, Group)` | Replicated config EDB grouping opaque tags. | Reusable optional IFC vocabulary, with app-owned membership. Grouping alone has no deny, threshold, exclusivity or audit semantics. |
 | `Auditor(A)` | Replicated config EDB designating auditors. | App-specific role relation, not a kernel role. Authority and effective configuration version must be explicit. |
 | `AuditGoal(Group, T1, T2, T3)` | Replicated config EDB describing a three-part audit goal. | App-specific. Preserve its present arity for Nova migration; do not make every app's goal a three-element tuple. |
-| Audit summary transport | Removed from Nova. | No summary is needed for local denial; completion is queried globally. |
 | `MayDependOn(Mout, Min)` | IDB at sender, derived from receive/send/order evidence. | Fixed IFC foundation for the selected dependency policy. Not a model-authored opportunity to omit causal inputs. |
 | `MessageTag(M, Tag)` | IDB from trusted source tags, imported envelope tags and dependency inheritance, in each local store. | Fixed IFC foundation. Translator can refer to it but must not replace source/import bridges or weaken propagation. |
 | `HasReceivedTag(P, Tag)` | IDB at P from successful receipts and message labels. | Fixed IFC foundation for tracked received knowledge. Does not mean semantic knowledge of every fact in the world, or knowledge from arbitrary uninstrumented tools. |
@@ -70,7 +69,7 @@ A gate needs a defined configuration snapshot. For an initial single-host implem
 
 `TagGroup` is general enough to reuse for grouping labels, but its presence must not trigger hidden enforcement. Nova supplies the membership, the limit of three distinct tags, and the Board exception. `AuditGoal` is not a substitute for group membership: the former describes desired coverage, the latter the scope of an exposure restriction. Tags outside a particular audit goal can still participate in the same confidentiality group. Multiple group membership, ungrouped labels and unknown labels need explicit application semantics. Today's Nova skips the grouped restriction for tags without membership; extraction must not silently advertise stronger behavior. A future profile can require a registry at ingestion if that is the intended policy.
 
-In the proposed protocol, historical receipts should certify an event at its accepted policy/configuration version. Today's two-argument Nova receipt does not carry that version metadata; it must be added to the protocol record/envelope during extraction. Removing an auditor's role later does not retroactively invalidate a previously accepted receipt under the current Nova policy. Checking the current `Auditor` relation again when consuming a historical receipt would add a restriction, as the earlier model experiments showed. Retroactive revocation, if desired, is a separate policy with an explicit representation.
+Current Nova derives live local coverage from successful receipts and the current `Auditor` configuration; the demo keeps those roles fixed. It no longer has audit-summary receipts or permanent audit certificates. The older historical-receipt experiments describe a different protocol. A future durable approval/certificate must declare whether its meaning is historical or revoked by later configuration, and retain the accepted policy/configuration version. It must not inherit either interpretation accidentally from a predicate name.
 
 ## Interface sketch
 
@@ -101,9 +100,9 @@ Translation should consume the actual enabled predicate/protocol contract, not a
 | P2: required capabilities | Trusted grants, valid local config snapshot, imported tags, receiver gate | Missing-capability denial at the recipient; validate the hiring-tag requirement as authorized policy configuration. Board receives no implicit bypass. |
 | P3: three distinct same-group tags | Local received-knowledge and incoming-label foundation | Recipient-local denial rules covering one/two/three incoming tags, pairwise distinctness, group membership and the explicit Board exception. |
 | P4: denied messages do not disclose or create knowledge | Receive lifecycle, guarded delivery, removal of temporary inputs, success-only receipt facts | Require these runtime guarantees and trace them to P4. A Datalog denial alone cannot establish payload isolation or rollback. |
-| P5: audit coverage and completion | Successful receive events and an authorized summary export/import channel | Local audit-coverage rules and completion from available receipts at configured observers. The current app routes receipts to Board; this is configuration, not a runtime privilege. |
+| P5: audit coverage and completion | Successful receive events and an authorized observer over local closures | Local Covered rules and observer-only Finished. No audit summaries are sent to Board; local enforcement cannot read global Finished. |
 
-The resulting executable artifact should bind policy rules and any narrowly permitted policy configuration to a versioned mechanism set, a predicate/placement contract and permitted transfer channels. Every policy needs an explicit disposition: generated rules, satisfaction by a named runtime guarantee, or unsupported/ambiguous. That is deployment metadata and traceability, not permission to omit a policy silently. The current prototype's “each policy must have nonempty Datalog” condition cannot represent P1/P4 satisfied by fixed mechanisms; it must be revised before this design is implemented.
+The resulting executable artifact should bind policy rules and any narrowly permitted policy configuration to a versioned mechanism set, a predicate/placement contract and permitted transfer channels. Every policy needs an explicit disposition: generated rules, satisfaction by a named runtime guarantee, or unsupported/ambiguous. Nova extension artifacts already distinguish builtin from extension coverage. The generic version-1 translation path still requires nonempty Datalog for each policy and needs richer mechanism/unsupported dispositions. Coverage metadata cannot authorize omitting a policy or inventing a mechanism guarantee.
 
 Locality validation must check body access as well as head placement. A rule for P must not read Q's local `HasCap` or `HasReceivedTag`, including through helper predicates or recursion. A summary imported by a declared route is the available EDB; no evaluator may substitute a global union to make a missing join work. New model-defined helper IDBs can be allowed only with validated schema, location and dependency rules. They cannot create arbitrary new EDB sources, networking operations or delivery gates.
 
@@ -117,7 +116,7 @@ Use a small runtime-owned protocol state machine for message delivery. Nova alre
 
 When a framework callback has external effects, a conceptual `delivering`/recovery state may be needed. A failed or timed-out callback must not blindly reset to pending if an external delivery might already have happened. Exact transitions and recovery acknowledgments belong to the adapter's delivery contract, not a model-authored state diagram.
 
-Business-resource type-state is a separate optional mechanism: e.g. `draft → reviewed → published` for a document. The kernel supplies safe transition checking/commit and observation hooks; the app defines types, states, transitions and policy guards. An allowed transition is subject to authorization; transition reachability alone grants no permission. State and success events change only when the wrapped operation succeeds under the defined transaction boundary.
+Business-resource type-state is a builtin mechanism selected by applications that need it: e.g. `draft → reviewed → published` for a document. The target runtime must supply safe transition checking/commit and observation hooks; the app defines types, states, transitions and policy guards. An allowed transition is subject to authorization; transition reachability alone grants no permission. State and success events change only when the wrapped operation succeeds under the defined transaction boundary. The complete transition/effect/recovery contract is specified in the [application porting contract](application-porting-contract.md#4-fsm-is-an-execution-mechanism).
 
 The current [lifecycle module](../runtime/src/lifecycle.ts) contains all of the following relations:
 
@@ -130,7 +129,7 @@ The current [lifecycle module](../runtime/src/lifecycle.ts) contains all of the 
 | `EnabledAction(Resource, State, Action)` | IDB from type/transition graph, independent of current `ResourceState` | Structural candidate action. Must join the current state and pass authorization before execution |
 | `ReachableState(Resource, From, To)` | IDB graph reachability | Analysis aid, not policy-aware feasibility or a liveness guarantee |
 
-This module is not currently connected to an action executor or to Nova resources. Do not describe it as existing lifecycle enforcement. For Nova's next step, formalize message typestate first and keep business-resource machines optional. Confidentiality depends on combinations of accumulated tags and is better expressed by Datalog relations than by enumerating a state for every possible knowledge subset. Likewise, `Finished` is a derived coverage query; it need not be a mandatory terminal workflow state.
+This module is not currently connected to an action executor or to Nova resources. For applications selecting the FSM module, connecting current-state checks, authorization, actual effects and state/history commit is required implementation work. Nova's message typestate remains distinct from a business-resource machine. Confidentiality depends on combinations of accumulated tags and is better expressed by Datalog relations than by enumerating a state for every possible knowledge subset. Likewise, `Finished` is a derived coverage query; it need not be a mandatory terminal workflow state.
 
 Predicate argument typing (`Principal`, `Message`, `Tag`, `Capability`, etc.) is distinct from resource typestate. Both are useful, but neither is fully enforced by today's string-based fact representation. Do not conflate TypeScript type annotations with runtime validation of untrusted JSON facts.
 
@@ -143,9 +142,9 @@ This inventory covers Nova, the new generic action interface, Document Vault and
 ## Proposed next implementation slice
 
 1. Make the Nova predicate/protocol contract the single source for schema, fixed rules, placement, permitted transfers and translator context. Keep today's names/semantics initially; defer naming cleanup and generalized audit arity.
-2. Extract the principal-scoped messaging protocol into runtime, parameterized by this contract. Nova supplies principals, source authorities, capabilities, group membership, audit goals, receipt routes and scripted behavior. Grokbot supplies its UI/framework adapter.
+2. Extract the principal-scoped messaging protocol into runtime, parameterized by this contract. Nova supplies principals, source authorities, capabilities, group membership, audit goals, observer scope and scripted behavior. Grokbot supplies its UI/framework adapter.
 3. Install a translated Nova policy artifact into a fresh session. Gate, local inference, Why/What-if/search, replay and checkpoint restore must carry the same policy/protocol identity. A feature not yet adapted must reject explicitly rather than fall back to reference rules.
-4. Compare reference and translated Nova through actual send/receive transitions, including denied-body isolation, envelope loss, multi-label propagation, pending interleavings, cross-store injection, duplicate attempts, failed delivery and historical receipts. Add an independent adapter conformance test to show the boundary is not Grokbot-specific.
+4. Compare reference and translated Nova through actual send/receive transitions, including denied-body isolation, envelope loss, multi-label propagation, pending interleavings, cross-store injection, duplicate attempts, failed delivery and configuration changes. The independent approval pilot supplies an initial backend-neutral action example; extend conformance to protected FSM execution and additional adapters.
 
 Keep the old one-shot results immutable. A translator that now relies on fixed IFC mechanisms solves a changed task; its results must not be presented as a direct accuracy improvement over the earlier prompt that asked the model to generate those mechanisms.
 

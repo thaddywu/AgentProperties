@@ -1,3 +1,4 @@
+% Standalone Overleaf export; edit docs/research/main.tex and regenerate this copy.
 \documentclass[10pt]{article}
 \usepackage[margin=0.75in]{geometry}
 \usepackage{amsmath,amssymb,booktabs,tabularx,longtable,xcolor,tcolorbox,listings,microtype}
@@ -5,6 +6,7 @@
 \usepackage{enumitem,tikz}
 \title{\vspace{-1.5em}Distributed Policy Reasoning for Multi-Agent Systems}
 \date{}
+\author{}
 \newtcolorbox{mainbox}{colback=gray!7,colframe=black!55,boxrule=.6pt,arc=2pt}
 \newtcolorbox{rulebox}{colback=gray!9,colframe=black!45,boxrule=.5pt,arc=1pt}
 \lstset{basicstyle=\ttfamily\small,columns=fullflexible,keepspaces=true,
@@ -16,9 +18,14 @@
 
 \section{System Overview}
 
-We place a distributed runtime enforcement layer around a multi-agent system. The layer
-combines information-flow control (IFC) and capability control. Policies and security
-state are represented as Datalog facts and rules.
+We place a runtime enforcement layer around a multi-agent system, independently of
+its agent framework or application backend. The design combines a common action gate
+with application-selected information-flow control (IFC), capability control, and
+resource finite-state-machine (FSM) mechanisms. Policies and security state are
+represented as Datalog facts and rules; trusted adapters connect them to observations
+and actual effects. The prototype implements the generic local action gate and Nova's
+message profile. Resource FSM inference is implemented; protected FSM execution is a
+specified integration step rather than an implemented prototype guarantee.
 
 \begin{mainbox}
 \centering
@@ -39,9 +46,99 @@ The same representation supports five analysis modes:
 \item \textbf{Planning.} Find a path to a goal using the allowed actions.
 \end{itemize}
 
-Facts do not need to be stored globally. Each principal stores its local facts. Messages
-carry facts needed by the receiver. Policy rules can be replicated. Thus, \textbf{policy
-is replicated, while state is distributed}.
+Facts do not need to be stored globally. Nova keeps principal-local facts and explicit
+message transfers. Other applications may use a single authoritative resource service.
+Rules can be replicated; state placement, transfer routes and evaluation phases belong
+to a validated execution profile rather than being inferred from tuple names.
+
+\section{Application Porting Boundary}\label{sec:porting}
+
+An application does not have to run on Grokbot. It supplies a trusted adapter around
+the operations whose effects must be controlled. Grokbot is one adapter; the shared
+runtime has no dependency on its UI, service, model provider or principal names.
+An in-process TypeScript action SDK is implemented. A non-TypeScript application can
+target the same boundary through a future authenticated service/gateway adapter;
+that transport and its transaction guarantees are not implemented by merely exposing
+a policy-check endpoint.
+
+\subsection{Four application inputs}
+
+\begin{enumerate}[leftmargin=1.5em,itemsep=3pt]
+\item \textbf{Policy.} Natural-language requirements or reviewed Datalog, application
+relations, constraints and goals. Translation targets the actual enabled contract.
+Direct rules must pass the same installation checks as generated rules.
+\item \textbf{Mechanism configuration.} The selected IFC/capability/FSM foundations
+and application parameters: grants, groups, resource types, states and transitions.
+The runtime supplies mechanisms; applications supply their domain definitions.
+\item \textbf{Execution protocol.} Logical stores, fact and rule placement, allowed
+exports/imports, closure phases, decision hooks and effect/commit/recovery behavior.
+Authors can request a plan; it must be supported by actual adapter hooks and authority.
+\item \textbf{Observation binding.} Implemented producers for EDB: authenticated
+identity/configuration, authoritative snapshots, successful runtime events and verified
+protocol imports. Each binding specifies argument mapping, scope, writer authority,
+validity/version and completeness where absence is meaningful.
+\end{enumerate}
+
+The application author provides policy and business FSM definitions. The integration
+developer supplies trusted observation/effect hooks and selects a supported execution
+profile. One person may perform both roles. Neither policy text nor generated code can
+invent an authenticated source, grant authority, or release a protected payload.
+Current descriptions remain \texttt{app.md}, \texttt{policy.md}, \texttt{tools.md} and
+\texttt{agents/*.md}; episodes are optional. The version-1 \texttt{runtime.json} binds
+local input/derived schemas, gate roles and acceptance cases. The richer protocol and
+source contract described here is a target, not a manifest format already supported
+by the prototype.
+
+\subsection{Mechanisms and mediated effects}
+
+The kernel supplies validated bounded inference, the selected gate semantics, scoped
+state and ordering around an actual protected operation. Optional builtin modules
+supply reusable IFC, capability and FSM semantics. A builtin includes both rules and
+the mechanisms that produce trusted inputs and act on designated decisions. A schema
+named \texttt{Received} or \texttt{ResourceState} alone cannot establish successful
+delivery or a committed transition. Roles, grants, exposure thresholds, auditor goals,
+state names and business transitions remain application definitions.
+
+The generic gate permits a request only with explicit \texttt{Allow} and no
+\texttt{Deny}; Nova's receive profile permits a well-formed attempt after complete
+evaluation when no \texttt{DenyReceive} is derived. The profile declares this choice.
+A preview decision is not a reusable execution token. An adapter must keep identity,
+operation, resource, snapshot and attempt identity bound through the actual effect.
+Remote adapters need appropriate transactions, idempotency and reconciliation; a
+timeout does not prove that an external effect did not occur.
+
+Complete mediation is a deployment assumption. Incoming content must be checked
+before entering an inbox or model context. Reads and tool results must be observed
+if their information is to be tracked in later outputs. In-process wrappers do not
+isolate malicious host code or protect access paths that bypass those wrappers.
+
+\subsection{Stores, closure and EDB sources}
+
+For a local decision at location $\ell$, the runtime uses a validated committed
+snapshot $E_\ell^v$, stages the attempt input $I$, and evaluates the assigned rules
+$R_\ell$ to their stratified fixed point:
+\[
+C_\ell^{v,I}=\operatorname{Closure}(E_\ell^v\cup I,R_\ell).
+\]
+The gate checks this result before the effect under its serialization/transaction
+contract. On confirmed commit, state and successful observations change; derived
+views are invalidated or recomputed for the new version. Query, Why and What-if use
+the same installed program and a selected snapshot. Observers evaluate only declared
+observer rules over authorized evidence and cannot silently supply a global join to
+local enforcement.
+
+Each EDB must have an implemented producer. For example, an approval-service snapshot
+produces \texttt{Approval(D,A)}, while a successful receive hook produces
+\texttt{Received(P,M)}. An agent's claimed approval belongs in a distinct
+unverified relation. Source names resolve to trusted mapping functions, not arbitrary
+model-authored code. Configuration/snapshot updates must handle removals and revocation;
+committed event history has its separately declared historical meaning.
+
+Negation requires a complete authoritative scope at the decision version. Missing,
+stale or foreign-local evidence is not a proven negative. Installation must check body
+locality through helpers/recursion and require an authorized evidence route for a remote
+dependency. The present prototype checks schemas and selected placements but does not
+yet completely validate this contract; finite installation cases do not establish it.
 
 \section{Running Example: Nova Budget Audit}
 
@@ -115,8 +212,8 @@ not a global join used to decide delivery.
 \texttt{MessageTag(M, Tag)} & Source, imported, or inherited label in the current store.\\
 \texttt{HasReceivedTag(P, Tag)} & Tags successfully received by \texttt{P}, local at \texttt{P}.\\
 \texttt{DenyReceive(P, M)} & Denial of a pending receive, local at \texttt{P}.\\
-\texttt{Covered(Tag)} & Local coverage of delivered audit material; not transported to Board.\\
-\texttt{Finished(Group)} & All tags in the audit goal are covered; computed only by the global observer.\\
+\texttt{Covered(Tag)} & Current local auditor progress; not transported to Board.\\
+\texttt{Finished(Group)} & All tags in the audit goal are covered; computed only by a global observer.\\
 \bottomrule
 \end{tabularx}
 \end{center}
@@ -143,15 +240,18 @@ Only then can the message contribute to \texttt{HasReceivedTag}. Missing inputs 
 failure abort evaluation rather than permit delivery. There is no explicit
 \texttt{AllowReceive} predicate.
 
-\textbf{Global audit completion.} Each auditor derives \texttt{Covered(Tag)} locally.
-Only the global observer combines these local results to compute \texttt{Finished(Group)}.
-No audit summary is sent to Board. Local enforcement cannot depend on this global result.
-Coverage means delivery for review, not a completed financial judgment.
+\textbf{Global audit completion.} An auditor derives \texttt{Covered(Tag)} from
+successful receipt and its configured auditor role. No audit summary is sent to Board.
+The global observer combines independently computed local closures and evaluates
+only \texttt{Finished} rules. It never reruns local enforcement rules on that union,
+and local rules cannot depend on \texttt{Finished}. The demo keeps its designated
+auditors fixed. Completion means receipt for review, not a subsequent
+budget judgment or a permanent audit certificate.
 
 \subsection{Datalog Rules}
 
 The following are the 11 information-flow, communication, and audit rules, in Souffl\'e syntax (\texttt{!} denotes
-negation; quoted values are constants). Each evaluation uses one owner's inputs.
+negation; quoted values are constants). Local rules use one owner's inputs.
 For \texttt{HasReceivedTag} and \texttt{DenyReceive}, the principal variable in the rule head
 is bound to that owner. The \texttt{Finished} rule runs only in the global observer. Board is exempt
 from the three-tag constraint, but not from capability requirements.
@@ -163,7 +263,7 @@ MessageTag(M, Tag) :- TrustedSource(M, Tag).
 % R2: message-label
 MessageTag(M, Tag) :- TransportTag(M, Tag).
 
-% R3 removed: no audit-summary transport.
+% R3 was removed: audit progress is no longer transported.
 
 % R4: runtime-dependency
 MayDependOn(Mout, Min) :-
@@ -293,18 +393,23 @@ The runtime blocks \texttt{mH}, so neither \texttt{Covered(nova\_hiring)} nor
 
 \section{Resource Lifecycle Foundation}
 
-Resource lifecycle is an independent modeling component, not an additional Nova
-workflow. An application supplies resources and tools whose effects change resource
-state. A shared state machine is defined by resource type; each resource retains
-its own current state and action history:
+Resource lifecycle is a reusable builtin mechanism selected by an application. The
+application supplies resource types, states, transitions and policy guards; the runtime
+is responsible for safe transition execution and committed state/history. Nova's
+message lifecycle remains separate from such a business resource workflow, and neither
+requires enumerating every combination of accumulated IFC tags as an FSM state.
+A shared machine is defined by resource type; each resource retains its own current
+state and action history:
 \begin{lstlisting}
 ResourceType(Resource, Type).
 ResourceState(Resource, State).
 Transition(Type, Action, From, To).
 ActionTaken(Event, Resource, Action, From, To).
 \end{lstlisting}
-These are input predicate schemas. The same transition rules apply to every matching
-resource, while an action event identifies the concrete resource affected. Evaluation
+These are input predicate schemas with different writers: the trusted registry supplies
+types/initial state, the app authority supplies transitions, and the protected executor
+maintains current state and success history. An agent cannot assert a successful action.
+The same machine serves every matching resource. The implemented inference validator
 rejects conflicting current states or types and ambiguous transitions for the same
 type, action, and source state. The following predicates are derived:
 
@@ -329,10 +434,32 @@ join with the input predicate explicitly:
 ?- ResourceState(R, From), ReachableState(R, From, Target).
 \end{lstlisting}
 
-These rules check the supplied FSM structure. They neither produce action paths nor
-execute tools, check permissions, or predict resource contention. The application
-executes actions, updates current state, and records successful effects. No resource
-workflow is connected to Nova; the UI exposes only general lifecycle templates.
+These rules describe the supplied FSM structure. They neither produce an executable
+action path nor authorize an operation. In the target execution contract, a request
+must satisfy both the current-state transition and the application gate:
+\[
+\begin{split}
+\operatorname{execute}(q,r,a)\ \Longrightarrow\;&
+ \operatorname{ResourceState}(r,s)\ \land\
+ \operatorname{Transition}(\operatorname{type}(r),a,s,s')\\
+ &\land\ \operatorname{Allow}(q)\in C_\ell^{v,I}
+ \ \land\ \nexists d:\operatorname{Deny}(q,d)\in C_\ell^{v,I}.
+\end{split}
+\]
+The snapshot must be admissible and the transition uniquely determined. Under a
+per-resource serialization/transaction boundary, the executor reads current state,
+evaluates guards/authorization, invokes the real operation, then replaces the current
+state and records \texttt{ActionTaken} only after confirmed success. Denial or a
+confirmed no-effect failure creates no successful transition. An uncertain external
+outcome requires recovery before an incompatible retry; a callback cannot undo a
+completed external write. Multi-worker exclusivity requires a shared state authority.
+
+\textbf{Implementation boundary.} The lifecycle module currently implements only
+validation and structural inference. The generic action SDK serializes authorization,
+callback and additive observations within one process-local session. It does not yet
+integrate FSM state replacement or recovery. Protected FSM execution is therefore a
+required builtin integration step in this design, not a demonstrated current feature.
+No business-resource workflow is connected to Nova.
 
 Changing current state changes the results of the joins above, not the machine's
 state-indexed enabled actions or reachability. Historical action records remain.
@@ -461,7 +588,8 @@ A locally allowed action may still leave the goal unreachable.
 \(G\in\mathrm{Closure}(E_k)\). A dead end is relative to this action set.
 The current Nova planner implements department-to-auditor deliveries; editable inputs
 do not make it a general planner for arbitrary tool calls. The independent resource
-foundation derives FSM reachability only; action-path queries are not implemented.
+foundation currently derives FSM reachability only; the protected transition contract
+above does not by itself implement general action-path planning.
 
 Here, start earlier: A has received only Procurement, while Facility and Hiring remain
 unaudited. The goal is \texttt{Finished(nova)}. The configured actions deliver each

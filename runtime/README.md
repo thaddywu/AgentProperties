@@ -4,9 +4,11 @@ Application-neutral function-free Datalog evaluation, safe query parsing and val
 
 Callers supply input facts and rules. The AST, predicate names and evaluation semantics are unchanged by the extraction. `runSouffle` and `explainSouffle` retain the existing native resource limits; `queryDatalog` retains bounded, read-only policy queries.
 
-`messaging-policy` supplies the fixed messaging/IFC/capability vocabulary and six foundation rules used by Nova. Application grants, tag-group membership, principals, exposure limits, audit roles and goals remain app-owned. Nova composes the foundation with its six handwritten reference rules. Event capture, principal placement and transport still live in Nova's adapter/protocol; exporting the foundation is not a generalized distributed-protocol implementation.
+`messaging-policy` supplies the fixed messaging/IFC/capability vocabulary and six foundation rules used by Nova. Application grants, tag-group membership, principals, exposure limits, audit roles and goals remain app-owned. Nova composes the foundation with its five handwritten reference rules. Event capture, principal placement and transport still live in Nova's adapter/protocol; exporting the foundation is not a generalized distributed-protocol implementation.
 
 The application interface in `src/application.ts` adds a generic in-process action gate. Applications supply a trusted binding and a translated bundle; the runtime does not import Nova, Grokbot, model adapters or app-specific predicates. [Document Vault](../apps/document-vault/README.md) exercises this interface with real document callbacks.
+
+The [application porting contract](../docs/application-porting-contract.md) specifies the target boundary for other backends: policies and builtin/FSM configuration, a validated execution profile, and implemented trusted EDB producers. Its illustrative manifest is not supported by the version-1 binding. The existing lifecycle module supplies graph analysis and validation; protected FSM transitions still need authorization/effect/state-replacement integration.
 
 ## Connect an application
 
@@ -49,4 +51,4 @@ This interface handles observable action authorization. It does not infer trustw
 
 Nova-specific local stores, message transport, receive gates, prevention search and completion search remain in `apps/nova`. The older native chat protocol remains in Grokbot. Both keep their existing execution paths; installing a generic bundle does not change a Nova session. General action-space planning is not part of this new interface.
 
-`messaging-protocol` exports the fixed message placement/transport declarations used by Nova. Nova still implements the hooks and composes its source authority and audit receipt route. The [Nova walkthrough](../apps/nova/README.md) supports golden and translated extension sessions over this fixed protocol; general protocol synthesis/minimization remains unimplemented.
+`messaging-protocol` exports the fixed message placement/transport declarations used by Nova. Nova still implements the hooks and composes its source authority and observer scope. The [Nova walkthrough](../apps/nova/README.md) supports golden and translated extension sessions over this fixed protocol; general protocol synthesis/minimization remains unimplemented.

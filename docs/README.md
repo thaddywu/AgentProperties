@@ -28,7 +28,7 @@ See [Nova setup and commands](../apps/nova/README.md), [model connections](../tr
 
 [App → translation → runtime walkthrough](../apps/document-vault/README.md) · [Repository boundaries](repository-structure.md) · [Translation experiments](translation-model-comparison.md) · [Research design](research/main.tex) · [Contributing](../.github/CONTRIBUTING.md) · [Security](../.github/SECURITY.md) · [Apache 2.0 license](LICENSE)
 
-[Nova runtime contract proposal](nova-runtime-contract.md) inventories predicate ownership, distributed placement, adapter APIs and optional type-state support. It describes the next design, separately from the implemented interfaces above.
+[Application porting contract](application-porting-contract.md) defines backend-independent adapters, builtin IFC/capability/FSM mechanisms, policy and execution declarations, and trusted EDB producers. It distinguishes the target design from the current SDK. [Nova's runtime inventory](nova-runtime-contract.md) maps that boundary to Nova predicates and protocol placement.
 
 [Distributed protocol synthesis RQ](distributed-protocol-rq.md) proposes query-style placement/transfers and a bounded study of storage, communication and inference costs. Nova's Rules dialog presents runtime, app inputs, translated extensions, reference rules/protocol and actual prevention. The equivalence target is the union of local closures plus decision behavior at every location; the current checker supplies snapshot evidence, not a universal proof.
 
