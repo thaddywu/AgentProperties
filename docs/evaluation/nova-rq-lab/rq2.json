@@ -1,0 +1,1758 @@
+{
+  "observables": {
+    "enforcement": [
+      "DenyReceive"
+    ],
+    "task": [
+      "Covered",
+      "Finished"
+    ],
+    "information": [
+      "Knows"
+    ]
+  },
+  "scope": "The exact UCQ coverage fragment treats MessageTag as a leaf relation; full Nova has recursion, negation and comparisons. Finite tests are not universal equivalence. The three artifacts and exploratory counterexample domain predate this lab; no held-out accuracy claim.",
+  "trials": [
+    {
+      "trial": 1,
+      "artifactId": "5fb554b2d9e6b4e258c0868f2798c7504912c624019febe1e7f9b0cb45d580ea",
+      "artifactHash": "f4d79ef45b6fdc2857b523f7cbd3ad3a9f62c80657d5d1c75a4019a3db6013c0",
+      "coverageFragment": {
+        "status": "different",
+        "scope": "All finite instances of the declared leaf relations, with no integrity constraints. Parsed flat positive UCQ only; not the complete recursive Nova program.",
+        "referenceContainedInTranslated": {
+          "contained": false,
+          "counterexample": {
+            "inputs": [
+              {
+                "predicate": "Auditor",
+                "args": [
+                  "cq_fresh_0"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "cq_fresh_0",
+                  "cq_fresh_1"
+                ]
+              },
+              {
+                "predicate": "MessageTag",
+                "args": [
+                  "cq_fresh_1",
+                  "cq_fresh_2"
+                ]
+              }
+            ],
+            "answer": {
+              "predicate": "Covered",
+              "args": [
+                "cq_fresh_2"
+              ]
+            }
+          }
+        },
+        "translatedContainedInReference": {
+          "contained": true
+        }
+      },
+      "wholeReceiveProgram": {
+        "status": "unsupported",
+        "scope": "All finite instances of the declared leaf relations, with no integrity constraints. Parsed flat positive UCQ only; not the complete recursive Nova program.",
+        "reason": "Requires only one output predicate, positive relational bodies and no recursion, negation or comparisons."
+      },
+      "snapshots": {
+        "domain": "Three known/incoming tags, four grouping configurations, three recipients, two current capability states; prior same-group exposure violations excluded. Revoked capabilities may coexist with prior knowledge.",
+        "corpusOrigin": "Exploratory post-generation probes, not a held-out accuracy benchmark",
+        "oracle": "Independent set-based interpretation of P2/P3 and successful-receipt coverage",
+        "counts": {
+          "snapshots": 1472,
+          "excludedAlreadyViolating": 64,
+          "decisionMatches": 1472,
+          "falseAllows": 0,
+          "falseDenials": 0,
+          "coverageMismatches": 128,
+          "knowledgeMismatches": 0,
+          "nativeCrossChecks": 50
+        },
+        "byScenario": {
+          "configured-nova": {
+            "snapshots": 352,
+            "decisionErrors": 0,
+            "coverageErrors": 0
+          },
+          "same-group-outside-goal": {
+            "snapshots": 352,
+            "decisionErrors": 0,
+            "coverageErrors": 0
+          },
+          "split-groups": {
+            "snapshots": 384,
+            "decisionErrors": 0,
+            "coverageErrors": 0
+          },
+          "ungrouped-goal-part": {
+            "snapshots": 384,
+            "decisionErrors": 0,
+            "coverageErrors": 128
+          }
+        },
+        "counterexamples": [
+          {
+            "kind": "coverage",
+            "scenario": "ungrouped-goal-part",
+            "recipient": "auditor_a",
+            "known": [
+              "nova_hiring"
+            ],
+            "incoming": [],
+            "capability": false,
+            "expected": [
+              "nova_hiring"
+            ],
+            "observed": []
+          }
+        ]
+      },
+      "recursive": {
+        "status": "tested",
+        "snapshots": 2048,
+        "mismatches": {
+          "DenyReceive": 64,
+          "HasReceivedTag": 0,
+          "Covered": 512,
+          "Finished": 128
+        },
+        "oracleMismatches": 0,
+        "counterexamples": {
+          "Covered": {
+            "inputs": [
+              {
+                "predicate": "Incoming",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "Auditor",
+                "args": [
+                  "auditor_a"
+                ]
+              },
+              {
+                "predicate": "AuditGoal",
+                "args": [
+                  "nova",
+                  "nova_procurement",
+                  "nova_facility",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "Requires",
+                "args": [
+                  "nova_hiring",
+                  "hr_review"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m0"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m0"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_procurement",
+                  "nova"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_facility",
+                  "nova"
+                ]
+              }
+            ],
+            "reference": [
+              "[\"Covered\",\"nova_hiring\"]"
+            ],
+            "translated": []
+          },
+          "Finished": {
+            "inputs": [
+              {
+                "predicate": "Incoming",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "Auditor",
+                "args": [
+                  "auditor_a"
+                ]
+              },
+              {
+                "predicate": "AuditGoal",
+                "args": [
+                  "nova",
+                  "nova_procurement",
+                  "nova_facility",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "Requires",
+                "args": [
+                  "nova_hiring",
+                  "hr_review"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m0"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m0"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_procurement"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_facility"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_procurement",
+                  "nova"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_facility",
+                  "nova"
+                ]
+              }
+            ],
+            "reference": [
+              "[\"Finished\",\"nova\"]"
+            ],
+            "translated": []
+          },
+          "DenyReceive": {
+            "inputs": [
+              {
+                "predicate": "Incoming",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "Auditor",
+                "args": [
+                  "auditor_a"
+                ]
+              },
+              {
+                "predicate": "AuditGoal",
+                "args": [
+                  "nova",
+                  "nova_procurement",
+                  "nova_facility",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "Requires",
+                "args": [
+                  "nova_hiring",
+                  "hr_review"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m0"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m0"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_procurement"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_facility"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_procurement",
+                  "nova"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_facility",
+                  "nova"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_hiring",
+                  "nova"
+                ]
+              }
+            ],
+            "reference": [],
+            "translated": [
+              "[\"DenyReceive\",\"auditor_a\",\"m3\"]"
+            ]
+          }
+        },
+        "byPriorState": {
+          "no_prior_exposure": {
+            "snapshots": 1920,
+            "mismatches": {
+              "DenyReceive": 0,
+              "HasReceivedTag": 0,
+              "Covered": 512,
+              "Finished": 128
+            }
+          },
+          "already_exposed": {
+            "snapshots": 128,
+            "mismatches": {
+              "DenyReceive": 64,
+              "HasReceivedTag": 0,
+              "Covered": 0,
+              "Finished": 0
+            }
+          }
+        },
+        "scope": "2,048 schema-valid EDBs: six optional graph edges (including a cycle), three seed labels, capability present/absent, hiring grouping present/absent. Some cyclic histories are not runtime-reachable; this is a Datalog semantics stress test, not a universal proof."
+      },
+      "reachableConfigurationCounterexample": {
+        "reference": {
+          "mutation": "Remove TagGroup(nova_hiring,nova), preserve AuditGoal and capability configuration",
+          "assumption": "The runtime accepts this configuration. If grouping is an application invariant, the adapter must enforce it; this probe does not assert the model was instructed to generalize beyond the supplied configuration.",
+          "deliveries": [
+            true,
+            true,
+            true
+          ],
+          "independentlyComplete": true,
+          "covered": [
+            "nova_facility",
+            "nova_hiring",
+            "nova_procurement"
+          ],
+          "observerComplete": true
+        },
+        "translated": {
+          "mutation": "Remove TagGroup(nova_hiring,nova), preserve AuditGoal and capability configuration",
+          "assumption": "The runtime accepts this configuration. If grouping is an application invariant, the adapter must enforce it; this probe does not assert the model was instructed to generalize beyond the supplied configuration.",
+          "deliveries": [
+            true,
+            true,
+            true
+          ],
+          "independentlyComplete": true,
+          "covered": [
+            "nova_facility",
+            "nova_procurement"
+          ],
+          "observerComplete": false
+        }
+      }
+    },
+    {
+      "trial": 2,
+      "artifactId": "aa016a81c5bf7f4d4f63a1b4479484bf2821352fa2feef7e7f9b9f0bc2106840",
+      "artifactHash": "803fe51ba88d422c6cf0cf57292633f62e146aa3aead75995effd52b0798646c",
+      "coverageFragment": {
+        "status": "different",
+        "scope": "All finite instances of the declared leaf relations, with no integrity constraints. Parsed flat positive UCQ only; not the complete recursive Nova program.",
+        "referenceContainedInTranslated": {
+          "contained": false,
+          "counterexample": {
+            "inputs": [
+              {
+                "predicate": "Auditor",
+                "args": [
+                  "cq_fresh_0"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "cq_fresh_0",
+                  "cq_fresh_1"
+                ]
+              },
+              {
+                "predicate": "MessageTag",
+                "args": [
+                  "cq_fresh_1",
+                  "cq_fresh_2"
+                ]
+              }
+            ],
+            "answer": {
+              "predicate": "Covered",
+              "args": [
+                "cq_fresh_2"
+              ]
+            }
+          }
+        },
+        "translatedContainedInReference": {
+          "contained": true
+        }
+      },
+      "wholeReceiveProgram": {
+        "status": "unsupported",
+        "scope": "All finite instances of the declared leaf relations, with no integrity constraints. Parsed flat positive UCQ only; not the complete recursive Nova program.",
+        "reason": "Requires only one output predicate, positive relational bodies and no recursion, negation or comparisons."
+      },
+      "snapshots": {
+        "domain": "Three known/incoming tags, four grouping configurations, three recipients, two current capability states; prior same-group exposure violations excluded. Revoked capabilities may coexist with prior knowledge.",
+        "corpusOrigin": "Exploratory post-generation probes, not a held-out accuracy benchmark",
+        "oracle": "Independent set-based interpretation of P2/P3 and successful-receipt coverage",
+        "counts": {
+          "snapshots": 1472,
+          "excludedAlreadyViolating": 64,
+          "decisionMatches": 1472,
+          "falseAllows": 0,
+          "falseDenials": 0,
+          "coverageMismatches": 128,
+          "knowledgeMismatches": 0,
+          "nativeCrossChecks": 50
+        },
+        "byScenario": {
+          "configured-nova": {
+            "snapshots": 352,
+            "decisionErrors": 0,
+            "coverageErrors": 0
+          },
+          "same-group-outside-goal": {
+            "snapshots": 352,
+            "decisionErrors": 0,
+            "coverageErrors": 0
+          },
+          "split-groups": {
+            "snapshots": 384,
+            "decisionErrors": 0,
+            "coverageErrors": 0
+          },
+          "ungrouped-goal-part": {
+            "snapshots": 384,
+            "decisionErrors": 0,
+            "coverageErrors": 128
+          }
+        },
+        "counterexamples": [
+          {
+            "kind": "coverage",
+            "scenario": "ungrouped-goal-part",
+            "recipient": "auditor_a",
+            "known": [
+              "nova_hiring"
+            ],
+            "incoming": [],
+            "capability": false,
+            "expected": [
+              "nova_hiring"
+            ],
+            "observed": []
+          }
+        ]
+      },
+      "recursive": {
+        "status": "tested",
+        "snapshots": 2048,
+        "mismatches": {
+          "DenyReceive": 64,
+          "HasReceivedTag": 0,
+          "Covered": 512,
+          "Finished": 128
+        },
+        "oracleMismatches": 0,
+        "counterexamples": {
+          "Covered": {
+            "inputs": [
+              {
+                "predicate": "Incoming",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "Auditor",
+                "args": [
+                  "auditor_a"
+                ]
+              },
+              {
+                "predicate": "AuditGoal",
+                "args": [
+                  "nova",
+                  "nova_procurement",
+                  "nova_facility",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "Requires",
+                "args": [
+                  "nova_hiring",
+                  "hr_review"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m0"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m0"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_procurement",
+                  "nova"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_facility",
+                  "nova"
+                ]
+              }
+            ],
+            "reference": [
+              "[\"Covered\",\"nova_hiring\"]"
+            ],
+            "translated": []
+          },
+          "Finished": {
+            "inputs": [
+              {
+                "predicate": "Incoming",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "Auditor",
+                "args": [
+                  "auditor_a"
+                ]
+              },
+              {
+                "predicate": "AuditGoal",
+                "args": [
+                  "nova",
+                  "nova_procurement",
+                  "nova_facility",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "Requires",
+                "args": [
+                  "nova_hiring",
+                  "hr_review"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m0"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m0"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_procurement"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_facility"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_procurement",
+                  "nova"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_facility",
+                  "nova"
+                ]
+              }
+            ],
+            "reference": [
+              "[\"Finished\",\"nova\"]"
+            ],
+            "translated": []
+          },
+          "DenyReceive": {
+            "inputs": [
+              {
+                "predicate": "Incoming",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "Auditor",
+                "args": [
+                  "auditor_a"
+                ]
+              },
+              {
+                "predicate": "AuditGoal",
+                "args": [
+                  "nova",
+                  "nova_procurement",
+                  "nova_facility",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "Requires",
+                "args": [
+                  "nova_hiring",
+                  "hr_review"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m0"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m0"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_procurement"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_facility"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_procurement",
+                  "nova"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_facility",
+                  "nova"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_hiring",
+                  "nova"
+                ]
+              }
+            ],
+            "reference": [],
+            "translated": [
+              "[\"DenyReceive\",\"auditor_a\",\"m3\"]"
+            ]
+          }
+        },
+        "byPriorState": {
+          "no_prior_exposure": {
+            "snapshots": 1920,
+            "mismatches": {
+              "DenyReceive": 0,
+              "HasReceivedTag": 0,
+              "Covered": 512,
+              "Finished": 128
+            }
+          },
+          "already_exposed": {
+            "snapshots": 128,
+            "mismatches": {
+              "DenyReceive": 64,
+              "HasReceivedTag": 0,
+              "Covered": 0,
+              "Finished": 0
+            }
+          }
+        },
+        "scope": "2,048 schema-valid EDBs: six optional graph edges (including a cycle), three seed labels, capability present/absent, hiring grouping present/absent. Some cyclic histories are not runtime-reachable; this is a Datalog semantics stress test, not a universal proof."
+      },
+      "reachableConfigurationCounterexample": {
+        "reference": {
+          "mutation": "Remove TagGroup(nova_hiring,nova), preserve AuditGoal and capability configuration",
+          "assumption": "The runtime accepts this configuration. If grouping is an application invariant, the adapter must enforce it; this probe does not assert the model was instructed to generalize beyond the supplied configuration.",
+          "deliveries": [
+            true,
+            true,
+            true
+          ],
+          "independentlyComplete": true,
+          "covered": [
+            "nova_facility",
+            "nova_hiring",
+            "nova_procurement"
+          ],
+          "observerComplete": true
+        },
+        "translated": {
+          "mutation": "Remove TagGroup(nova_hiring,nova), preserve AuditGoal and capability configuration",
+          "assumption": "The runtime accepts this configuration. If grouping is an application invariant, the adapter must enforce it; this probe does not assert the model was instructed to generalize beyond the supplied configuration.",
+          "deliveries": [
+            true,
+            true,
+            true
+          ],
+          "independentlyComplete": true,
+          "covered": [
+            "nova_facility",
+            "nova_procurement"
+          ],
+          "observerComplete": false
+        }
+      }
+    },
+    {
+      "trial": 3,
+      "artifactId": "85331eaba7a889c97d3cd6c7ed569c579444b1d185b2ecfbe401164b7d4d8c87",
+      "artifactHash": "cac2e393a3d634b389f8744d9be518a72ee1f05263f4f0d3d61d6807ac9f0544",
+      "coverageFragment": {
+        "status": "different",
+        "scope": "All finite instances of the declared leaf relations, with no integrity constraints. Parsed flat positive UCQ only; not the complete recursive Nova program.",
+        "referenceContainedInTranslated": {
+          "contained": false,
+          "counterexample": {
+            "inputs": [
+              {
+                "predicate": "Auditor",
+                "args": [
+                  "cq_fresh_0"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "cq_fresh_0",
+                  "cq_fresh_1"
+                ]
+              },
+              {
+                "predicate": "MessageTag",
+                "args": [
+                  "cq_fresh_1",
+                  "cq_fresh_2"
+                ]
+              }
+            ],
+            "answer": {
+              "predicate": "Covered",
+              "args": [
+                "cq_fresh_2"
+              ]
+            }
+          }
+        },
+        "translatedContainedInReference": {
+          "contained": true
+        }
+      },
+      "wholeReceiveProgram": {
+        "status": "unsupported",
+        "scope": "All finite instances of the declared leaf relations, with no integrity constraints. Parsed flat positive UCQ only; not the complete recursive Nova program.",
+        "reason": "Requires only one output predicate, positive relational bodies and no recursion, negation or comparisons."
+      },
+      "snapshots": {
+        "domain": "Three known/incoming tags, four grouping configurations, three recipients, two current capability states; prior same-group exposure violations excluded. Revoked capabilities may coexist with prior knowledge.",
+        "corpusOrigin": "Exploratory post-generation probes, not a held-out accuracy benchmark",
+        "oracle": "Independent set-based interpretation of P2/P3 and successful-receipt coverage",
+        "counts": {
+          "snapshots": 1472,
+          "excludedAlreadyViolating": 64,
+          "decisionMatches": 1472,
+          "falseAllows": 0,
+          "falseDenials": 0,
+          "coverageMismatches": 128,
+          "knowledgeMismatches": 0,
+          "nativeCrossChecks": 50
+        },
+        "byScenario": {
+          "configured-nova": {
+            "snapshots": 352,
+            "decisionErrors": 0,
+            "coverageErrors": 0
+          },
+          "same-group-outside-goal": {
+            "snapshots": 352,
+            "decisionErrors": 0,
+            "coverageErrors": 0
+          },
+          "split-groups": {
+            "snapshots": 384,
+            "decisionErrors": 0,
+            "coverageErrors": 0
+          },
+          "ungrouped-goal-part": {
+            "snapshots": 384,
+            "decisionErrors": 0,
+            "coverageErrors": 128
+          }
+        },
+        "counterexamples": [
+          {
+            "kind": "coverage",
+            "scenario": "ungrouped-goal-part",
+            "recipient": "auditor_a",
+            "known": [
+              "nova_hiring"
+            ],
+            "incoming": [],
+            "capability": false,
+            "expected": [
+              "nova_hiring"
+            ],
+            "observed": []
+          }
+        ]
+      },
+      "recursive": {
+        "status": "tested",
+        "snapshots": 2048,
+        "mismatches": {
+          "DenyReceive": 64,
+          "HasReceivedTag": 0,
+          "Covered": 512,
+          "Finished": 128
+        },
+        "oracleMismatches": 0,
+        "counterexamples": {
+          "Covered": {
+            "inputs": [
+              {
+                "predicate": "Incoming",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "Auditor",
+                "args": [
+                  "auditor_a"
+                ]
+              },
+              {
+                "predicate": "AuditGoal",
+                "args": [
+                  "nova",
+                  "nova_procurement",
+                  "nova_facility",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "Requires",
+                "args": [
+                  "nova_hiring",
+                  "hr_review"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m0"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m0"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_procurement",
+                  "nova"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_facility",
+                  "nova"
+                ]
+              }
+            ],
+            "reference": [
+              "[\"Covered\",\"nova_hiring\"]"
+            ],
+            "translated": []
+          },
+          "Finished": {
+            "inputs": [
+              {
+                "predicate": "Incoming",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "Auditor",
+                "args": [
+                  "auditor_a"
+                ]
+              },
+              {
+                "predicate": "AuditGoal",
+                "args": [
+                  "nova",
+                  "nova_procurement",
+                  "nova_facility",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "Requires",
+                "args": [
+                  "nova_hiring",
+                  "hr_review"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m0"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m0"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_procurement"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_facility"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_procurement",
+                  "nova"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_facility",
+                  "nova"
+                ]
+              }
+            ],
+            "reference": [
+              "[\"Finished\",\"nova\"]"
+            ],
+            "translated": []
+          },
+          "DenyReceive": {
+            "inputs": [
+              {
+                "predicate": "Incoming",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "Auditor",
+                "args": [
+                  "auditor_a"
+                ]
+              },
+              {
+                "predicate": "AuditGoal",
+                "args": [
+                  "nova",
+                  "nova_procurement",
+                  "nova_facility",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "Requires",
+                "args": [
+                  "nova_hiring",
+                  "hr_review"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m0"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m0"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_procurement"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_facility"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_procurement",
+                  "nova"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_facility",
+                  "nova"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_hiring",
+                  "nova"
+                ]
+              }
+            ],
+            "reference": [],
+            "translated": [
+              "[\"DenyReceive\",\"auditor_a\",\"m3\"]"
+            ]
+          }
+        },
+        "byPriorState": {
+          "no_prior_exposure": {
+            "snapshots": 1920,
+            "mismatches": {
+              "DenyReceive": 0,
+              "HasReceivedTag": 0,
+              "Covered": 512,
+              "Finished": 128
+            }
+          },
+          "already_exposed": {
+            "snapshots": 128,
+            "mismatches": {
+              "DenyReceive": 64,
+              "HasReceivedTag": 0,
+              "Covered": 0,
+              "Finished": 0
+            }
+          }
+        },
+        "scope": "2,048 schema-valid EDBs: six optional graph edges (including a cycle), three seed labels, capability present/absent, hiring grouping present/absent. Some cyclic histories are not runtime-reachable; this is a Datalog semantics stress test, not a universal proof."
+      },
+      "reachableConfigurationCounterexample": {
+        "reference": {
+          "mutation": "Remove TagGroup(nova_hiring,nova), preserve AuditGoal and capability configuration",
+          "assumption": "The runtime accepts this configuration. If grouping is an application invariant, the adapter must enforce it; this probe does not assert the model was instructed to generalize beyond the supplied configuration.",
+          "deliveries": [
+            true,
+            true,
+            true
+          ],
+          "independentlyComplete": true,
+          "covered": [
+            "nova_facility",
+            "nova_hiring",
+            "nova_procurement"
+          ],
+          "observerComplete": true
+        },
+        "translated": {
+          "mutation": "Remove TagGroup(nova_hiring,nova), preserve AuditGoal and capability configuration",
+          "assumption": "The runtime accepts this configuration. If grouping is an application invariant, the adapter must enforce it; this probe does not assert the model was instructed to generalize beyond the supplied configuration.",
+          "deliveries": [
+            true,
+            true,
+            true
+          ],
+          "independentlyComplete": true,
+          "covered": [
+            "nova_facility",
+            "nova_procurement"
+          ],
+          "observerComplete": false
+        }
+      }
+    }
+  ],
+  "recursionControl": {
+    "status": "tested",
+    "snapshots": 2048,
+    "mismatches": {
+      "DenyReceive": 288,
+      "HasReceivedTag": 0,
+      "Covered": 0,
+      "Finished": 0
+    },
+    "oracleMismatches": 0,
+    "counterexamples": {
+      "DenyReceive": {
+        "inputs": [
+          {
+            "predicate": "Incoming",
+            "args": [
+              "auditor_a",
+              "m3"
+            ]
+          },
+          {
+            "predicate": "Auditor",
+            "args": [
+              "auditor_a"
+            ]
+          },
+          {
+            "predicate": "AuditGoal",
+            "args": [
+              "nova",
+              "nova_procurement",
+              "nova_facility",
+              "nova_hiring"
+            ]
+          },
+          {
+            "predicate": "Requires",
+            "args": [
+              "nova_hiring",
+              "hr_review"
+            ]
+          },
+          {
+            "predicate": "Sender",
+            "args": [
+              "auditor_a",
+              "m0"
+            ]
+          },
+          {
+            "predicate": "Sender",
+            "args": [
+              "auditor_a",
+              "m1"
+            ]
+          },
+          {
+            "predicate": "Sender",
+            "args": [
+              "auditor_a",
+              "m2"
+            ]
+          },
+          {
+            "predicate": "Sender",
+            "args": [
+              "auditor_a",
+              "m3"
+            ]
+          },
+          {
+            "predicate": "Received",
+            "args": [
+              "auditor_a",
+              "m0"
+            ]
+          },
+          {
+            "predicate": "Received",
+            "args": [
+              "auditor_a",
+              "m1"
+            ]
+          },
+          {
+            "predicate": "Received",
+            "args": [
+              "auditor_a",
+              "m2"
+            ]
+          },
+          {
+            "predicate": "ReceivedBeforeSend",
+            "args": [
+              "m0",
+              "m1"
+            ]
+          },
+          {
+            "predicate": "ReceivedBeforeSend",
+            "args": [
+              "m1",
+              "m2"
+            ]
+          },
+          {
+            "predicate": "ReceivedBeforeSend",
+            "args": [
+              "m2",
+              "m3"
+            ]
+          },
+          {
+            "predicate": "TransportTag",
+            "args": [
+              "m0",
+              "nova_hiring"
+            ]
+          },
+          {
+            "predicate": "TagGroup",
+            "args": [
+              "nova_procurement",
+              "nova"
+            ]
+          },
+          {
+            "predicate": "TagGroup",
+            "args": [
+              "nova_facility",
+              "nova"
+            ]
+          }
+        ],
+        "reference": [
+          "[\"DenyReceive\",\"auditor_a\",\"m3\"]"
+        ],
+        "translated": []
+      }
+    },
+    "byPriorState": {
+      "no_prior_exposure": {
+        "snapshots": 1920,
+        "mismatches": {
+          "DenyReceive": 224,
+          "HasReceivedTag": 0,
+          "Covered": 0,
+          "Finished": 0
+        }
+      },
+      "already_exposed": {
+        "snapshots": 128,
+        "mismatches": {
+          "DenyReceive": 64,
+          "HasReceivedTag": 0,
+          "Covered": 0,
+          "Finished": 0
+        }
+      }
+    },
+    "scope": "2,048 schema-valid EDBs: six optional graph edges (including a cycle), three seed labels, capability present/absent, hiring grouping present/absent. Some cyclic histories are not runtime-reachable; this is a Datalog semantics stress test, not a universal proof.",
+    "control": "Handwritten missing-recursion control, not a deployable model output or an accuracy trial."
+  }
+}

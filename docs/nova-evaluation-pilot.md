@@ -119,3 +119,23 @@ Covered(T) :- Auditor(P), Received(P, M), MessageTag(M, T), TagGroup(T, G).
 可复现命令见 [Nova README](../apps/nova/README.md#backend-neutral-port-and-fsm-experiment)。190 个生成快照、96 个 placement 候选、四项声明查询，每个规则来源各有 24 个候选通过。参考规则成本从 19,833 降到 10,329；保存的 trial-1 翻译从 19,839 降到 10,335。成本仅统计 tuple/rule/replication 副本。部署所选 plan 后，缺少权限的 HR 交付未调用 sink；合法路由完成审计，授权 observer 显式提供完成 EDB，报告 FSM 执行批准、发布。证据保存在 [nova-ports](evaluation/nova-ports/)。
 
 这是独立的实现/集成实验，不能当作 RQ1 的 corpus 覆盖率、RQ2 的新准确率或 RQ3 的生产效果。当前 430 个相关测试及 runtime/Nova/translation/adapters 类型检查通过。Grokbot 的可选 run adapter 已实现；生产事务接线、全部读/tool/context hooks、持久化与跨 worker 恢复仍需按后端完成。详细接口与边界见 [porting contract](application-porting-contract.md#8-implemented-interfaces-and-primitive-vocabulary)。
+
+## 三个 RQ 的 evaluation plan 与新小实验
+
+论文现有独立的 Evaluation Plan 一节。RQ1 以人工分析为主，逐条说明 policy、需要的事实来源、执行 hook 和机制，区分语言限制与缺失 adapter；正式 corpus 由两人独立标注。RQ2 假定有审阅过的 reference，只要求预先指定的输出相等，例如 `DenyReceive`；completion 另测。必须写清楚比较所有 schema-valid EDB，还是满足应用前提的 EDB。RQ3 对同一任务比较关闭 enforcement、reference enforcement、translated enforcement，分别计违规、完成、安全完成、错误拒绝，以及真实模型 input/output tokens 和重试成本。
+
+新 [lab 命令与方法](../apps/nova/evaluation/README.md#three-rq-lab-observable-equality-and-measured-model-usage) 已实现正向 UCQ fragment 的精确包含检查、递归 EDB 对照测试和实际 routing-model/token 实验。完整 Nova 有否定、`!=` 和递归，不能全部当成正向 UCQ。SAT/SMT 是后续有界反例搜索方案，不能把“在某个 domain 内找不到反例”说成任意 EDB 上相等。
+
+三份既有翻译的 `Covered` fragment 都有精确反例：多出的 `TagGroup` 条件漏算 coverage。实际交付也复现了合法配置变化下 reference 完成、translated 未完成。在新增 2,048 个递归 EDB 测试中，每份有 64 个拒绝差异，全部发生于 auditor 原来已经违规持有三部分的状态；其余 1,920 个没有拒绝差异。另有 512 个 coverage、128 个 completion 差异。循环图和既有违规状态是逻辑测试，不能冒充可达安全流程；旧的 1,472 测试排除了既有 exposure，故结果并不矛盾。
+
+真实 routing-model 小样本为两任务 × 两次重复 × 三条件，每条件四个任务。模型负责选择路线，报告内容和接收方行为仍是脚本。所有条件均 4/4 安全完成且无违规，每次一个模型调用：
+
+| 条件 | Input tokens 合计 | Output tokens 合计 | 平均每任务总 tokens |
+| --- | ---: | ---: | ---: |
+| 关闭 enforcement | 940 | 174 | 278.50 |
+| reference | 940 | 173 | 278.25 |
+| translated | 940 | 156 | 274.00 |
+
+这只能证明实验链路与真实用量记录可用，不能据此宣称安全提升或 token 节约。另一个故意把三份报告都发给 A 的脚本，对照条件完成但违规；启用 enforcement 后阻止违规，但无法完成。这验证了为什么必须同时报告安全、完成和安全完成。初次连接配置阻断单列为 setup，不把缺失用量计作零；配置后的十二个任务没有模型或解析失败。
+
+数据、反例、source hashes 与复现参数见 [nova-rq-lab](evaluation/nova-rq-lab/)。原始模型响应及连接配置保持私有，原有 trial 和 pilot 记录不覆盖。

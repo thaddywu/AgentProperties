@@ -1,12 +1,20 @@
 import { randomUUID } from "node:crypto";
 import type { AgentRunModel, AgentRuntime } from "@rakazo/adapter-kit";
 
+export type PolicyModelUsage = {
+  inputTokens: number;
+  outputTokens: number;
+  provider: string;
+  model: string;
+};
+
 /** One isolated runtime invocation; callers record the raw text before parsing it. */
 export function policyTranslationModel(
   runtime: AgentRuntime,
   model: AgentRunModel,
   signal: AbortSignal,
   instructions: string,
+  recordUsage?: (usage: PolicyModelUsage) => void,
 ) {
   return async (prompt: string, record: (text: string) => void): Promise<string> => {
     const id = randomUUID();
@@ -30,6 +38,13 @@ export function policyTranslationModel(
         },
         { signal, operationId: id, traceId: id },
       )) {
+        if (event.type === "usage")
+          recordUsage?.({
+            inputTokens: event.inputTokens,
+            outputTokens: event.outputTokens,
+            provider: event.provider,
+            model: event.model,
+          });
         if (["tool", "subagent", "ask", "takeover"].includes(event.type))
           throw new Error("Unexpected tool or interaction in one-shot translation.");
         if (event.type === "text") {

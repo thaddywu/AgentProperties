@@ -35,3 +35,5 @@ The manuscript lives in the `docs/research` Git submodule. Initialize it with `g
 [Distributed protocol synthesis RQ](distributed-protocol-rq.md) describes query-style placement/transfers and a bounded study of storage, communication and inference costs. Nova's Rules dialog presents runtime, app inputs, translated extensions, reference rules/protocol and actual prevention. The equivalence target is the union of local closures plus decision behavior at every location; the current checker supplies snapshot evidence, not a universal proof.
 
 [Nova evaluation pilot](nova-evaluation-pilot.md) records independent porting experiments and initial evidence for expressiveness, translation accuracy and end-to-end safety/task completion, with offline replay and explicit study limits.
+
+[Three-RQ lab](../apps/nova/evaluation/README.md#three-rq-lab-observable-equality-and-measured-model-usage) provides exact positive-UCQ fragment checks, recursive observable comparisons, and a small real routing-model experiment with provider-reported token counts. The manuscript has a separate Evaluation Plan section.

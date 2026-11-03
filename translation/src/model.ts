@@ -1,7 +1,13 @@
+import type { PolicyModelUsage } from "@rakazo/adapters/policy-translation";
 import { ModelConnectInputSchema } from "@rakazo/contracts";
 
 /** Reuse the existing models/connect contract and provider adapter. Credentials stay server-side. */
-export function connectionGenerator(raw: unknown, instructions: string, timeoutMs = 120_000) {
+export function connectionGenerator(
+  raw: unknown,
+  instructions: string,
+  timeoutMs = 120_000,
+  recordUsage?: (usage: PolicyModelUsage) => void,
+) {
   const parsed = ModelConnectInputSchema.safeParse(raw);
   if (!parsed.success || !parsed.data.modelId?.trim()) throw new Error("Invalid model connection.");
   const connection = parsed.data;
@@ -26,6 +32,7 @@ export function connectionGenerator(raw: unknown, instructions: string, timeoutM
       model,
       AbortSignal.timeout(timeoutMs),
       instructions,
+      recordUsage,
     )(prompt, record);
   };
 }
