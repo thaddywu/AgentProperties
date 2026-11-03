@@ -10,7 +10,7 @@ import { PRINCIPALS } from "../src/shared.js";
 import { allRecords, filterRecords } from "../src/store-records.js";
 
 // A centralized oracle exists ONLY in this diagnostic test. The runtime never
-// runs policy on the reconstructed union. Compare all derived predicates, not just denial.
+// reruns local policy on the union. Only observer Finished rules run there.
 const derivedKeys = (facts: PolicyFact[]) =>
   [...new Set(facts.filter((f) => DERIVED.has(f.predicate)).map(factKey))].sort();
 function compare(runtime: NovaRuntime) {
@@ -76,12 +76,12 @@ describe("distributed policy completeness against a diagnostic oracle", () => {
     expect(runtime.settle("relay").allowed).toBe(true);
     compare(runtime);
   });
-  it("publishes summaries when config enables auditing of previously received assignments", () => {
+  it("queries completion when config enables local auditing of prior assignments", () => {
     const runtime = new NovaRuntime();
     for (const [i, department] of departments.entries())
       runtime.assign(`s${i}`, department, tag(department), "assignment");
     runtime.configure([...CONFIG, ...departments.map((p) => f("Auditor", p))]);
-    expect(runtime.closure("board").facts).toContainEqual(f("Finished", "nova"));
+    expect(reconstructDebugView(runtime.state).facts).toContainEqual(f("Finished", "nova"));
     compare(runtime);
   });
   it("detects an omitted transport fact and fails closed instead of allowing delivery", () => {
@@ -110,11 +110,10 @@ describe("distributed policy completeness against a diagnostic oracle", () => {
     expect(() => runtime.settle("mH")).toThrow(/Missing local receive intent/);
     expect(runtime.snapshot()).toEqual(before);
   });
-  it("detects a missing audit receipt without repairing it by a hidden global join", () => {
+  it("does not derive audit coverage through a hidden cross-store join", () => {
     const runtime = new NovaRuntime();
-    for (const [i, department] of departments.entries())
-      runtime.assign(`s${i}`, department, tag(department), "assignment");
     for (const [i, department] of departments.entries()) {
+      runtime.assign(`s${i}`, department, tag(department), "assignment");
       runtime.send(
         department,
         department === "facility" ? "auditor_b" : "auditor_a",
@@ -123,19 +122,18 @@ describe("distributed policy completeness against a diagnostic oracle", () => {
       );
       runtime.settle(`r${i}`);
     }
+    // The sender still has MessageTag(r2, hiring), but the auditor's envelope is missing.
     filterRecords(
       runtime.state,
       (r) =>
         !(
-          r.owner === "board" &&
-          r.fact.predicate === "AuditReceipt" &&
-          r.fact.args[1] === "nova_hiring"
+          r.owner === "auditor_a" &&
+          r.fact.predicate === "TransportTag" &&
+          r.fact.args[0] === "r2"
         ),
     );
-    expect(runtime.closure("board").facts).not.toContainEqual(f("Finished", "nova"));
     expect(evaluate(inputs(runtime.state)).facts).toContainEqual(f("Finished", "nova"));
-    const result = terminalQuery(runtime.state, "?- Finished(nova).", "debug");
-    expect(result.rows).toEqual([]); // Debug reconstruction must not rerun policy on its union.
+    expect(terminalQuery(runtime.state, "?- Finished(nova).", "debug").rows).toEqual([]);
   });
   it("persists only local partitions and independent replicated configuration copies", () => {
     const runtime = createEpisode();
@@ -164,7 +162,7 @@ describe("distributed policy completeness against a diagnostic oracle", () => {
       },
     });
     expect(
-      terminalQuery(runtime.state, "?- Knows(auditor_a, Tag).", "auditor_a").rows,
+      terminalQuery(runtime.state, "?- HasReceivedTag(auditor_a, Tag).", "auditor_a").rows,
     ).toHaveLength(2);
     expect(why(runtime.state, "DenyReceive(auditor_a, mH)", "auditor_a")).not.toBeNull();
     expect(() => terminalQuery(runtime.state, "?- Auditor(A).", "debug")).toThrow(
@@ -174,17 +172,21 @@ describe("distributed policy completeness against a diagnostic oracle", () => {
   it("reconstructs each debug query afresh and leaves local stores unchanged", () => {
     const runtime = createEpisode();
     const before = runtime.snapshot();
-    expect(terminalQuery(runtime.state, "?- Knows(A, Tag).", "auditor_b").rows).toEqual([]);
-    expect(terminalQuery(runtime.state, "?- Knows(auditor_a, Tag).", "debug").rows).toHaveLength(2);
+    expect(terminalQuery(runtime.state, "?- HasReceivedTag(A, Tag).", "auditor_b").rows).toEqual(
+      [],
+    );
+    expect(
+      terminalQuery(runtime.state, "?- HasReceivedTag(auditor_a, Tag).", "debug").rows,
+    ).toHaveLength(2);
     expect(runtime.snapshot()).toEqual(before);
     filterRecords(
       runtime.state,
       (r) =>
         !(r.owner === "auditor_a" && r.fact.predicate === "Received" && r.fact.args[1] === "mF"),
     );
-    expect(terminalQuery(runtime.state, "?- Knows(auditor_a, Tag).", "debug").rows).toEqual([
-      ["nova_procurement"],
-    ]);
+    expect(
+      terminalQuery(runtime.state, "?- HasReceivedTag(auditor_a, Tag).", "debug").rows,
+    ).toEqual([["nova_procurement"]]);
     expect(runtime.state).not.toHaveProperty("facts");
     expect(allRecords(runtime.state).every((r) => r.owner !== "global")).toBe(true);
   });

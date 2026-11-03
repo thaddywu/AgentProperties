@@ -14,11 +14,12 @@ import {
 import { novaDocuments } from "./documents.js";
 import { POLICY_LAYERS, parseInputs } from "./policy.js";
 import { closureConformance, comparePrevention } from "./prevention.js";
-import { PROTOCOL } from "./protocol.js";
+import { NOVA_PROTOCOL, PROTOCOL } from "./protocol.js";
 import type { RuntimeState } from "./runtime.js";
 import { clone, createEpisode, NovaRuntime, REPLIES, view } from "./runtime.js";
 import { allRecords } from "./store-records.js";
 import { GOLDEN_ID, readPolicyArtifact, rulesFor } from "./translated-policy.js";
+import { reviewPolicy, savedTranslationReview } from "./translation-review.js";
 export type Selection = { event?: number; side?: "before" | "after" | "check" };
 export type Request = Selection & {
   operation: string;
@@ -87,6 +88,7 @@ export class NovaService {
       },
       documents: novaDocuments(),
       foundationProtocol: MESSAGING_PROTOCOL,
+      applicationProtocol: NOVA_PROTOCOL,
       policyLayers: clone(POLICY_LAYERS),
       protocol: PROTOCOL,
       liveEvents: clone(this.runtime.state.events),
@@ -100,19 +102,10 @@ export class NovaService {
     switch (req.operation) {
       case "conformance":
         return closureConformance(selected);
-      case "review-policy": {
-        const artifact = readPolicyArtifact(req.artifact);
-        runSouffle([], rulesFor({ policy: artifact }));
-        const cases = comparePrevention(artifact);
-        return {
-          artifact,
-          cases,
-          eligible: cases.every(
-            (test) => test.matches && test.golden.passed && test.translated?.passed,
-          ),
-          semanticCorrectness: "unproven",
-        };
-      }
+      case "replay-translation":
+        return { ...savedTranslationReview(), replay: true, modelCalled: false };
+      case "review-policy":
+        return reviewPolicy(req.artifact);
       case "prevention":
         return comparePrevention(this.runtime.state.policy);
       case "start-policy": {

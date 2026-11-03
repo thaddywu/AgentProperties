@@ -8,7 +8,7 @@ describe("Nova local service", () => {
     const state = new NovaService().state();
     const [builtin, nova] = state.policyLayers;
     expect(builtin!.rules).toHaveLength(6);
-    expect(nova!.rules).toHaveLength(6);
+    expect(nova!.rules).toHaveLength(5);
     expect(nova!.title).toBe("Nova reference");
     expect(
       state.policyLayers.flatMap((layer) => layer.rules.map((rule) => rule.id)).sort(),
@@ -40,7 +40,7 @@ describe("Nova local service", () => {
     service.run({
       operation: "what-if",
       revision: 1,
-      remove: "Received(auditor_a, mF). Receiver(auditor_a, mF).",
+      remove: "Received(auditor_a, mF).",
       query: "DenyReceive(auditor_a, mH)",
     });
     expect(JSON.stringify(service.runtime.state)).toBe(before);
@@ -72,7 +72,7 @@ describe("Nova local service", () => {
         side: "check",
         query: "DenyReceive(auditor_a, mH)",
       }),
-    ).toMatchObject({ rule: expect.stringContaining('Knows("auditor_a",T1)') });
+    ).toMatchObject({ rule: expect.stringContaining('HasReceivedTag("auditor_a",T1)') });
     expect(
       service.run({ operation: "why", revision: 2, query: "DenyReceive(auditor_a, mH)" }),
     ).toBeNull();

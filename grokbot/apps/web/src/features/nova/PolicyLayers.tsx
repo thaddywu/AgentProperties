@@ -1,6 +1,6 @@
 import type { closureConformance, comparePrevention } from "@rakazo/nova/prevention";
 import type { NovaView, Request, Selection } from "@rakazo/nova/service";
-import type { NovaPolicyArtifact } from "@rakazo/nova/translated-policy";
+import type { PolicyReview } from "@rakazo/nova/translation-review";
 import {
   Button,
   Dialog,
@@ -13,20 +13,17 @@ import {
 } from "@rakazo/ui-web";
 import { useEffect, useState } from "react";
 import { request } from "./client";
+import { PolicyData, ProtocolDetails } from "./PolicyData";
+import { TranslationComparison } from "./TranslationComparison";
 
-type Review = {
-  artifact: NovaPolicyArtifact;
-  cases: ReturnType<typeof comparePrevention>;
-  eligible: boolean;
-};
 const codeStyle = "whitespace-pre-wrap break-words font-mono text-xs leading-relaxed";
 function Details({ title, value }: { title: string; value: unknown }) {
   return (
     <details className="text-xs">
       <summary className="cursor-pointer font-medium">{title}</summary>
-      <pre className={`${codeStyle} mt-2`}>
-        {typeof value === "string" ? value : JSON.stringify(value, null, 2)}
-      </pre>
+      <div className="mt-2">
+        <PolicyData value={value} />
+      </div>
     </details>
   );
 }
@@ -83,6 +80,12 @@ export function PolicyLayers({
   mutate,
   busy,
   selection,
+  tab,
+  setTab,
+  review,
+  setReview,
+  replay,
+  parentError,
 }: {
   state: NovaView | null;
   open: boolean;
@@ -90,8 +93,13 @@ export function PolicyLayers({
   mutate: (request: Request) => Promise<void>;
   busy: boolean;
   selection: Selection;
+  tab: string;
+  setTab: (value: string) => void;
+  review?: PolicyReview;
+  setReview: (value: PolicyReview | undefined) => void;
+  replay: () => Promise<void>;
+  parentError?: string;
 }) {
-  const [review, setReview] = useState<Review>();
   const [trials, setTrials] = useState<ReturnType<typeof comparePrevention>>();
   const [conformance, setConformance] = useState<ReturnType<typeof closureConformance>>();
   const [working, setWorking] = useState(false);
@@ -99,8 +107,9 @@ export function PolicyLayers({
   useEffect(() => {
     setConformance(undefined);
     setTrials(undefined);
-  }, [state?.version, selection.event, selection.side]);
+  }, [state?.version, selection.event, selection.side, review?.artifact.id]);
   const artifact = review?.artifact ?? state?.policy;
+  const displayedTrials = trials ?? (review?.historical ? undefined : review?.cases);
   async function perform(action: () => Promise<void>) {
     setWorking(true);
     setError("");
@@ -115,20 +124,20 @@ export function PolicyLayers({
   const disabled = working || busy || !state;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-auto sm:max-w-3xl">
+      <DialogContent className="max-h-[85vh] overflow-auto sm:max-w-6xl">
         <DialogTitle>Rules and inputs</DialogTitle>
         {state && (
           <p className="text-xs text-muted-foreground">
-            Active: {state.policyIdentity.mode === "golden" ? "Golden" : "Translated"} ·{" "}
+            Active: {state.policyIdentity.mode === "golden" ? "Reference" : "Translated"} ·{" "}
             {state.policyIdentity.id.slice(0, 12)}
           </p>
         )}
-        {error && (
+        {(error || parentError) && (
           <p role="alert" className="text-xs text-destructive">
-            {error}
+            {error || parentError}
           </p>
         )}
-        <Tabs defaultValue="runtime">
+        <Tabs value={tab} onValueChange={setTab}>
           <TabsList
             aria-label="Policy walkthrough"
             className="w-full flex-wrap justify-start group-data-horizontal/tabs:h-auto"
@@ -137,7 +146,7 @@ export function PolicyLayers({
               ["runtime", "Runtime"],
               ["input", "Nova input"],
               ["translated", "Translated"],
-              ["golden", "Golden"],
+              ["golden", "Reference"],
               ["prevention", "Prevention"],
             ].map(([id, title]) => (
               <TabsTrigger key={id} value={id!} className="h-7 flex-none">
@@ -151,7 +160,7 @@ export function PolicyLayers({
             </p>
             {state && (
               <>
-                <Details title="Built-in protocol" value={state.foundationProtocol} />
+                <ProtocolDetails title="Built-in protocol" protocol={state.foundationProtocol} />
                 <Layer state={state} layer={state.policyLayers[0]!} />
               </>
             )}
@@ -165,6 +174,19 @@ export function PolicyLayers({
             ))}
           </TabsContent>
           <TabsContent value="translated" className="min-w-0 space-y-4">
+            {(busy || working) && (
+              <p role="status" className="text-xs text-muted-foreground">
+                Loading translation…
+              </p>
+            )}
+            <div className="flex flex-wrap items-center gap-3">
+              <Button size="sm" disabled={disabled} onClick={() => void replay()}>
+                View saved translation
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                Saved model output and its recorded comparison. No model call.
+              </span>
+            </div>
             <label className="block text-xs font-medium">
               Import translation artifact
               <input
@@ -180,7 +202,7 @@ export function PolicyLayers({
                   setReview(undefined);
                   void perform(async () => {
                     if (file.size > 200_000) throw new Error("Artifact exceeds 200 KB.");
-                    const result = await request<Review>({
+                    const result = await request<PolicyReview>({
                       operation: "review-policy",
                       revision: state.version,
                       artifact: JSON.parse(await file.text()),
@@ -204,9 +226,11 @@ export function PolicyLayers({
                 </p>
                 {review && (
                   <p className="text-xs">
-                    {review.eligible
-                      ? "Checks passed; semantic equivalence is unproven."
-                      : "Checks failed. See Prevention for counterexamples."}
+                    {review.historical
+                      ? "Historical protocol: saved results only. Cannot run or activate in the current runtime."
+                      : review.eligible
+                        ? "Checks passed; semantic equivalence is unproven."
+                        : "Checks failed. See Prevention for counterexamples."}
                   </p>
                 )}
                 {review?.eligible && (
@@ -219,16 +243,42 @@ export function PolicyLayers({
                   </Button>
                 )}
                 <Details title="Exact translation input" value={artifact.documents} />
-                <Details title="Inherited protocol" value={artifact.protocol} />
-                {artifact.policies.map((policy) => (
-                  <section key={policy.id} className="space-y-2 rounded border border-border p-3">
-                    <h3 className="text-xs font-medium">
-                      {policy.id} · {policy.basis}
-                    </h3>
-                    <p className="text-xs text-muted-foreground">{policy.notes}</p>
-                    {policy.datalog && <pre className={codeStyle}>{policy.datalog}</pre>}
-                  </section>
-                ))}
+                <ProtocolDetails title="Inherited protocol" protocol={artifact.protocol} />
+                {review && (
+                  <>
+                    <p className="text-xs text-muted-foreground">
+                      {review.cases.filter((test) => test.matches).length} of {review.cases.length}{" "}
+                      scenarios matched. This is not a proof of equivalence.
+                    </p>
+                    {review.historical && (
+                      <Details title="Historical checks" value={review.cases} />
+                    )}
+                    <TranslationComparison
+                      rows={review.correspondence}
+                      historical={review.historical}
+                    />
+                  </>
+                )}
+                {!review && (
+                  <Button
+                    size="sm"
+                    disabled={disabled}
+                    onClick={() =>
+                      void perform(async () => {
+                        if (state)
+                          setReview(
+                            await request<PolicyReview>({
+                              operation: "review-policy",
+                              revision: state.version,
+                              artifact,
+                            }),
+                          );
+                      })
+                    }
+                  >
+                    Compare active translation
+                  </Button>
+                )}
               </>
             )}
           </TabsContent>
@@ -241,11 +291,12 @@ export function PolicyLayers({
               disabled={disabled}
               onClick={() => void mutate({ operation: "start-policy" })}
             >
-              Start golden session
+              Start reference session
             </Button>
             {state && (
               <>
-                <Details title="Golden protocol" value={state.protocol} />
+                <ProtocolDetails title="Nova protocol" protocol={state.applicationProtocol} />
+                <ProtocolDetails title="Complete protocol" protocol={state.protocol} />
                 <Layer state={state} layer={state.policyLayers[1]!} />
               </>
             )}
@@ -258,8 +309,12 @@ export function PolicyLayers({
                 onClick={() =>
                   void perform(async () => {
                     if (!state) return;
-                    if (artifact) {
-                      const result = await request<Review>({
+                    if (review?.historical) {
+                      setTrials(
+                        await request({ operation: "prevention", revision: state.version }),
+                      );
+                    } else if (artifact) {
+                      const result = await request<PolicyReview>({
                         operation: "review-policy",
                         revision: state.version,
                         artifact,
@@ -296,14 +351,15 @@ export function PolicyLayers({
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Prevention uses fresh sessions and baseline configuration. Closure comparison uses the
-              selected snapshot.
+              {review?.historical
+                ? "Checks use the current runtime. The saved translation belongs to an older protocol."
+                : "Prevention uses fresh sessions and baseline configuration. Closure comparison uses the selected snapshot."}
             </p>
             {conformance && (
               <div className="space-y-2 text-xs">
                 <p>
                   {conformance.equivalent
-                    ? "Closure union and pending gate decisions match full-copy."
+                    ? "Local closure union, global completion and pending gate decisions match full-copy."
                     : "Full-copy mismatch found."}
                 </p>
                 <p>
@@ -313,14 +369,14 @@ export function PolicyLayers({
                 <Details title="Closure evidence" value={conformance} />
               </div>
             )}
-            {trials?.map((trial) => (
+            {displayedTrials?.map((trial) => (
               <section
                 key={trial.name}
                 className="space-y-2 rounded border border-border p-3 text-xs"
               >
                 <h3 className="font-medium">{trial.name}</h3>
                 <p>
-                  Golden: {trial.golden.passed ? "passed" : "failed"}
+                  Reference: {trial.golden.passed ? "passed" : "failed"}
                   {trial.translated
                     ? ` · Translated: ${trial.matches && trial.translated.passed ? "matched" : "mismatch"}`
                     : " · No translation loaded"}

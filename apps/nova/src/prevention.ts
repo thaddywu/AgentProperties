@@ -44,7 +44,7 @@ export function closureConformance(state: RuntimeState) {
     ),
     fullCopyInputCopies: inputs(state).length * PRINCIPALS.length,
     scope:
-      "Selected snapshot only; not a proof for arbitrary executions or a minimum-storage claim.",
+      "Local closure union plus observer-only completion, and local gate decisions, at this snapshot. Not a proof for arbitrary executions or a minimum-storage claim.",
   };
 }
 
@@ -129,7 +129,7 @@ const cases: Case[] = [
     },
   },
   {
-    name: "Split audit and historical receipts",
+    name: "Split audit completion",
     execute(r, settle) {
       for (const [i, tag] of ["nova_procurement", "nova_facility", "nova_hiring"].entries()) {
         r.send("board", i === 1 ? "auditor_b" : "auditor_a", `audit${i}`, "audit material", {
@@ -137,9 +137,8 @@ const cases: Case[] = [
         });
         settle(`audit${i}`, true);
       }
-      r.configure(CONFIG.filter((fact) => fact.predicate !== "Auditor"));
-      if (!contains(r.closure("board").facts, f("Finished", "nova")))
-        throw new Error("Historical coverage was lost after role removal.");
+      if (!contains(reconstructDebugView(r.state).facts, f("Finished", "nova")))
+        throw new Error("Global query did not combine local audit coverage.");
     },
   },
 ];

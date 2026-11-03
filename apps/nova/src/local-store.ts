@@ -45,7 +45,11 @@ export function localRules(owner: string, state: Pick<RuntimeState, "policy"> = 
 export function localClosure(state: RuntimeState, owner: string) {
   return runSouffle(localInputs(state, owner), localRules(owner, state));
 }
-/** Observer union of independently computed stores. Never evaluated as a policy program. */
+/** Only observer outputs may be computed across stores; local enforcement never reads them. */
+export function observerRules(state: Pick<RuntimeState, "policy"> = {}) {
+  return rulesFor(state).filter((rule) => PROTOCOL.observer.some((p) => p === rule.head.predicate));
+}
+/** Union local closures, then evaluate only observer rules. Never rerun local gate rules here. */
 export function reconstructDebugView(state: RuntimeState) {
   const stores = Object.fromEntries(
     PRINCIPALS.map((owner) => [owner, localClosure(state, owner).facts]),
@@ -53,7 +57,12 @@ export function reconstructDebugView(state: RuntimeState) {
   const unique = new Map<string, PolicyFact>();
   for (const facts of Object.values(stores))
     for (const fact of facts) unique.set(factKey(fact), fact);
-  return { stores, facts: [...unique.values()] };
+  const localFacts = [...unique.values()];
+  const observer = runSouffle(localFacts, observerRules(state)).facts.filter((fact) =>
+    PROTOCOL.observer.some((p) => p === fact.predicate),
+  );
+  for (const fact of observer) unique.set(factKey(fact), fact);
+  return { stores, localFacts, observer, facts: [...unique.values()] };
 }
 export function derivedAt(state: RuntimeState) {
   const { stores, facts } = reconstructDebugView(state);
@@ -61,9 +70,13 @@ export function derivedAt(state: RuntimeState) {
     .filter((f) => DERIVED.has(f.predicate))
     .map((fact) => ({
       fact,
-      owners: Object.entries(stores)
-        .filter(([, tuples]) => tuples.some((f) => factKey(f) === factKey(fact)))
-        .map(([owner]) => owner),
-      rule: "Soufflé · local",
+      owners: PROTOCOL.observer.some((p) => p === fact.predicate)
+        ? ["observer"]
+        : Object.entries(stores)
+            .filter(([, tuples]) => tuples.some((f) => factKey(f) === factKey(fact)))
+            .map(([owner]) => owner),
+      rule: PROTOCOL.observer.some((p) => p === fact.predicate)
+        ? "Soufflé · global query"
+        : "Soufflé · local",
     }));
 }

@@ -26,13 +26,20 @@ export function migrateTagSchema(state: LegacyRuntimeState) {
     const predicate = names[tuple.predicate] ?? tuple.predicate;
     const a = tuple.args;
     if (
-      ["TrustedSource", "Propagated", "TransportTag", "Knows", "AuditReceipt"].includes(
-        predicate,
-      ) &&
+      [
+        "TrustedSource",
+        "Propagated",
+        "TransportTag",
+        "Knows",
+        "MessageTag",
+        "HasReceivedTag",
+        "AuditReceipt",
+      ].includes(predicate) &&
       a.length === 3
     )
       return fact(predicate, a[0]!, tag(a[1]!, a[2]!));
-    if (predicate === "Audited" && a.length === 2) return fact(predicate, tag(a[0]!, a[1]!));
+    if (["Audited", "Covered"].includes(predicate) && a.length === 2)
+      return fact(predicate, tag(a[0]!, a[1]!));
     if (predicate === "Requires" && a.length === 3)
       return fact(predicate, tag(a[0]!, a[1]!), a[2]!);
     return { ...tuple, predicate };

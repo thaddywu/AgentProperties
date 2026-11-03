@@ -1,6 +1,7 @@
 import type { QuestionTemplate } from "@rakazo/nova/questions";
 import type { NovaView, Request, Selection } from "@rakazo/nova/service";
 import { NAMES, PRINCIPALS } from "@rakazo/nova/shared";
+import type { PolicyReview } from "@rakazo/nova/translation-review";
 import { BotAvatar, Button, Dialog, DialogContent, DialogTitle } from "@rakazo/ui-web";
 import {
   ArrowRight,
@@ -17,6 +18,7 @@ import { useEffect, useState } from "react";
 import { AppearanceToggle } from "../../components/AppearanceToggle";
 import { AnalysisTerminal } from "./AnalysisTerminal";
 import { loadState, request } from "./client";
+import { ProtocolView } from "./PolicyData";
 import { PolicyLayers } from "./PolicyLayers";
 import { QuestionCatalog } from "./QuestionCatalog";
 
@@ -33,6 +35,8 @@ export function NovaApp() {
   const [questionsOpen, setQuestionsOpen] = useState(false);
   const [template, setTemplate] = useState<QuestionTemplate>();
   const [rules, setRules] = useState(false);
+  const [policyTab, setPolicyTab] = useState("runtime");
+  const [policyReview, setPolicyReview] = useState<PolicyReview>();
   const [protocolOpen, setProtocolOpen] = useState(false);
   const [configOpen, setConfigOpen] = useState(false);
   const [config, setConfig] = useState("");
@@ -69,6 +73,23 @@ export function NovaApp() {
       setBusy(false);
     }
   };
+  const replayTranslation = async () => {
+    if (!state) return;
+    setRules(true);
+    setPolicyTab("translated");
+    setBusy(true);
+    setError("");
+    setPolicyReview(undefined);
+    try {
+      setPolicyReview(
+        await request<PolicyReview>({ operation: "replay-translation", revision: state.version }),
+      );
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Replay failed");
+    } finally {
+      setBusy(false);
+    }
+  };
   const messages =
     state?.messages.filter(
       (m) => principal === "all" || m.from === principal || m.to === principal,
@@ -80,13 +101,30 @@ export function NovaApp() {
         <strong className="text-sm">Nova</strong>
         <span className="text-xs text-muted-foreground">Distributed Policy Reasoning</span>
         <span className="ml-auto hidden text-xs text-muted-foreground sm:inline">
-          {state?.policyIdentity.mode === "translated" ? "Translated" : "Golden"} · Local runtime
+          {state?.policyIdentity.mode === "translated" ? "Translated" : "Reference"} · Local runtime
         </span>
         <AppearanceToggle />
         <Button size="sm" variant="ghost" onClick={() => setQuestionsOpen(true)}>
           Questions
         </Button>
-        <Button size="sm" variant="ghost" onClick={() => setRules(true)}>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={busy || !state}
+          onClick={() => void replayTranslation()}
+        >
+          {busy && rules && policyTab === "translated"
+            ? "Loading translation…"
+            : "View historical translation"}
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => {
+            setPolicyTab("runtime");
+            setRules(true);
+          }}
+        >
           <FileCode2 className="size-3.5" />
           Rules
         </Button>
@@ -178,7 +216,7 @@ export function NovaApp() {
               disabled={busy}
               onClick={() => void mutate({ operation: "reset", preset: "earlier" })}
             >
-              Earlier
+              Before second delivery
             </Button>
             <Button
               size="sm"
@@ -186,7 +224,7 @@ export function NovaApp() {
               disabled={busy}
               onClick={() => void mutate({ operation: "reset", preset: "denial" })}
             >
-              Denial
+              Before third delivery
             </Button>
             <Button
               size="sm"
@@ -474,6 +512,8 @@ export function NovaApp() {
         )}
       </div>
       <QuestionCatalog
+        revision={state?.version ?? 0}
+        selection={selection}
         open={questionsOpen}
         onOpenChange={setQuestionsOpen}
         onSelect={(q) => {
@@ -485,7 +525,10 @@ export function NovaApp() {
       <Dialog open={protocolOpen} onOpenChange={setProtocolOpen}>
         <DialogContent className="max-h-[85vh] overflow-auto">
           <DialogTitle>Local stores and transfers</DialogTitle>
-          <pre className="overflow-auto text-xs">{JSON.stringify(state?.protocol, null, 2)}</pre>
+          <h3 className="text-sm font-medium">Built-in protocol</h3>
+          {state && <ProtocolView protocol={state.foundationProtocol} />}
+          <h3 className="text-sm font-medium">Nova protocol</h3>
+          {state && <ProtocolView protocol={state.applicationProtocol} />}
         </DialogContent>
       </Dialog>
       <PolicyLayers
@@ -495,6 +538,12 @@ export function NovaApp() {
         mutate={mutate}
         busy={busy}
         selection={selection}
+        tab={policyTab}
+        setTab={setPolicyTab}
+        review={policyReview}
+        setReview={setPolicyReview}
+        replay={replayTranslation}
+        parentError={error}
       />
       <Dialog open={configOpen} onOpenChange={setConfigOpen}>
         <DialogContent>

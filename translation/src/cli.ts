@@ -12,6 +12,7 @@ import {
   APPLICATION_TRANSLATION_INSTRUCTIONS,
   translateApplication,
 } from "./application-translation.js";
+import { connectionGenerator } from "./model.js";
 
 async function main() {
   const { values, positionals } = parseArgs({
@@ -111,30 +112,8 @@ async function main() {
         throw new Error(
           "Missing model configuration. Supply --connection <private-models-connect.json>, or --provider --model --api-key-env [--base-url]. No model was called.",
         );
-      // Defer the existing provider stack until input/config checks pass; no Prisma/database is required.
-      const {
-        policyTranslationModel,
-        PiAgentRuntime,
-        buildModelConnectPlaintext,
-        parseModelSecret,
-      } = await import("@rakazo/adapters/policy-translation");
-      const secret = parseModelSecret(buildModelConnectPlaintext(connection));
-      const model = {
-        provider: connection.provider,
-        id: connection.modelId!,
-        maxTokens: connection.maxTokens ?? 8192,
-        thinkingLevel: connection.thinkingLevel ?? "low",
-        contextWindow: connection.contextWindow,
-        ...(secret.kind === "api_key"
-          ? { apiKey: secret.key }
-          : secret.kind === "openai_compatible"
-            ? { apiKey: secret.apiKey, baseUrl: secret.baseUrl, reasoning: secret.reasoning }
-            : {}),
-      };
-      return policyTranslationModel(
-        new PiAgentRuntime(),
-        model,
-        AbortSignal.timeout(120_000),
+      return connectionGenerator(
+        connection,
         binding
           ? APPLICATION_TRANSLATION_INSTRUCTIONS
           : (await import("./prompt.js")).TRANSLATION_INSTRUCTIONS,

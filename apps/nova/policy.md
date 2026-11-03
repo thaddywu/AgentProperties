@@ -6,4 +6,4 @@ P3. No agent other than Board may receive a message if combining its incoming in
 
 P4. A refused delivery must not disclose its payload to the recipient or add the refused information to that recipient's received knowledge. Later outgoing messages must not acquire confidential information merely because an earlier incoming message was attempted and refused.
 
-P5. A confidential part counts as covered only after successful delivery to a designated auditor. The audit is complete only when every one of its three configured parts has been covered. Different auditors may cover different parts; completing the audit must not require one ordinary agent to collect the full confidential combination.
+P5. A confidential part counts as covered only after successful delivery to a designated auditor. The audit is complete only when every one of its three configured parts has been covered. Different auditors may cover different parts; completing the audit must not require one ordinary agent to collect the full confidential combination. Completion is queried globally from local audit coverage; no audit summary is sent to Board.

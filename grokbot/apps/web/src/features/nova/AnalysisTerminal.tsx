@@ -33,6 +33,7 @@ function Field({
         value={value}
         rows={rows}
         onChange={(e) => onChange(e.target.value)}
+        placeholder={label === "ADD" ? "None" : undefined}
         spellCheck={false}
         className="w-full resize-y rounded border border-border bg-background p-2 font-mono text-xs leading-relaxed"
       />
@@ -108,11 +109,11 @@ export function AnalysisTerminal({
   mutate: (req: Request) => Promise<void>;
 }) {
   const [tab, setTab] = useState<Tab>("query");
-  const [program, setProgram] = useState("?- Knows(A, Tag).");
+  const [program, setProgram] = useState("?- HasReceivedTag(A, Tag).");
   const [whyQuery, setWhyQuery] = useState("DenyReceive(auditor_a, mH)");
   const [whatQuery, setWhatQuery] = useState("DenyReceive(auditor_a, mH)");
   const [minQuery, setMinQuery] = useState("DenyReceive(auditor_a, mH)");
-  const [remove, setRemove] = useState("Receiver(auditor_a, mF).\nReceived(auditor_a, mF).");
+  const [remove, setRemove] = useState("Received(auditor_a, mF).");
   const [add, setAdd] = useState("");
   const [events, setEvents] = useState(PREVENTABLE_PRESET);
   const [goal, setGoal] = useState("Finished(nova)");
@@ -120,9 +121,11 @@ export function AnalysisTerminal({
   const [basis, setBasis] = useState<"earlier" | "selected">("earlier");
   const [results, setResults] = useState<Partial<Record<Tab, Result>>>({});
   const [busy, setBusy] = useState(false);
+  const [questionEdited, setQuestionEdited] = useState(false);
   useEffect(() => {
     if (!template) return;
     setTab(template.tab);
+    setQuestionEdited(false);
     setResults((prev) => ({ ...prev, [template.tab]: undefined }));
     if (template.query) {
       if (template.tab === "query") setProgram(template.query);
@@ -130,17 +133,32 @@ export function AnalysisTerminal({
       if (template.tab === "what-if") setWhatQuery(template.query);
       if (template.tab === "minimal") setMinQuery(template.query);
     }
+    if (template.tab === "minimal") setEvents(template.events ?? PREVENTABLE_PRESET);
+    if (template.tab === "speculative") setActions(template.actions ?? ACTION_PRESET);
+    if (template.goal) setGoal(template.goal);
+    if (template.basis) setBasis(template.basis);
     if (template.tab === "what-if") {
       setRemove(template.remove ?? "");
-      setAdd("");
+      setAdd(template.add ?? "");
     }
   }, [template]);
   const result = results[tab];
+  const usingInterpretation =
+    template &&
+    template.tab === tab &&
+    !questionEdited &&
+    (!["query", "why"].includes(tab) || template.scope === scope);
+  const staleQuestion =
+    usingInterpretation &&
+    template?.revision !== undefined &&
+    (template.revision !== state.version ||
+      template.snapshotKey !== `${selection.event ?? "live"}:${selection.side ?? "after"}`);
   const run = async () => {
+    if (staleQuestion) return;
     setBusy(true);
     const context =
       tab === "speculative" && basis === "earlier"
-        ? "Earlier runtime · Procurement received by A"
+        ? "Before second delivery · A has Procurement"
         : selection.event
           ? `Event ${selection.event} · ${selection.side}`
           : "Current runtime";
@@ -229,10 +247,62 @@ export function AnalysisTerminal({
           }
         }}
       >
+        {usingInterpretation && (
+          <div className="space-y-1 text-sm">
+            <p>{template.originalQuestion ?? template.question}</p>
+            {template.originalQuestion && template.originalQuestion !== template.question && (
+              <p className="text-xs text-muted-foreground">Interpreted as: {template.question}</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              {template.interpretationSource === "model" ? "Model interpretation" : "Example"} ·{" "}
+              {template.tab === "speculative"
+                ? template.basis === "earlier"
+                  ? "Before second delivery"
+                  : "Selected snapshot"
+                : selection.event
+                  ? `Event ${selection.event} · ${selection.side ?? "after"}`
+                  : "Current runtime"}{" "}
+              · {template.scope === "debug" ? "All local stores" : template.scope}
+            </p>
+            {template.parameters && (
+              <details className="text-xs text-muted-foreground">
+                <summary>Interpreted arguments</summary>
+                <dl className="mt-2 space-y-1">
+                  {Object.entries(template.parameters).map(([key, value]) => (
+                    <div key={key}>
+                      <dt className="inline font-medium">{key}: </dt>
+                      <dd className="inline font-mono">
+                        {Array.isArray(value) ? value.join(", ") : value}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </details>
+            )}
+            {template.argumentNotes?.map((note) => (
+              <p key={note} className="text-xs text-muted-foreground">
+                {note}
+              </p>
+            ))}
+          </div>
+        )}
+        {staleQuestion && (
+          <p role="status" className="text-sm text-muted-foreground">
+            Snapshot changed. Open Questions and interpret again.
+          </p>
+        )}
         <p className="text-xs text-muted-foreground">{help[tab]}</p>
         {tab === "query" && (
           <>
-            <Field label="Datalog program" value={program} onChange={setProgram} rows={4} />
+            <Field
+              label="Datalog program"
+              value={program}
+              onChange={(value) => {
+                setProgram(value);
+                setQuestionEdited(true);
+              }}
+              rows={4}
+            />
             <details className="text-xs text-muted-foreground">
               <summary className="cursor-pointer">Syntax</summary>
               <p className="mt-1">
@@ -243,18 +313,67 @@ export function AnalysisTerminal({
             </details>
           </>
         )}
-        {tab === "why" && <Field label="FACT" value={whyQuery} onChange={setWhyQuery} rows={2} />}
+        {tab === "why" && (
+          <Field
+            label="FACT"
+            value={whyQuery}
+            onChange={(value) => {
+              setWhyQuery(value);
+              setQuestionEdited(true);
+            }}
+            rows={2}
+          />
+        )}
         {tab === "what-if" && (
           <>
-            <Field label="REMOVE" value={remove} onChange={setRemove} />
-            <Field label="ADD" value={add} onChange={setAdd} rows={2} />
-            <Field label="FACT" value={whatQuery} onChange={setWhatQuery} rows={2} />
+            <Field
+              label="REMOVE"
+              value={remove}
+              onChange={(value) => {
+                setRemove(value);
+                setQuestionEdited(true);
+              }}
+            />
+            <Field
+              label="ADD"
+              value={add}
+              onChange={(value) => {
+                setAdd(value);
+                setQuestionEdited(true);
+              }}
+              rows={2}
+            />
+            <Field
+              label="FACT"
+              value={whatQuery}
+              onChange={(value) => {
+                setWhatQuery(value);
+                setQuestionEdited(true);
+              }}
+              rows={2}
+            />
           </>
         )}
         {tab === "minimal" && (
           <>
-            <Field label="FACT" value={minQuery} onChange={setMinQuery} rows={2} />
-            <Field label="PREVENTABLE EVENTS" value={events} onChange={setEvents} rows={7} />
+            <Field
+              label="FACT"
+              value={minQuery}
+              onChange={(value) => {
+                setMinQuery(value);
+                setQuestionEdited(true);
+              }}
+              rows={2}
+            />
+            <Field
+              label="PREVENTABLE EVENTS"
+              value={events}
+              onChange={(value) => {
+                setEvents(value);
+                setQuestionEdited(true);
+              }}
+              rows={7}
+            />
           </>
         )}
         {tab === "speculative" && (
@@ -264,18 +383,37 @@ export function AnalysisTerminal({
               <select
                 aria-label="Speculative starting state"
                 value={basis}
-                onChange={(e) => setBasis(e.target.value as typeof basis)}
+                onChange={(e) => {
+                  setBasis(e.target.value as typeof basis);
+                  setQuestionEdited(true);
+                }}
                 className="mt-1 w-full rounded border border-border bg-background p-2"
               >
-                <option value="earlier">Earlier runtime · A has Procurement</option>
+                <option value="earlier">Before second delivery · A has Procurement</option>
                 <option value="selected">Selected runtime snapshot</option>
               </select>
             </label>
-            <Field label="GOAL" value={goal} onChange={setGoal} rows={2} />
-            <Field label="PROGRESS ACTIONS" value={actions} onChange={setActions} rows={6} />
+            <Field
+              label="GOAL"
+              value={goal}
+              onChange={(value) => {
+                setGoal(value);
+                setQuestionEdited(true);
+              }}
+              rows={2}
+            />
+            <Field
+              label="PROGRESS ACTIONS"
+              value={actions}
+              onChange={(value) => {
+                setActions(value);
+                setQuestionEdited(true);
+              }}
+              rows={6}
+            />
           </>
         )}
-        <Button size="sm" disabled={busy} onClick={() => void run()}>
+        <Button size="sm" disabled={busy || staleQuestion} onClick={() => void run()}>
           {busy
             ? "Running…"
             : tab === "why"

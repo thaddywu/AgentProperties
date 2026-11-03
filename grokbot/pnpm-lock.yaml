@@ -332,6 +332,9 @@ importers:
         specifier: 7.18.3
         version: 7.18.3(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
     devDependencies:
+      '@rakazo/policy-translation':
+        specifier: workspace:*
+        version: link:../../../translation
       '@babel/core':
         specifier: 7.29.7
         version: 7.29.7

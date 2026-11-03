@@ -14,8 +14,20 @@ mounts=(
   --volume "$nova_root/grokbot/apps/web/nova.html:/app/grokbot/apps/web/nova.html:ro"
   --volume "$nova_root/grokbot/apps/web/vite.nova.config.ts:/app/grokbot/apps/web/vite.nova.config.ts:ro"
   --volume "$nova_root/apps/nova/src:/app/apps/nova/src"
+  --volume "$nova_root/apps/nova/demo:/app/apps/nova/demo:ro"
   --volume "$nova_root/runtime/src:/app/runtime/src"
+  --volume "$nova_root/translation/src:/app/translation/src"
 )
+# Optional shared model connection; mount read-only and never bake credentials into the image.
+model_mounts=()
+if [[ -n "${MODEL_CONNECTION_FILE:-}" ]]; then
+  model_connection="$(realpath "$MODEL_CONNECTION_FILE")"
+  [[ -f "$model_connection" ]] || { echo 'Model connection file not found.' >&2; exit 1; }
+  model_mounts=(--volume "$model_connection:/run/secrets/model-connection.json:ro" --env MODEL_CONNECTION_FILE=/run/secrets/model-connection.json)
+  if [[ -n "${RAKAZO_OPENAI_COMPAT_ALLOW_PUBLIC:-}" ]]; then
+    model_mounts+=(--env "RAKAZO_OPENAI_COMPAT_ALLOW_PUBLIC=$RAKAZO_OPENAI_COMPAT_ALLOW_PUBLIC")
+  fi
+fi
 health() {
   docker exec -i "$nova_container" node --input-type=module <<'JS'
 const base = "http://127.0.0.1:5180";
@@ -74,7 +86,7 @@ case "$mode" in
     echo "[3/4] Starting frontend + policy worker on port $nova_port..."
     if ! docker run --detach --init --restart unless-stopped --user 0 --name "$nova_container" \
       --volume "$nova_volume:/nova-state" --env NOVA_STATE_FILE=/nova-state/runtime.json \
-      -p "127.0.0.1:$nova_port:5180" "${mounts[@]}" --workdir /app/grokbot/apps/web \
+      -p "127.0.0.1:$nova_port:5180" "${mounts[@]}" "${model_mounts[@]}" --workdir /app/grokbot/apps/web \
       "$nova_image" /app/grokbot/apps/web/node_modules/.bin/vite --config vite.nova.config.ts --host 0.0.0.0 >/dev/null; then
       echo 'Startup failed. Check the Docker error above (for example, a port conflict).' >&2
       exit 1

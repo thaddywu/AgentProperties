@@ -8,16 +8,18 @@ describe("fixed messaging foundation", () => {
       [
         { predicate: "TransportTag", args: ["input", "medical"] },
         { predicate: "Received", args: ["reader", "input"] },
-        { predicate: "Receiver", args: ["reader", "input"] },
         { predicate: "Sender", args: ["reader", "reply"] },
-        { predicate: "Before", args: ["input", "reply"] },
+        { predicate: "ReceivedBeforeSend", args: ["input", "reply"] },
         { predicate: "Incoming", args: ["reader", "reply"] },
         { predicate: "Requires", args: ["medical", "clearance"] },
       ],
       Object.values(MESSAGING_RULES),
     );
-    expect(result.facts).toContainEqual({ predicate: "Propagated", args: ["reply", "medical"] });
-    expect(result.facts).toContainEqual({ predicate: "Knows", args: ["reader", "medical"] });
+    expect(result.facts).toContainEqual({ predicate: "MessageTag", args: ["reply", "medical"] });
+    expect(result.facts).toContainEqual({
+      predicate: "HasReceivedTag",
+      args: ["reader", "medical"],
+    });
     expect(result.facts).toContainEqual({ predicate: "DenyReceive", args: ["reader", "reply"] });
   });
   it("does not impose an application exposure threshold or audit goal", () => {
@@ -31,9 +33,11 @@ describe("fixed messaging foundation", () => {
       ],
       Object.values(MESSAGING_RULES),
     );
-    expect(result.facts.filter((fact) => fact.predicate === "Propagated")).toHaveLength(3);
+    expect(result.facts.filter((fact) => fact.predicate === "MessageTag")).toHaveLength(3);
     expect(
-      result.facts.some((fact) => ["DenyReceive", "Finished", "Knows"].includes(fact.predicate)),
+      result.facts.some((fact) =>
+        ["DenyReceive", "Finished", "HasReceivedTag"].includes(fact.predicate),
+      ),
     ).toBe(false);
   });
 });

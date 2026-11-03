@@ -14,7 +14,7 @@ export const NAMES: Record<string, string> = {
   auditor_a: "Auditor A",
   auditor_b: "Auditor B",
 };
-export const PREVENTABLE_PRESET = `eP:\n  Receiver(auditor_a, mP).\n  Received(auditor_a, mP).\neF:\n  Receiver(auditor_a, mF).\n  Received(auditor_a, mF).`;
+export const PREVENTABLE_PRESET = `eP:\n  Received(auditor_a, mP).\neF:\n  Received(auditor_a, mF).`;
 export const ACTION_PRESET = ["procurement", "facility", "hr"]
   .flatMap((sender) => ["auditor_a", "auditor_b"].map((receiver) => `${sender} -> ${receiver}`))
   .join("\n");

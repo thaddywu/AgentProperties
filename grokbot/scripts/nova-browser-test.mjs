@@ -44,7 +44,7 @@ const clickRun = async (name) => {
     "Replay completion in runtime": "replay-trace",
     New: "reset",
     "Next event": "advance",
-    Denial: "reset",
+    "Before third delivery": "reset",
     "Apply configuration": "config",
     Send: "send",
   };
@@ -73,6 +73,9 @@ const selectSnapshot = async (action) => {
   await page.waitForTimeout(50);
 };
 try {
+  const initial = await current();
+  if (initial.policyIdentity.mode !== "golden")
+    await api({ operation: "start-policy", revision: initial.version });
   await reset("denial");
   await page.goto(`${base}/nova.html`);
   await page.getByRole("tab", { name: "Query", exact: true }).waitFor();
@@ -82,28 +85,41 @@ try {
   assert.match(await builtinPanel.innerText(), /TransportTag\(Message, Tag\)/);
   assert.match(await builtinPanel.innerText(), /capability/);
   assert.doesNotMatch(await builtinPanel.innerText(), /three-tag-exposure|AuditGoal/);
+  await builtinPanel.getByText("Built-in protocol", { exact: true }).click();
+  await builtinPanel.getByRole("table").waitFor();
+  assert.match(await builtinPanel.innerText(), /MessageTag → TransportTag/);
+  assert.match(await builtinPanel.innerText(), /Keep on allow; discard on deny/);
+  assert.doesNotMatch(await builtinPanel.innerText(), /"replicated"\s*:/);
+  await page.screenshot({ path: `${output}/builtin-protocol-table.png`, fullPage: true });
+  await builtinPanel.getByText("Built-in protocol", { exact: true }).click();
   await builtinPanel.getByText("App-supplied values", { exact: true }).click();
   assert.match(await builtinPanel.innerText(), /HasCap\(auditor_a, hr_review\)/);
   await page.screenshot({ path: `${output}/builtin-policy.png`, fullPage: true });
-  await page.getByRole("tab", { name: "Golden", exact: true }).click();
-  const novaPanel = page.getByRole("tabpanel", { name: "Golden", exact: true });
+  await page.getByRole("tab", { name: "Reference", exact: true }).click();
+  const novaPanel = page.getByRole("tabpanel", { name: "Reference", exact: true });
   assert.match(await novaPanel.innerText(), /Handwritten Nova rules/);
   assert.match(await novaPanel.innerText(), /three-tag-exposure/);
   assert.match(await novaPanel.innerText(), /AuditGoal\(Group, Tag1, Tag2, Tag3\)/);
   assert.doesNotMatch(await novaPanel.innerText(), /runtime-dependency/);
+  await novaPanel.getByText("Nova protocol", { exact: true }).click();
+  assert.match(await novaPanel.innerText(), /Global query only: Finished/);
+  assert.doesNotMatch(await novaPanel.innerText(), /AuditReceipt/);
+  assert.match(await novaPanel.innerText(), /Only at board/);
+  await novaPanel.getByText("Nova protocol", { exact: true }).click();
   await page.screenshot({ path: `${output}/nova-policy.png`, fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   assert.equal(
     await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     true,
   );
-  const tabListBounds = await page
-    .getByRole("tablist", { name: "Policy walkthrough" })
-    .boundingBox();
-  const lastTabBounds = await page
-    .getByRole("tab", { name: "Prevention", exact: true })
-    .boundingBox();
-  assert.ok(lastTabBounds.y + lastTabBounds.height <= tabListBounds.y + tabListBounds.height + 1);
+  // Measure in one frame: the dialog can still be moving after a viewport resize.
+  assert.ok(
+    await page.getByRole("tablist", { name: "Policy walkthrough" }).evaluate((list) => {
+      const bounds = list.getBoundingClientRect();
+      const last = list.lastElementChild.getBoundingClientRect();
+      return last.bottom <= bounds.bottom + 1;
+    }),
+  );
   await page.screenshot({ path: `${output}/nova-policy-narrow.png`, fullPage: true });
   await page.setViewportSize({ width: 1500, height: 1000 });
   await page.getByRole("tab", { name: "Nova input", exact: true }).click();
@@ -121,13 +137,16 @@ try {
   await page.getByRole("tab", { name: "Prevention", exact: true }).click();
   await page.getByRole("button", { name: "Check closure union", exact: true }).click();
   await page
-    .getByText("Closure union and pending gate decisions match full-copy.", { exact: true })
+    .getByText(
+      "Local closure union, global completion and pending gate decisions match full-copy.",
+      { exact: true },
+    )
     .waitFor();
   await page.getByRole("button", { name: "Run prevention comparison", exact: true }).click();
   await page.getByRole("heading", { name: "Third distinct tag", exact: true }).waitFor();
   assert.match(
     await page.getByRole("tabpanel", { name: "Prevention", exact: true }).innerText(),
-    /Golden: passed/,
+    /Reference: passed/,
   );
   await page.screenshot({ path: `${output}/policy-prevention.png`, fullPage: true });
   const fixture = execFileSync(process.execPath, [
@@ -143,8 +162,10 @@ try {
     .getByText("Checks passed; semantic equivalence is unproven.", { exact: true })
     .waitFor();
   await page.screenshot({ path: `${output}/translated-policy.png`, fullPage: true });
-  await page.getByRole("button", { name: "Start translated session", exact: true }).click();
-  await page.getByText(/^Active: Translated/).waitFor();
+  await selectSnapshot(async () => {
+    await page.getByRole("button", { name: "Start translated session", exact: true }).click();
+    await page.getByText(/^Active: Translated/).waitFor();
+  });
   const active = await current();
   assert.equal(active.policyIdentity.mode, "translated");
   await api({ operation: "reset", preset: "denial", revision: active.version });
@@ -160,49 +181,238 @@ try {
   await page.reload();
   await page.getByRole("button", { name: "Rules", exact: true }).click();
   await page.getByText(/^Active: Translated/).waitFor();
-  await page.getByRole("tab", { name: "Golden", exact: true }).click();
-  await page.getByRole("button", { name: "Start golden session", exact: true }).click();
-  await page.getByText(/^Active: Golden/).waitFor();
+  await page.getByRole("tab", { name: "Reference", exact: true }).click();
+  await selectSnapshot(async () => {
+    await page.getByRole("button", { name: "Start reference session", exact: true }).click();
+    await page.getByText(/^Active: Reference/).waitFor();
+  });
   await page.keyboard.press("Escape");
   await reset("denial");
   await page.reload();
   await page.getByRole("tab", { name: "Query", exact: true }).waitFor();
+  const replayBefore = await current();
+  await page.getByRole("button", { name: "View historical translation", exact: true }).click();
+  await page.getByRole("region", { name: "Policy comparison" }).waitFor();
+  await page
+    .getByText(
+      "Historical protocol: saved results only. Cannot run or activate in the current runtime.",
+      { exact: true },
+    )
+    .waitFor();
+  const comparison = page.getByRole("region", { name: "Policy comparison" });
+  await page.getByText("Exact translation input", { exact: true }).click();
+  const sourceDocuments = page.getByText("Exact translation input", { exact: true }).locator("..");
+  await sourceDocuments.getByText("policy.md", { exact: true }).click();
+  assert.match(await sourceDocuments.innerText(), /P3\. No agent other than Board/);
+  assert.doesNotMatch(await sourceDocuments.innerText(), /"content"\s*:/);
+  await page.getByText("Exact translation input", { exact: true }).click();
+  assert.match(await comparison.innerText(), /P3\. No agent other than Board/);
+  const gtBounds = await page.getByRole("region", { name: "Reference rules" }).boundingBox();
+  const generatedBounds = await page.getByRole("region", { name: "Generated rules" }).boundingBox();
+  assert.ok(generatedBounds.x > gtBounds.x && Math.abs(generatedBounds.y - gtBounds.y) < 2);
+  await page.screenshot({ path: `${output}/translation-side-by-side.png`, fullPage: true });
+  await page.getByLabel("Compare policy").selectOption("P5");
+  assert.match(
+    await page.getByRole("region", { name: "Reference rules" }).innerText(),
+    /Audited\(Tag\) :- AuditReceipt/,
+  );
+  assert.doesNotMatch(
+    await page.getByRole("region", { name: "Generated rules" }).innerText(),
+    /Audited\(Tag\) :- AuditReceipt/,
+  );
+  await page.screenshot({ path: `${output}/translation-audit-difference.png`, fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  assert.equal(
+    await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    true,
+  );
+  await page.screenshot({ path: `${output}/translation-comparison-narrow.png`, fullPage: true });
+  await page.setViewportSize({ width: 1500, height: 1000 });
+  await page.getByRole("tab", { name: "Prevention", exact: true }).click();
+  await page.getByRole("button", { name: "Run prevention comparison", exact: true }).click();
+  await page.getByRole("heading", { name: "Split audit completion", exact: true }).waitFor();
+  const auditCase = page
+    .getByRole("heading", { name: "Split audit completion", exact: true })
+    .locator("..");
+  assert.match(await auditCase.innerText(), /Reference: passed/);
+  assert.doesNotMatch(
+    await page.getByRole("tabpanel", { name: "Prevention", exact: true }).innerText(),
+    /role changes|historical receipts/,
+  );
+  await auditCase.getByText("Delivery and payload evidence", { exact: true }).click();
+  assert.match(await auditCase.innerText(), /Content visible to recipient/);
+  assert.doesNotMatch(await auditCase.innerText(), /"bodyVisible"\s*:/);
+  await page.screenshot({ path: `${output}/prevention-readable-evidence.png`, fullPage: true });
+  const replayAfter = await current();
+  assert.equal(replayAfter.version, replayBefore.version);
+  assert.deepEqual(replayAfter.messages, replayBefore.messages);
+  await page.keyboard.press("Escape");
+  console.log(
+    "PASS saved translation replay, policy correspondence, side-by-side rules and unchanged runtime",
+  );
   console.log(
     "PASS five-part policy walkthrough, input documents, closure union and actual prevention",
   );
   await page.getByRole("button", { name: "Questions", exact: true }).click();
-  for (const category of [
-    "Information flow",
-    "Capability",
-    "Communication",
-    "Provenance",
-    "Resource lifecycle",
-  ]) {
+  for (const category of ["Information flow", "Capability", "Communication", "Provenance"]) {
     await page.getByRole("tab", { name: category, exact: true }).click();
     assert.equal(
       await page
         .getByRole("dialog")
         .getByRole("button", { name: /^Open question:/ })
         .count(),
-      category === "Resource lifecycle" ? 0 : 3,
+      category === "Communication" ? 5 : 3,
     );
   }
   await page.screenshot({ path: `${output}/questions.png`, fullPage: true });
   await page.getByRole("tab", { name: "Capability", exact: true }).click();
   await page
     .getByRole("button", {
-      name: "Open question: Which required permissions is this agent missing?",
+      name: "Open question: Which permission is Auditor B missing for HR information?",
       exact: true,
     })
     .click();
+  await page.getByRole("dialog", { name: "Questions", exact: true }).waitFor({ state: "hidden" });
   assert.equal(await page.getByLabel("Store scope").inputValue(), "auditor_b");
   const missing = await clickRun("Run query");
   assert.deepEqual(missing.result.rows, [["hr_review"]]);
   assert.equal(await page.getByRole("region", { name: "Audit report lifecycle" }).count(), 0);
   await page.getByRole("tab", { name: "Query", exact: true }).click();
   await page.getByLabel("Store scope").selectOption("auditor_a");
-  console.log("PASS clear question templates and disconnected lifecycle catalog");
-  await page.getByLabel("Datalog program").fill("?- Knows(auditor_a, Tag).");
+  console.log("PASS concrete question examples and offline interpretation");
+  await page.getByRole("button", { name: "Questions", exact: true }).click();
+  await page.getByRole("tab", { name: "Information flow", exact: true }).click();
+  await page
+    .getByRole("button", {
+      name: "Open question: Who has already received HR information?",
+      exact: true,
+    })
+    .click();
+  await page.getByRole("dialog", { name: "Questions", exact: true }).waitFor({ state: "hidden" });
+  assert.equal(await page.getByLabel("Store scope").inputValue(), "debug");
+  assert.match(
+    await page.getByRole("region", { name: "Datalog analysis terminal" }).innerText(),
+    /Who has already received HR information/,
+  );
+  const interpreted = await clickRun("Run query");
+  assert.deepEqual(interpreted.result.rows, [["hr"]]);
+  await page.screenshot({ path: `${output}/nl-query.png`, fullPage: true });
+  // Deterministic UI fixture: server model interpretation is tested separately with an injected provider.
+  await page.route("**/nova-question", async (route) => {
+    const request = route.request().postDataJSON();
+    const result =
+      request.question === "Why was it blocked?"
+        ? { status: "needs_clarification", message: "Which message and recipient?" }
+        : {
+            status: "ready",
+            revision: request.revision,
+            selection: {},
+            question: {
+              id: "denial",
+              category: "Communication",
+              template: "WHY DenyReceive({recipient}, {message})",
+              question: "Why would message mH to Auditor A be blocked?",
+              originalQuestion: request.question,
+              interpretationSource: "model",
+              tab: "why",
+              scope: "auditor_a",
+              query: 'DenyReceive("auditor_a", "mH")',
+            },
+          };
+    assert.equal(request.mode, "model");
+    if (result.status === "ready") {
+      if (request.question.startsWith("If Auditor A"))
+        Object.assign(result.question, {
+          id: "without-receive",
+          tab: "what-if",
+          question: "Would HR still be blocked without the Facility receipt?",
+          parameters: { recipient: "auditor_a", message: "mH", earlierMessage: "mF" },
+          remove: 'Received("auditor_a", "mF").',
+          add: "",
+          argumentNotes: [
+            "ADD is empty: this template changes only the specified earlier receipt.",
+          ],
+        });
+      if (request.question.startsWith("Among Auditor A"))
+        Object.assign(result.question, {
+          id: "prevention",
+          tab: "minimal",
+          question: "Which of mP and mF should be prevented?",
+          parameters: { recipient: "auditor_a", message: "mH", eventMessages: ["mP", "mF"] },
+          events:
+            'event1:\n  Received("auditor_a", "mP").\nevent2:\n  Received("auditor_a", "mF").',
+        });
+      if (request.question.startsWith("Starting when Auditor A"))
+        Object.assign(result.question, {
+          id: "planning",
+          tab: "speculative",
+          scope: "debug",
+          question: "How can we finish Nova from before the second delivery?",
+          parameters: {
+            goalGroup: "nova",
+            basis: "earlier",
+            routes: [
+              "facility->auditor_a",
+              "facility->auditor_b",
+              "hr->auditor_a",
+              "hr->auditor_b",
+            ],
+          },
+          goal: 'Finished("nova")',
+          basis: "earlier",
+          actions: "facility->auditor_a\nfacility->auditor_b\nhr->auditor_a\nhr->auditor_b",
+        });
+    }
+    await route.fulfill({ json: { result } });
+  });
+  const beforeInterpretation = await current();
+  await page.getByRole("button", { name: "Questions", exact: true }).click();
+  await page.getByLabel("Ask about Nova").fill("Why was it blocked?");
+  await page.getByRole("button", { name: "Interpret question", exact: true }).click();
+  await page.getByText("Which message and recipient?", { exact: true }).waitFor();
+  await page.getByLabel("Ask about Nova").fill("Why can't A receive the HR message mH?");
+  await page.getByRole("button", { name: "Interpret question", exact: true }).click();
+  await page.getByRole("dialog", { name: "Questions", exact: true }).waitFor({ state: "hidden" });
+  assert.equal(await page.getByLabel("Store scope").inputValue(), "auditor_a");
+  assert.match(
+    await page.getByRole("region", { name: "Datalog analysis terminal" }).innerText(),
+    /Model interpretation/,
+  );
+  assert.equal((await current()).version, beforeInterpretation.version);
+  const nlProof = await clickRun("PROOF");
+  assert.match(nlProof.result.fact, /DenyReceive/);
+  await page.screenshot({ path: `${output}/nl-query-interpreted.png`, fullPage: true });
+  for (const label of ["What-if", "Min-prevention", "Planning"]) {
+    await page.getByRole("button", { name: "Questions", exact: true }).click();
+    await page.getByRole("button", { name: `Use ${label} question`, exact: true }).click();
+    assert.ok((await page.getByLabel("Ask about Nova").inputValue()).length > 30);
+    await page.screenshot({ path: `${output}/suggested-${label}.png`, fullPage: true });
+    await page.getByRole("button", { name: "Interpret question", exact: true }).click();
+    await page.getByRole("dialog", { name: "Questions", exact: true }).waitFor({ state: "hidden" });
+    await page.getByText("Interpreted arguments", { exact: true }).click();
+    if (label === "What-if") {
+      assert.equal(
+        await page.getByLabel("REMOVE", { exact: true }).inputValue(),
+        'Received("auditor_a", "mF").',
+      );
+      assert.equal(await page.getByLabel("ADD", { exact: true }).inputValue(), "");
+      assert.equal((await clickRun("Run what-if")).result.result, false);
+    } else if (label === "Min-prevention") {
+      assert.match(await page.getByLabel("PREVENTABLE EVENTS").inputValue(), /event1:/);
+      assert.deepEqual((await clickRun("Find minimum")).result.solutions, [["event1"], ["event2"]]);
+    } else {
+      assert.equal(await page.getByLabel("GOAL", { exact: true }).inputValue(), 'Finished("nova")');
+      assert.equal((await page.getByLabel("PROGRESS ACTIONS").inputValue()).split("\n").length, 4);
+      assert.equal(await page.getByLabel("Speculative starting state").inputValue(), "earlier");
+      assert.ok((await clickRun("Find completion")).result.trace.length);
+    }
+    await page.screenshot({ path: `${output}/arguments-${label}.png`, fullPage: true });
+  }
+  await page.unroute("**/nova-question");
+  console.log("PASS synthetic model interpretation UI, clarification and explicit query execution");
+  await page.getByRole("tab", { name: "Query", exact: true }).click();
+  await page.getByLabel("Store scope").selectOption("auditor_a");
+  await page.getByLabel("Datalog program").fill("?- HasReceivedTag(auditor_a, Tag).");
   let result = await clickRun("Run query");
   assert.deepEqual(result.result.rows, [["nova_procurement"], ["nova_facility"]]);
   assert.equal(
@@ -228,7 +438,7 @@ try {
 
   await page.getByRole("tab", { name: "Why", exact: true }).click();
   result = await clickRun("PROOF");
-  assert.match(result.result.rule, /Knows\("auditor_a",T1\)/);
+  assert.match(result.result.rule, /HasReceivedTag\("auditor_a",T1\)/);
   assert.match(JSON.stringify(result.result), /TransportTag/);
   assert.match(result.result.fact, /DenyReceive/);
   await page.screenshot({ path: `${output}/why.png`, fullPage: true });
@@ -246,11 +456,12 @@ try {
   console.log("PASS editable what-if, input isolation and derived-write rejection");
 
   await page.getByRole("tab", { name: "Min-prevention", exact: true }).click();
-  result = await clickRun("Find minimum");
-  assert.deepEqual(result.result.solutions, [["eP"], ["eF"]]);
   await page
     .getByLabel("PREVENTABLE EVENTS")
-    .fill("onlyFacility:\nReceiver(auditor_a, mF).\nReceived(auditor_a, mF).");
+    .fill("eP:\nReceived(auditor_a, mP).\neF:\nReceived(auditor_a, mF).");
+  result = await clickRun("Find minimum");
+  assert.deepEqual(result.result.solutions, [["eP"], ["eF"]]);
+  await page.getByLabel("PREVENTABLE EVENTS").fill("onlyFacility:\nReceived(auditor_a, mF).");
   result = await clickRun("Find minimum");
   assert.deepEqual(result.result.solutions, [["onlyFacility"]]);
   console.log("PASS editable minimal-prevention events");
@@ -296,7 +507,7 @@ try {
   );
   console.log("PASS step-by-step runtime send and gate execution");
 
-  await clickRun("Denial");
+  await clickRun("Before third delivery");
   await selectSnapshot(() => page.getByLabel("Store snapshot").selectOption("10"));
   await page.waitForTimeout(100);
   await selectSnapshot(() => page.getByRole("button", { name: "Before", exact: true }).click());
@@ -321,7 +532,7 @@ try {
   assert.match(result.result.rule, /Requires/);
   console.log("PASS configuration changes actual derivations");
 
-  await clickRun("Denial");
+  await clickRun("Before third delivery");
   await page.setViewportSize({ width: 390, height: 844 });
   assert.equal(
     await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),

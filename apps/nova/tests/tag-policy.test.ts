@@ -62,13 +62,17 @@ describe("opaque taint tags and grouped exposure", () => {
   it("uses configured tags for completion, not fixed part names", () => {
     const facts = [
       f("AuditGoal", "goal", "red", "blue", "green"),
-      f("AuditReceipt", "auditor_a", "red"),
-      f("AuditReceipt", "auditor_b", "blue"),
+      f("Auditor", "auditor_a"),
+      f("Received", "auditor_a", "r"),
+      f("TransportTag", "r", "red"),
+      f("Auditor", "auditor_b"),
+      f("Received", "auditor_b", "b"),
+      f("TransportTag", "b", "blue"),
     ];
     expect(evaluate(facts).facts).not.toContainEqual(f("Finished", "goal"));
-    expect(evaluate([...facts, f("AuditReceipt", "auditor_a", "green")]).facts).toContainEqual(
-      f("Finished", "goal"),
-    );
+    expect(
+      evaluate([...facts, f("Received", "auditor_a", "g"), f("TransportTag", "g", "green")]).facts,
+    ).toContainEqual(f("Finished", "goal"));
   });
   it("migrates old facts, message tags and historical snapshots without resetting the episode", () => {
     const current = createEpisode().snapshot();
@@ -77,17 +81,17 @@ describe("opaque taint tags and grouped exposure", () => {
     const legacy = (tuple: PolicyFact): PolicyFact => {
       const names: Record<string, string> = {
         TrustedSource: "TrustedCarry",
-        Propagated: "Carries",
+        MessageTag: "Carries",
         TransportTag: "TransportCarry",
       };
       const predicate = names[tuple.predicate] ?? tuple.predicate;
       if (
-        ["TrustedSource", "Propagated", "TransportTag", "Knows", "AuditReceipt"].includes(
+        ["TrustedSource", "MessageTag", "TransportTag", "HasReceivedTag", "AuditReceipt"].includes(
           tuple.predicate,
         )
       )
         return f(predicate, tuple.args[0]!, "nova", tuple.args[1]!.slice(5));
-      if (predicate === "Audited") return f(predicate, "nova", tuple.args[0]!.slice(5));
+      if (predicate === "Covered") return f(predicate, "nova", tuple.args[0]!.slice(5));
       if (predicate === "Requires")
         return f(predicate, "nova", tuple.args[0]!.slice(5), tuple.args[1]!);
       return tuple;

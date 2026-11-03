@@ -1,0 +1,1523 @@
+{
+  "artifactId": "5f15c1a29882a59d9ea0a7049987bcf5f50e10f3ec4fd731f2ee65383042b685",
+  "cases": [
+    {
+      "name": "Unrestricted message",
+      "golden": {
+        "observations": [
+          {
+            "message": "plain",
+            "recipient": "auditor_b",
+            "allowed": true,
+            "expected": true,
+            "fullCopyDeny": false,
+            "denyDerived": false,
+            "received": true,
+            "bodyVisible": true
+          }
+        ],
+        "error": null,
+        "facts": [
+          "[\"AuditGoal\",\"nova\",\"nova_procurement\",\"nova_facility\",\"nova_hiring\"]",
+          "[\"Auditor\",\"auditor_a\"]",
+          "[\"Auditor\",\"auditor_b\"]",
+          "[\"HasCap\",\"auditor_a\",\"hr_review\"]",
+          "[\"HasCap\",\"hr\",\"hr_review\"]",
+          "[\"Received\",\"auditor_b\",\"plain\"]",
+          "[\"Receiver\",\"auditor_b\",\"plain\"]",
+          "[\"Requires\",\"nova_hiring\",\"hr_review\"]",
+          "[\"Sender\",\"hr\",\"plain\"]",
+          "[\"TagGroup\",\"nova_facility\",\"nova\"]",
+          "[\"TagGroup\",\"nova_hiring\",\"nova\"]",
+          "[\"TagGroup\",\"nova_procurement\",\"nova\"]"
+        ],
+        "visible": [
+          {
+            "principal": "board",
+            "messages": []
+          },
+          {
+            "principal": "procurement",
+            "messages": []
+          },
+          {
+            "principal": "facility",
+            "messages": []
+          },
+          {
+            "principal": "hr",
+            "messages": ["plain"]
+          },
+          {
+            "principal": "auditor_a",
+            "messages": []
+          },
+          {
+            "principal": "auditor_b",
+            "messages": ["plain"]
+          }
+        ],
+        "closureEquivalent": true,
+        "passed": true
+      },
+      "translated": {
+        "observations": [
+          {
+            "message": "plain",
+            "recipient": "auditor_b",
+            "allowed": true,
+            "expected": true,
+            "fullCopyDeny": false,
+            "denyDerived": false,
+            "received": true,
+            "bodyVisible": true
+          }
+        ],
+        "error": null,
+        "facts": [
+          "[\"AuditGoal\",\"nova\",\"nova_procurement\",\"nova_facility\",\"nova_hiring\"]",
+          "[\"Auditor\",\"auditor_a\"]",
+          "[\"Auditor\",\"auditor_b\"]",
+          "[\"HasCap\",\"auditor_a\",\"hr_review\"]",
+          "[\"HasCap\",\"hr\",\"hr_review\"]",
+          "[\"Received\",\"auditor_b\",\"plain\"]",
+          "[\"Receiver\",\"auditor_b\",\"plain\"]",
+          "[\"Requires\",\"nova_hiring\",\"hr_review\"]",
+          "[\"Sender\",\"hr\",\"plain\"]",
+          "[\"TagGroup\",\"nova_facility\",\"nova\"]",
+          "[\"TagGroup\",\"nova_hiring\",\"nova\"]",
+          "[\"TagGroup\",\"nova_procurement\",\"nova\"]"
+        ],
+        "visible": [
+          {
+            "principal": "board",
+            "messages": []
+          },
+          {
+            "principal": "procurement",
+            "messages": []
+          },
+          {
+            "principal": "facility",
+            "messages": []
+          },
+          {
+            "principal": "hr",
+            "messages": ["plain"]
+          },
+          {
+            "principal": "auditor_a",
+            "messages": []
+          },
+          {
+            "principal": "auditor_b",
+            "messages": ["plain"]
+          }
+        ],
+        "closureEquivalent": true,
+        "passed": true
+      },
+      "matches": true,
+      "difference": {
+        "missingFacts": [],
+        "extraFacts": [],
+        "decisionsChanged": false,
+        "visibilityChanged": false
+      }
+    },
+    {
+      "name": "Capability missing",
+      "golden": {
+        "observations": [
+          {
+            "message": "restricted",
+            "recipient": "auditor_b",
+            "allowed": false,
+            "expected": false,
+            "fullCopyDeny": true,
+            "denyDerived": true,
+            "received": false,
+            "bodyVisible": false
+          }
+        ],
+        "error": null,
+        "facts": [
+          "[\"AuditGoal\",\"nova\",\"nova_procurement\",\"nova_facility\",\"nova_hiring\"]",
+          "[\"Auditor\",\"auditor_a\"]",
+          "[\"Auditor\",\"auditor_b\"]",
+          "[\"HasCap\",\"auditor_a\",\"hr_review\"]",
+          "[\"HasCap\",\"hr\",\"hr_review\"]",
+          "[\"Propagated\",\"restricted\",\"nova_hiring\"]",
+          "[\"Requires\",\"nova_hiring\",\"hr_review\"]",
+          "[\"Sender\",\"board\",\"restricted\"]",
+          "[\"TagGroup\",\"nova_facility\",\"nova\"]",
+          "[\"TagGroup\",\"nova_hiring\",\"nova\"]",
+          "[\"TagGroup\",\"nova_procurement\",\"nova\"]",
+          "[\"TrustedSource\",\"restricted\",\"nova_hiring\"]"
+        ],
+        "visible": [
+          {
+            "principal": "board",
+            "messages": ["restricted"]
+          },
+          {
+            "principal": "procurement",
+            "messages": []
+          },
+          {
+            "principal": "facility",
+            "messages": []
+          },
+          {
+            "principal": "hr",
+            "messages": []
+          },
+          {
+            "principal": "auditor_a",
+            "messages": []
+          },
+          {
+            "principal": "auditor_b",
+            "messages": []
+          }
+        ],
+        "closureEquivalent": true,
+        "passed": true
+      },
+      "translated": {
+        "observations": [
+          {
+            "message": "restricted",
+            "recipient": "auditor_b",
+            "allowed": false,
+            "expected": false,
+            "fullCopyDeny": true,
+            "denyDerived": true,
+            "received": false,
+            "bodyVisible": false
+          }
+        ],
+        "error": null,
+        "facts": [
+          "[\"AuditGoal\",\"nova\",\"nova_procurement\",\"nova_facility\",\"nova_hiring\"]",
+          "[\"Auditor\",\"auditor_a\"]",
+          "[\"Auditor\",\"auditor_b\"]",
+          "[\"HasCap\",\"auditor_a\",\"hr_review\"]",
+          "[\"HasCap\",\"hr\",\"hr_review\"]",
+          "[\"Propagated\",\"restricted\",\"nova_hiring\"]",
+          "[\"Requires\",\"nova_hiring\",\"hr_review\"]",
+          "[\"Sender\",\"board\",\"restricted\"]",
+          "[\"TagGroup\",\"nova_facility\",\"nova\"]",
+          "[\"TagGroup\",\"nova_hiring\",\"nova\"]",
+          "[\"TagGroup\",\"nova_procurement\",\"nova\"]",
+          "[\"TrustedSource\",\"restricted\",\"nova_hiring\"]"
+        ],
+        "visible": [
+          {
+            "principal": "board",
+            "messages": ["restricted"]
+          },
+          {
+            "principal": "procurement",
+            "messages": []
+          },
+          {
+            "principal": "facility",
+            "messages": []
+          },
+          {
+            "principal": "hr",
+            "messages": []
+          },
+          {
+            "principal": "auditor_a",
+            "messages": []
+          },
+          {
+            "principal": "auditor_b",
+            "messages": []
+          }
+        ],
+        "closureEquivalent": true,
+        "passed": true
+      },
+      "matches": true,
+      "difference": {
+        "missingFacts": [],
+        "extraFacts": [],
+        "decisionsChanged": false,
+        "visibilityChanged": false
+      }
+    },
+    {
+      "name": "Capability present",
+      "golden": {
+        "observations": [
+          {
+            "message": "permitted",
+            "recipient": "auditor_a",
+            "allowed": true,
+            "expected": true,
+            "fullCopyDeny": false,
+            "denyDerived": false,
+            "received": true,
+            "bodyVisible": true
+          }
+        ],
+        "error": null,
+        "facts": [
+          "[\"AuditGoal\",\"nova\",\"nova_procurement\",\"nova_facility\",\"nova_hiring\"]",
+          "[\"AuditReceipt\",\"auditor_a\",\"nova_hiring\"]",
+          "[\"Audited\",\"nova_hiring\"]",
+          "[\"Auditor\",\"auditor_a\"]",
+          "[\"Auditor\",\"auditor_b\"]",
+          "[\"HasCap\",\"auditor_a\",\"hr_review\"]",
+          "[\"HasCap\",\"hr\",\"hr_review\"]",
+          "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+          "[\"Propagated\",\"permitted\",\"nova_hiring\"]",
+          "[\"Received\",\"auditor_a\",\"permitted\"]",
+          "[\"Receiver\",\"auditor_a\",\"permitted\"]",
+          "[\"Requires\",\"nova_hiring\",\"hr_review\"]",
+          "[\"Sender\",\"board\",\"permitted\"]",
+          "[\"TagGroup\",\"nova_facility\",\"nova\"]",
+          "[\"TagGroup\",\"nova_hiring\",\"nova\"]",
+          "[\"TagGroup\",\"nova_procurement\",\"nova\"]",
+          "[\"TransportTag\",\"permitted\",\"nova_hiring\"]",
+          "[\"TrustedSource\",\"permitted\",\"nova_hiring\"]"
+        ],
+        "visible": [
+          {
+            "principal": "board",
+            "messages": ["permitted"]
+          },
+          {
+            "principal": "procurement",
+            "messages": []
+          },
+          {
+            "principal": "facility",
+            "messages": []
+          },
+          {
+            "principal": "hr",
+            "messages": []
+          },
+          {
+            "principal": "auditor_a",
+            "messages": ["permitted"]
+          },
+          {
+            "principal": "auditor_b",
+            "messages": []
+          }
+        ],
+        "closureEquivalent": true,
+        "passed": true
+      },
+      "translated": {
+        "observations": [
+          {
+            "message": "permitted",
+            "recipient": "auditor_a",
+            "allowed": true,
+            "expected": true,
+            "fullCopyDeny": false,
+            "denyDerived": false,
+            "received": true,
+            "bodyVisible": true
+          }
+        ],
+        "error": null,
+        "facts": [
+          "[\"AuditGoal\",\"nova\",\"nova_procurement\",\"nova_facility\",\"nova_hiring\"]",
+          "[\"AuditReceipt\",\"auditor_a\",\"nova_hiring\"]",
+          "[\"Audited\",\"nova_hiring\"]",
+          "[\"Auditor\",\"auditor_a\"]",
+          "[\"Auditor\",\"auditor_b\"]",
+          "[\"HasCap\",\"auditor_a\",\"hr_review\"]",
+          "[\"HasCap\",\"hr\",\"hr_review\"]",
+          "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+          "[\"Propagated\",\"permitted\",\"nova_hiring\"]",
+          "[\"Received\",\"auditor_a\",\"permitted\"]",
+          "[\"Receiver\",\"auditor_a\",\"permitted\"]",
+          "[\"Requires\",\"nova_hiring\",\"hr_review\"]",
+          "[\"Sender\",\"board\",\"permitted\"]",
+          "[\"TagGroup\",\"nova_facility\",\"nova\"]",
+          "[\"TagGroup\",\"nova_hiring\",\"nova\"]",
+          "[\"TagGroup\",\"nova_procurement\",\"nova\"]",
+          "[\"TransportTag\",\"permitted\",\"nova_hiring\"]",
+          "[\"TrustedSource\",\"permitted\",\"nova_hiring\"]"
+        ],
+        "visible": [
+          {
+            "principal": "board",
+            "messages": ["permitted"]
+          },
+          {
+            "principal": "procurement",
+            "messages": []
+          },
+          {
+            "principal": "facility",
+            "messages": []
+          },
+          {
+            "principal": "hr",
+            "messages": []
+          },
+          {
+            "principal": "auditor_a",
+            "messages": ["permitted"]
+          },
+          {
+            "principal": "auditor_b",
+            "messages": []
+          }
+        ],
+        "closureEquivalent": true,
+        "passed": true
+      },
+      "matches": true,
+      "difference": {
+        "missingFacts": [],
+        "extraFacts": [],
+        "decisionsChanged": false,
+        "visibilityChanged": false
+      }
+    },
+    {
+      "name": "Third distinct tag",
+      "golden": {
+        "observations": [
+          {
+            "message": "part0",
+            "recipient": "auditor_a",
+            "allowed": true,
+            "expected": true,
+            "fullCopyDeny": false,
+            "denyDerived": false,
+            "received": true,
+            "bodyVisible": true
+          },
+          {
+            "message": "part1",
+            "recipient": "auditor_a",
+            "allowed": true,
+            "expected": true,
+            "fullCopyDeny": false,
+            "denyDerived": false,
+            "received": true,
+            "bodyVisible": true
+          },
+          {
+            "message": "part2",
+            "recipient": "auditor_a",
+            "allowed": false,
+            "expected": false,
+            "fullCopyDeny": true,
+            "denyDerived": true,
+            "received": false,
+            "bodyVisible": false
+          }
+        ],
+        "error": null,
+        "facts": [
+          "[\"AuditGoal\",\"nova\",\"nova_procurement\",\"nova_facility\",\"nova_hiring\"]",
+          "[\"AuditReceipt\",\"auditor_a\",\"nova_facility\"]",
+          "[\"AuditReceipt\",\"auditor_a\",\"nova_procurement\"]",
+          "[\"Audited\",\"nova_facility\"]",
+          "[\"Audited\",\"nova_procurement\"]",
+          "[\"Auditor\",\"auditor_a\"]",
+          "[\"Auditor\",\"auditor_b\"]",
+          "[\"HasCap\",\"auditor_a\",\"hr_review\"]",
+          "[\"HasCap\",\"hr\",\"hr_review\"]",
+          "[\"Knows\",\"auditor_a\",\"nova_facility\"]",
+          "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+          "[\"Propagated\",\"part0\",\"nova_procurement\"]",
+          "[\"Propagated\",\"part1\",\"nova_facility\"]",
+          "[\"Propagated\",\"part2\",\"nova_hiring\"]",
+          "[\"Received\",\"auditor_a\",\"part0\"]",
+          "[\"Received\",\"auditor_a\",\"part1\"]",
+          "[\"Receiver\",\"auditor_a\",\"part0\"]",
+          "[\"Receiver\",\"auditor_a\",\"part1\"]",
+          "[\"Requires\",\"nova_hiring\",\"hr_review\"]",
+          "[\"Sender\",\"board\",\"part0\"]",
+          "[\"Sender\",\"board\",\"part1\"]",
+          "[\"Sender\",\"board\",\"part2\"]",
+          "[\"TagGroup\",\"nova_facility\",\"nova\"]",
+          "[\"TagGroup\",\"nova_hiring\",\"nova\"]",
+          "[\"TagGroup\",\"nova_procurement\",\"nova\"]",
+          "[\"TransportTag\",\"part0\",\"nova_procurement\"]",
+          "[\"TransportTag\",\"part1\",\"nova_facility\"]",
+          "[\"TrustedSource\",\"part0\",\"nova_procurement\"]",
+          "[\"TrustedSource\",\"part1\",\"nova_facility\"]",
+          "[\"TrustedSource\",\"part2\",\"nova_hiring\"]"
+        ],
+        "visible": [
+          {
+            "principal": "board",
+            "messages": ["part0", "part1", "part2"]
+          },
+          {
+            "principal": "procurement",
+            "messages": []
+          },
+          {
+            "principal": "facility",
+            "messages": []
+          },
+          {
+            "principal": "hr",
+            "messages": []
+          },
+          {
+            "principal": "auditor_a",
+            "messages": ["part0", "part1"]
+          },
+          {
+            "principal": "auditor_b",
+            "messages": []
+          }
+        ],
+        "closureEquivalent": true,
+        "passed": true
+      },
+      "translated": {
+        "observations": [
+          {
+            "message": "part0",
+            "recipient": "auditor_a",
+            "allowed": true,
+            "expected": true,
+            "fullCopyDeny": false,
+            "denyDerived": false,
+            "received": true,
+            "bodyVisible": true
+          },
+          {
+            "message": "part1",
+            "recipient": "auditor_a",
+            "allowed": true,
+            "expected": true,
+            "fullCopyDeny": false,
+            "denyDerived": false,
+            "received": true,
+            "bodyVisible": true
+          },
+          {
+            "message": "part2",
+            "recipient": "auditor_a",
+            "allowed": false,
+            "expected": false,
+            "fullCopyDeny": true,
+            "denyDerived": true,
+            "received": false,
+            "bodyVisible": false
+          }
+        ],
+        "error": null,
+        "facts": [
+          "[\"AuditGoal\",\"nova\",\"nova_procurement\",\"nova_facility\",\"nova_hiring\"]",
+          "[\"AuditReceipt\",\"auditor_a\",\"nova_facility\"]",
+          "[\"AuditReceipt\",\"auditor_a\",\"nova_procurement\"]",
+          "[\"Audited\",\"nova_facility\"]",
+          "[\"Audited\",\"nova_procurement\"]",
+          "[\"Auditor\",\"auditor_a\"]",
+          "[\"Auditor\",\"auditor_b\"]",
+          "[\"HasCap\",\"auditor_a\",\"hr_review\"]",
+          "[\"HasCap\",\"hr\",\"hr_review\"]",
+          "[\"Knows\",\"auditor_a\",\"nova_facility\"]",
+          "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+          "[\"Propagated\",\"part0\",\"nova_procurement\"]",
+          "[\"Propagated\",\"part1\",\"nova_facility\"]",
+          "[\"Propagated\",\"part2\",\"nova_hiring\"]",
+          "[\"Received\",\"auditor_a\",\"part0\"]",
+          "[\"Received\",\"auditor_a\",\"part1\"]",
+          "[\"Receiver\",\"auditor_a\",\"part0\"]",
+          "[\"Receiver\",\"auditor_a\",\"part1\"]",
+          "[\"Requires\",\"nova_hiring\",\"hr_review\"]",
+          "[\"Sender\",\"board\",\"part0\"]",
+          "[\"Sender\",\"board\",\"part1\"]",
+          "[\"Sender\",\"board\",\"part2\"]",
+          "[\"TagGroup\",\"nova_facility\",\"nova\"]",
+          "[\"TagGroup\",\"nova_hiring\",\"nova\"]",
+          "[\"TagGroup\",\"nova_procurement\",\"nova\"]",
+          "[\"TransportTag\",\"part0\",\"nova_procurement\"]",
+          "[\"TransportTag\",\"part1\",\"nova_facility\"]",
+          "[\"TrustedSource\",\"part0\",\"nova_procurement\"]",
+          "[\"TrustedSource\",\"part1\",\"nova_facility\"]",
+          "[\"TrustedSource\",\"part2\",\"nova_hiring\"]"
+        ],
+        "visible": [
+          {
+            "principal": "board",
+            "messages": ["part0", "part1", "part2"]
+          },
+          {
+            "principal": "procurement",
+            "messages": []
+          },
+          {
+            "principal": "facility",
+            "messages": []
+          },
+          {
+            "principal": "hr",
+            "messages": []
+          },
+          {
+            "principal": "auditor_a",
+            "messages": ["part0", "part1"]
+          },
+          {
+            "principal": "auditor_b",
+            "messages": []
+          }
+        ],
+        "closureEquivalent": true,
+        "passed": true
+      },
+      "matches": true,
+      "difference": {
+        "missingFacts": [],
+        "extraFacts": [],
+        "decisionsChanged": false,
+        "visibilityChanged": false
+      }
+    },
+    {
+      "name": "All three incoming / Board exception",
+      "golden": {
+        "observations": [
+          {
+            "message": "source0",
+            "recipient": "board",
+            "allowed": true,
+            "expected": true,
+            "fullCopyDeny": false,
+            "denyDerived": false,
+            "received": true,
+            "bodyVisible": true
+          },
+          {
+            "message": "source1",
+            "recipient": "board",
+            "allowed": true,
+            "expected": true,
+            "fullCopyDeny": false,
+            "denyDerived": false,
+            "received": true,
+            "bodyVisible": true
+          },
+          {
+            "message": "source2",
+            "recipient": "board",
+            "allowed": true,
+            "expected": true,
+            "fullCopyDeny": false,
+            "denyDerived": false,
+            "received": true,
+            "bodyVisible": true
+          },
+          {
+            "message": "combined",
+            "recipient": "auditor_a",
+            "allowed": false,
+            "expected": false,
+            "fullCopyDeny": true,
+            "denyDerived": true,
+            "received": false,
+            "bodyVisible": false
+          }
+        ],
+        "error": null,
+        "facts": [
+          "[\"AuditGoal\",\"nova\",\"nova_procurement\",\"nova_facility\",\"nova_hiring\"]",
+          "[\"Auditor\",\"auditor_a\"]",
+          "[\"Auditor\",\"auditor_b\"]",
+          "[\"Before\",\"source0\",\"combined\"]",
+          "[\"Before\",\"source1\",\"combined\"]",
+          "[\"Before\",\"source2\",\"combined\"]",
+          "[\"DependsOn\",\"combined\",\"source0\"]",
+          "[\"DependsOn\",\"combined\",\"source1\"]",
+          "[\"DependsOn\",\"combined\",\"source2\"]",
+          "[\"HasCap\",\"auditor_a\",\"hr_review\"]",
+          "[\"HasCap\",\"board\",\"hr_review\"]",
+          "[\"HasCap\",\"hr\",\"hr_review\"]",
+          "[\"Knows\",\"board\",\"nova_facility\"]",
+          "[\"Knows\",\"board\",\"nova_hiring\"]",
+          "[\"Knows\",\"board\",\"nova_procurement\"]",
+          "[\"Propagated\",\"combined\",\"nova_facility\"]",
+          "[\"Propagated\",\"combined\",\"nova_hiring\"]",
+          "[\"Propagated\",\"combined\",\"nova_procurement\"]",
+          "[\"Propagated\",\"source0\",\"nova_procurement\"]",
+          "[\"Propagated\",\"source1\",\"nova_facility\"]",
+          "[\"Propagated\",\"source2\",\"nova_hiring\"]",
+          "[\"Received\",\"board\",\"source0\"]",
+          "[\"Received\",\"board\",\"source1\"]",
+          "[\"Received\",\"board\",\"source2\"]",
+          "[\"Receiver\",\"board\",\"source0\"]",
+          "[\"Receiver\",\"board\",\"source1\"]",
+          "[\"Receiver\",\"board\",\"source2\"]",
+          "[\"Requires\",\"nova_hiring\",\"hr_review\"]",
+          "[\"Sender\",\"board\",\"combined\"]",
+          "[\"Sender\",\"board\",\"source0\"]",
+          "[\"Sender\",\"board\",\"source1\"]",
+          "[\"Sender\",\"board\",\"source2\"]",
+          "[\"TagGroup\",\"nova_facility\",\"nova\"]",
+          "[\"TagGroup\",\"nova_hiring\",\"nova\"]",
+          "[\"TagGroup\",\"nova_procurement\",\"nova\"]",
+          "[\"TransportTag\",\"source0\",\"nova_procurement\"]",
+          "[\"TransportTag\",\"source1\",\"nova_facility\"]",
+          "[\"TransportTag\",\"source2\",\"nova_hiring\"]",
+          "[\"TrustedSource\",\"source0\",\"nova_procurement\"]",
+          "[\"TrustedSource\",\"source1\",\"nova_facility\"]",
+          "[\"TrustedSource\",\"source2\",\"nova_hiring\"]"
+        ],
+        "visible": [
+          {
+            "principal": "board",
+            "messages": ["source0", "source1", "source2", "combined"]
+          },
+          {
+            "principal": "procurement",
+            "messages": []
+          },
+          {
+            "principal": "facility",
+            "messages": []
+          },
+          {
+            "principal": "hr",
+            "messages": []
+          },
+          {
+            "principal": "auditor_a",
+            "messages": []
+          },
+          {
+            "principal": "auditor_b",
+            "messages": []
+          }
+        ],
+        "closureEquivalent": true,
+        "passed": true
+      },
+      "translated": {
+        "observations": [
+          {
+            "message": "source0",
+            "recipient": "board",
+            "allowed": true,
+            "expected": true,
+            "fullCopyDeny": false,
+            "denyDerived": false,
+            "received": true,
+            "bodyVisible": true
+          },
+          {
+            "message": "source1",
+            "recipient": "board",
+            "allowed": true,
+            "expected": true,
+            "fullCopyDeny": false,
+            "denyDerived": false,
+            "received": true,
+            "bodyVisible": true
+          },
+          {
+            "message": "source2",
+            "recipient": "board",
+            "allowed": true,
+            "expected": true,
+            "fullCopyDeny": false,
+            "denyDerived": false,
+            "received": true,
+            "bodyVisible": true
+          },
+          {
+            "message": "combined",
+            "recipient": "auditor_a",
+            "allowed": false,
+            "expected": false,
+            "fullCopyDeny": true,
+            "denyDerived": true,
+            "received": false,
+            "bodyVisible": false
+          }
+        ],
+        "error": null,
+        "facts": [
+          "[\"AuditGoal\",\"nova\",\"nova_procurement\",\"nova_facility\",\"nova_hiring\"]",
+          "[\"Auditor\",\"auditor_a\"]",
+          "[\"Auditor\",\"auditor_b\"]",
+          "[\"Before\",\"source0\",\"combined\"]",
+          "[\"Before\",\"source1\",\"combined\"]",
+          "[\"Before\",\"source2\",\"combined\"]",
+          "[\"DependsOn\",\"combined\",\"source0\"]",
+          "[\"DependsOn\",\"combined\",\"source1\"]",
+          "[\"DependsOn\",\"combined\",\"source2\"]",
+          "[\"HasCap\",\"auditor_a\",\"hr_review\"]",
+          "[\"HasCap\",\"board\",\"hr_review\"]",
+          "[\"HasCap\",\"hr\",\"hr_review\"]",
+          "[\"Knows\",\"board\",\"nova_facility\"]",
+          "[\"Knows\",\"board\",\"nova_hiring\"]",
+          "[\"Knows\",\"board\",\"nova_procurement\"]",
+          "[\"Propagated\",\"combined\",\"nova_facility\"]",
+          "[\"Propagated\",\"combined\",\"nova_hiring\"]",
+          "[\"Propagated\",\"combined\",\"nova_procurement\"]",
+          "[\"Propagated\",\"source0\",\"nova_procurement\"]",
+          "[\"Propagated\",\"source1\",\"nova_facility\"]",
+          "[\"Propagated\",\"source2\",\"nova_hiring\"]",
+          "[\"Received\",\"board\",\"source0\"]",
+          "[\"Received\",\"board\",\"source1\"]",
+          "[\"Received\",\"board\",\"source2\"]",
+          "[\"Receiver\",\"board\",\"source0\"]",
+          "[\"Receiver\",\"board\",\"source1\"]",
+          "[\"Receiver\",\"board\",\"source2\"]",
+          "[\"Requires\",\"nova_hiring\",\"hr_review\"]",
+          "[\"Sender\",\"board\",\"combined\"]",
+          "[\"Sender\",\"board\",\"source0\"]",
+          "[\"Sender\",\"board\",\"source1\"]",
+          "[\"Sender\",\"board\",\"source2\"]",
+          "[\"TagGroup\",\"nova_facility\",\"nova\"]",
+          "[\"TagGroup\",\"nova_hiring\",\"nova\"]",
+          "[\"TagGroup\",\"nova_procurement\",\"nova\"]",
+          "[\"TransportTag\",\"source0\",\"nova_procurement\"]",
+          "[\"TransportTag\",\"source1\",\"nova_facility\"]",
+          "[\"TransportTag\",\"source2\",\"nova_hiring\"]",
+          "[\"TrustedSource\",\"source0\",\"nova_procurement\"]",
+          "[\"TrustedSource\",\"source1\",\"nova_facility\"]",
+          "[\"TrustedSource\",\"source2\",\"nova_hiring\"]"
+        ],
+        "visible": [
+          {
+            "principal": "board",
+            "messages": ["source0", "source1", "source2", "combined"]
+          },
+          {
+            "principal": "procurement",
+            "messages": []
+          },
+          {
+            "principal": "facility",
+            "messages": []
+          },
+          {
+            "principal": "hr",
+            "messages": []
+          },
+          {
+            "principal": "auditor_a",
+            "messages": []
+          },
+          {
+            "principal": "auditor_b",
+            "messages": []
+          }
+        ],
+        "closureEquivalent": true,
+        "passed": true
+      },
+      "matches": true,
+      "difference": {
+        "missingFacts": [],
+        "extraFacts": [],
+        "decisionsChanged": false,
+        "visibilityChanged": false
+      }
+    },
+    {
+      "name": "Same-group non-goal tags",
+      "golden": {
+        "observations": [
+          {
+            "message": "extra0",
+            "recipient": "auditor_b",
+            "allowed": true,
+            "expected": true,
+            "fullCopyDeny": false,
+            "denyDerived": false,
+            "received": true,
+            "bodyVisible": true
+          },
+          {
+            "message": "extra1",
+            "recipient": "auditor_b",
+            "allowed": true,
+            "expected": true,
+            "fullCopyDeny": false,
+            "denyDerived": false,
+            "received": true,
+            "bodyVisible": true
+          },
+          {
+            "message": "extra2",
+            "recipient": "auditor_b",
+            "allowed": false,
+            "expected": false,
+            "fullCopyDeny": true,
+            "denyDerived": true,
+            "received": false,
+            "bodyVisible": false
+          }
+        ],
+        "error": null,
+        "facts": [
+          "[\"AuditGoal\",\"nova\",\"nova_procurement\",\"nova_facility\",\"nova_hiring\"]",
+          "[\"AuditReceipt\",\"auditor_b\",\"alpha\"]",
+          "[\"AuditReceipt\",\"auditor_b\",\"beta\"]",
+          "[\"Audited\",\"alpha\"]",
+          "[\"Audited\",\"beta\"]",
+          "[\"Auditor\",\"auditor_a\"]",
+          "[\"Auditor\",\"auditor_b\"]",
+          "[\"HasCap\",\"auditor_a\",\"hr_review\"]",
+          "[\"HasCap\",\"hr\",\"hr_review\"]",
+          "[\"Knows\",\"auditor_b\",\"alpha\"]",
+          "[\"Knows\",\"auditor_b\",\"beta\"]",
+          "[\"Propagated\",\"extra0\",\"alpha\"]",
+          "[\"Propagated\",\"extra1\",\"beta\"]",
+          "[\"Propagated\",\"extra2\",\"gamma\"]",
+          "[\"Received\",\"auditor_b\",\"extra0\"]",
+          "[\"Received\",\"auditor_b\",\"extra1\"]",
+          "[\"Receiver\",\"auditor_b\",\"extra0\"]",
+          "[\"Receiver\",\"auditor_b\",\"extra1\"]",
+          "[\"Requires\",\"nova_hiring\",\"hr_review\"]",
+          "[\"Sender\",\"board\",\"extra0\"]",
+          "[\"Sender\",\"board\",\"extra1\"]",
+          "[\"Sender\",\"board\",\"extra2\"]",
+          "[\"TagGroup\",\"alpha\",\"other\"]",
+          "[\"TagGroup\",\"beta\",\"other\"]",
+          "[\"TagGroup\",\"gamma\",\"other\"]",
+          "[\"TagGroup\",\"nova_facility\",\"nova\"]",
+          "[\"TagGroup\",\"nova_hiring\",\"nova\"]",
+          "[\"TagGroup\",\"nova_procurement\",\"nova\"]",
+          "[\"TransportTag\",\"extra0\",\"alpha\"]",
+          "[\"TransportTag\",\"extra1\",\"beta\"]",
+          "[\"TrustedSource\",\"extra0\",\"alpha\"]",
+          "[\"TrustedSource\",\"extra1\",\"beta\"]",
+          "[\"TrustedSource\",\"extra2\",\"gamma\"]"
+        ],
+        "visible": [
+          {
+            "principal": "board",
+            "messages": ["extra0", "extra1", "extra2"]
+          },
+          {
+            "principal": "procurement",
+            "messages": []
+          },
+          {
+            "principal": "facility",
+            "messages": []
+          },
+          {
+            "principal": "hr",
+            "messages": []
+          },
+          {
+            "principal": "auditor_a",
+            "messages": []
+          },
+          {
+            "principal": "auditor_b",
+            "messages": ["extra0", "extra1"]
+          }
+        ],
+        "closureEquivalent": true,
+        "passed": true
+      },
+      "translated": {
+        "observations": [
+          {
+            "message": "extra0",
+            "recipient": "auditor_b",
+            "allowed": true,
+            "expected": true,
+            "fullCopyDeny": false,
+            "denyDerived": false,
+            "received": true,
+            "bodyVisible": true
+          },
+          {
+            "message": "extra1",
+            "recipient": "auditor_b",
+            "allowed": true,
+            "expected": true,
+            "fullCopyDeny": false,
+            "denyDerived": false,
+            "received": true,
+            "bodyVisible": true
+          },
+          {
+            "message": "extra2",
+            "recipient": "auditor_b",
+            "allowed": false,
+            "expected": false,
+            "fullCopyDeny": true,
+            "denyDerived": true,
+            "received": false,
+            "bodyVisible": false
+          }
+        ],
+        "error": null,
+        "facts": [
+          "[\"AuditGoal\",\"nova\",\"nova_procurement\",\"nova_facility\",\"nova_hiring\"]",
+          "[\"AuditReceipt\",\"auditor_b\",\"alpha\"]",
+          "[\"AuditReceipt\",\"auditor_b\",\"beta\"]",
+          "[\"Audited\",\"alpha\"]",
+          "[\"Audited\",\"beta\"]",
+          "[\"Auditor\",\"auditor_a\"]",
+          "[\"Auditor\",\"auditor_b\"]",
+          "[\"HasCap\",\"auditor_a\",\"hr_review\"]",
+          "[\"HasCap\",\"hr\",\"hr_review\"]",
+          "[\"Knows\",\"auditor_b\",\"alpha\"]",
+          "[\"Knows\",\"auditor_b\",\"beta\"]",
+          "[\"Propagated\",\"extra0\",\"alpha\"]",
+          "[\"Propagated\",\"extra1\",\"beta\"]",
+          "[\"Propagated\",\"extra2\",\"gamma\"]",
+          "[\"Received\",\"auditor_b\",\"extra0\"]",
+          "[\"Received\",\"auditor_b\",\"extra1\"]",
+          "[\"Receiver\",\"auditor_b\",\"extra0\"]",
+          "[\"Receiver\",\"auditor_b\",\"extra1\"]",
+          "[\"Requires\",\"nova_hiring\",\"hr_review\"]",
+          "[\"Sender\",\"board\",\"extra0\"]",
+          "[\"Sender\",\"board\",\"extra1\"]",
+          "[\"Sender\",\"board\",\"extra2\"]",
+          "[\"TagGroup\",\"alpha\",\"other\"]",
+          "[\"TagGroup\",\"beta\",\"other\"]",
+          "[\"TagGroup\",\"gamma\",\"other\"]",
+          "[\"TagGroup\",\"nova_facility\",\"nova\"]",
+          "[\"TagGroup\",\"nova_hiring\",\"nova\"]",
+          "[\"TagGroup\",\"nova_procurement\",\"nova\"]",
+          "[\"TransportTag\",\"extra0\",\"alpha\"]",
+          "[\"TransportTag\",\"extra1\",\"beta\"]",
+          "[\"TrustedSource\",\"extra0\",\"alpha\"]",
+          "[\"TrustedSource\",\"extra1\",\"beta\"]",
+          "[\"TrustedSource\",\"extra2\",\"gamma\"]"
+        ],
+        "visible": [
+          {
+            "principal": "board",
+            "messages": ["extra0", "extra1", "extra2"]
+          },
+          {
+            "principal": "procurement",
+            "messages": []
+          },
+          {
+            "principal": "facility",
+            "messages": []
+          },
+          {
+            "principal": "hr",
+            "messages": []
+          },
+          {
+            "principal": "auditor_a",
+            "messages": []
+          },
+          {
+            "principal": "auditor_b",
+            "messages": ["extra0", "extra1"]
+          }
+        ],
+        "closureEquivalent": true,
+        "passed": true
+      },
+      "matches": true,
+      "difference": {
+        "missingFacts": [],
+        "extraFacts": [],
+        "decisionsChanged": false,
+        "visibilityChanged": false
+      }
+    },
+    {
+      "name": "Repeated tag and unrelated group",
+      "golden": {
+        "observations": [
+          {
+            "message": "repeat0",
+            "recipient": "auditor_b",
+            "allowed": true,
+            "expected": true,
+            "fullCopyDeny": false,
+            "denyDerived": false,
+            "received": true,
+            "bodyVisible": true
+          },
+          {
+            "message": "repeat1",
+            "recipient": "auditor_b",
+            "allowed": true,
+            "expected": true,
+            "fullCopyDeny": false,
+            "denyDerived": false,
+            "received": true,
+            "bodyVisible": true
+          },
+          {
+            "message": "repeat2",
+            "recipient": "auditor_b",
+            "allowed": true,
+            "expected": true,
+            "fullCopyDeny": false,
+            "denyDerived": false,
+            "received": true,
+            "bodyVisible": true
+          }
+        ],
+        "error": null,
+        "facts": [
+          "[\"AuditGoal\",\"nova\",\"nova_procurement\",\"nova_facility\",\"nova_hiring\"]",
+          "[\"AuditReceipt\",\"auditor_b\",\"nova_procurement\"]",
+          "[\"AuditReceipt\",\"auditor_b\",\"unrelated\"]",
+          "[\"Audited\",\"nova_procurement\"]",
+          "[\"Audited\",\"unrelated\"]",
+          "[\"Auditor\",\"auditor_a\"]",
+          "[\"Auditor\",\"auditor_b\"]",
+          "[\"HasCap\",\"auditor_a\",\"hr_review\"]",
+          "[\"HasCap\",\"hr\",\"hr_review\"]",
+          "[\"Knows\",\"auditor_b\",\"nova_procurement\"]",
+          "[\"Knows\",\"auditor_b\",\"unrelated\"]",
+          "[\"Propagated\",\"repeat0\",\"nova_procurement\"]",
+          "[\"Propagated\",\"repeat1\",\"nova_procurement\"]",
+          "[\"Propagated\",\"repeat2\",\"unrelated\"]",
+          "[\"Received\",\"auditor_b\",\"repeat0\"]",
+          "[\"Received\",\"auditor_b\",\"repeat1\"]",
+          "[\"Received\",\"auditor_b\",\"repeat2\"]",
+          "[\"Receiver\",\"auditor_b\",\"repeat0\"]",
+          "[\"Receiver\",\"auditor_b\",\"repeat1\"]",
+          "[\"Receiver\",\"auditor_b\",\"repeat2\"]",
+          "[\"Requires\",\"nova_hiring\",\"hr_review\"]",
+          "[\"Sender\",\"board\",\"repeat0\"]",
+          "[\"Sender\",\"board\",\"repeat1\"]",
+          "[\"Sender\",\"board\",\"repeat2\"]",
+          "[\"TagGroup\",\"nova_facility\",\"nova\"]",
+          "[\"TagGroup\",\"nova_hiring\",\"nova\"]",
+          "[\"TagGroup\",\"nova_procurement\",\"nova\"]",
+          "[\"TagGroup\",\"unrelated\",\"other\"]",
+          "[\"TransportTag\",\"repeat0\",\"nova_procurement\"]",
+          "[\"TransportTag\",\"repeat1\",\"nova_procurement\"]",
+          "[\"TransportTag\",\"repeat2\",\"unrelated\"]",
+          "[\"TrustedSource\",\"repeat0\",\"nova_procurement\"]",
+          "[\"TrustedSource\",\"repeat1\",\"nova_procurement\"]",
+          "[\"TrustedSource\",\"repeat2\",\"unrelated\"]"
+        ],
+        "visible": [
+          {
+            "principal": "board",
+            "messages": ["repeat0", "repeat1", "repeat2"]
+          },
+          {
+            "principal": "procurement",
+            "messages": []
+          },
+          {
+            "principal": "facility",
+            "messages": []
+          },
+          {
+            "principal": "hr",
+            "messages": []
+          },
+          {
+            "principal": "auditor_a",
+            "messages": []
+          },
+          {
+            "principal": "auditor_b",
+            "messages": ["repeat0", "repeat1", "repeat2"]
+          }
+        ],
+        "closureEquivalent": true,
+        "passed": true
+      },
+      "translated": {
+        "observations": [
+          {
+            "message": "repeat0",
+            "recipient": "auditor_b",
+            "allowed": true,
+            "expected": true,
+            "fullCopyDeny": false,
+            "denyDerived": false,
+            "received": true,
+            "bodyVisible": true
+          },
+          {
+            "message": "repeat1",
+            "recipient": "auditor_b",
+            "allowed": true,
+            "expected": true,
+            "fullCopyDeny": false,
+            "denyDerived": false,
+            "received": true,
+            "bodyVisible": true
+          },
+          {
+            "message": "repeat2",
+            "recipient": "auditor_b",
+            "allowed": true,
+            "expected": true,
+            "fullCopyDeny": false,
+            "denyDerived": false,
+            "received": true,
+            "bodyVisible": true
+          }
+        ],
+        "error": null,
+        "facts": [
+          "[\"AuditGoal\",\"nova\",\"nova_procurement\",\"nova_facility\",\"nova_hiring\"]",
+          "[\"AuditReceipt\",\"auditor_b\",\"nova_procurement\"]",
+          "[\"AuditReceipt\",\"auditor_b\",\"unrelated\"]",
+          "[\"Audited\",\"nova_procurement\"]",
+          "[\"Audited\",\"unrelated\"]",
+          "[\"Auditor\",\"auditor_a\"]",
+          "[\"Auditor\",\"auditor_b\"]",
+          "[\"HasCap\",\"auditor_a\",\"hr_review\"]",
+          "[\"HasCap\",\"hr\",\"hr_review\"]",
+          "[\"Knows\",\"auditor_b\",\"nova_procurement\"]",
+          "[\"Knows\",\"auditor_b\",\"unrelated\"]",
+          "[\"Propagated\",\"repeat0\",\"nova_procurement\"]",
+          "[\"Propagated\",\"repeat1\",\"nova_procurement\"]",
+          "[\"Propagated\",\"repeat2\",\"unrelated\"]",
+          "[\"Received\",\"auditor_b\",\"repeat0\"]",
+          "[\"Received\",\"auditor_b\",\"repeat1\"]",
+          "[\"Received\",\"auditor_b\",\"repeat2\"]",
+          "[\"Receiver\",\"auditor_b\",\"repeat0\"]",
+          "[\"Receiver\",\"auditor_b\",\"repeat1\"]",
+          "[\"Receiver\",\"auditor_b\",\"repeat2\"]",
+          "[\"Requires\",\"nova_hiring\",\"hr_review\"]",
+          "[\"Sender\",\"board\",\"repeat0\"]",
+          "[\"Sender\",\"board\",\"repeat1\"]",
+          "[\"Sender\",\"board\",\"repeat2\"]",
+          "[\"TagGroup\",\"nova_facility\",\"nova\"]",
+          "[\"TagGroup\",\"nova_hiring\",\"nova\"]",
+          "[\"TagGroup\",\"nova_procurement\",\"nova\"]",
+          "[\"TagGroup\",\"unrelated\",\"other\"]",
+          "[\"TransportTag\",\"repeat0\",\"nova_procurement\"]",
+          "[\"TransportTag\",\"repeat1\",\"nova_procurement\"]",
+          "[\"TransportTag\",\"repeat2\",\"unrelated\"]",
+          "[\"TrustedSource\",\"repeat0\",\"nova_procurement\"]",
+          "[\"TrustedSource\",\"repeat1\",\"nova_procurement\"]",
+          "[\"TrustedSource\",\"repeat2\",\"unrelated\"]"
+        ],
+        "visible": [
+          {
+            "principal": "board",
+            "messages": ["repeat0", "repeat1", "repeat2"]
+          },
+          {
+            "principal": "procurement",
+            "messages": []
+          },
+          {
+            "principal": "facility",
+            "messages": []
+          },
+          {
+            "principal": "hr",
+            "messages": []
+          },
+          {
+            "principal": "auditor_a",
+            "messages": []
+          },
+          {
+            "principal": "auditor_b",
+            "messages": ["repeat0", "repeat1", "repeat2"]
+          }
+        ],
+        "closureEquivalent": true,
+        "passed": true
+      },
+      "matches": true,
+      "difference": {
+        "missingFacts": [],
+        "extraFacts": [],
+        "decisionsChanged": false,
+        "visibilityChanged": false
+      }
+    },
+    {
+      "name": "Split audit and historical receipts",
+      "golden": {
+        "observations": [
+          {
+            "message": "audit0",
+            "recipient": "auditor_a",
+            "allowed": true,
+            "expected": true,
+            "fullCopyDeny": false,
+            "denyDerived": false,
+            "received": true,
+            "bodyVisible": true
+          },
+          {
+            "message": "audit1",
+            "recipient": "auditor_b",
+            "allowed": true,
+            "expected": true,
+            "fullCopyDeny": false,
+            "denyDerived": false,
+            "received": true,
+            "bodyVisible": true
+          },
+          {
+            "message": "audit2",
+            "recipient": "auditor_a",
+            "allowed": true,
+            "expected": true,
+            "fullCopyDeny": false,
+            "denyDerived": false,
+            "received": true,
+            "bodyVisible": true
+          }
+        ],
+        "error": null,
+        "facts": [
+          "[\"AuditGoal\",\"nova\",\"nova_procurement\",\"nova_facility\",\"nova_hiring\"]",
+          "[\"AuditReceipt\",\"auditor_a\",\"nova_hiring\"]",
+          "[\"AuditReceipt\",\"auditor_a\",\"nova_procurement\"]",
+          "[\"AuditReceipt\",\"auditor_b\",\"nova_facility\"]",
+          "[\"Audited\",\"nova_facility\"]",
+          "[\"Audited\",\"nova_hiring\"]",
+          "[\"Audited\",\"nova_procurement\"]",
+          "[\"Finished\",\"nova\"]",
+          "[\"HasCap\",\"auditor_a\",\"hr_review\"]",
+          "[\"HasCap\",\"hr\",\"hr_review\"]",
+          "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+          "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+          "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+          "[\"Propagated\",\"audit0\",\"nova_procurement\"]",
+          "[\"Propagated\",\"audit1\",\"nova_facility\"]",
+          "[\"Propagated\",\"audit2\",\"nova_hiring\"]",
+          "[\"Received\",\"auditor_a\",\"audit0\"]",
+          "[\"Received\",\"auditor_a\",\"audit2\"]",
+          "[\"Received\",\"auditor_b\",\"audit1\"]",
+          "[\"Receiver\",\"auditor_a\",\"audit0\"]",
+          "[\"Receiver\",\"auditor_a\",\"audit2\"]",
+          "[\"Receiver\",\"auditor_b\",\"audit1\"]",
+          "[\"Requires\",\"nova_hiring\",\"hr_review\"]",
+          "[\"Sender\",\"board\",\"audit0\"]",
+          "[\"Sender\",\"board\",\"audit1\"]",
+          "[\"Sender\",\"board\",\"audit2\"]",
+          "[\"TagGroup\",\"nova_facility\",\"nova\"]",
+          "[\"TagGroup\",\"nova_hiring\",\"nova\"]",
+          "[\"TagGroup\",\"nova_procurement\",\"nova\"]",
+          "[\"TransportTag\",\"audit0\",\"nova_procurement\"]",
+          "[\"TransportTag\",\"audit1\",\"nova_facility\"]",
+          "[\"TransportTag\",\"audit2\",\"nova_hiring\"]",
+          "[\"TrustedSource\",\"audit0\",\"nova_procurement\"]",
+          "[\"TrustedSource\",\"audit1\",\"nova_facility\"]",
+          "[\"TrustedSource\",\"audit2\",\"nova_hiring\"]"
+        ],
+        "visible": [
+          {
+            "principal": "board",
+            "messages": ["audit0", "audit1", "audit2"]
+          },
+          {
+            "principal": "procurement",
+            "messages": []
+          },
+          {
+            "principal": "facility",
+            "messages": []
+          },
+          {
+            "principal": "hr",
+            "messages": []
+          },
+          {
+            "principal": "auditor_a",
+            "messages": ["audit0", "audit2"]
+          },
+          {
+            "principal": "auditor_b",
+            "messages": ["audit1"]
+          }
+        ],
+        "closureEquivalent": true,
+        "passed": true
+      },
+      "translated": {
+        "observations": [
+          {
+            "message": "audit0",
+            "recipient": "auditor_a",
+            "allowed": true,
+            "expected": true,
+            "fullCopyDeny": false,
+            "denyDerived": false,
+            "received": true,
+            "bodyVisible": true
+          },
+          {
+            "message": "audit1",
+            "recipient": "auditor_b",
+            "allowed": true,
+            "expected": true,
+            "fullCopyDeny": false,
+            "denyDerived": false,
+            "received": true,
+            "bodyVisible": true
+          },
+          {
+            "message": "audit2",
+            "recipient": "auditor_a",
+            "allowed": true,
+            "expected": true,
+            "fullCopyDeny": false,
+            "denyDerived": false,
+            "received": true,
+            "bodyVisible": true
+          }
+        ],
+        "error": null,
+        "facts": [
+          "[\"AuditGoal\",\"nova\",\"nova_procurement\",\"nova_facility\",\"nova_hiring\"]",
+          "[\"AuditReceipt\",\"auditor_a\",\"nova_hiring\"]",
+          "[\"AuditReceipt\",\"auditor_a\",\"nova_procurement\"]",
+          "[\"AuditReceipt\",\"auditor_b\",\"nova_facility\"]",
+          "[\"Finished\",\"nova\"]",
+          "[\"HasCap\",\"auditor_a\",\"hr_review\"]",
+          "[\"HasCap\",\"hr\",\"hr_review\"]",
+          "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+          "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+          "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+          "[\"Propagated\",\"audit0\",\"nova_procurement\"]",
+          "[\"Propagated\",\"audit1\",\"nova_facility\"]",
+          "[\"Propagated\",\"audit2\",\"nova_hiring\"]",
+          "[\"Received\",\"auditor_a\",\"audit0\"]",
+          "[\"Received\",\"auditor_a\",\"audit2\"]",
+          "[\"Received\",\"auditor_b\",\"audit1\"]",
+          "[\"Receiver\",\"auditor_a\",\"audit0\"]",
+          "[\"Receiver\",\"auditor_a\",\"audit2\"]",
+          "[\"Receiver\",\"auditor_b\",\"audit1\"]",
+          "[\"Requires\",\"nova_hiring\",\"hr_review\"]",
+          "[\"Sender\",\"board\",\"audit0\"]",
+          "[\"Sender\",\"board\",\"audit1\"]",
+          "[\"Sender\",\"board\",\"audit2\"]",
+          "[\"TagGroup\",\"nova_facility\",\"nova\"]",
+          "[\"TagGroup\",\"nova_hiring\",\"nova\"]",
+          "[\"TagGroup\",\"nova_procurement\",\"nova\"]",
+          "[\"TransportTag\",\"audit0\",\"nova_procurement\"]",
+          "[\"TransportTag\",\"audit1\",\"nova_facility\"]",
+          "[\"TransportTag\",\"audit2\",\"nova_hiring\"]",
+          "[\"TrustedSource\",\"audit0\",\"nova_procurement\"]",
+          "[\"TrustedSource\",\"audit1\",\"nova_facility\"]",
+          "[\"TrustedSource\",\"audit2\",\"nova_hiring\"]"
+        ],
+        "visible": [
+          {
+            "principal": "board",
+            "messages": ["audit0", "audit1", "audit2"]
+          },
+          {
+            "principal": "procurement",
+            "messages": []
+          },
+          {
+            "principal": "facility",
+            "messages": []
+          },
+          {
+            "principal": "hr",
+            "messages": []
+          },
+          {
+            "principal": "auditor_a",
+            "messages": ["audit0", "audit2"]
+          },
+          {
+            "principal": "auditor_b",
+            "messages": ["audit1"]
+          }
+        ],
+        "closureEquivalent": true,
+        "passed": true
+      },
+      "matches": false,
+      "difference": {
+        "missingFacts": [
+          "[\"Audited\",\"nova_facility\"]",
+          "[\"Audited\",\"nova_hiring\"]",
+          "[\"Audited\",\"nova_procurement\"]"
+        ],
+        "extraFacts": [],
+        "decisionsChanged": false,
+        "visibilityChanged": false
+      }
+    }
+  ],
+  "correspondence": [
+    {
+      "id": "P1",
+      "title": "Preserve information when forwarding",
+      "source": "P1. Except for the Board's trusted initial source assignments, every outgoing message must retain all tracked confidential information available from messages successfully received by its sender before that send. Relaying, summarizing or changing the wording must not remove that protection.",
+      "referenceSource": "P1. Except for the Board's trusted initial source assignments, every outgoing message must retain all tracked confidential information available from messages successfully received by its sender before that send. Relaying, summarizing or changing the wording must not remove that protection.",
+      "inputMatchesReference": true,
+      "golden": "// trusted-label\nPropagated(M, Tag) :- TrustedSource(M, Tag).\n// message-label\nPropagated(M, Tag) :- TransportTag(M, Tag).\n// runtime-dependency\nDependsOn(Mout, Min) :- Receiver(P, Min), Sender(P, Mout), Before(Min, Mout).\n// label-propagation\nPropagated(Mout, Tag) :- DependsOn(Mout, Min), Propagated(Min, Tag).",
+      "ruleIds": ["trusted-label", "message-label", "runtime-dependency", "label-propagation"],
+      "protocol": "Send captures successful prior receipts and transfers this message's tags. Trusted source assignment is separate ingestion.",
+      "basis": "builtin",
+      "generated": "",
+      "notes": "The runtime records Sender and Before from successful prior receipts. The foundation's runtime-dependency and label-propagation rules therefore preserve all inherited labels, regardless of rewriting. The message protocol exports those labels as TransportTag. Trusted initial assignments use the separate trusted-ingestion path, not computation over Board's receipt history."
+    },
+    {
+      "id": "P2",
+      "title": "Require permission before receiving",
+      "source": "P2. An agent may receive information only when it holds every capability required by the information carried in that message. In particular, Nova hiring information requires hr_review. This requirement applies to Board as well as the other agents.",
+      "referenceSource": "P2. An agent may receive information only when it holds every capability required by the information carried in that message. In particular, Nova hiring information requires hr_review. This requirement applies to Board as well as the other agents.",
+      "inputMatchesReference": true,
+      "golden": "// capability\nDenyReceive(P, M) :- Incoming(P, M), Propagated(M, Tag), Requires(Tag, Cap), not HasCap(P, Cap).",
+      "ruleIds": ["capability"],
+      "protocol": "The receiver checks its trusted capability configuration before delivery, including Board.",
+      "basis": "builtin",
+      "generated": "",
+      "notes": "The foundation's capability rule denies delivery for each carried tag whose required capability the recipient lacks. Trusted configuration requires hr_review for nova_hiring. Receiver-local capability checks apply to Board too; no Board exemption is present."
+    },
+    {
+      "id": "P3",
+      "title": "Prevent collecting three confidential parts",
+      "source": "P3. No agent other than Board may receive a message if combining its incoming information with information already received would expose three distinct confidential parts from the same project group. This includes messages carrying multiple parts. Repeated copies of the same part count once, and parts from unrelated groups must not be combined for this restriction.",
+      "referenceSource": "P3. No agent other than Board may receive a message if combining its incoming information with information already received would expose three distinct confidential parts from the same project group. This includes messages carrying multiple parts. Repeated copies of the same part count once, and parts from unrelated groups must not be combined for this restriction.",
+      "inputMatchesReference": true,
+      "golden": "// three-tag-exposure\nDenyReceive(P, M) :- Incoming(P, M), Propagated(M, T3), Knows(P, T1), Knows(P, T2), TagGroup(T1, Group), TagGroup(T2, Group), TagGroup(T3, Group), P != \"board\", T1 != T2, T1 != T3, T2 != T3.\n// three-tag-two-incoming\nDenyReceive(P, M) :- Incoming(P, M), Propagated(M, T2), Propagated(M, T3), Knows(P, T1), TagGroup(T1, Group), TagGroup(T2, Group), TagGroup(T3, Group), P != \"board\", T1 != T2, T1 != T3, T2 != T3.\n// three-tag-all-incoming\nDenyReceive(P, M) :- Incoming(P, M), Propagated(M, T1), Propagated(M, T2), Propagated(M, T3), TagGroup(T1, Group), TagGroup(T2, Group), TagGroup(T3, Group), P != \"board\", T1 != T2, T1 != T3, T2 != T3.",
+      "ruleIds": ["three-tag-exposure", "three-tag-two-incoming", "three-tag-all-incoming"],
+      "protocol": "The receiver checks incoming tags together with its previously received information.",
+      "basis": "extension",
+      "generated": "DenyReceive(P, M) :- Incoming(P, M), P != \"board\", Propagated(M, T1), Propagated(M, T2), Propagated(M, T3), TagGroup(T1, G), TagGroup(T2, G), TagGroup(T3, G), T1 != T2, T1 != T3, T2 != T3.\nDenyReceive(P, M) :- Incoming(P, M), P != \"board\", Propagated(M, T1), Propagated(M, T2), Knows(P, T3), TagGroup(T1, G), TagGroup(T2, G), TagGroup(T3, G), T1 != T2, T1 != T3, T2 != T3.\nDenyReceive(P, M) :- Incoming(P, M), P != \"board\", Propagated(M, T1), Knows(P, T2), Knows(P, T3), TagGroup(T1, G), TagGroup(T2, G), TagGroup(T3, G), T1 != T2, T1 != T3, T2 != T3.\nDenyReceive(P, M) :- Incoming(P, M), P != \"board\", Knows(P, T1), Knows(P, T2), Knows(P, T3), TagGroup(T1, G), TagGroup(T2, G), TagGroup(T3, G), T1 != T2, T1 != T3, T2 != T3.",
+      "notes": "The rules test all distributions of three distinct same-group parts across incoming labels and previously received knowledge. Distinctness prevents repeated copies from counting twice; the shared group prevents combining unrelated projects. The final rule also covers a recipient already holding three parts. Only Board is exempt. All inputs are available in the recipient's local store."
+    },
+    {
+      "id": "P4",
+      "title": "Keep refused content out of the recipient",
+      "source": "P4. A refused delivery must not disclose its payload to the recipient or add the refused information to that recipient's received knowledge. Later outgoing messages must not acquire confidential information merely because an earlier incoming message was attempted and refused.",
+      "referenceSource": "P4. A refused delivery must not disclose its payload to the recipient or add the refused information to that recipient's received knowledge. Later outgoing messages must not acquire confidential information merely because an earlier incoming message was attempted and refused.",
+      "inputMatchesReference": true,
+      "golden": "// runtime-dependency\nDependsOn(Mout, Min) :- Receiver(P, Min), Sender(P, Mout), Before(Min, Mout).\n// knowledge\nKnows(P, Tag) :- Received(P, M), Propagated(M, Tag).",
+      "ruleIds": ["knowledge", "runtime-dependency"],
+      "protocol": "On denial, release no payload, add no Receiver/Received facts, and remove temporary incoming tags. This needs runtime code as well as rules.",
+      "basis": "builtin",
+      "generated": "",
+      "notes": "The fixed settle protocol checks DenyReceive before releasing payloads. Refusal removes temporary inputs without recording Receiver or Received or retaining tags. Consequently refused messages contribute neither Knows through the foundation's knowledge rule nor later runtime dependencies through successful receipt history."
+    },
+    {
+      "id": "P5",
+      "title": "Combine audit coverage across reviewers",
+      "source": "P5. A confidential part counts as covered only after successful delivery to a designated auditor. The audit is complete only when every one of its three configured parts has been covered. Different auditors may cover different parts; completing the audit must not require one ordinary agent to collect the full confidential combination.",
+      "referenceSource": "P5. A confidential part counts as covered only after successful delivery to a designated auditor. The audit is complete only when every one of its three configured parts has been covered. Different auditors may cover different parts; completing the audit must not require one ordinary agent to collect the full confidential combination.",
+      "inputMatchesReference": true,
+      "golden": "// audit-receipt\nAudited(Tag) :- AuditReceipt(A, Tag).\n// audit-progress\nAudited(Tag) :- Auditor(A), Received(A, M), Propagated(M, Tag).\n// finished\nFinished(Group) :- AuditGoal(Group, T1, T2, T3), Audited(T1), Audited(T2), Audited(T3).",
+      "ruleIds": ["audit-receipt", "audit-progress", "finished"],
+      "protocol": "Auditors export durable receipts to Board. Removing a current auditor role does not revoke accepted historical receipts.",
+      "basis": "extension",
+      "generated": "Audited(T) :- Auditor(P), Received(P, M), Propagated(M, T), TagGroup(T, G).\nFinished(G) :- AuditGoal(G, T1, T2, T3), AuditReceipt(A1, T1), AuditReceipt(A2, T2), AuditReceipt(A3, T3).",
+      "notes": "Local coverage requires an actual successful tagged delivery to a designated auditor. The fixed audit protocol transfers these local Audited results into durable trusted AuditReceipt records at Board. Completion requires receipts for all three configured goal parts, but their auditors may differ. Board uses receipts rather than remote Knows. Historical receipts remain valid after role changes, so Finished deliberately does not recheck current Auditor membership. The protocol restricts Finished evaluation to Board."
+    }
+  ]
+}

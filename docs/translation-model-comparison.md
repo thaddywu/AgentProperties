@@ -1,5 +1,7 @@
 # Nova one-shot translation: GPT-5.4 and GPT-6.1 Sol
 
+> Historical experiments: the current runtime no longer uses audit receipts or Board-side completion. Saved outputs and their reported results are unchanged and do not constitute evaluation of the new protocol.
+
 Both experiments used exactly the same input-document snapshot and system/user prompts, verified byte for byte. Each successful experiment made one translation invocation, requested low reasoning effort and at most 8192 output tokens, and supplied no reference rules. No automatic repair, reference substitution or enforcement installation was performed.
 
 | Check | GPT-5.4 | GPT-6.1 Sol |

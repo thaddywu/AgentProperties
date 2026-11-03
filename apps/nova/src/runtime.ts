@@ -1,7 +1,8 @@
 import type { PolicyFact } from "@rakazo/policy-runtime/datalog";
 import { factKey } from "@rakazo/policy-runtime/datalog";
-import { derivedAt, localClosure } from "./local-store.js";
+import { derivedAt, localClosure, reconstructDebugView } from "./local-store.js";
 import { CONFIG, contains, f, validateInput } from "./policy.js";
+import { migratePredicateNames } from "./predicate-migration.js";
 import { accepts, PROTOCOL } from "./protocol.js";
 import { PRINCIPALS } from "./shared.js";
 import {
@@ -49,7 +50,7 @@ export type LocalStores = Record<string, InputRecord[]>;
 export type RuntimeState = {
   policy?: NovaPolicyArtifact;
   storeSchemaVersion: 1;
-  protocolVersion?: 1;
+  protocolVersion?: 1 | 2 | 3;
   tagSchemaVersion?: 1;
   stores: LocalStores;
   messages: Message[];
@@ -104,6 +105,7 @@ export class NovaRuntime {
     else if (state) {
       const legacy = clone(state);
       migrateTagSchema(legacy);
+      migratePredicateNames(legacy);
       if (!legacy.protocolVersion) {
         legacy.records = migrateRecords(legacy.records, legacy.messages);
         for (const event of legacy.events) {
@@ -117,11 +119,15 @@ export class NovaRuntime {
         ...(policy ? { policy } : {}),
         storeSchemaVersion: 1,
         protocolVersion: 1,
-        stores: partitionLegacyRecords(records),
+        stores: partitionLegacyRecords(records.filter((r) => r.fact.predicate !== "AuditReceipt")),
         events: events.map((event) => ({
           ...event,
-          before: partitionLegacyRecords(event.before),
-          after: partitionLegacyRecords(event.after),
+          before: partitionLegacyRecords(
+            event.before.filter((r) => r.fact.predicate !== "AuditReceipt"),
+          ),
+          after: partitionLegacyRecords(
+            event.after.filter((r) => r.fact.predicate !== "AuditReceipt"),
+          ),
         })),
       };
     } else {
@@ -136,6 +142,25 @@ export class NovaRuntime {
       };
       for (const fact of CONFIG) putRecord(this.state, inputRecord(fact, "config"));
     }
+    // Old summary facts are no longer runtime inputs. Keep messages and gate history.
+    if (!this.state.protocolVersion || this.state.protocolVersion < 2) {
+      const keep = (r: InputRecord) => r.fact.predicate !== "AuditReceipt";
+      filterRecords(this.state, keep);
+      for (const event of this.state.events) {
+        filterRecords({ stores: event.before }, keep);
+        filterRecords({ stores: event.after }, keep);
+        event.added = event.added.filter((f) => f.predicate !== "AuditReceipt");
+        event.removed = event.removed.filter((f) => f.predicate !== "AuditReceipt");
+        event.check = event.check?.filter(
+          (f) =>
+            !["AuditReceipt", "Finished"].includes(f.predicate) &&
+            !(event.actor === "board" && ["Audited", "Covered"].includes(f.predicate)),
+        );
+      }
+      this.state.protocolVersion = 2;
+    }
+    migratePredicateNames(this.state);
+    this.state.protocolVersion = 3;
   }
   snapshot() {
     return clone(this.state);
@@ -152,15 +177,6 @@ export class NovaRuntime {
     filterRecords(next, (r) => r.source !== "config");
     for (const record of records) putRecord(next, record);
     this.state.stores = next.stores;
-    // Configuration changes can enable new local Audited facts without another receive.
-    for (const owner of PRINCIPALS) this.publishAudit(owner);
-  }
-  private publishAudit(owner: string) {
-    const local = this.closure(owner).facts;
-    const route = PROTOCOL.transfers.audit;
-    if (contains(local, f(route.requireRole, owner)))
-      for (const fact of local.filter((fact) => fact.predicate === route.export))
-        this.append(inputRecord(f(route.import, owner, ...fact.args), "protocol", route.to));
   }
   private event(
     kind: RuntimeEvent["kind"],
@@ -216,7 +232,9 @@ export class NovaRuntime {
           record.fact.predicate === "Received" &&
           record.fact.args[0] === from
         )
-          this.append(inputRecord(f("Before", record.fact.args[1]!, id), "runtime", from));
+          this.append(
+            inputRecord(f("ReceivedBeforeSend", record.fact.args[1]!, id), "runtime", from),
+          );
     this.append(inputRecord(f("Incoming", to, id), "runtime", to));
     const labels = this.closure(from).facts.filter(
       (fact) =>
@@ -259,7 +277,6 @@ export class NovaRuntime {
       (r) => factKey(r.fact) !== factKey(f("Incoming", msg.to, id)),
     );
     if (!denied) {
-      this.append(inputRecord(f("Receiver", msg.to, id), "runtime", msg.to));
       this.append(inputRecord(f("Received", msg.to, id), "runtime", msg.to));
     }
     this.state.stores[msg.to] = this.state.stores[msg.to]!.filter((r) => {
@@ -274,7 +291,6 @@ export class NovaRuntime {
       return true;
     });
     msg.status = denied ? "denied" : "delivered";
-    if (!denied) this.publishAudit(msg.to);
     this.event(
       denied ? "deny" : "receive",
       msg,
@@ -318,18 +334,6 @@ function migrateRecords(records: InputRecord[], messages: Message[]) {
       record.lifetime = received ? "local" : "temporary";
       record.event = received?.event ?? pending?.event;
       add(record);
-      if (
-        received &&
-        records.some((r) => r.fact.predicate === "Auditor" && r.fact.args[0] === message.to)
-      )
-        add({
-          ...inputRecord(
-            f(PROTOCOL.transfers.audit.import, message.to, ...label.args.slice(1)),
-            "protocol",
-            PROTOCOL.transfers.audit.to,
-          ),
-          event: received.event,
-        });
     }
   }
   return result;
@@ -407,6 +411,6 @@ export function view(state: RuntimeState) {
       ).values(),
     ],
     derived: derivedAt(state),
-    finished: contains(localClosure(state, "board").facts, f("Finished", "nova")),
+    finished: contains(reconstructDebugView(state).facts, f("Finished", "nova")),
   };
 }

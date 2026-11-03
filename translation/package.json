@@ -23,5 +23,9 @@
     "vitest": "4.1.11",
     "tsx": "4.23.13",
     "@biomejs/biome": "2.5.13"
+  },
+  "exports": {
+    "./question": "./src/question.ts",
+    "./model": "./src/model.ts"
   }
 }

@@ -113,7 +113,7 @@ export function parseProgram(source: string) {
       take(".");
     }
   }
-  if (!columns) throw new Error("End with a query, for example: ?- Knows(A, P, C).");
+  if (!columns) throw new Error("End with a query, for example: ?- Relation(X, Y).");
   if (rules.length > 100) throw new Error("At most 100 rules are supported per execution.");
   return { facts, rules, columns };
 }

@@ -42,23 +42,12 @@ export const NOVA_PREDICATES = {
     meaning:
       "Tag envelope exported at send time and imported at recipient; temporary until allow, removed on deny.",
   },
-  AuditReceipt: {
-    args: ["auditor", "tag"],
-    kind: "input",
-    meaning:
-      "Trusted coverage summary imported at Board from a designated auditor's locally derived audit result.",
-  },
   Sender: {
     args: ["agent", "message"],
     kind: "input",
     meaning: "Actual message-send event in the sender's store.",
   },
-  Receiver: {
-    args: ["agent", "message"],
-    kind: "input",
-    meaning: "Successful receive event only, in recipient's store.",
-  },
-  Before: {
+  ReceivedBeforeSend: {
     args: ["earlierMessage", "laterMessage"],
     kind: "input",
     meaning:
@@ -74,17 +63,18 @@ export const NOVA_PREDICATES = {
     kind: "input",
     meaning: "Temporary pending receive intent at the recipient, checked before payload release.",
   },
-  DependsOn: {
+  MayDependOn: {
     args: ["outputMessage", "inputMessage"],
     kind: "derived",
-    meaning: "Tracked computation dependency between messages.",
+    meaning:
+      "Conservative possible dependency on prior received messages; not proof of actual use.",
   },
-  Propagated: {
+  MessageTag: {
     args: ["message", "tag"],
     kind: "derived",
     meaning: "Tracked tags carried by a message, including inherited confidential information.",
   },
-  Knows: {
+  HasReceivedTag: {
     args: ["agent", "tag"],
     kind: "derived",
     meaning:
@@ -96,16 +86,17 @@ export const NOVA_PREDICATES = {
     meaning:
       "Enforcement output: presence refuses this pending receive. Absence permits it after runtime envelope checks.",
   },
-  Audited: {
+  Covered: {
     args: ["tag"],
     kind: "derived",
     meaning:
-      "Coverage by successful delivery to a designated auditor, or an imported trusted coverage receipt. Not a financial judgment.",
+      "Local coverage by successful delivery to a designated auditor. Not transported or persisted as an input. Not a financial judgment.",
   },
   Finished: {
     args: ["group"],
     kind: "derived",
-    meaning: "Current audit goal covered. Board-only result, not a guarantee of eventual progress.",
+    meaning:
+      "Current audit goal covered. Computed only by a global observer over the union of local closures; never used in local enforcement.",
   },
 } as const;
 
@@ -123,8 +114,8 @@ The validator will parse this dialect into the existing AST and serialize it for
 Available vocabulary (each args list defines arity and order):
 ${JSON.stringify(NOVA_PREDICATES, null, 2)}
 
-Runtime context: rules are evaluated independently at each principal's local store. Configuration Auditor, Requires, TagGroup and AuditGoal is explicitly replicated. HasCap, Sender, Receiver, Received, Incoming, Knows and DenyReceive are local to the agent in their first argument. TrustedSource and AuditReceipt inputs and Finished output are Board-only. Propagated, DependsOn, Before and Audited operate only on records actually available locally. No global cross-store joins are available for enforcement. Do not assume an agent can inspect another agent's history.
-Send creates a pending message. Sender-local tracked labels are transported as a snapshot into the receiver's temporary gate input. A complete envelope and receive intent are required before checking DenyReceive. Allow records Receiver/Received and retains transported labels; deny removes temporary labels and does not release the payload. Only successful prior receipts contribute to later computation dependencies. Trusted source assignment is ingestion, not a normal computation over all Board history. After allowed delivery, a designated auditor exports coverage summaries to Board; those summaries do not transport its Knows facts. There is no sanitization/declassification. Rules cannot implement payload release, event generation, atomicity or transport; distinguish those runtime guarantees in notes.
+Runtime context: rules are evaluated independently at each principal's local store. Configuration Auditor, Requires, TagGroup and AuditGoal is explicitly replicated. HasCap, Sender, Received, Incoming, HasReceivedTag and DenyReceive are local to the agent in their first argument. TrustedSource inputs are Board-only. Finished is an observer-only output and cannot appear in the body of a local rule. Only Finished rules run over the union of local closures; local policy rules are never rerun over that union. MessageTag, MayDependOn, ReceivedBeforeSend and Covered operate only on records actually available locally. No global cross-store joins are available for enforcement. Do not assume an agent can inspect another agent's history.
+Send creates a pending message. Sender-local tracked labels are transported as a snapshot into the receiver's temporary gate input. A complete envelope and receive intent are required before checking DenyReceive. Allow records Received and retains transported labels; deny removes temporary labels and does not release the payload. Only successful prior receipts contribute to later computation dependencies. Trusted source assignment is ingestion, not a normal computation over all Board history. After allowed delivery, Covered is derived in the auditor local store. No audit summary is sent to Board. Global queries combine local Covered facts to compute Finished. The demo uses fixed designated auditors. There is no sanitization/declassification. Rules cannot implement payload release, event generation, atomicity or transport; distinguish those runtime guarantees in notes.
 
 Application Markdown (exact content):
 ${JSON.stringify(documents, null, 2)}`;

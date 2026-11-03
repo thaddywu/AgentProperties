@@ -10,7 +10,13 @@ export function compareGenerated(source: string) {
   const extra = facts.map((fact) => ({ ...fact, args: fact.args.map((arg) => arg.slice(2)) }));
   const f = (predicate: string, ...args: string[]): PolicyFact => ({ predicate, args });
   const tags = ["nova_procurement", "nova_facility", "nova_hiring"];
-  const observables = new Set(["Propagated", "Knows", "DenyReceive", "Audited", "Finished"]);
+  const observables = new Set([
+    "MessageTag",
+    "HasReceivedTag",
+    "DenyReceive",
+    "Covered",
+    "Finished",
+  ]);
   const keys = (input: PolicyFact[]) =>
     new Set(
       input
@@ -34,7 +40,7 @@ export function compareGenerated(source: string) {
     if (owner === "board") input.push(f("HasCap", owner, "hr_review"));
     known.forEach((tag, index) => {
       input.push(
-        f("Receiver", owner, `old${index}`),
+        f("Received", owner, `old${index}`),
         f("Received", owner, `old${index}`),
         f("TransportTag", `old${index}`, tag),
       );
@@ -57,11 +63,11 @@ export function compareGenerated(source: string) {
     {
       name: "successful-receipt-lineage",
       input: [
-        f("Receiver", "facility", "old"),
+        f("Received", "facility", "old"),
         f("Received", "facility", "old"),
         f("TransportTag", "old", tags[1]!),
         f("Sender", "facility", "out"),
-        f("Before", "old", "out"),
+        f("ReceivedBeforeSend", "old", "out"),
       ],
     },
     {
@@ -80,7 +86,11 @@ export function compareGenerated(source: string) {
       name: "board-audit-coverage",
       input: [
         ...CONFIG.filter((fact) => fact.predicate !== "HasCap"),
-        ...tags.map((tag, i) => f("AuditReceipt", i === 1 ? "auditor_b" : "auditor_a", tag)),
+        ...tags.flatMap((tag, i) => [
+          f("Auditor", `reviewer${i}`),
+          f("Received", `reviewer${i}`, `review${i}`),
+          f("TransportTag", `review${i}`, tag),
+        ]),
       ],
     },
   );

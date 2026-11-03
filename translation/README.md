@@ -18,7 +18,7 @@ The [Document Vault walkthrough](../apps/document-vault/README.md) exercises act
 
 ## Existing Nova experiment
 
-Nova supports two experiments. Add `--nova-extension` to provide the immutable foundation and fixed protocol and ask for app-specific extensions only. That path writes `nova-policy.json`, which Nova can review and load into a fresh session; see the [five-part walkthrough](../apps/nova/README.md). Its generated heads are limited to DenyReceive, Audited and Finished; inputs, config, propagation rules and protocol cannot be rewritten. Unknown/unsafe/unstratified rules fail validation. One model call is made, with no repair or golden-rule substitution. Exact inputs and raw output are saved before validation, and failed behavior comparisons remain visible.
+Nova supports two experiments. Add `--nova-extension` to provide the immutable foundation and fixed protocol and ask for app-specific extensions only. That path writes `nova-policy.json`, which Nova can review and load into a fresh session; see the [five-part walkthrough](../apps/nova/README.md). Its generated heads are limited to DenyReceive, Covered and Finished; inputs, config, propagation rules and protocol cannot be rewritten. Unknown/unsafe/unstratified rules fail validation. One model call is made, with no repair or golden-rule substitution. Exact inputs and raw output are saved before validation, and failed behavior comparisons remain visible.
 
 The command without `--nova-extension` preserves the legacy whole-policy experiment described below. Its artifacts are not installable Nova extension bundles.
 
@@ -72,3 +72,11 @@ For that public endpoint, explicitly enable the existing compatible-adapter gate
 RAKAZO_OPENAI_COMPAT_ALLOW_PUBLIC=1 pnpm --dir translation translate ../apps/nova \
   --connection /path/to/private-models-connect.json
 ```
+
+## Natural-language query interpretation
+
+`src/question.ts` is a provider-neutral one-shot interpreter. It accepts a question, a catalog of supported templates and named entities, plus an injected generation function. Its output is a template ID and parameters, a clarification, or an unsupported response—not executable query text. `src/model.ts` reuses the same models/connect adapter as policy translation.
+
+Nova owns its template definitions, concrete questions and deterministic compiler in `apps/nova/src/questions.ts`. The web server composes these with the interpreter at `/nova-question`; it checks the selected state version both before and after interpretation. Only the existing analysis endpoint executes a query after the user reviews it. Examples use explicit deterministic bindings and are labeled separately from model interpretations. See [Nova setup](../apps/nova/README.md#natural-language-questions).
+
+Question parameters may be entity strings or bounded arrays of message/route IDs. The Nova compiler validates candidate receipts, goal groups, starting states and routes, then creates analysis arguments deterministically. Raw Datalog or arbitrary event/action definitions from the model are not accepted. HTTP question requests use `mode: "model"` (the default) for genuine interpretation, or `mode: "example"` for an exact known offline example. Suggested questions only fill the input; they do not bypass the model when interpreted.

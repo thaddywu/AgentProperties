@@ -1,3 +1,4 @@
+import type { QuestionTemplate } from "@rakazo/nova/questions";
 import type { NovaView, Request, Selection } from "@rakazo/nova/service";
 
 let pendingState: { key: string; promise: Promise<NovaView> } | undefined;
@@ -33,4 +34,25 @@ export async function request<T>(body: Request): Promise<T> {
       );
     throw error;
   }
+}
+
+export type QuestionInterpretation =
+  | { status: "ready"; question: QuestionTemplate; revision: number; selection: Selection }
+  | { status: "needs_clarification" | "unsupported"; message: string };
+export async function interpretQuestion(
+  question: string,
+  revision: number,
+  selection: Selection,
+  signal: AbortSignal,
+  mode: "model" | "example" = "model",
+): Promise<QuestionInterpretation> {
+  const response = await fetch("/nova-question", {
+    method: "POST",
+    signal,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question, revision, ...selection, mode }),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error ?? "Could not interpret the question.");
+  return data.result;
 }

@@ -22,20 +22,18 @@ const distinct: Rule["distinct"] = [
 export const NOVA_PREDICATES: Record<string, PredicateDefinition> = {
   Auditor: { args: ["Principal"], kind: "input", source: "config" },
   AuditGoal: { args: ["Group", "Tag1", "Tag2", "Tag3"], kind: "input", source: "config" },
-  AuditReceipt: { args: ["Auditor", "Tag"], kind: "input", source: "transport" },
-  Audited: { args: ["Tag"], kind: "derived", source: "inference" },
+  Covered: { args: ["Tag"], kind: "derived", source: "inference" },
   Finished: { args: ["Group"], kind: "derived", source: "inference" },
 };
 export const NOVA_RULES: Rule[] = [
-  rule("audit-receipt", f("Audited", "Tag"), [f("AuditReceipt", "A", "Tag")]),
   rule(
     "three-tag-exposure",
     f("DenyReceive", "P", "M"),
     [
       f("Incoming", "P", "M"),
-      f("Propagated", "M", "T3"),
-      f("Knows", "P", "T1"),
-      f("Knows", "P", "T2"),
+      f("MessageTag", "M", "T3"),
+      f("HasReceivedTag", "P", "T1"),
+      f("HasReceivedTag", "P", "T2"),
       f("TagGroup", "T1", "Group"),
       f("TagGroup", "T2", "Group"),
       f("TagGroup", "T3", "Group"),
@@ -49,9 +47,9 @@ export const NOVA_RULES: Rule[] = [
     f("DenyReceive", "P", "M"),
     [
       f("Incoming", "P", "M"),
-      f("Propagated", "M", "T2"),
-      f("Propagated", "M", "T3"),
-      f("Knows", "P", "T1"),
+      f("MessageTag", "M", "T2"),
+      f("MessageTag", "M", "T3"),
+      f("HasReceivedTag", "P", "T1"),
       f("TagGroup", "T1", "Group"),
       f("TagGroup", "T2", "Group"),
       f("TagGroup", "T3", "Group"),
@@ -64,9 +62,9 @@ export const NOVA_RULES: Rule[] = [
     f("DenyReceive", "P", "M"),
     [
       f("Incoming", "P", "M"),
-      f("Propagated", "M", "T1"),
-      f("Propagated", "M", "T2"),
-      f("Propagated", "M", "T3"),
+      f("MessageTag", "M", "T1"),
+      f("MessageTag", "M", "T2"),
+      f("MessageTag", "M", "T3"),
       f("TagGroup", "T1", "Group"),
       f("TagGroup", "T2", "Group"),
       f("TagGroup", "T3", "Group"),
@@ -74,28 +72,27 @@ export const NOVA_RULES: Rule[] = [
     distinct,
     1,
   ),
-  rule("audit-progress", f("Audited", "Tag"), [
+  rule("coverage", f("Covered", "Tag"), [
     f("Auditor", "A"),
     f("Received", "A", "M"),
-    f("Propagated", "M", "Tag"),
+    f("MessageTag", "M", "Tag"),
   ]),
   rule("finished", f("Finished", "Group"), [
     f("AuditGoal", "Group", "T1", "T2", "T3"),
-    f("Audited", "T1"),
-    f("Audited", "T2"),
-    f("Audited", "T3"),
+    f("Covered", "T1"),
+    f("Covered", "T2"),
+    f("Covered", "T3"),
   ]),
 ];
-// Preserve the established native rule order for proofs and recorded experiments.
+// Local foundation and application rules; Finished is evaluated only by the observer.
 export const REASONING_RULES: Rule[] = [
   MESSAGING_RULES["trusted-label"],
   MESSAGING_RULES["message-label"],
-  NOVA_RULES[0]!,
   MESSAGING_RULES["runtime-dependency"],
   MESSAGING_RULES["label-propagation"],
-  MESSAGING_RULES.knowledge,
+  MESSAGING_RULES["received-tag"],
   MESSAGING_RULES.capability,
-  ...NOVA_RULES.slice(1),
+  ...NOVA_RULES,
 ];
 export const RULE_TEXT = souffleProgram([], REASONING_RULES);
 export { CONFIG } from "./config.js";

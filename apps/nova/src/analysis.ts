@@ -5,7 +5,13 @@ import { explainSouffle, runSouffle } from "@rakazo/policy-runtime/souffle";
 
 export { ACTION_PRESET, PREVENTABLE_PRESET } from "./shared.js";
 
-import { localClosure, localInputs, localRules, reconstructDebugView } from "./local-store.js";
+import {
+  localClosure,
+  localInputs,
+  localRules,
+  observerRules,
+  reconstructDebugView,
+} from "./local-store.js";
 import { contains, DERIVED, f, parseInputs, parseTarget } from "./policy.js";
 import { PROTOCOL } from "./protocol.js";
 import type { RuntimeState } from "./runtime.js";
@@ -24,6 +30,21 @@ import type { ProofNode } from "@rakazo/policy-runtime/souffle";
 export type { ProofNode } from "@rakazo/policy-runtime/souffle";
 export function why(input: RuntimeState, query: string, scope = "auditor_a"): ProofNode | null {
   const target = parseTarget(query);
+  if (scope === "debug" && PROTOCOL.observer.some((p) => p === target.predicate)) {
+    const result = reconstructDebugView(input);
+    if (!contains(result.facts, target)) return null;
+    const proof = explainSouffle(result.localFacts, observerRules(input), target);
+    const expand = (node: ProofNode): ProofNode => {
+      if (node.kind === "input" && DERIVED.has(parseTarget(node.fact).predicate)) {
+        const owner = Object.keys(result.stores).find((p) =>
+          contains(result.stores[p]!, parseTarget(node.fact)),
+        );
+        if (owner) return why(input, node.fact, owner) ?? node;
+      }
+      return { ...node, children: node.children.map(expand) };
+    };
+    return expand(proof);
+  }
   const stores =
     scope === "debug"
       ? reconstructDebugView(input).stores
@@ -34,9 +55,7 @@ export function why(input: RuntimeState, query: string, scope = "auditor_a"): Pr
   const mark = (node: ProofNode) => {
     if (
       node.kind === "input" &&
-      [PROTOCOL.transfers.message.import, PROTOCOL.transfers.audit.import].some((p) =>
-        node.fact.startsWith(`${p}(`),
-      )
+      [PROTOCOL.transfers.message.import].some((p) => node.fact.startsWith(`${p}(`))
     )
       node.kind = "protocol";
     node.children.forEach(mark);
@@ -56,12 +75,11 @@ export function whatIf(input: RuntimeState, remove: string, add: string, query: 
   const changed = without(input, new Set(removed.map(factKey)));
   for (const fact of added) {
     let owner: string | undefined;
-    if (fact.predicate === "Before")
+    if (fact.predicate === "ReceivedBeforeSend")
       owner = changed.messages.find((m) => m.id === fact.args[1])?.from;
     if (fact.predicate === "TrustedSource") owner = "board";
     if (fact.predicate === "TransportTag")
       owner = changed.messages.find((m) => m.id === fact.args[0])?.to;
-    if (fact.predicate === "AuditReceipt") owner = PROTOCOL.transfers.audit.to;
     putRecord(changed, inputRecord(fact, "analysis", owner));
   }
   const before = reconstructDebugView(input),
@@ -180,7 +198,7 @@ export function applyAction(state: RuntimeState, action: Action) {
     suffix = 1;
   while (runtime.state.messages.some((m) => m.id === id)) id = `${reply.id}_${suffix++}`;
   runtime.send(action.sender, action.receiver, id, reply.body);
-  if (!contains(runtime.closure(action.sender).facts, f("Propagated", id, action.tag)))
+  if (!contains(runtime.closure(action.sender).facts, f("MessageTag", id, action.tag)))
     throw new Error(
       `Missing source lineage for ${action.sender}. Deliver the Board assignment first.`,
     );
@@ -197,7 +215,7 @@ export function speculative(state: RuntimeState, actions: Action[], goal: string
   let evaluated = 0;
   const search = (current: RuntimeState): SearchNode => {
     evaluated++;
-    const closed = localClosure(current, "board");
+    const closed = reconstructDebugView(current);
     const selfIndex = PROTOCOL.local[target.predicate]?.indexOf("@self") ?? -1;
     const goalOwner =
       PROTOCOL.onlyAt[target.predicate] ?? (selfIndex >= 0 ? target.args[selfIndex] : undefined);
@@ -208,13 +226,13 @@ export function speculative(state: RuntimeState, actions: Action[], goal: string
     const edges: SearchEdge[] = [];
     let trace: Action[] | null = null;
     for (const action of actions) {
-      if (contains(closed.facts, f("Audited", action.tag))) continue;
+      if (contains(closed.facts, f("Covered", action.tag))) continue;
       const attempt = applyAction(current, action);
       if (!attempt.allowed) {
         edges.push({ action, classification: "denied", proof: attempt.proof });
         continue;
       }
-      if (!contains(attempt.runtime.closure(action.receiver).facts, f("Audited", action.tag)))
+      if (!contains(attempt.runtime.closure(action.receiver).facts, f("Covered", action.tag)))
         throw new Error("Configured action did not make audit progress.");
       const successor = search(attempt.runtime.state);
       const completion = successor.trace === null ? undefined : [action, ...successor.trace];

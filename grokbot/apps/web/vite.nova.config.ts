@@ -1,14 +1,38 @@
+import { readFileSync } from "node:fs";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { resolve } from "node:path";
 import type { Request } from "@rakazo/nova/service";
 import { ServiceProcess } from "@rakazo/nova/service-process";
 import { NOVA_WORKER_PATH } from "@rakazo/nova/worker-path";
+import { QUESTION_INSTRUCTIONS } from "@rakazo/policy-translation/question";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
+import { tsImport } from "tsx/esm/api";
 import { defineConfig } from "vite";
+import type { questionHandler as QuestionHandler } from "./src/features/nova/server-question.ts";
 
 const service = new ServiceProcess(NOVA_WORKER_PATH, process.env.NOVA_STATE_FILE);
 process.once("exit", () => service.close());
+const { questionHandler }: { questionHandler: typeof QuestionHandler } = await tsImport(
+  "./src/features/nova/server-question.ts",
+  import.meta.url,
+);
+const connection = process.env.MODEL_CONNECTION_FILE
+  ? JSON.parse(readFileSync(process.env.MODEL_CONNECTION_FILE, "utf8"))
+  : undefined;
+const interpret = questionHandler(
+  service,
+  connection
+    ? async (prompt) => {
+        // The optional provider stack ships TS workspace sources; load it only for model questions.
+        const { connectionGenerator } = await tsImport(
+          "@rakazo/policy-translation/model",
+          import.meta.url,
+        );
+        return connectionGenerator(connection, QUESTION_INSTRUCTIONS, 60_000)(prompt);
+      }
+    : undefined,
+);
 async function api(req: IncomingMessage, res: ServerResponse, next: () => void) {
   const pathname = req.url?.split("?")[0];
   if (
@@ -20,7 +44,7 @@ async function api(req: IncomingMessage, res: ServerResponse, next: () => void) 
     res.end();
     return;
   }
-  if (pathname !== "/nova-api") return next();
+  if (pathname !== "/nova-api" && pathname !== "/nova-question") return next();
   res.setHeader("Content-Type", "application/json");
   res.setHeader("Cache-Control", "no-store");
   try {
@@ -34,7 +58,10 @@ async function api(req: IncomingMessage, res: ServerResponse, next: () => void) 
       body += chunk;
       if (Buffer.byteLength(body) > 256_000) throw new Error("Request too large.");
     }
-    const result = await service.run(JSON.parse(body) as Request);
+    const result =
+      pathname === "/nova-question"
+        ? await interpret(JSON.parse(body))
+        : await service.run(JSON.parse(body) as Request);
     res.end(JSON.stringify({ result }));
   } catch (error) {
     res.statusCode = 400;

@@ -9,24 +9,12 @@ export const PROTOCOL = {
   replicated: ["Auditor", ...MESSAGING_PROTOCOL.replicated, "AuditGoal"],
   local: {
     ...MESSAGING_PROTOCOL.local,
-    Audited: ["_"],
-    AuditReceipt: ["_", "_"],
-    Finished: ["_"],
+    Covered: ["_"],
   } as Record<string, string[]>,
-  onlyAt: { TrustedSource: "board", AuditReceipt: "board", Finished: "board" } as Record<
-    string,
-    string
-  >,
+  onlyAt: { TrustedSource: "board" } as Record<string, string>,
+  observer: ["Finished"],
   temporary: MESSAGING_PROTOCOL.temporary,
-  transfers: {
-    message: MESSAGING_PROTOCOL.message,
-    audit: {
-      export: "Audited",
-      import: "AuditReceipt",
-      to: "board",
-      requireRole: "Auditor",
-    },
-  },
+  transfers: { message: MESSAGING_PROTOCOL.message },
 } as const;
 
 export function accepts(owner: string, fact: PolicyFact) {
@@ -40,3 +28,18 @@ export function accepts(owner: string, fact: PolicyFact) {
     pattern.every((term, i) => term === "_" || fact.args[i] === (term === "@self" ? owner : term))
   );
 }
+
+/** App-only additions, projected from the executable protocol for display. */
+export const NOVA_PROTOCOL = {
+  replicated: PROTOCOL.replicated.filter(
+    (predicate) => !MESSAGING_PROTOCOL.replicated.some((base) => base === predicate),
+  ),
+  local: Object.fromEntries(
+    Object.entries(PROTOCOL.local).filter(
+      ([predicate]) => !Object.hasOwn(MESSAGING_PROTOCOL.local, predicate),
+    ),
+  ),
+  onlyAt: PROTOCOL.onlyAt,
+  observer: PROTOCOL.observer,
+  transfers: {},
+};

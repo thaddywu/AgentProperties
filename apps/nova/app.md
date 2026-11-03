@@ -8,7 +8,7 @@ Board sends a trusted assignment to each department. Departments send rationale-
 
 Both auditors can review procurement and facility information. HR information requires `hr_review`, initially held by HR and Auditor A. Auditor B initially lacks that capability. Board is exempt from the information-combination limit, but not from capability requirements. Board need not approve individual deliveries; the receive check uses recipient-local information.
 
-Successful delivery of a tagged message to a designated auditor records coverage of that part. This means delivery for review, not a financial judgment. Coverage receipts go to Board without copying the auditor's complete knowledge. Board considers the audit finished once all three configured parts are covered, potentially by different auditors.
+Successful delivery of a tagged message to a designated auditor records coverage of that part. This means delivery for review, not a financial judgment. Covered facts remain derived in each auditor's local store; no audit summary is sent to Board. A read-only global query combines local coverage and reports completion once all three configured parts are covered, potentially by different auditors. Finished is never computed in a principal's local gate or used to authorize delivery. The demo uses the same two designated auditors throughout.
 
 The default demonstration delivers Procurement and Facility to Auditor A, then attempts HR to A. The third delivery is refused. An alternative routes Facility to B, leaving A able to receive HR. These are example schedules, not mandatory workflows. Manual sends and different orders are supported.
 

@@ -22,19 +22,19 @@ store Received(P, M) at P       lifetime durable
 store Incoming(P, M) at P       lifetime pending(M)
 store HasCap(P, C) at P         authority capability_config
 
-eval Knows(P, T) at P
+eval HasReceivedTag(P, T) at P
 eval DenyReceive(P, M) at P     hook receive(M)
 
 on send(S, D, M):
-  export Propagated@S(M, T)
+  export MessageTag@S(M, T)
       as TransportTag@D(M, T)
       lifetime pending(M)
       retain on successful_receive(D, M)
 
 on new_coverage(A, T):
   require Auditor@A(A)
-  export Audited@A(T)
-      as AuditReceipt@Observer(A, T)
+  export Covered@A(T)
+      as Covered@Observer(T)
       for Observer in configured_audit_observers
       lifetime durable_receipt
 ```
@@ -43,9 +43,9 @@ The event `new_coverage` above is a proposed adapter/runtime trigger for newly e
 
 The message export matches the current M, not every message in the sender's history. A rule such as “export `A(P, _)`” can mean selecting matching local tuples, but the plan must still say which columns are retained, who receives them, what predicate they become, when they expire and who may issue them. Projection can remove fields necessary for a later join or for verifying the issuer, so these are semantic obligations rather than formatting choices.
 
-Locations for `TransportTag(M, T)` and `Propagated(M, T)` cannot be guessed from the first argument: M is a message, not a principal. They use the envelope's recipient or the current store context. Similarly, `Audited(T)` can be derived independently at several peers. Only explicitly imported summaries permit a local consumer to use remote evidence.
+Locations for `TransportTag(M, T)` and `MessageTag(M, T)` cannot be guessed from the first argument: M is a message, not a principal. They use the envelope's recipient or the current store context. Similarly, `Covered(T)` can be derived independently at several peers. Only explicitly imported summaries permit a local consumer to use remote evidence.
 
-An export query reads its permitted source store. It is not permission to run a global query. Metadata can itself disclose information: exporting a `Knows` relation, tag list or proof may reveal facts the recipient is not allowed to learn. The plan needs authority/disclosure constraints in addition to Datalog safety and arity checks.
+An export query reads its permitted source store. It is not permission to run a global query. Metadata can itself disclose information: exporting a `HasReceivedTag` relation, tag list or proof may reveal facts the recipient is not allowed to learn. The plan needs authority/disclosure constraints in addition to Datalog safety and arity checks.
 
 ## State machines and inference
 
@@ -84,7 +84,7 @@ Existing work provides context rather than a claim of novelty: [WebdamLog](https
 ## A bounded first experiment
 
 1. Use Nova's hand-reviewed rules and current protocol as a semantic baseline. Specify mandatory observer queries, permitted receipt routes, allowed storage sites and configuration-version semantics.
-2. Enumerate a finite set of choices: local recomputation versus retained derived summaries, permitted config replication subsets, and authorized message/receipt projections. Never offer arbitrary sharing of `Knows` as a valid way to reduce cost.
+2. Enumerate a finite set of choices: local recomputation versus retained derived summaries, permitted config replication subsets, and authorized message/receipt projections. Never offer arbitrary sharing of `HasReceivedTag` as a valid way to reduce cost.
 3. Let translation propose a plan, then statically validate schema, writer, locality, exports and negation-completeness requirements. Evaluate cost and behavior using a deterministic executor/searcher, rather than accepting an LLM assertion that its plan is minimal.
 4. Compare fixed-plan translation, LLM-proposed plans and bounded exhaustive/search-selected plans. Measure false allows/denies, goal/query/provenance agreement, cost, rejected/unsupported plans and synthesis effort. Keep a held-out trace corpus, including delayed configuration, dropped envelopes and interleaved receives.
 5. Report optimality only within the enumerated plan space and checked workload/domain. Passing sampled traces is conformance evidence, not a proof over all apps and all asynchronous executions.
@@ -93,10 +93,12 @@ This separates two questions: whether natural language was translated into the i
 
 ## Current demo changes and copy
 
-The Rules dialog has five views: `Runtime`, `Nova input`, `Translated`, `Golden` and `Prevention`. Runtime shows the builtin predicate schemas, inference rules, protocol placement/transfers and app-supplied configuration values. Nova input shows the exact checked-in Markdown; imported artifacts retain their own exact input snapshot. Translated shows per-policy builtin/extension coverage, generated rules, model identifier and inherited protocol. Golden preserves handwritten app rules and the complete fixed protocol. Prevention runs actual send/settle comparisons in fresh sessions and a separate full-copy diagnostic on the selected snapshot.
+The Rules dialog has five views: `Runtime`, `Nova input`, `Translated`, `Reference` and `Prevention`. Runtime shows the builtin predicate schemas, inference rules, protocol placement/transfers and app-supplied configuration values. Nova input shows the exact checked-in Markdown; imported artifacts retain their own exact input snapshot. Translated shows per-policy builtin/extension coverage, generated rules, model identifier and inherited protocol. Reference preserves handwritten app rules and the complete fixed protocol. Prevention runs actual send/settle comparisons in fresh sessions and a separate full-copy diagnostic on the selected snapshot.
 
-`Start golden session` and `Start translated session` explicitly replace the demo with a new initial session. No hot policy replacement occurs inside an existing history. The active mode and content identity are visible. Failed artifact checks leave the existing session intact. Generated extensions can write DenyReceive, Audited and Finished, but cannot replace the fixed propagation/knowledge rules, write input facts, change trusted configuration or replace the protocol. The versioned artifact is revalidated when restored from a checkpoint; query, Why, What-if, search and replay use the same installed rules.
+`Start reference session` and `Start translated session` explicitly replace the demo with a new initial session. No hot policy replacement occurs inside an existing history. The active mode and content identity are visible. Failed artifact checks leave the existing session intact. Generated extensions can write DenyReceive, Covered and Finished, but cannot replace the fixed propagation/knowledge rules, write input facts, change trusted configuration or replace the protocol. The versioned artifact is revalidated when restored from a checkpoint; query, Why, What-if, search and replay use the same installed rules.
 
-The key copy is “Fixed protocol inherited; protocol synthesis is not implemented.” and “Checks passed; semantic equivalence is unproven.” These distinctions are necessary to avoid presenting fixed protocol reuse as agent-generated deployment or finite tests as proof. “Prevention uses fresh sessions and baseline configuration. Closure comparison uses the selected snapshot.” distinguishes the two experiments. Details and evidence are revealed inside the dialog rather than adding persistent explanations to the main interface. The active Golden/Translated label remains visible because it changes which rules enforce delivery.
+The key copy is “Fixed protocol inherited; protocol synthesis is not implemented.” and “Checks passed; semantic equivalence is unproven.” These distinctions are necessary to avoid presenting fixed protocol reuse as agent-generated deployment or finite tests as proof. “Prevention uses fresh sessions and baseline configuration. Closure comparison uses the selected snapshot.” distinguishes the two experiments. Details and evidence are revealed inside the dialog rather than adding persistent explanations to the main interface. The active Reference/Translated label remains visible because it changes which rules enforce delivery.
 
 The legacy whole-policy one-shot remains available. The new `--nova-extension` experiment provides the fixed foundation and protocol to the model, excludes golden app rules and acceptance cases, and exports a reloadable artifact. It does not synthesize a new protocol or run a minimizer. See the [Nova walkthrough](../apps/nova/README.md).
+
+Current Nova scope: audit-summary transport has been removed. Local closures exclude Finished; the global observer computes only Finished rules on their union. The implemented comparison therefore checks the local union plus observer outputs against full-copy, and checks each pending local gate separately. The stronger placement-optimization question above remains a research target, not a claim that Finished exists at every principal.

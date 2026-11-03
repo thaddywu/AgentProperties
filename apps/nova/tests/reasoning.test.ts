@@ -12,7 +12,7 @@ import {
   why,
 } from "../src/analysis.js";
 import { contains, evaluate, f } from "../src/policy.js";
-import { createEpisode, inputs, NovaRuntime } from "../src/runtime.js";
+import { createEpisode, inputs, NovaRuntime, view } from "../src/runtime.js";
 import { allRecords, putRecord } from "../src/store-records.js";
 
 const q = "DenyReceive(auditor_a, mH)";
@@ -24,7 +24,7 @@ describe("executable Nova policy reasoning", () => {
     const r = createEpisode();
     expect(contains(r.closure("auditor_a").facts, f("DenyReceive", "auditor_a", "mH"))).toBe(true);
     const proof = JSON.stringify(why(r.state, q));
-    for (const name of ["Incoming", "Propagated", "Knows", "Received", "TransportTag"])
+    for (const name of ["Incoming", "MessageTag", "HasReceivedTag", "Received", "TransportTag"])
       expect(proof).toContain(name);
     expect(r.state.events).toHaveLength(11);
     expect(
@@ -36,9 +36,9 @@ describe("executable Nova policy reasoning", () => {
   it("what-if removes both records on a copy and retracts derived facts", () => {
     const r = createEpisode(),
       before = JSON.stringify(r.state);
-    const result = whatIf(r.state, "Receiver(auditor_a, mF). Received(auditor_a, mF).", "", q);
+    const result = whatIf(r.state, "Received(auditor_a, mF).", "", q);
     expect(result.result).toBe(false);
-    expect(result.removed).toContainEqual(f("Knows", "auditor_a", "nova_facility"));
+    expect(result.removed).toContainEqual(f("HasReceivedTag", "auditor_a", "nova_facility"));
     expect(result.removed).toContainEqual(f("DenyReceive", "auditor_a", "mH"));
     expect(JSON.stringify(r.state)).toBe(before);
   });
@@ -94,23 +94,23 @@ describe("executable Nova policy reasoning", () => {
       expect(next.allowed).toBe(true);
       r = next.runtime;
     }
-    expect(contains(r.closure("board").facts, f("Finished", "nova"))).toBe(true);
+    expect(view(r.state).finished).toBe(true);
   });
   it("derivations disappear when source support is removed; derived facts cannot be injected", () => {
     const input = inputs(createEpisode().state).filter(
       (f) => !["TrustedSource", "TransportTag", "AuditReceipt"].includes(f.predicate),
     );
     const result = evaluate(input);
-    for (const name of ["Propagated", "Knows", "DenyReceive", "Audited", "Finished"])
+    for (const name of ["MessageTag", "HasReceivedTag", "DenyReceive", "Covered", "Finished"])
       expect(result.facts.some((f) => f.predicate === name)).toBe(false);
     expect(() => evaluate([...input, f("Finished", "nova")])).toThrow(/read-only/);
-    expect(() => whatIf(new NovaRuntime().state, "", "Knows(auditor_a, nova_hiring).", q)).toThrow(
-      /read-only/,
-    );
+    expect(() =>
+      whatIf(new NovaRuntime().state, "", "HasReceivedTag(auditor_a, nova_hiring).", q),
+    ).toThrow(/read-only/);
   });
-  it("records Sender and Before from execution, and denies without delivering payload or knowledge", () => {
+  it("records Sender and ReceivedBeforeSend from execution, and denies without delivering payload or knowledge", () => {
     const r = createEpisode();
-    expect(inputs(r.state)).toContainEqual(f("Before", "m0", "mH"));
+    expect(inputs(r.state)).toContainEqual(f("ReceivedBeforeSend", "m0", "mH"));
     const before = r.accessible("auditor_a");
     expect(r.settle("mH").allowed).toBe(false);
     expect(r.accessible("auditor_a")).toEqual(before);
@@ -128,12 +128,12 @@ describe("executable Nova policy reasoning", () => {
   });
   it("supports real variable joins, custom recursive query rules, and read-only protected predicates", () => {
     const r = createEpisode();
-    expect(terminalQuery(r.state, "?- Knows(auditor_a, Tag).").rows).toEqual([
+    expect(terminalQuery(r.state, "?- HasReceivedTag(auditor_a, Tag).").rows).toEqual([
       ["nova_procurement"],
       ["nova_facility"],
     ]);
     expect(
-      terminalQuery(r.state, "Reason(M, T) :- Incoming(A, M), Propagated(M, T). ?- Reason(M, T).")
+      terminalQuery(r.state, "Reason(M, T) :- Incoming(A, M), MessageTag(M, T). ?- Reason(M, T).")
         .rows,
     ).toEqual([["mH", "nova_hiring"]]);
     expect(
@@ -169,9 +169,9 @@ describe("executable Nova policy reasoning", () => {
     const r = createEpisode("earlier");
     r.send("auditor_a", "board", "report", "Procurement review");
     expect(r.closure("auditor_a").facts).toContainEqual(
-      f("Propagated", "report", "nova_procurement"),
+      f("MessageTag", "report", "nova_procurement"),
     );
-    expect(r.closure("auditor_a").facts).toContainEqual(f("DependsOn", "report", "mP"));
+    expect(r.closure("auditor_a").facts).toContainEqual(f("MayDependOn", "report", "mP"));
   });
   it("covers multi-label incoming messages and Board exemption with the same Datalog engine", () => {
     const input = [
@@ -191,7 +191,7 @@ describe("executable Nova policy reasoning", () => {
     const r = createEpisode();
     expect(
       allRecords(r.state).some((r) =>
-        ["Knows", "Propagated", "DenyReceive", "Finished"].includes(r.fact.predicate),
+        ["HasReceivedTag", "MessageTag", "DenyReceive", "Finished"].includes(r.fact.predicate),
       ),
     ).toBe(false);
     expect(allRecords(r.state).map((r) => `${r.owner}:${factKey(r.fact)}`).length).toBe(
