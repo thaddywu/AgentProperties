@@ -26,7 +26,9 @@ See [Nova setup and commands](../apps/nova/README.md), [model connections](../tr
 
 `grokbot/infra/` contains active Docker/Compose, sandbox, updater and backup tooling. `grokbot/patches/` contains the pnpm-applied Electron signing dependency fix; neither directory is an archive.
 
-[App → translation → runtime walkthrough](../apps/document-vault/README.md) · [Repository boundaries](repository-structure.md) · [Translation experiments](translation-model-comparison.md) · [Research design](research/main.tex) · [Contributing](../.github/CONTRIBUTING.md) · [Security](../.github/SECURITY.md) · [Apache 2.0 license](LICENSE)
+[App → translation → runtime walkthrough](../apps/document-vault/README.md) · [Repository boundaries](repository-structure.md) · [Translation experiments](translation-model-comparison.md) · [Research design submodule](research/) · [Contributing](../.github/CONTRIBUTING.md) · [Security](../.github/SECURITY.md) · [Apache 2.0 license](LICENSE)
+
+The manuscript lives in the `docs/research` Git submodule. Initialize it with `git submodule update --init --recursive` when working on the paper; access to the paper repository is required. Core application commands do not require it. Edit `docs/research/main.tex`; the root `main.tex` is a local compilation entry point. Commit and push manuscript changes inside the submodule before committing the updated submodule revision in this repository.
 
 [Application porting contract](application-porting-contract.md) defines backend-independent adapters, builtin IFC/capability/FSM mechanisms, policy and execution declarations, and trusted EDB producers. It distinguishes the target design from the current SDK. [Nova's runtime inventory](nova-runtime-contract.md) maps that boundary to Nova predicates and protocol placement.
 

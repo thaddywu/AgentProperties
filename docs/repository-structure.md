@@ -28,10 +28,12 @@ apps/
 runtime/                 Generic action gate, Datalog, queries, provenance and lifecycle
 translation/             One-shot natural-language-to-Datalog research prototype
   output/                Ignored experiments and validated policy bundles
-docs/                    README, LICENSE, repository design and research documents
+docs/                    README, LICENSE and repository design documents
+  research/              Git submodule containing the canonical manuscript, main.tex
+main.tex                 Local compilation entry point for the manuscript submodule
 ```
 
-The repository root contains the five module/documentation directories plus `AGENTS.md` and `CLAUDE.md` for coding-agent instructions. Project files live with their owner:
+The repository root contains the five module/documentation directories, the manuscript compilation entry point, and `AGENTS.md`/`CLAUDE.md` for coding-agent instructions. Project files live with their owner:
 
 | Location | Contents |
 | --- | --- |
@@ -44,7 +46,7 @@ The repository root contains the five module/documentation directories plus `AGE
 
 The host workspace explicitly includes adjacent `../apps/*`, `../runtime` and `../translation` packages. Use `pnpm --dir grokbot ...` from the checkout root. Recursive pnpm build/check commands replace Turbo, which does not support workspace packages outside its root. `repository-command.mjs` keeps repository-wide CLI file paths relative to the checkout while resolving tools from the host installation. Vitest caches also stay under the host installation. Formatting runs separately inside the host, Nova, runtime and translation modules, avoiding local state outside those module roots. Each module points formatting at the Git root and force-ignores private debug state and translation output; see [Biome configuration](https://biomejs.dev/reference/configuration/#vcsroot).
 
-Only `.gitignore`, `.gitattributes` and `.dockerignore` remain as tracked root dotfiles: they govern repository-wide exclusion/line endings and the root Docker build context. `.github/` contains CI, platform screenshots/releases, issue templates and contribution/security guidance. GitHub workflow discovery requires that location. `.agents/` contains coding-assistant skills (`composio`, `pr-watch`); these are development helpers. Application agent specifications live in `apps/*/agents/`. The root `AGENTS.md` holds repository-wide rules; `grokbot/AGENTS.md` adds host/client rules. `CLAUDE.md` imports the root rules. Local private debug state is ignored and is separate from the module layout.
+The tracked root dotfiles `.gitignore`, `.gitattributes`, `.dockerignore` and `.gitmodules` govern repository-wide exclusion/line endings, the root Docker build context and the paper submodule. `.github/` contains CI, platform screenshots/releases, issue templates and contribution/security guidance. GitHub workflow discovery requires that location. `.agents/` contains coding-assistant skills (`composio`, `pr-watch`); these are development helpers. Application agent specifications live in `apps/*/agents/`. The root `AGENTS.md` holds repository-wide rules; `grokbot/AGENTS.md` adds host/client rules. `CLAUDE.md` imports the root rules. Local private debug state is ignored and is separate from the module layout.
 
 The dependency direction is `Grokbot UI → Nova application → policy runtime`. Translation reads an application's Markdown; its optional model adapter comes from Grokbot's existing provider-neutral connection/runtime stack. The generic translation path emits a validated policy bundle which an app explicitly loads through `createPolicySession`. Document Vault runs actual callbacks through that gate and uses the same policy for query/Why/What-if. The legacy whole-policy Nova experiment remains comparison-only. The new Nova extension path supplies the fixed foundation and protocol to the model, compares generated extensions against golden behavior, and exports artifacts that Nova can explicitly install into fresh sessions.
 
@@ -62,7 +64,7 @@ Our application-description interface is app.md, policy.md, tools.md and agents/
 
 Current module READMEs and the design manuscript are the documentation sources. Superseded demo launch guides, archived Relay specifications, upstream marketing/changelog notes and redundant research indexes have been removed; Git history retains earlier versions.
 
-The [application porting contract](application-porting-contract.md) owns the target boundary between policies, optional builtin/FSM configuration, execution protocols and trusted EDB producers. `docs/research/main.tex` is the canonical manuscript. The root `main.tex` is its standalone Overleaf export; regenerate that copy from the canonical source instead of editing both independently. Neither the illustrative contract format nor protected resource FSM execution is implemented by the current version-1 binding.
+The [application porting contract](application-porting-contract.md) owns the target boundary between policies, optional builtin/FSM configuration, execution protocols and trusted EDB producers. The `docs/research` submodule owns the canonical `main.tex` and its build-output ignore rules. The root `main.tex` loads that source for local compilation and contains no separate manuscript copy. Initialize the paper with `git submodule update --init --recursive` when needed; paper-repository access is required, while core application commands remain independent. Commit/push paper changes in the submodule first, then commit the new `docs/research` gitlink in the parent. The parent uses a sibling-relative repository URL so forks must provide access or configure their own paper remote. Neither the illustrative contract format nor protected resource FSM execution is implemented by the current version-1 binding.
 
 ## Rakazo updates
 

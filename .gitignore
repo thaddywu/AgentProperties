@@ -53,13 +53,13 @@ playwright-report-www
 /.rakazo-local/
 /grokbot/infra/compose/docker-compose.local.yml
 
-# Research document build output
-/docs/research/main.aux
-/docs/research/main.fdb_latexmk
-/docs/research/main.fls
-/docs/research/main.log
-/docs/research/main.out
-/docs/research/main.pdf
-/docs/research/main.synctex.gz
+# Local manuscript entry-point build output; the paper submodule owns its ignores.
+/main.aux
+/main.fdb_latexmk
+/main.fls
+/main.log
+/main.out
+/main.pdf
+/main.synctex.gz
 
 dist-nova

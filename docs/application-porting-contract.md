@@ -205,4 +205,4 @@ Negation requires a complete authoritative scope. `not Approval(D, A)` is meanin
 
 This is the system boundary to freeze before expanding the student corpus or claiming broad expressiveness. RQ1 can then separate rule expressibility from missing observations/mechanisms; RQ2 can evaluate translation within a fixed contract; RQ3 can test actual mediated effects and legal task completion.
 
-[Runtime API](../runtime/README.md) · [Nova-specific inventory](nova-runtime-contract.md) · [Pilot evidence](nova-evaluation-pilot.md) · [Manuscript](research/main.tex)
+[Runtime API](../runtime/README.md) · [Nova-specific inventory](nova-runtime-contract.md) · [Pilot evidence](nova-evaluation-pilot.md) · [Manuscript submodule](research/)
