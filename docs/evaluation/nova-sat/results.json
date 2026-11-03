@@ -1,0 +1,5822 @@
+{
+  "format": "nova-bounded-sat-v1",
+  "solver": "logic-solver 2.0.1 / MiniSat, offline isolated child",
+  "seed": 239,
+  "results": [
+    {
+      "artifactId": "5fb554b2d9e6b4e258c0868f2798c7504912c624019febe1e7f9b0cb45d580ea",
+      "artifactHash": "f4d79ef45b6fdc2857b523f7cbd3ad3a9f62c80657d5d1c75a4019a3db6013c0",
+      "comparisons": [
+        {
+          "name": "denial-with-prior-exposure-allowed",
+          "grouping": "fixed",
+          "noPriorExposure": false,
+          "observables": [
+            "DenyReceive"
+          ],
+          "space": {
+            "required": [
+              {
+                "predicate": "Incoming",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "Auditor",
+                "args": [
+                  "auditor_a"
+                ]
+              },
+              {
+                "predicate": "AuditGoal",
+                "args": [
+                  "nova",
+                  "nova_procurement",
+                  "nova_facility",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "Requires",
+                "args": [
+                  "nova_hiring",
+                  "hr_review"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m0"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_procurement",
+                  "nova"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_facility",
+                  "nova"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_hiring",
+                  "nova"
+                ]
+              }
+            ],
+            "optional": [
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_procurement"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_facility"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m3",
+                  "nova_procurement"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m3",
+                  "nova_facility"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m3",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m0",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m1",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m2",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m0",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m1",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m2",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "HasCap",
+                "args": [
+                  "auditor_a",
+                  "hr_review"
+                ]
+              }
+            ],
+            "constraints": []
+          },
+          "sat": {
+            "status": "different",
+            "bounds": {
+              "optionalTuples": 13,
+              "assignments": "8192",
+              "variables": 631,
+              "clauses": 2299,
+              "programs": [
+                {
+                  "groundRules": 68,
+                  "possibleFacts": 52,
+                  "groundingOperations": 33208,
+                  "roundBounds": [
+                    {
+                      "stratum": 0,
+                      "rounds": 25
+                    },
+                    {
+                      "stratum": 1,
+                      "rounds": 1
+                    }
+                  ]
+                },
+                {
+                  "groundRules": 74,
+                  "possibleFacts": 52,
+                  "groundingOperations": 43894,
+                  "roundBounds": [
+                    {
+                      "stratum": 0,
+                      "rounds": 25
+                    },
+                    {
+                      "stratum": 1,
+                      "rounds": 1
+                    }
+                  ]
+                }
+              ],
+              "encodingOperations": 2494
+            },
+            "counterexample": {
+              "inputs": [
+                {
+                  "predicate": "Incoming",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                },
+                {
+                  "predicate": "Auditor",
+                  "args": [
+                    "auditor_a"
+                  ]
+                },
+                {
+                  "predicate": "AuditGoal",
+                  "args": [
+                    "nova",
+                    "nova_procurement",
+                    "nova_facility",
+                    "nova_hiring"
+                  ]
+                },
+                {
+                  "predicate": "Requires",
+                  "args": [
+                    "nova_hiring",
+                    "hr_review"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m0"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m1"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m2"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m1"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m2"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                },
+                {
+                  "predicate": "TagGroup",
+                  "args": [
+                    "nova_procurement",
+                    "nova"
+                  ]
+                },
+                {
+                  "predicate": "TagGroup",
+                  "args": [
+                    "nova_facility",
+                    "nova"
+                  ]
+                },
+                {
+                  "predicate": "TagGroup",
+                  "args": [
+                    "nova_hiring",
+                    "nova"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_procurement"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_facility"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_hiring"
+                  ]
+                }
+              ],
+              "different": true,
+              "reference": [],
+              "translated": [
+                {
+                  "predicate": "DenyReceive",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                }
+              ],
+              "referenceOnly": [],
+              "translatedOnly": [
+                {
+                  "predicate": "DenyReceive",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                }
+              ],
+              "replayVerified": true,
+              "shrink": {
+                "checks": 8,
+                "deletionMinimal": true
+              }
+            }
+          },
+          "nativeReplay": {
+            "reference": [],
+            "translated": [
+              {
+                "predicate": "DenyReceive",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              }
+            ],
+            "passed": true
+          },
+          "testing": {
+            "status": "different",
+            "method": "exhaustive",
+            "seed": 239,
+            "examined": 8,
+            "admitted": 8,
+            "totalAssignments": "8192",
+            "counterexample": {
+              "inputs": [
+                {
+                  "predicate": "Incoming",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                },
+                {
+                  "predicate": "Auditor",
+                  "args": [
+                    "auditor_a"
+                  ]
+                },
+                {
+                  "predicate": "AuditGoal",
+                  "args": [
+                    "nova",
+                    "nova_procurement",
+                    "nova_facility",
+                    "nova_hiring"
+                  ]
+                },
+                {
+                  "predicate": "Requires",
+                  "args": [
+                    "nova_hiring",
+                    "hr_review"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m0"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m1"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m2"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m1"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m2"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                },
+                {
+                  "predicate": "TagGroup",
+                  "args": [
+                    "nova_procurement",
+                    "nova"
+                  ]
+                },
+                {
+                  "predicate": "TagGroup",
+                  "args": [
+                    "nova_facility",
+                    "nova"
+                  ]
+                },
+                {
+                  "predicate": "TagGroup",
+                  "args": [
+                    "nova_hiring",
+                    "nova"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_procurement"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_facility"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_hiring"
+                  ]
+                }
+              ],
+              "different": true,
+              "reference": [],
+              "translated": [
+                {
+                  "predicate": "DenyReceive",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                }
+              ],
+              "referenceOnly": [],
+              "translatedOnly": [
+                {
+                  "predicate": "DenyReceive",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                }
+              ],
+              "replayVerified": true,
+              "shrink": {
+                "checks": 3,
+                "deletionMinimal": true
+              }
+            }
+          }
+        },
+        {
+          "name": "denial-no-prior-exposure",
+          "grouping": "fixed",
+          "noPriorExposure": true,
+          "observables": [
+            "DenyReceive"
+          ],
+          "space": {
+            "required": [
+              {
+                "predicate": "Incoming",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "Auditor",
+                "args": [
+                  "auditor_a"
+                ]
+              },
+              {
+                "predicate": "AuditGoal",
+                "args": [
+                  "nova",
+                  "nova_procurement",
+                  "nova_facility",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "Requires",
+                "args": [
+                  "nova_hiring",
+                  "hr_review"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m0"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_procurement",
+                  "nova"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_facility",
+                  "nova"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_hiring",
+                  "nova"
+                ]
+              }
+            ],
+            "optional": [
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_procurement"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_facility"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m3",
+                  "nova_procurement"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m3",
+                  "nova_facility"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m3",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m0",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m1",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m2",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m0",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m1",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m2",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "HasCap",
+                "args": [
+                  "auditor_a",
+                  "hr_review"
+                ]
+              }
+            ],
+            "constraints": [
+              [
+                {
+                  "fact": {
+                    "predicate": "TransportTag",
+                    "args": [
+                      "m0",
+                      "nova_procurement"
+                    ]
+                  },
+                  "present": false
+                },
+                {
+                  "fact": {
+                    "predicate": "TransportTag",
+                    "args": [
+                      "m0",
+                      "nova_facility"
+                    ]
+                  },
+                  "present": false
+                },
+                {
+                  "fact": {
+                    "predicate": "TransportTag",
+                    "args": [
+                      "m0",
+                      "nova_hiring"
+                    ]
+                  },
+                  "present": false
+                }
+              ]
+            ]
+          },
+          "sat": {
+            "status": "equivalent_within_bound",
+            "bounds": {
+              "optionalTuples": 13,
+              "assignments": "8192",
+              "variables": 631,
+              "clauses": 2300,
+              "programs": [
+                {
+                  "groundRules": 68,
+                  "possibleFacts": 52,
+                  "groundingOperations": 33208,
+                  "roundBounds": [
+                    {
+                      "stratum": 0,
+                      "rounds": 25
+                    },
+                    {
+                      "stratum": 1,
+                      "rounds": 1
+                    }
+                  ]
+                },
+                {
+                  "groundRules": 74,
+                  "possibleFacts": 52,
+                  "groundingOperations": 43894,
+                  "roundBounds": [
+                    {
+                      "stratum": 0,
+                      "rounds": 25
+                    },
+                    {
+                      "stratum": 1,
+                      "rounds": 1
+                    }
+                  ]
+                }
+              ],
+              "encodingOperations": 2494
+            }
+          },
+          "testing": {
+            "status": "equivalent_within_bound",
+            "method": "exhaustive",
+            "seed": 239,
+            "examined": 8192,
+            "admitted": 7168,
+            "complete": true,
+            "totalAssignments": "8192"
+          }
+        },
+        {
+          "name": "completion-variable-grouping",
+          "grouping": "variable",
+          "noPriorExposure": true,
+          "observables": [
+            "Finished"
+          ],
+          "space": {
+            "required": [
+              {
+                "predicate": "Incoming",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "Auditor",
+                "args": [
+                  "auditor_a"
+                ]
+              },
+              {
+                "predicate": "AuditGoal",
+                "args": [
+                  "nova",
+                  "nova_procurement",
+                  "nova_facility",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "Requires",
+                "args": [
+                  "nova_hiring",
+                  "hr_review"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m0"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_procurement",
+                  "nova"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_facility",
+                  "nova"
+                ]
+              }
+            ],
+            "optional": [
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_procurement"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_facility"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m3",
+                  "nova_procurement"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m3",
+                  "nova_facility"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m3",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m0",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m1",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m2",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m0",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m1",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m2",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "HasCap",
+                "args": [
+                  "auditor_a",
+                  "hr_review"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_hiring",
+                  "nova"
+                ]
+              }
+            ],
+            "constraints": [
+              [
+                {
+                  "fact": {
+                    "predicate": "TransportTag",
+                    "args": [
+                      "m0",
+                      "nova_procurement"
+                    ]
+                  },
+                  "present": false
+                },
+                {
+                  "fact": {
+                    "predicate": "TransportTag",
+                    "args": [
+                      "m0",
+                      "nova_facility"
+                    ]
+                  },
+                  "present": false
+                },
+                {
+                  "fact": {
+                    "predicate": "TransportTag",
+                    "args": [
+                      "m0",
+                      "nova_hiring"
+                    ]
+                  },
+                  "present": false
+                },
+                {
+                  "fact": {
+                    "predicate": "TagGroup",
+                    "args": [
+                      "nova_hiring",
+                      "nova"
+                    ]
+                  },
+                  "present": false
+                }
+              ]
+            ]
+          },
+          "sat": {
+            "status": "different",
+            "bounds": {
+              "optionalTuples": 14,
+              "assignments": "16384",
+              "variables": 747,
+              "clauses": 2721,
+              "programs": [
+                {
+                  "groundRules": 68,
+                  "possibleFacts": 52,
+                  "groundingOperations": 33208,
+                  "roundBounds": [
+                    {
+                      "stratum": 0,
+                      "rounds": 25
+                    },
+                    {
+                      "stratum": 1,
+                      "rounds": 1
+                    }
+                  ]
+                },
+                {
+                  "groundRules": 74,
+                  "possibleFacts": 52,
+                  "groundingOperations": 43894,
+                  "roundBounds": [
+                    {
+                      "stratum": 0,
+                      "rounds": 25
+                    },
+                    {
+                      "stratum": 1,
+                      "rounds": 1
+                    }
+                  ]
+                }
+              ],
+              "encodingOperations": 2494
+            },
+            "counterexample": {
+              "inputs": [
+                {
+                  "predicate": "Incoming",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                },
+                {
+                  "predicate": "Auditor",
+                  "args": [
+                    "auditor_a"
+                  ]
+                },
+                {
+                  "predicate": "AuditGoal",
+                  "args": [
+                    "nova",
+                    "nova_procurement",
+                    "nova_facility",
+                    "nova_hiring"
+                  ]
+                },
+                {
+                  "predicate": "Requires",
+                  "args": [
+                    "nova_hiring",
+                    "hr_review"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m0"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m1"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m2"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m1"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m2"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                },
+                {
+                  "predicate": "TagGroup",
+                  "args": [
+                    "nova_procurement",
+                    "nova"
+                  ]
+                },
+                {
+                  "predicate": "TagGroup",
+                  "args": [
+                    "nova_facility",
+                    "nova"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_procurement"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_facility"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_hiring"
+                  ]
+                }
+              ],
+              "different": true,
+              "reference": [
+                {
+                  "predicate": "Finished",
+                  "args": [
+                    "nova"
+                  ]
+                }
+              ],
+              "translated": [],
+              "referenceOnly": [
+                {
+                  "predicate": "Finished",
+                  "args": [
+                    "nova"
+                  ]
+                }
+              ],
+              "translatedOnly": [],
+              "replayVerified": true,
+              "shrink": {
+                "checks": 7,
+                "deletionMinimal": true
+              }
+            }
+          },
+          "nativeReplay": {
+            "reference": [
+              {
+                "predicate": "Finished",
+                "args": [
+                  "nova"
+                ]
+              }
+            ],
+            "translated": [],
+            "passed": true
+          },
+          "testing": {
+            "status": "different",
+            "method": "exhaustive",
+            "seed": 239,
+            "examined": 8,
+            "admitted": 8,
+            "totalAssignments": "16384",
+            "counterexample": {
+              "inputs": [
+                {
+                  "predicate": "Incoming",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                },
+                {
+                  "predicate": "Auditor",
+                  "args": [
+                    "auditor_a"
+                  ]
+                },
+                {
+                  "predicate": "AuditGoal",
+                  "args": [
+                    "nova",
+                    "nova_procurement",
+                    "nova_facility",
+                    "nova_hiring"
+                  ]
+                },
+                {
+                  "predicate": "Requires",
+                  "args": [
+                    "nova_hiring",
+                    "hr_review"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m0"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m1"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m2"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m1"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m2"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                },
+                {
+                  "predicate": "TagGroup",
+                  "args": [
+                    "nova_procurement",
+                    "nova"
+                  ]
+                },
+                {
+                  "predicate": "TagGroup",
+                  "args": [
+                    "nova_facility",
+                    "nova"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_procurement"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_facility"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_hiring"
+                  ]
+                }
+              ],
+              "different": true,
+              "reference": [
+                {
+                  "predicate": "Finished",
+                  "args": [
+                    "nova"
+                  ]
+                }
+              ],
+              "translated": [],
+              "referenceOnly": [
+                {
+                  "predicate": "Finished",
+                  "args": [
+                    "nova"
+                  ]
+                }
+              ],
+              "translatedOnly": [],
+              "replayVerified": true,
+              "shrink": {
+                "checks": 3,
+                "deletionMinimal": true
+              }
+            }
+          }
+        }
+      ],
+      "traces": {
+        "status": "different",
+        "seed": 239,
+        "traces": 16,
+        "steps": 12,
+        "checkedSteps": 120,
+        "rejected": 20,
+        "tracesWithDifference": 8,
+        "counterexamples": [
+          {
+            "trace": 1,
+            "missingGroup": true,
+            "prefix": [
+              {
+                "from": "procurement",
+                "to": "auditor_a",
+                "revokeA": false
+              },
+              {
+                "from": "facility",
+                "to": "auditor_b",
+                "revokeA": false
+              },
+              {
+                "from": "hr",
+                "to": "auditor_a",
+                "revokeA": false
+              }
+            ],
+            "reference": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_hiring\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Finished\",\"nova\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            },
+            "translated": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            }
+          },
+          {
+            "trace": 3,
+            "missingGroup": true,
+            "prefix": [
+              {
+                "from": "procurement",
+                "to": "auditor_a",
+                "revokeA": false
+              },
+              {
+                "from": "facility",
+                "to": "auditor_b",
+                "revokeA": false
+              },
+              {
+                "from": "hr",
+                "to": "auditor_a",
+                "revokeA": false
+              }
+            ],
+            "reference": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_hiring\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Finished\",\"nova\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            },
+            "translated": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            }
+          },
+          {
+            "trace": 5,
+            "missingGroup": true,
+            "prefix": [
+              {
+                "from": "procurement",
+                "to": "auditor_a",
+                "revokeA": false
+              },
+              {
+                "from": "facility",
+                "to": "auditor_b",
+                "revokeA": false
+              },
+              {
+                "from": "hr",
+                "to": "auditor_a",
+                "revokeA": false
+              }
+            ],
+            "reference": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_hiring\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Finished\",\"nova\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            },
+            "translated": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            }
+          },
+          {
+            "trace": 7,
+            "missingGroup": true,
+            "prefix": [
+              {
+                "from": "procurement",
+                "to": "auditor_a",
+                "revokeA": false
+              },
+              {
+                "from": "facility",
+                "to": "auditor_b",
+                "revokeA": false
+              },
+              {
+                "from": "hr",
+                "to": "auditor_a",
+                "revokeA": false
+              }
+            ],
+            "reference": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_hiring\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Finished\",\"nova\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            },
+            "translated": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            }
+          },
+          {
+            "trace": 9,
+            "missingGroup": true,
+            "prefix": [
+              {
+                "from": "procurement",
+                "to": "auditor_a",
+                "revokeA": false
+              },
+              {
+                "from": "facility",
+                "to": "auditor_b",
+                "revokeA": false
+              },
+              {
+                "from": "hr",
+                "to": "auditor_a",
+                "revokeA": false
+              }
+            ],
+            "reference": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_hiring\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Finished\",\"nova\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            },
+            "translated": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            }
+          },
+          {
+            "trace": 11,
+            "missingGroup": true,
+            "prefix": [
+              {
+                "from": "procurement",
+                "to": "auditor_a",
+                "revokeA": false
+              },
+              {
+                "from": "facility",
+                "to": "auditor_b",
+                "revokeA": false
+              },
+              {
+                "from": "hr",
+                "to": "auditor_a",
+                "revokeA": false
+              }
+            ],
+            "reference": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_hiring\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Finished\",\"nova\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            },
+            "translated": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            }
+          },
+          {
+            "trace": 13,
+            "missingGroup": true,
+            "prefix": [
+              {
+                "from": "procurement",
+                "to": "auditor_a",
+                "revokeA": false
+              },
+              {
+                "from": "facility",
+                "to": "auditor_b",
+                "revokeA": false
+              },
+              {
+                "from": "hr",
+                "to": "auditor_a",
+                "revokeA": false
+              }
+            ],
+            "reference": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_hiring\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Finished\",\"nova\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            },
+            "translated": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            }
+          },
+          {
+            "trace": 15,
+            "missingGroup": true,
+            "prefix": [
+              {
+                "from": "procurement",
+                "to": "auditor_a",
+                "revokeA": false
+              },
+              {
+                "from": "facility",
+                "to": "auditor_b",
+                "revokeA": false
+              },
+              {
+                "from": "hr",
+                "to": "auditor_a",
+                "revokeA": false
+              }
+            ],
+            "reference": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_hiring\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Finished\",\"nova\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            },
+            "translated": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            }
+          }
+        ],
+        "scope": "Actual shared-port executions: fixed and missing-hiring-group configurations, legal split prefix, seeded relays/cycles and authoritative grant refresh/revocation. No direct receipt/tag assertion. These traces are exploratory, not exhaustive or held-out."
+      }
+    },
+    {
+      "artifactId": "aa016a81c5bf7f4d4f63a1b4479484bf2821352fa2feef7e7f9b9f0bc2106840",
+      "artifactHash": "803fe51ba88d422c6cf0cf57292633f62e146aa3aead75995effd52b0798646c",
+      "comparisons": [
+        {
+          "name": "denial-with-prior-exposure-allowed",
+          "grouping": "fixed",
+          "noPriorExposure": false,
+          "observables": [
+            "DenyReceive"
+          ],
+          "space": {
+            "required": [
+              {
+                "predicate": "Incoming",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "Auditor",
+                "args": [
+                  "auditor_a"
+                ]
+              },
+              {
+                "predicate": "AuditGoal",
+                "args": [
+                  "nova",
+                  "nova_procurement",
+                  "nova_facility",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "Requires",
+                "args": [
+                  "nova_hiring",
+                  "hr_review"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m0"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_procurement",
+                  "nova"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_facility",
+                  "nova"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_hiring",
+                  "nova"
+                ]
+              }
+            ],
+            "optional": [
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_procurement"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_facility"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m3",
+                  "nova_procurement"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m3",
+                  "nova_facility"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m3",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m0",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m1",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m2",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m0",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m1",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m2",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "HasCap",
+                "args": [
+                  "auditor_a",
+                  "hr_review"
+                ]
+              }
+            ],
+            "constraints": []
+          },
+          "sat": {
+            "status": "different",
+            "bounds": {
+              "optionalTuples": 13,
+              "assignments": "8192",
+              "variables": 631,
+              "clauses": 2299,
+              "programs": [
+                {
+                  "groundRules": 68,
+                  "possibleFacts": 52,
+                  "groundingOperations": 33208,
+                  "roundBounds": [
+                    {
+                      "stratum": 0,
+                      "rounds": 25
+                    },
+                    {
+                      "stratum": 1,
+                      "rounds": 1
+                    }
+                  ]
+                },
+                {
+                  "groundRules": 74,
+                  "possibleFacts": 52,
+                  "groundingOperations": 43894,
+                  "roundBounds": [
+                    {
+                      "stratum": 0,
+                      "rounds": 25
+                    },
+                    {
+                      "stratum": 1,
+                      "rounds": 1
+                    }
+                  ]
+                }
+              ],
+              "encodingOperations": 2494
+            },
+            "counterexample": {
+              "inputs": [
+                {
+                  "predicate": "Incoming",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                },
+                {
+                  "predicate": "Auditor",
+                  "args": [
+                    "auditor_a"
+                  ]
+                },
+                {
+                  "predicate": "AuditGoal",
+                  "args": [
+                    "nova",
+                    "nova_procurement",
+                    "nova_facility",
+                    "nova_hiring"
+                  ]
+                },
+                {
+                  "predicate": "Requires",
+                  "args": [
+                    "nova_hiring",
+                    "hr_review"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m0"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m1"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m2"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m1"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m2"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                },
+                {
+                  "predicate": "TagGroup",
+                  "args": [
+                    "nova_procurement",
+                    "nova"
+                  ]
+                },
+                {
+                  "predicate": "TagGroup",
+                  "args": [
+                    "nova_facility",
+                    "nova"
+                  ]
+                },
+                {
+                  "predicate": "TagGroup",
+                  "args": [
+                    "nova_hiring",
+                    "nova"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_procurement"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_facility"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_hiring"
+                  ]
+                }
+              ],
+              "different": true,
+              "reference": [],
+              "translated": [
+                {
+                  "predicate": "DenyReceive",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                }
+              ],
+              "referenceOnly": [],
+              "translatedOnly": [
+                {
+                  "predicate": "DenyReceive",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                }
+              ],
+              "replayVerified": true,
+              "shrink": {
+                "checks": 8,
+                "deletionMinimal": true
+              }
+            }
+          },
+          "nativeReplay": {
+            "reference": [],
+            "translated": [
+              {
+                "predicate": "DenyReceive",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              }
+            ],
+            "passed": true
+          },
+          "testing": {
+            "status": "different",
+            "method": "exhaustive",
+            "seed": 239,
+            "examined": 8,
+            "admitted": 8,
+            "totalAssignments": "8192",
+            "counterexample": {
+              "inputs": [
+                {
+                  "predicate": "Incoming",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                },
+                {
+                  "predicate": "Auditor",
+                  "args": [
+                    "auditor_a"
+                  ]
+                },
+                {
+                  "predicate": "AuditGoal",
+                  "args": [
+                    "nova",
+                    "nova_procurement",
+                    "nova_facility",
+                    "nova_hiring"
+                  ]
+                },
+                {
+                  "predicate": "Requires",
+                  "args": [
+                    "nova_hiring",
+                    "hr_review"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m0"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m1"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m2"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m1"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m2"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                },
+                {
+                  "predicate": "TagGroup",
+                  "args": [
+                    "nova_procurement",
+                    "nova"
+                  ]
+                },
+                {
+                  "predicate": "TagGroup",
+                  "args": [
+                    "nova_facility",
+                    "nova"
+                  ]
+                },
+                {
+                  "predicate": "TagGroup",
+                  "args": [
+                    "nova_hiring",
+                    "nova"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_procurement"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_facility"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_hiring"
+                  ]
+                }
+              ],
+              "different": true,
+              "reference": [],
+              "translated": [
+                {
+                  "predicate": "DenyReceive",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                }
+              ],
+              "referenceOnly": [],
+              "translatedOnly": [
+                {
+                  "predicate": "DenyReceive",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                }
+              ],
+              "replayVerified": true,
+              "shrink": {
+                "checks": 3,
+                "deletionMinimal": true
+              }
+            }
+          }
+        },
+        {
+          "name": "denial-no-prior-exposure",
+          "grouping": "fixed",
+          "noPriorExposure": true,
+          "observables": [
+            "DenyReceive"
+          ],
+          "space": {
+            "required": [
+              {
+                "predicate": "Incoming",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "Auditor",
+                "args": [
+                  "auditor_a"
+                ]
+              },
+              {
+                "predicate": "AuditGoal",
+                "args": [
+                  "nova",
+                  "nova_procurement",
+                  "nova_facility",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "Requires",
+                "args": [
+                  "nova_hiring",
+                  "hr_review"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m0"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_procurement",
+                  "nova"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_facility",
+                  "nova"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_hiring",
+                  "nova"
+                ]
+              }
+            ],
+            "optional": [
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_procurement"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_facility"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m3",
+                  "nova_procurement"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m3",
+                  "nova_facility"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m3",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m0",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m1",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m2",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m0",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m1",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m2",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "HasCap",
+                "args": [
+                  "auditor_a",
+                  "hr_review"
+                ]
+              }
+            ],
+            "constraints": [
+              [
+                {
+                  "fact": {
+                    "predicate": "TransportTag",
+                    "args": [
+                      "m0",
+                      "nova_procurement"
+                    ]
+                  },
+                  "present": false
+                },
+                {
+                  "fact": {
+                    "predicate": "TransportTag",
+                    "args": [
+                      "m0",
+                      "nova_facility"
+                    ]
+                  },
+                  "present": false
+                },
+                {
+                  "fact": {
+                    "predicate": "TransportTag",
+                    "args": [
+                      "m0",
+                      "nova_hiring"
+                    ]
+                  },
+                  "present": false
+                }
+              ]
+            ]
+          },
+          "sat": {
+            "status": "equivalent_within_bound",
+            "bounds": {
+              "optionalTuples": 13,
+              "assignments": "8192",
+              "variables": 631,
+              "clauses": 2300,
+              "programs": [
+                {
+                  "groundRules": 68,
+                  "possibleFacts": 52,
+                  "groundingOperations": 33208,
+                  "roundBounds": [
+                    {
+                      "stratum": 0,
+                      "rounds": 25
+                    },
+                    {
+                      "stratum": 1,
+                      "rounds": 1
+                    }
+                  ]
+                },
+                {
+                  "groundRules": 74,
+                  "possibleFacts": 52,
+                  "groundingOperations": 43894,
+                  "roundBounds": [
+                    {
+                      "stratum": 0,
+                      "rounds": 25
+                    },
+                    {
+                      "stratum": 1,
+                      "rounds": 1
+                    }
+                  ]
+                }
+              ],
+              "encodingOperations": 2494
+            }
+          },
+          "testing": {
+            "status": "equivalent_within_bound",
+            "method": "exhaustive",
+            "seed": 239,
+            "examined": 8192,
+            "admitted": 7168,
+            "complete": true,
+            "totalAssignments": "8192"
+          }
+        },
+        {
+          "name": "completion-variable-grouping",
+          "grouping": "variable",
+          "noPriorExposure": true,
+          "observables": [
+            "Finished"
+          ],
+          "space": {
+            "required": [
+              {
+                "predicate": "Incoming",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "Auditor",
+                "args": [
+                  "auditor_a"
+                ]
+              },
+              {
+                "predicate": "AuditGoal",
+                "args": [
+                  "nova",
+                  "nova_procurement",
+                  "nova_facility",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "Requires",
+                "args": [
+                  "nova_hiring",
+                  "hr_review"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m0"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_procurement",
+                  "nova"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_facility",
+                  "nova"
+                ]
+              }
+            ],
+            "optional": [
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_procurement"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_facility"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m3",
+                  "nova_procurement"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m3",
+                  "nova_facility"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m3",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m0",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m1",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m2",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m0",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m1",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m2",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "HasCap",
+                "args": [
+                  "auditor_a",
+                  "hr_review"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_hiring",
+                  "nova"
+                ]
+              }
+            ],
+            "constraints": [
+              [
+                {
+                  "fact": {
+                    "predicate": "TransportTag",
+                    "args": [
+                      "m0",
+                      "nova_procurement"
+                    ]
+                  },
+                  "present": false
+                },
+                {
+                  "fact": {
+                    "predicate": "TransportTag",
+                    "args": [
+                      "m0",
+                      "nova_facility"
+                    ]
+                  },
+                  "present": false
+                },
+                {
+                  "fact": {
+                    "predicate": "TransportTag",
+                    "args": [
+                      "m0",
+                      "nova_hiring"
+                    ]
+                  },
+                  "present": false
+                },
+                {
+                  "fact": {
+                    "predicate": "TagGroup",
+                    "args": [
+                      "nova_hiring",
+                      "nova"
+                    ]
+                  },
+                  "present": false
+                }
+              ]
+            ]
+          },
+          "sat": {
+            "status": "different",
+            "bounds": {
+              "optionalTuples": 14,
+              "assignments": "16384",
+              "variables": 747,
+              "clauses": 2721,
+              "programs": [
+                {
+                  "groundRules": 68,
+                  "possibleFacts": 52,
+                  "groundingOperations": 33208,
+                  "roundBounds": [
+                    {
+                      "stratum": 0,
+                      "rounds": 25
+                    },
+                    {
+                      "stratum": 1,
+                      "rounds": 1
+                    }
+                  ]
+                },
+                {
+                  "groundRules": 74,
+                  "possibleFacts": 52,
+                  "groundingOperations": 43894,
+                  "roundBounds": [
+                    {
+                      "stratum": 0,
+                      "rounds": 25
+                    },
+                    {
+                      "stratum": 1,
+                      "rounds": 1
+                    }
+                  ]
+                }
+              ],
+              "encodingOperations": 2494
+            },
+            "counterexample": {
+              "inputs": [
+                {
+                  "predicate": "Incoming",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                },
+                {
+                  "predicate": "Auditor",
+                  "args": [
+                    "auditor_a"
+                  ]
+                },
+                {
+                  "predicate": "AuditGoal",
+                  "args": [
+                    "nova",
+                    "nova_procurement",
+                    "nova_facility",
+                    "nova_hiring"
+                  ]
+                },
+                {
+                  "predicate": "Requires",
+                  "args": [
+                    "nova_hiring",
+                    "hr_review"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m0"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m1"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m2"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m1"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m2"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                },
+                {
+                  "predicate": "TagGroup",
+                  "args": [
+                    "nova_procurement",
+                    "nova"
+                  ]
+                },
+                {
+                  "predicate": "TagGroup",
+                  "args": [
+                    "nova_facility",
+                    "nova"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_procurement"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_facility"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_hiring"
+                  ]
+                }
+              ],
+              "different": true,
+              "reference": [
+                {
+                  "predicate": "Finished",
+                  "args": [
+                    "nova"
+                  ]
+                }
+              ],
+              "translated": [],
+              "referenceOnly": [
+                {
+                  "predicate": "Finished",
+                  "args": [
+                    "nova"
+                  ]
+                }
+              ],
+              "translatedOnly": [],
+              "replayVerified": true,
+              "shrink": {
+                "checks": 7,
+                "deletionMinimal": true
+              }
+            }
+          },
+          "nativeReplay": {
+            "reference": [
+              {
+                "predicate": "Finished",
+                "args": [
+                  "nova"
+                ]
+              }
+            ],
+            "translated": [],
+            "passed": true
+          },
+          "testing": {
+            "status": "different",
+            "method": "exhaustive",
+            "seed": 239,
+            "examined": 8,
+            "admitted": 8,
+            "totalAssignments": "16384",
+            "counterexample": {
+              "inputs": [
+                {
+                  "predicate": "Incoming",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                },
+                {
+                  "predicate": "Auditor",
+                  "args": [
+                    "auditor_a"
+                  ]
+                },
+                {
+                  "predicate": "AuditGoal",
+                  "args": [
+                    "nova",
+                    "nova_procurement",
+                    "nova_facility",
+                    "nova_hiring"
+                  ]
+                },
+                {
+                  "predicate": "Requires",
+                  "args": [
+                    "nova_hiring",
+                    "hr_review"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m0"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m1"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m2"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m1"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m2"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                },
+                {
+                  "predicate": "TagGroup",
+                  "args": [
+                    "nova_procurement",
+                    "nova"
+                  ]
+                },
+                {
+                  "predicate": "TagGroup",
+                  "args": [
+                    "nova_facility",
+                    "nova"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_procurement"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_facility"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_hiring"
+                  ]
+                }
+              ],
+              "different": true,
+              "reference": [
+                {
+                  "predicate": "Finished",
+                  "args": [
+                    "nova"
+                  ]
+                }
+              ],
+              "translated": [],
+              "referenceOnly": [
+                {
+                  "predicate": "Finished",
+                  "args": [
+                    "nova"
+                  ]
+                }
+              ],
+              "translatedOnly": [],
+              "replayVerified": true,
+              "shrink": {
+                "checks": 3,
+                "deletionMinimal": true
+              }
+            }
+          }
+        }
+      ],
+      "traces": {
+        "status": "different",
+        "seed": 239,
+        "traces": 16,
+        "steps": 12,
+        "checkedSteps": 120,
+        "rejected": 20,
+        "tracesWithDifference": 8,
+        "counterexamples": [
+          {
+            "trace": 1,
+            "missingGroup": true,
+            "prefix": [
+              {
+                "from": "procurement",
+                "to": "auditor_a",
+                "revokeA": false
+              },
+              {
+                "from": "facility",
+                "to": "auditor_b",
+                "revokeA": false
+              },
+              {
+                "from": "hr",
+                "to": "auditor_a",
+                "revokeA": false
+              }
+            ],
+            "reference": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_hiring\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Finished\",\"nova\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            },
+            "translated": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            }
+          },
+          {
+            "trace": 3,
+            "missingGroup": true,
+            "prefix": [
+              {
+                "from": "procurement",
+                "to": "auditor_a",
+                "revokeA": false
+              },
+              {
+                "from": "facility",
+                "to": "auditor_b",
+                "revokeA": false
+              },
+              {
+                "from": "hr",
+                "to": "auditor_a",
+                "revokeA": false
+              }
+            ],
+            "reference": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_hiring\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Finished\",\"nova\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            },
+            "translated": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            }
+          },
+          {
+            "trace": 5,
+            "missingGroup": true,
+            "prefix": [
+              {
+                "from": "procurement",
+                "to": "auditor_a",
+                "revokeA": false
+              },
+              {
+                "from": "facility",
+                "to": "auditor_b",
+                "revokeA": false
+              },
+              {
+                "from": "hr",
+                "to": "auditor_a",
+                "revokeA": false
+              }
+            ],
+            "reference": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_hiring\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Finished\",\"nova\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            },
+            "translated": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            }
+          },
+          {
+            "trace": 7,
+            "missingGroup": true,
+            "prefix": [
+              {
+                "from": "procurement",
+                "to": "auditor_a",
+                "revokeA": false
+              },
+              {
+                "from": "facility",
+                "to": "auditor_b",
+                "revokeA": false
+              },
+              {
+                "from": "hr",
+                "to": "auditor_a",
+                "revokeA": false
+              }
+            ],
+            "reference": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_hiring\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Finished\",\"nova\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            },
+            "translated": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            }
+          },
+          {
+            "trace": 9,
+            "missingGroup": true,
+            "prefix": [
+              {
+                "from": "procurement",
+                "to": "auditor_a",
+                "revokeA": false
+              },
+              {
+                "from": "facility",
+                "to": "auditor_b",
+                "revokeA": false
+              },
+              {
+                "from": "hr",
+                "to": "auditor_a",
+                "revokeA": false
+              }
+            ],
+            "reference": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_hiring\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Finished\",\"nova\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            },
+            "translated": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            }
+          },
+          {
+            "trace": 11,
+            "missingGroup": true,
+            "prefix": [
+              {
+                "from": "procurement",
+                "to": "auditor_a",
+                "revokeA": false
+              },
+              {
+                "from": "facility",
+                "to": "auditor_b",
+                "revokeA": false
+              },
+              {
+                "from": "hr",
+                "to": "auditor_a",
+                "revokeA": false
+              }
+            ],
+            "reference": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_hiring\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Finished\",\"nova\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            },
+            "translated": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            }
+          },
+          {
+            "trace": 13,
+            "missingGroup": true,
+            "prefix": [
+              {
+                "from": "procurement",
+                "to": "auditor_a",
+                "revokeA": false
+              },
+              {
+                "from": "facility",
+                "to": "auditor_b",
+                "revokeA": false
+              },
+              {
+                "from": "hr",
+                "to": "auditor_a",
+                "revokeA": false
+              }
+            ],
+            "reference": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_hiring\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Finished\",\"nova\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            },
+            "translated": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            }
+          },
+          {
+            "trace": 15,
+            "missingGroup": true,
+            "prefix": [
+              {
+                "from": "procurement",
+                "to": "auditor_a",
+                "revokeA": false
+              },
+              {
+                "from": "facility",
+                "to": "auditor_b",
+                "revokeA": false
+              },
+              {
+                "from": "hr",
+                "to": "auditor_a",
+                "revokeA": false
+              }
+            ],
+            "reference": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_hiring\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Finished\",\"nova\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            },
+            "translated": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            }
+          }
+        ],
+        "scope": "Actual shared-port executions: fixed and missing-hiring-group configurations, legal split prefix, seeded relays/cycles and authoritative grant refresh/revocation. No direct receipt/tag assertion. These traces are exploratory, not exhaustive or held-out."
+      }
+    },
+    {
+      "artifactId": "85331eaba7a889c97d3cd6c7ed569c579444b1d185b2ecfbe401164b7d4d8c87",
+      "artifactHash": "cac2e393a3d634b389f8744d9be518a72ee1f05263f4f0d3d61d6807ac9f0544",
+      "comparisons": [
+        {
+          "name": "denial-with-prior-exposure-allowed",
+          "grouping": "fixed",
+          "noPriorExposure": false,
+          "observables": [
+            "DenyReceive"
+          ],
+          "space": {
+            "required": [
+              {
+                "predicate": "Incoming",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "Auditor",
+                "args": [
+                  "auditor_a"
+                ]
+              },
+              {
+                "predicate": "AuditGoal",
+                "args": [
+                  "nova",
+                  "nova_procurement",
+                  "nova_facility",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "Requires",
+                "args": [
+                  "nova_hiring",
+                  "hr_review"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m0"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_procurement",
+                  "nova"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_facility",
+                  "nova"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_hiring",
+                  "nova"
+                ]
+              }
+            ],
+            "optional": [
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_procurement"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_facility"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m3",
+                  "nova_procurement"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m3",
+                  "nova_facility"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m3",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m0",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m1",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m2",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m0",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m1",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m2",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "HasCap",
+                "args": [
+                  "auditor_a",
+                  "hr_review"
+                ]
+              }
+            ],
+            "constraints": []
+          },
+          "sat": {
+            "status": "different",
+            "bounds": {
+              "optionalTuples": 13,
+              "assignments": "8192",
+              "variables": 631,
+              "clauses": 2299,
+              "programs": [
+                {
+                  "groundRules": 68,
+                  "possibleFacts": 52,
+                  "groundingOperations": 33208,
+                  "roundBounds": [
+                    {
+                      "stratum": 0,
+                      "rounds": 25
+                    },
+                    {
+                      "stratum": 1,
+                      "rounds": 1
+                    }
+                  ]
+                },
+                {
+                  "groundRules": 74,
+                  "possibleFacts": 52,
+                  "groundingOperations": 43894,
+                  "roundBounds": [
+                    {
+                      "stratum": 0,
+                      "rounds": 25
+                    },
+                    {
+                      "stratum": 1,
+                      "rounds": 1
+                    }
+                  ]
+                }
+              ],
+              "encodingOperations": 2494
+            },
+            "counterexample": {
+              "inputs": [
+                {
+                  "predicate": "Incoming",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                },
+                {
+                  "predicate": "Auditor",
+                  "args": [
+                    "auditor_a"
+                  ]
+                },
+                {
+                  "predicate": "AuditGoal",
+                  "args": [
+                    "nova",
+                    "nova_procurement",
+                    "nova_facility",
+                    "nova_hiring"
+                  ]
+                },
+                {
+                  "predicate": "Requires",
+                  "args": [
+                    "nova_hiring",
+                    "hr_review"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m0"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m1"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m2"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m1"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m2"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                },
+                {
+                  "predicate": "TagGroup",
+                  "args": [
+                    "nova_procurement",
+                    "nova"
+                  ]
+                },
+                {
+                  "predicate": "TagGroup",
+                  "args": [
+                    "nova_facility",
+                    "nova"
+                  ]
+                },
+                {
+                  "predicate": "TagGroup",
+                  "args": [
+                    "nova_hiring",
+                    "nova"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_procurement"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_facility"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_hiring"
+                  ]
+                }
+              ],
+              "different": true,
+              "reference": [],
+              "translated": [
+                {
+                  "predicate": "DenyReceive",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                }
+              ],
+              "referenceOnly": [],
+              "translatedOnly": [
+                {
+                  "predicate": "DenyReceive",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                }
+              ],
+              "replayVerified": true,
+              "shrink": {
+                "checks": 8,
+                "deletionMinimal": true
+              }
+            }
+          },
+          "nativeReplay": {
+            "reference": [],
+            "translated": [
+              {
+                "predicate": "DenyReceive",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              }
+            ],
+            "passed": true
+          },
+          "testing": {
+            "status": "different",
+            "method": "exhaustive",
+            "seed": 239,
+            "examined": 8,
+            "admitted": 8,
+            "totalAssignments": "8192",
+            "counterexample": {
+              "inputs": [
+                {
+                  "predicate": "Incoming",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                },
+                {
+                  "predicate": "Auditor",
+                  "args": [
+                    "auditor_a"
+                  ]
+                },
+                {
+                  "predicate": "AuditGoal",
+                  "args": [
+                    "nova",
+                    "nova_procurement",
+                    "nova_facility",
+                    "nova_hiring"
+                  ]
+                },
+                {
+                  "predicate": "Requires",
+                  "args": [
+                    "nova_hiring",
+                    "hr_review"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m0"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m1"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m2"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m1"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m2"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                },
+                {
+                  "predicate": "TagGroup",
+                  "args": [
+                    "nova_procurement",
+                    "nova"
+                  ]
+                },
+                {
+                  "predicate": "TagGroup",
+                  "args": [
+                    "nova_facility",
+                    "nova"
+                  ]
+                },
+                {
+                  "predicate": "TagGroup",
+                  "args": [
+                    "nova_hiring",
+                    "nova"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_procurement"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_facility"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_hiring"
+                  ]
+                }
+              ],
+              "different": true,
+              "reference": [],
+              "translated": [
+                {
+                  "predicate": "DenyReceive",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                }
+              ],
+              "referenceOnly": [],
+              "translatedOnly": [
+                {
+                  "predicate": "DenyReceive",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                }
+              ],
+              "replayVerified": true,
+              "shrink": {
+                "checks": 3,
+                "deletionMinimal": true
+              }
+            }
+          }
+        },
+        {
+          "name": "denial-no-prior-exposure",
+          "grouping": "fixed",
+          "noPriorExposure": true,
+          "observables": [
+            "DenyReceive"
+          ],
+          "space": {
+            "required": [
+              {
+                "predicate": "Incoming",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "Auditor",
+                "args": [
+                  "auditor_a"
+                ]
+              },
+              {
+                "predicate": "AuditGoal",
+                "args": [
+                  "nova",
+                  "nova_procurement",
+                  "nova_facility",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "Requires",
+                "args": [
+                  "nova_hiring",
+                  "hr_review"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m0"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_procurement",
+                  "nova"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_facility",
+                  "nova"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_hiring",
+                  "nova"
+                ]
+              }
+            ],
+            "optional": [
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_procurement"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_facility"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m3",
+                  "nova_procurement"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m3",
+                  "nova_facility"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m3",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m0",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m1",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m2",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m0",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m1",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m2",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "HasCap",
+                "args": [
+                  "auditor_a",
+                  "hr_review"
+                ]
+              }
+            ],
+            "constraints": [
+              [
+                {
+                  "fact": {
+                    "predicate": "TransportTag",
+                    "args": [
+                      "m0",
+                      "nova_procurement"
+                    ]
+                  },
+                  "present": false
+                },
+                {
+                  "fact": {
+                    "predicate": "TransportTag",
+                    "args": [
+                      "m0",
+                      "nova_facility"
+                    ]
+                  },
+                  "present": false
+                },
+                {
+                  "fact": {
+                    "predicate": "TransportTag",
+                    "args": [
+                      "m0",
+                      "nova_hiring"
+                    ]
+                  },
+                  "present": false
+                }
+              ]
+            ]
+          },
+          "sat": {
+            "status": "equivalent_within_bound",
+            "bounds": {
+              "optionalTuples": 13,
+              "assignments": "8192",
+              "variables": 631,
+              "clauses": 2300,
+              "programs": [
+                {
+                  "groundRules": 68,
+                  "possibleFacts": 52,
+                  "groundingOperations": 33208,
+                  "roundBounds": [
+                    {
+                      "stratum": 0,
+                      "rounds": 25
+                    },
+                    {
+                      "stratum": 1,
+                      "rounds": 1
+                    }
+                  ]
+                },
+                {
+                  "groundRules": 74,
+                  "possibleFacts": 52,
+                  "groundingOperations": 43894,
+                  "roundBounds": [
+                    {
+                      "stratum": 0,
+                      "rounds": 25
+                    },
+                    {
+                      "stratum": 1,
+                      "rounds": 1
+                    }
+                  ]
+                }
+              ],
+              "encodingOperations": 2494
+            }
+          },
+          "testing": {
+            "status": "equivalent_within_bound",
+            "method": "exhaustive",
+            "seed": 239,
+            "examined": 8192,
+            "admitted": 7168,
+            "complete": true,
+            "totalAssignments": "8192"
+          }
+        },
+        {
+          "name": "completion-variable-grouping",
+          "grouping": "variable",
+          "noPriorExposure": true,
+          "observables": [
+            "Finished"
+          ],
+          "space": {
+            "required": [
+              {
+                "predicate": "Incoming",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "Auditor",
+                "args": [
+                  "auditor_a"
+                ]
+              },
+              {
+                "predicate": "AuditGoal",
+                "args": [
+                  "nova",
+                  "nova_procurement",
+                  "nova_facility",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "Requires",
+                "args": [
+                  "nova_hiring",
+                  "hr_review"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m0"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Received",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "Sender",
+                "args": [
+                  "auditor_a",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_procurement",
+                  "nova"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_facility",
+                  "nova"
+                ]
+              }
+            ],
+            "optional": [
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_procurement"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_facility"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m0",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m3",
+                  "nova_procurement"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m3",
+                  "nova_facility"
+                ]
+              },
+              {
+                "predicate": "TransportTag",
+                "args": [
+                  "m3",
+                  "nova_hiring"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m0",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m1",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m2",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m0",
+                  "m2"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m1",
+                  "m3"
+                ]
+              },
+              {
+                "predicate": "ReceivedBeforeSend",
+                "args": [
+                  "m2",
+                  "m1"
+                ]
+              },
+              {
+                "predicate": "HasCap",
+                "args": [
+                  "auditor_a",
+                  "hr_review"
+                ]
+              },
+              {
+                "predicate": "TagGroup",
+                "args": [
+                  "nova_hiring",
+                  "nova"
+                ]
+              }
+            ],
+            "constraints": [
+              [
+                {
+                  "fact": {
+                    "predicate": "TransportTag",
+                    "args": [
+                      "m0",
+                      "nova_procurement"
+                    ]
+                  },
+                  "present": false
+                },
+                {
+                  "fact": {
+                    "predicate": "TransportTag",
+                    "args": [
+                      "m0",
+                      "nova_facility"
+                    ]
+                  },
+                  "present": false
+                },
+                {
+                  "fact": {
+                    "predicate": "TransportTag",
+                    "args": [
+                      "m0",
+                      "nova_hiring"
+                    ]
+                  },
+                  "present": false
+                },
+                {
+                  "fact": {
+                    "predicate": "TagGroup",
+                    "args": [
+                      "nova_hiring",
+                      "nova"
+                    ]
+                  },
+                  "present": false
+                }
+              ]
+            ]
+          },
+          "sat": {
+            "status": "different",
+            "bounds": {
+              "optionalTuples": 14,
+              "assignments": "16384",
+              "variables": 747,
+              "clauses": 2721,
+              "programs": [
+                {
+                  "groundRules": 68,
+                  "possibleFacts": 52,
+                  "groundingOperations": 33208,
+                  "roundBounds": [
+                    {
+                      "stratum": 0,
+                      "rounds": 25
+                    },
+                    {
+                      "stratum": 1,
+                      "rounds": 1
+                    }
+                  ]
+                },
+                {
+                  "groundRules": 74,
+                  "possibleFacts": 52,
+                  "groundingOperations": 43894,
+                  "roundBounds": [
+                    {
+                      "stratum": 0,
+                      "rounds": 25
+                    },
+                    {
+                      "stratum": 1,
+                      "rounds": 1
+                    }
+                  ]
+                }
+              ],
+              "encodingOperations": 2494
+            },
+            "counterexample": {
+              "inputs": [
+                {
+                  "predicate": "Incoming",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                },
+                {
+                  "predicate": "Auditor",
+                  "args": [
+                    "auditor_a"
+                  ]
+                },
+                {
+                  "predicate": "AuditGoal",
+                  "args": [
+                    "nova",
+                    "nova_procurement",
+                    "nova_facility",
+                    "nova_hiring"
+                  ]
+                },
+                {
+                  "predicate": "Requires",
+                  "args": [
+                    "nova_hiring",
+                    "hr_review"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m0"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m1"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m2"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m1"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m2"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                },
+                {
+                  "predicate": "TagGroup",
+                  "args": [
+                    "nova_procurement",
+                    "nova"
+                  ]
+                },
+                {
+                  "predicate": "TagGroup",
+                  "args": [
+                    "nova_facility",
+                    "nova"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_procurement"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_facility"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_hiring"
+                  ]
+                }
+              ],
+              "different": true,
+              "reference": [
+                {
+                  "predicate": "Finished",
+                  "args": [
+                    "nova"
+                  ]
+                }
+              ],
+              "translated": [],
+              "referenceOnly": [
+                {
+                  "predicate": "Finished",
+                  "args": [
+                    "nova"
+                  ]
+                }
+              ],
+              "translatedOnly": [],
+              "replayVerified": true,
+              "shrink": {
+                "checks": 7,
+                "deletionMinimal": true
+              }
+            }
+          },
+          "nativeReplay": {
+            "reference": [
+              {
+                "predicate": "Finished",
+                "args": [
+                  "nova"
+                ]
+              }
+            ],
+            "translated": [],
+            "passed": true
+          },
+          "testing": {
+            "status": "different",
+            "method": "exhaustive",
+            "seed": 239,
+            "examined": 8,
+            "admitted": 8,
+            "totalAssignments": "16384",
+            "counterexample": {
+              "inputs": [
+                {
+                  "predicate": "Incoming",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                },
+                {
+                  "predicate": "Auditor",
+                  "args": [
+                    "auditor_a"
+                  ]
+                },
+                {
+                  "predicate": "AuditGoal",
+                  "args": [
+                    "nova",
+                    "nova_procurement",
+                    "nova_facility",
+                    "nova_hiring"
+                  ]
+                },
+                {
+                  "predicate": "Requires",
+                  "args": [
+                    "nova_hiring",
+                    "hr_review"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m0"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m1"
+                  ]
+                },
+                {
+                  "predicate": "Received",
+                  "args": [
+                    "auditor_a",
+                    "m2"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m1"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m2"
+                  ]
+                },
+                {
+                  "predicate": "Sender",
+                  "args": [
+                    "auditor_a",
+                    "m3"
+                  ]
+                },
+                {
+                  "predicate": "TagGroup",
+                  "args": [
+                    "nova_procurement",
+                    "nova"
+                  ]
+                },
+                {
+                  "predicate": "TagGroup",
+                  "args": [
+                    "nova_facility",
+                    "nova"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_procurement"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_facility"
+                  ]
+                },
+                {
+                  "predicate": "TransportTag",
+                  "args": [
+                    "m0",
+                    "nova_hiring"
+                  ]
+                }
+              ],
+              "different": true,
+              "reference": [
+                {
+                  "predicate": "Finished",
+                  "args": [
+                    "nova"
+                  ]
+                }
+              ],
+              "translated": [],
+              "referenceOnly": [
+                {
+                  "predicate": "Finished",
+                  "args": [
+                    "nova"
+                  ]
+                }
+              ],
+              "translatedOnly": [],
+              "replayVerified": true,
+              "shrink": {
+                "checks": 3,
+                "deletionMinimal": true
+              }
+            }
+          }
+        }
+      ],
+      "traces": {
+        "status": "different",
+        "seed": 239,
+        "traces": 16,
+        "steps": 12,
+        "checkedSteps": 120,
+        "rejected": 20,
+        "tracesWithDifference": 8,
+        "counterexamples": [
+          {
+            "trace": 1,
+            "missingGroup": true,
+            "prefix": [
+              {
+                "from": "procurement",
+                "to": "auditor_a",
+                "revokeA": false
+              },
+              {
+                "from": "facility",
+                "to": "auditor_b",
+                "revokeA": false
+              },
+              {
+                "from": "hr",
+                "to": "auditor_a",
+                "revokeA": false
+              }
+            ],
+            "reference": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_hiring\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Finished\",\"nova\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            },
+            "translated": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            }
+          },
+          {
+            "trace": 3,
+            "missingGroup": true,
+            "prefix": [
+              {
+                "from": "procurement",
+                "to": "auditor_a",
+                "revokeA": false
+              },
+              {
+                "from": "facility",
+                "to": "auditor_b",
+                "revokeA": false
+              },
+              {
+                "from": "hr",
+                "to": "auditor_a",
+                "revokeA": false
+              }
+            ],
+            "reference": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_hiring\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Finished\",\"nova\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            },
+            "translated": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            }
+          },
+          {
+            "trace": 5,
+            "missingGroup": true,
+            "prefix": [
+              {
+                "from": "procurement",
+                "to": "auditor_a",
+                "revokeA": false
+              },
+              {
+                "from": "facility",
+                "to": "auditor_b",
+                "revokeA": false
+              },
+              {
+                "from": "hr",
+                "to": "auditor_a",
+                "revokeA": false
+              }
+            ],
+            "reference": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_hiring\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Finished\",\"nova\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            },
+            "translated": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            }
+          },
+          {
+            "trace": 7,
+            "missingGroup": true,
+            "prefix": [
+              {
+                "from": "procurement",
+                "to": "auditor_a",
+                "revokeA": false
+              },
+              {
+                "from": "facility",
+                "to": "auditor_b",
+                "revokeA": false
+              },
+              {
+                "from": "hr",
+                "to": "auditor_a",
+                "revokeA": false
+              }
+            ],
+            "reference": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_hiring\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Finished\",\"nova\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            },
+            "translated": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            }
+          },
+          {
+            "trace": 9,
+            "missingGroup": true,
+            "prefix": [
+              {
+                "from": "procurement",
+                "to": "auditor_a",
+                "revokeA": false
+              },
+              {
+                "from": "facility",
+                "to": "auditor_b",
+                "revokeA": false
+              },
+              {
+                "from": "hr",
+                "to": "auditor_a",
+                "revokeA": false
+              }
+            ],
+            "reference": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_hiring\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Finished\",\"nova\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            },
+            "translated": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            }
+          },
+          {
+            "trace": 11,
+            "missingGroup": true,
+            "prefix": [
+              {
+                "from": "procurement",
+                "to": "auditor_a",
+                "revokeA": false
+              },
+              {
+                "from": "facility",
+                "to": "auditor_b",
+                "revokeA": false
+              },
+              {
+                "from": "hr",
+                "to": "auditor_a",
+                "revokeA": false
+              }
+            ],
+            "reference": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_hiring\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Finished\",\"nova\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            },
+            "translated": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            }
+          },
+          {
+            "trace": 13,
+            "missingGroup": true,
+            "prefix": [
+              {
+                "from": "procurement",
+                "to": "auditor_a",
+                "revokeA": false
+              },
+              {
+                "from": "facility",
+                "to": "auditor_b",
+                "revokeA": false
+              },
+              {
+                "from": "hr",
+                "to": "auditor_a",
+                "revokeA": false
+              }
+            ],
+            "reference": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_hiring\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Finished\",\"nova\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            },
+            "translated": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            }
+          },
+          {
+            "trace": 15,
+            "missingGroup": true,
+            "prefix": [
+              {
+                "from": "procurement",
+                "to": "auditor_a",
+                "revokeA": false
+              },
+              {
+                "from": "facility",
+                "to": "auditor_b",
+                "revokeA": false
+              },
+              {
+                "from": "hr",
+                "to": "auditor_a",
+                "revokeA": false
+              }
+            ],
+            "reference": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_hiring\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Finished\",\"nova\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            },
+            "translated": {
+              "allowed": true,
+              "released": [
+                "source0",
+                "source1",
+                "source2",
+                "m0",
+                "m1",
+                "m2"
+              ],
+              "facts": [
+                "[\"Covered\",\"nova_facility\"]",
+                "[\"Covered\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_hiring\"]",
+                "[\"Knows\",\"auditor_a\",\"nova_procurement\"]",
+                "[\"Knows\",\"auditor_b\",\"nova_facility\"]",
+                "[\"Knows\",\"facility\",\"nova_facility\"]",
+                "[\"Knows\",\"hr\",\"nova_hiring\"]",
+                "[\"Knows\",\"procurement\",\"nova_procurement\"]"
+              ]
+            }
+          }
+        ],
+        "scope": "Actual shared-port executions: fixed and missing-hiring-group configurations, legal split prefix, seeded relays/cycles and authoritative grant refresh/revocation. No direct receipt/tag assertion. These traces are exploratory, not exhaustive or held-out."
+      }
+    }
+  ],
+  "scope": "SAT quantifies over all subsets of the declared optional EDB catalog satisfying explicit constraints; all other EDB tuples are absent. Full recursive stratified programs are used, not a UCQ approximation. UNSAT is bounded equality, not all-domain or all-trace equivalence. Every SAT witness is replayed and deletion-shrunk in the TypeScript evaluator; --native adds a Souffle cross-check. Testing and reachable trace checks remain separate."
+}

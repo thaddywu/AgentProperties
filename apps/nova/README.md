@@ -114,3 +114,5 @@ Use a new output directory. The trial enumerates bounded fact/rule placements ov
 This is an offline integration/placement experiment with synthetic data. It does not measure production latency or prove correctness for all asynchronous executions. See [the port contract](../../docs/application-porting-contract.md#8-implemented-interfaces-and-primitive-vocabulary) for trusted EDB producers, recovery and the optional Grokbot adapter's required host hooks.
 
 The [three-RQ lab](evaluation/README.md#three-rq-lab-observable-equality-and-measured-model-usage) adds exact positive-UCQ fragment comparisons, recursive EDB tests and an optional real routing-model experiment with measured token usage.
+
+[Bounded SAT and testing](evaluation/README.md#bounded-sat-and-configurable-testing) now check full recursive Nova rules, export CNF/counterexamples, exhaust or sample declared EDB combinations, and run seeded port traces.

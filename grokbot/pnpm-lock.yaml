@@ -64,6 +64,9 @@ importers:
       '@types/node':
         specifier: 24.13.3
         version: 24.13.3
+      logic-solver:
+        specifier: 2.0.1
+        version: 2.0.1
       typescript:
         specifier: 7.0.2
         version: 7.0.2
@@ -1017,6 +1020,12 @@ importers:
 
 
 packages:
+  logic-solver@2.0.1:
+    resolution: {integrity: sha512-F1oCywXUzvAF4Z98mMyXySUCpUU3hNyc+JfYV3g2x/4BupC/xv94iPJuHh9us2XX5UrvY5lnKUXNvjcJNQBJ/g==}
+
+  underscore@1.13.8:
+    resolution: {integrity: sha512-DXtD3ZtEQzc7M8m4cXotyHR+FAS18C64asBYY5vqZexfYryNNnDc02W4hKg3rdQuqOYas1jkseX0+nZXjTXnvQ==}
+
 
   '@anthropic-ai/sdk@0.123.0':
     resolution: {integrity: sha512-Y9oX9mPNGZClHQOFqrWRk43Srcu/UHuPq3rfxxOq7JgW0gi+lJA2MAOK4Ul3k/+AUrwRWFJvd0tK3oC0Pw25dw==}
@@ -10072,6 +10081,12 @@ packages:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
 
 snapshots:
+  logic-solver@2.0.1:
+    dependencies:
+      underscore: 1.13.8
+
+  underscore@1.13.8: {}
+
 
   '@anthropic-ai/sdk@0.123.0(zod@4.6.2)':
     dependencies:

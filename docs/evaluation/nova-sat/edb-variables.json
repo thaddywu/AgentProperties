@@ -1,0 +1,132 @@
+[
+  {
+    "fact": {
+      "predicate": "TransportTag",
+      "args": [
+        "m0",
+        "nova_procurement"
+      ]
+    },
+    "variable": 2
+  },
+  {
+    "fact": {
+      "predicate": "TransportTag",
+      "args": [
+        "m0",
+        "nova_facility"
+      ]
+    },
+    "variable": 3
+  },
+  {
+    "fact": {
+      "predicate": "TransportTag",
+      "args": [
+        "m0",
+        "nova_hiring"
+      ]
+    },
+    "variable": 4
+  },
+  {
+    "fact": {
+      "predicate": "TransportTag",
+      "args": [
+        "m3",
+        "nova_procurement"
+      ]
+    },
+    "variable": 5
+  },
+  {
+    "fact": {
+      "predicate": "TransportTag",
+      "args": [
+        "m3",
+        "nova_facility"
+      ]
+    },
+    "variable": 6
+  },
+  {
+    "fact": {
+      "predicate": "TransportTag",
+      "args": [
+        "m3",
+        "nova_hiring"
+      ]
+    },
+    "variable": 7
+  },
+  {
+    "fact": {
+      "predicate": "ReceivedBeforeSend",
+      "args": [
+        "m0",
+        "m1"
+      ]
+    },
+    "variable": 8
+  },
+  {
+    "fact": {
+      "predicate": "ReceivedBeforeSend",
+      "args": [
+        "m1",
+        "m2"
+      ]
+    },
+    "variable": 9
+  },
+  {
+    "fact": {
+      "predicate": "ReceivedBeforeSend",
+      "args": [
+        "m2",
+        "m3"
+      ]
+    },
+    "variable": 10
+  },
+  {
+    "fact": {
+      "predicate": "ReceivedBeforeSend",
+      "args": [
+        "m0",
+        "m2"
+      ]
+    },
+    "variable": 11
+  },
+  {
+    "fact": {
+      "predicate": "ReceivedBeforeSend",
+      "args": [
+        "m1",
+        "m3"
+      ]
+    },
+    "variable": 12
+  },
+  {
+    "fact": {
+      "predicate": "ReceivedBeforeSend",
+      "args": [
+        "m2",
+        "m1"
+      ]
+    },
+    "variable": 13
+  },
+  {
+    "fact": {
+      "predicate": "HasCap",
+      "args": [
+        "auditor_a",
+        "hr_review"
+      ]
+    },
+    "variable": 14
+  }
+]

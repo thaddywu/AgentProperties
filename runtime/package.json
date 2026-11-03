@@ -11,6 +11,8 @@
     "./lifecycle": "./src/lifecycle.ts",
     "./application": "./src/application.ts",
     "./binding": "./src/binding.ts",
+    "./bounded-equivalence": "./src/bounded-equivalence.ts",
+    "./finite-domain": "./src/finite-domain.ts",
     "./messaging-policy": "./src/messaging-policy.ts",
     "./messaging-protocol": "./src/messaging-protocol.ts",
     "./primitives": "./src/primitives.ts",

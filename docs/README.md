@@ -37,3 +37,5 @@ The manuscript lives in the `docs/research` Git submodule. Initialize it with `g
 [Nova evaluation pilot](nova-evaluation-pilot.md) records independent porting experiments and initial evidence for expressiveness, translation accuracy and end-to-end safety/task completion, with offline replay and explicit study limits.
 
 [Three-RQ lab](../apps/nova/evaluation/README.md#three-rq-lab-observable-equality-and-measured-model-usage) provides exact positive-UCQ fragment checks, recursive observable comparisons, and a small real routing-model experiment with provider-reported token counts. The manuscript has a separate Evaluation Plan section.
+
+[Bounded SAT and configurable testing](../apps/nova/evaluation/README.md#bounded-sat-and-configurable-testing) now compare full stratified recursive programs over explicit finite input catalogs, with replayable counterexamples, seeded/exhaustive EDB tests and real port traces.

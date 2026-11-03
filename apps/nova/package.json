@@ -18,10 +18,11 @@
     "@rakazo/policy-runtime": "workspace:*"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.13",
     "@types/node": "24.13.3",
-    "typescript": "7.0.2",
-    "vitest": "4.1.11",
+    "logic-solver": "2.0.1",
     "tsx": "4.23.13",
-    "@biomejs/biome": "2.5.13"
+    "typescript": "7.0.2",
+    "vitest": "4.1.11"
   }
 }

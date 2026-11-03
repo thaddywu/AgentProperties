@@ -124,7 +124,7 @@ Covered(T) :- Auditor(P), Received(P, M), MessageTag(M, T), TagGroup(T, G).
 
 论文现有独立的 Evaluation Plan 一节。RQ1 以人工分析为主，逐条说明 policy、需要的事实来源、执行 hook 和机制，区分语言限制与缺失 adapter；正式 corpus 由两人独立标注。RQ2 假定有审阅过的 reference，只要求预先指定的输出相等，例如 `DenyReceive`；completion 另测。必须写清楚比较所有 schema-valid EDB，还是满足应用前提的 EDB。RQ3 对同一任务比较关闭 enforcement、reference enforcement、translated enforcement，分别计违规、完成、安全完成、错误拒绝，以及真实模型 input/output tokens 和重试成本。
 
-新 [lab 命令与方法](../apps/nova/evaluation/README.md#three-rq-lab-observable-equality-and-measured-model-usage) 已实现正向 UCQ fragment 的精确包含检查、递归 EDB 对照测试和实际 routing-model/token 实验。完整 Nova 有否定、`!=` 和递归，不能全部当成正向 UCQ。SAT/SMT 是后续有界反例搜索方案，不能把“在某个 domain 内找不到反例”说成任意 EDB 上相等。
+新 [lab 命令与方法](../apps/nova/evaluation/README.md#three-rq-lab-observable-equality-and-measured-model-usage) 已实现正向 UCQ fragment 的精确包含检查、递归 EDB 对照测试和实际 routing-model/token 实验。完整 Nova 有否定、`!=` 和递归，不能全部当成正向 UCQ。该轮尚未实现 SAT/SMT，后续实现见文末；不能把“在某个 domain 内找不到反例”说成任意 EDB 上相等。
 
 三份既有翻译的 `Covered` fragment 都有精确反例：多出的 `TagGroup` 条件漏算 coverage。实际交付也复现了合法配置变化下 reference 完成、translated 未完成。在新增 2,048 个递归 EDB 测试中，每份有 64 个拒绝差异，全部发生于 auditor 原来已经违规持有三部分的状态；其余 1,920 个没有拒绝差异。另有 512 个 coverage、128 个 completion 差异。循环图和既有违规状态是逻辑测试，不能冒充可达安全流程；旧的 1,472 测试排除了既有 exposure，故结果并不矛盾。
 
@@ -139,3 +139,13 @@ Covered(T) :- Auditor(P), Received(P, M), MessageTag(M, T), TagGroup(T, G).
 这只能证明实验链路与真实用量记录可用，不能据此宣称安全提升或 token 节约。另一个故意把三份报告都发给 A 的脚本，对照条件完成但违规；启用 enforcement 后阻止违规，但无法完成。这验证了为什么必须同时报告安全、完成和安全完成。初次连接配置阻断单列为 setup，不把缺失用量计作零；配置后的十二个任务没有模型或解析失败。
 
 数据、反例、source hashes 与复现参数见 [nova-rq-lab](evaluation/nova-rq-lab/)。原始模型响应及连接配置保持私有，原有 trial 和 pilot 记录不覆盖。
+
+## 后续实现：SAT 与 configurable testing 已落地
+
+SAT 不要求 UCQ。新 `bounded-equivalence` 接口把完整 function-free、分层 Datalog（递归、否定、`!=`）编译为布尔约束，使用离线 MiniSat。EDB 范围由 required/optional tuples 和显式约束指定，其他 tuples 视为不存在。派生事实从 false 开始，按足够的轮数算到固定点；不会只编码 rule implication、让递归自己证明自己。超时、quota 不足、无法重放和空 domain 单独返回，不伪装为通过。
+
+三份未修改的翻译结果一致：13 个 optional facts 共 8,192 种组合；固定分组且排除既有 exposure 后，SAT 判定拒绝输出在此范围内相等，独立穷举的 7,168 个允许输入也一致。取消排除条件，SAT 找到额外拒绝的反例。允许招聘分组缺失的 14-fact 范围，则找到 completion 反例。每个 SAT 反例都经 TypeScript 与 native Soufflé 重放，且在保持约束的情况下删除多余 optional facts。
+
+Testing 现支持可配置范围、固定 seed 抽样、穷举和失败输入缩减；真实 port 轨迹还包含合法分工、循环 relay、权限刷新/撤销与配置变化。每份 artifact 的 16 条轨迹比较 120 步，八条在故意缺失分组的配置下出现任务输出差异。它们不等价于普遍正确性或 held-out accuracy。
+
+[命令与状态解释](../apps/nova/evaluation/README.md#bounded-sat-and-configurable-testing) · [结果与一个可直接检查的 CNF](evaluation/nova-sat/)。旧 pilot 数据保持不变。

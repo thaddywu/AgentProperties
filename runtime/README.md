@@ -62,3 +62,9 @@ The port serializes refresh → sender closure/export → receiver closure/gate 
 `protocol-planner` exactly searches declared finite shareable-input/rule placements using witness snapshots, optional local query observations and a tuple/rule/replication cost. It returns scope and program/witness/search hashes. `applyProtocolPlan` deploys it on the same profile. This optimizes placement under fixed message channels and authorities; finite witness agreement is not universal asynchronous correctness or a production latency result.
 
 The [Nova walkthrough](../apps/nova/README.md) includes an executable backend-port and report-FSM trial using either reference rules or a saved translated extension. Grokbot's optional `message-policy-port` adapter maps authenticated runs to this same interface; production-wide host mediation still requires durable composition-root wiring and all relevant input hooks.
+
+## Bounded comparison and testing
+
+`bounded-equivalence` compiles parsed function-free, stratified rules to a Boolean CNF comparison, supporting recursion, negation and inequalities. Callers supply a `FiniteComparison`: trusted input/derived schema, reference/translated rules, observable predicate names, required/optional EDB tuples and optional EDB-presence clauses. A caller-provided `SatSolver` handles CNF; no solver dependency is required by the runtime core. The actual Nova adapter uses an offline MiniSat build in a killable subprocess.
+
+`finite-domain` supplies evaluator-based exhaustive and seeded testing with that same contract. Counterexamples are projected to selected outputs, replayed and deletion-shrunk under the declared constraints. Unknown outcomes, empty domains and incomplete testing are explicit; equality is always limited to the finite catalog. See [commands, statuses and evidence](../apps/nova/evaluation/README.md#bounded-sat-and-configurable-testing).
