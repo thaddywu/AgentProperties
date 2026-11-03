@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import type { Rule } from "@rakazo/policy-runtime/datalog";
+import { validateRuleLocality } from "@rakazo/policy-runtime/distributed";
 import { MESSAGING_RULES } from "@rakazo/policy-runtime/messaging-policy";
 import { parseProgram, validateAndStratify } from "@rakazo/policy-runtime/query";
 import { souffleProgram } from "@rakazo/policy-runtime/souffle";
@@ -63,6 +64,10 @@ export function compileExtensions(policies: PolicyExtension[]): Rule[] {
   }
   const combined = parseProgram(`${FOUNDATION_SOURCE}\n${source}\n?- TranslationSentinel().`);
   validateAndStratify(combined.facts, combined.rules);
+  validateRuleLocality(
+    PROTOCOL,
+    combined.rules.filter((r) => r.id !== "query"),
+  );
   return combined.rules
     .filter((r) => r.id !== "query")
     .map((rule, index) => ({

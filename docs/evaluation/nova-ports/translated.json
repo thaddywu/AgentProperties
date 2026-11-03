@@ -1,0 +1,131 @@
+{
+  "policyOrigin": {
+    "kind": "translated",
+    "id": "5fb554b2d9e6b4e258c0868f2798c7504912c624019febe1e7f9b0cb45d580ea"
+  },
+  "baseline": {
+    "plan": {
+      "replicateAt": {},
+      "ruleLocations": {}
+    },
+    "cost": 19839,
+    "components": {
+      "facts": 13122,
+      "rules": 67,
+      "replication": 6650
+    },
+    "programId": "38d0fd6293715b5cd79c30208067c9e8bf84288da63b5616190a44a58c2ed743",
+    "witnessesHash": "53351bf8577e9c9cd143baa94f552ad1852fd1b5acc5650b4bc1e65eee9245af",
+    "searchSpaceHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "plansExamined": 1,
+    "feasiblePlans": 1,
+    "witnessesChecked": 190,
+    "queryObservations": 4,
+    "optimalWithinDeclaredSpace": true,
+    "proofScope": "Exact optimum over enumerated placements and provided snapshots; not a universal asynchronous protocol proof. Message transfer channels and source authority remain fixed constraints.",
+    "costScope": "Stored input tuples summed over witness snapshots, deployed rule copies, and additional replicated tuple copies; not network bytes, latency or production traffic."
+  },
+  "optimized": {
+    "plan": {
+      "replicateAt": {
+        "AuditGoal": [
+          "board"
+        ],
+        "Auditor": [
+          "auditor_a",
+          "auditor_b"
+        ],
+        "TagGroup": [
+          "auditor_a",
+          "auditor_b"
+        ],
+        "TagRequiresCapability": [
+          "board",
+          "procurement",
+          "facility",
+          "hr",
+          "auditor_a",
+          "auditor_b"
+        ]
+      },
+      "ruleLocations": {
+        "translated-5": [
+          "auditor_a",
+          "auditor_b"
+        ],
+        "runtime-dependency": [
+          "board",
+          "procurement",
+          "facility",
+          "hr",
+          "auditor_a",
+          "auditor_b"
+        ]
+      }
+    },
+    "cost": 10335,
+    "components": {
+      "facts": 8372,
+      "rules": 63,
+      "replication": 1900
+    },
+    "programId": "38d0fd6293715b5cd79c30208067c9e8bf84288da63b5616190a44a58c2ed743",
+    "witnessesHash": "53351bf8577e9c9cd143baa94f552ad1852fd1b5acc5650b4bc1e65eee9245af",
+    "searchSpaceHash": "e4c72cd12fc59eb431d751f5d23fdd4276cec1c2ab03f2e8690dee8c4a92a5e0",
+    "plansExamined": 96,
+    "feasiblePlans": 24,
+    "witnessesChecked": 190,
+    "queryObservations": 4,
+    "optimalWithinDeclaredSpace": true,
+    "proofScope": "Exact optimum over enumerated placements and provided snapshots; not a universal asynchronous protocol proof. Message transfer channels and source authority remain fixed constraints.",
+    "costScope": "Stored input tuples summed over witness snapshots, deployed rule copies, and additional replicated tuple copies; not network bytes, latency or production traffic."
+  },
+  "execution": {
+    "deniedMissingCapability": true,
+    "deniedBodyReleased": false,
+    "hiringDeliveredToAuthorizedAuditor": true,
+    "auditComplete": true,
+    "auditorAKnows": [
+      "nova_hiring",
+      "nova_procurement"
+    ],
+    "delivered": [
+      {
+        "id": "source0",
+        "recipient": "procurement"
+      },
+      {
+        "id": "source1",
+        "recipient": "facility"
+      },
+      {
+        "id": "source2",
+        "recipient": "hr"
+      },
+      {
+        "id": "p",
+        "recipient": "auditor_a"
+      },
+      {
+        "id": "f",
+        "recipient": "auditor_b"
+      },
+      {
+        "id": "h",
+        "recipient": "auditor_a"
+      }
+    ]
+  },
+  "fsm": {
+    "prematurePublishDenied": true,
+    "approved": true,
+    "published": true,
+    "callbacks": 2,
+    "currentState": [
+      [
+        "published"
+      ]
+    ],
+    "committedActions": 2
+  }
+}

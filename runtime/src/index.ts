@@ -1,8 +1,13 @@
 export * from "./application.js";
+export * from "./backend-port.js";
 export * from "./binding.js";
 export * from "./datalog.js";
+export * from "./distributed.js";
 export * from "./lifecycle.js";
+export * from "./messaging.js";
 export * from "./messaging-policy.js";
 export * from "./messaging-protocol.js";
-export { parseGroundFacts, parseProgram, queryDatalog } from "./query.js";
+export * from "./primitives.js";
+export * from "./protocol-planner.js";
+export { parseGroundFacts, parsePolicyRules, parseProgram, queryDatalog } from "./query.js";
 export * from "./souffle.js";

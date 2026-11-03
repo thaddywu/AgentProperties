@@ -1,4 +1,5 @@
 import type { PolicyFact } from "./datalog.js";
+import { LIFECYCLE_PREDICATES } from "./lifecycle.js";
 
 export type ActionIntent = { actor: string; action: string; resource: string };
 export type RuntimeBinding = {
@@ -7,6 +8,7 @@ export type RuntimeBinding = {
   context: string;
   predicates: Record<string, { kind: "input" | "derived"; args: string[]; meaning: string }>;
   decision: { request: string; allow: string; deny: string };
+  mechanisms?: "fsm"[];
   tests: { name: string; inputs: PolicyFact[]; request: ActionIntent; allowed: boolean }[];
 };
 
@@ -84,6 +86,21 @@ export function readRuntimeBinding(value: unknown): RuntimeBinding {
   )
     throw new Error("Binding needs independent allow and deny acceptance cases (2–100 total).");
   const binding = structuredClone(value) as RuntimeBinding;
+  if (value.mechanisms !== undefined) {
+    if (
+      !Array.isArray(value.mechanisms) ||
+      value.mechanisms.length !== 1 ||
+      value.mechanisms[0] !== "fsm"
+    )
+      throw new Error("The action SDK supports the optional fsm mechanism.");
+    for (const [predicate, expected] of Object.entries(LIFECYCLE_PREDICATES)) {
+      const schema = binding.predicates[predicate];
+      if (!schema || schema.kind !== expected.kind || schema.args.length !== expected.args.length)
+        throw new Error(
+          `FSM binding must declare ${predicate}/${expected.args.length} as ${expected.kind}.`,
+        );
+    }
+  }
   const names = new Set<string>();
   for (const test of binding.tests) {
     if (

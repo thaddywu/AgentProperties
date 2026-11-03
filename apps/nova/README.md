@@ -99,3 +99,16 @@ Supported questions cover source messages, tag holders, message tags, permission
 Four fill-only suggestions above **Ask about Nova** cover Why, What-if, Min-prevention and Planning. For the first three, select **Before third delivery** or the Before/Gate inputs snapshot of the HR refusal event. Planning can select either the earlier starting state or the current selected snapshot; selected-state planning requires pending deliveries to be resolved first.
 
 Interpretation includes the actual parameters: recipient/message for Why; an earlier receipt for What-if; recipient/message and an array of candidate receipt message IDs for Min-prevention; goal group, starting-state choice and an array of allowed route IDs for Planning. These compile into FACT, REMOVE/ADD, PREVENTABLE EVENTS or GOAL/PROGRESS ACTIONS. Opening another interpretation replaces all corresponding form arguments, including clearing an old ADD field. Bindings are inspectable under **Interpreted arguments**. What-if currently only supports removing one receipt, so ADD is explicitly empty rather than an invented model output. Candidate events are single successful receipts; allowed routes come from Nova's existing action domain.
+
+## Backend-neutral port and FSM experiment
+
+`src/ports.ts` composes Nova's reference rules or a validated saved translated extension with the canonical shared primitives. Both target `createBackendPort`; the application supplies principals, grants, audit rules and authorized observation/effect functions.
+
+```bash
+pnpm --dir grokbot exec tsx ../apps/nova/src/port-demo-run.ts --output ../translation/output/nova-port-run
+# Optionally add --artifact ../apps/nova/evaluation/model-trials/trial-1.json
+```
+
+Use a new output directory. The trial enumerates bounded fact/rule placements over 190 generated snapshots, checks local gates and four query observations, executes the selected plan with real delivery callbacks, and drives an audit report through `draft → approved → published`. A rejected hiring report never reaches the delivery sink. Observer completion is explicitly materialized at the report authority, rather than read implicitly by local gates. `results.json` records scope, costs, hashes and execution outcomes.
+
+This is an offline integration/placement experiment with synthetic data. It does not measure production latency or prove correctness for all asynchronous executions. See [the port contract](../../docs/application-porting-contract.md#8-implemented-interfaces-and-primitive-vocabulary) for trusted EDB producers, recovery and the optional Grokbot adapter's required host hooks.

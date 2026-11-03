@@ -1,5 +1,5 @@
-import type { PolicyFact } from "@rakazo/policy-runtime/datalog";
 import { factKey } from "@rakazo/policy-runtime/datalog";
+import { bindLocalRules, distributedClosure } from "@rakazo/policy-runtime/distributed";
 import { runSouffle } from "@rakazo/policy-runtime/souffle";
 import { DERIVED } from "./policy.js";
 import { accepts, PROTOCOL } from "./protocol.js";
@@ -18,29 +18,7 @@ export function localInputs(state: RuntimeState, owner: string) {
 }
 /** Bind location variables before evaluation, so locality also constrains recursion. */
 export function localRules(owner: string, state: Pick<RuntimeState, "policy"> = {}) {
-  return rulesFor(state).flatMap((rule) => {
-    if (PROTOCOL.onlyAt[rule.head.predicate] && PROTOCOL.onlyAt[rule.head.predicate] !== owner)
-      return [];
-    const pattern = PROTOCOL.local[rule.head.predicate];
-    if (!pattern) return [];
-    const bindings = new Map<string, string>();
-    for (let i = 0; i < pattern.length; i++) {
-      if (pattern[i] === "_") continue;
-      const expected = pattern[i] === "@self" ? owner : pattern[i]!;
-      const term = rule.head.args[i]!;
-      if (/^[A-Z]/.test(term)) bindings.set(term, `c:${expected}`);
-      else if ((term.startsWith("c:") ? term.slice(2) : term) !== expected) return [];
-    }
-    const bind = (value: string) => bindings.get(value) ?? value;
-    return [
-      {
-        ...rule,
-        head: { ...rule.head, args: rule.head.args.map(bind) },
-        body: rule.body.map((b) => ({ ...b, args: b.args.map(bind) })),
-        distinct: rule.distinct.map(([a, b]): [string, string] => [bind(a), bind(b)]),
-      },
-    ];
-  });
+  return bindLocalRules(PROTOCOL, rulesFor(state), owner);
 }
 export function localClosure(state: RuntimeState, owner: string) {
   return runSouffle(localInputs(state, owner), localRules(owner, state));
@@ -51,18 +29,9 @@ export function observerRules(state: Pick<RuntimeState, "policy"> = {}) {
 }
 /** Union local closures, then evaluate only observer rules. Never rerun local gate rules here. */
 export function reconstructDebugView(state: RuntimeState) {
-  const stores = Object.fromEntries(
-    PRINCIPALS.map((owner) => [owner, localClosure(state, owner).facts]),
+  return distributedClosure(PROTOCOL, rulesFor(state), PRINCIPALS, (owner) =>
+    localInputs(state, owner),
   );
-  const unique = new Map<string, PolicyFact>();
-  for (const facts of Object.values(stores))
-    for (const fact of facts) unique.set(factKey(fact), fact);
-  const localFacts = [...unique.values()];
-  const observer = runSouffle(localFacts, observerRules(state)).facts.filter((fact) =>
-    PROTOCOL.observer.some((p) => p === fact.predicate),
-  );
-  for (const fact of observer) unique.set(factKey(fact), fact);
-  return { stores, localFacts, observer, facts: [...unique.values()] };
 }
 export function derivedAt(state: RuntimeState) {
   const { stores, facts } = reconstructDebugView(state);

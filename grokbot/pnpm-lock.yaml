@@ -545,6 +545,9 @@ importers:
       '@rakazo/logging':
         specifier: workspace:*
         version: link:../logging
+      '@rakazo/policy-runtime':
+        specifier: workspace:*
+        version: link:../../../runtime
       chat:
         specifier: 4.40.0
         version: 4.40.0(zod@4.6.2)

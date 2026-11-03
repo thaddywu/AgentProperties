@@ -1,6 +1,6 @@
 # Nova-centered runtime and translation contract
 
-Status: Nova-specific inventory, updated 2026-11-03. The [application porting contract](application-porting-contract.md) defines the framework-wide ownership, execution and EDB-source boundary, including protected FSM transitions as a required builtin mechanism for applications selecting that module. The six fixed IFC/capability rules and their schema live in `runtime/src/messaging-policy.ts`; Nova's five app-specific reference rules remain in `apps/nova/src/policy.ts`. Nova extension artifacts can be reviewed and installed into fresh sessions with the fixed protocol. General protocol synthesis and connected resource FSM execution remain unimplemented. Document Vault and the independent approval pilot exercise the existing local action SDK without Grokbot.
+Status: Nova-specific inventory, updated 2026-11-03. The [application porting contract](application-porting-contract.md) defines the framework-wide ownership, execution and EDB-source boundary, including protected FSM transitions as a required builtin mechanism for applications selecting that module. The six fixed IFC/capability rules and their schema live in `runtime/src/messaging-policy.ts`; Nova's five app-specific reference rules remain in `apps/nova/src/policy.ts`. Nova extension artifacts can be reviewed and installed into fresh sessions with the fixed protocol. A shared backend-neutral messaging port, canonical primitive aliases, protected FSM execution and bounded storage/rule-placement search are now implemented. General asynchronous channel synthesis remains outside the prototype. Document Vault and the independent approval pilot exercise the existing local action SDK without Grokbot.
 
 ## Target boundary
 
@@ -73,7 +73,7 @@ Current Nova derives live local coverage from successful receipts and the curren
 
 ## Interface sketch
 
-These are proposed responsibilities, not exported APIs today. Keep principal binding and administrative observation separate from the agent-facing action surface.
+These responsibilities are implemented through `createMessagingProfile`, `createBackendPort`, principal-bound agent ports and trusted source/recovery methods. See the [actual API and canonical primitive table](application-porting-contract.md#8-implemented-interfaces-and-primitive-vocabulary). The table below preserves the legacy profile vocabulary used by saved Nova artifacts.
 
 | Boundary | Trusted adapter/runtime responsibility | Agent-visible intent |
 | --- | --- | --- |
@@ -116,20 +116,20 @@ Use a small runtime-owned protocol state machine for message delivery. Nova alre
 
 When a framework callback has external effects, a conceptual `delivering`/recovery state may be needed. A failed or timed-out callback must not blindly reset to pending if an external delivery might already have happened. Exact transitions and recovery acknowledgments belong to the adapter's delivery contract, not a model-authored state diagram.
 
-Business-resource type-state is a builtin mechanism selected by applications that need it: e.g. `draft → reviewed → published` for a document. The target runtime must supply safe transition checking/commit and observation hooks; the app defines types, states, transitions and policy guards. An allowed transition is subject to authorization; transition reachability alone grants no permission. State and success events change only when the wrapped operation succeeds under the defined transaction boundary. The complete transition/effect/recovery contract is specified in the [application porting contract](application-porting-contract.md#4-fsm-is-an-execution-mechanism).
+Business-resource type-state is a builtin mechanism selected by applications that need it: e.g. `draft → reviewed → published` for a document. The shared action runtime now supplies safe transition checking/commit and observation hooks; the app defines types, states, transitions and policy guards. An allowed transition is subject to authorization; transition reachability alone grants no permission. State and success events change only when the wrapped operation succeeds under the defined transaction boundary. The complete transition/effect/recovery contract is specified in the [application porting contract](application-porting-contract.md#4-fsm-is-an-execution-mechanism).
 
 The current [lifecycle module](../runtime/src/lifecycle.ts) contains all of the following relations:
 
 | Predicate | Current behavior | Proposed role |
 | --- | --- | --- |
 | `ResourceType(Resource, Type)` | EDB, one type per resource checked by validator | Trusted app registry input to optional lifecycle support |
-| `ResourceState(Resource, State)` | EDB, one current state checked by validator | Runtime-maintained committed state after integration; agent cannot assert success |
+| `ResourceState(Resource, State)` | One validated state, replaced after confirmed successful callback | Runtime-maintained; ordinary observations cannot rewrite it |
 | `Transition(Type, Action, From, To)` | EDB, ambiguous target transitions rejected | App-owned machine definition, optionally proposed by translation and validated |
-| `ActionTaken(Event, Resource, Action, From, To)` | EDB accepted as history; current evaluator does not execute actions or establish that the history is genuine | Runtime observation of a committed transition after integration |
+| `ActionTaken(Event, Resource, Action, From, To)` | Successful FSM execution appends immutable history | Trusted restored history or runtime commit; no agent assertion |
 | `EnabledAction(Resource, State, Action)` | IDB from type/transition graph, independent of current `ResourceState` | Structural candidate action. Must join the current state and pass authorization before execution |
 | `ReachableState(Resource, From, To)` | IDB graph reachability | Analysis aid, not policy-aware feasibility or a liveness guarantee |
 
-This module is not currently connected to an action executor or to Nova resources. For applications selecting the FSM module, connecting current-state checks, authorization, actual effects and state/history commit is required implementation work. Nova's message typestate remains distinct from a business-resource machine. Confidentiality depends on combinations of accumulated tags and is better expressed by Datalog relations than by enumerating a state for every possible knowledge subset. Likewise, `Finished` is a derived coverage query; it need not be a mandatory terminal workflow state.
+Selecting `mechanisms: ["fsm"]` connects the foundation to `createPolicySession.execute`: current-state checks, mandatory denials, application authorization, serialized effects, state/history commit and uncertain-outcome reconciliation. `CanTransition/4` joins the current state; `ResourceRecovery/2` blocks a resource until confirmed recovery. The separate Nova port trial explicitly materializes observer completion into a report authority and executes approve/publish. Queues and recovery bookkeeping are process-local; durable backend transactions are still required. Nova's message typestate remains distinct from a business-resource machine. Confidentiality depends on combinations of accumulated tags and is better expressed by Datalog relations than by enumerating a state for every possible knowledge subset. Likewise, `Finished` is a derived coverage query; it need not be a mandatory terminal workflow state.
 
 Predicate argument typing (`Principal`, `Message`, `Tag`, `Capability`, etc.) is distinct from resource typestate. Both are useful, but neither is fully enforced by today's string-based fact representation. Do not conflate TypeScript type annotations with runtime validation of untrusted JSON facts.
 
@@ -139,12 +139,12 @@ The generic action prototype supplies configurable names for `Request/4`, `Allow
 
 This inventory covers Nova, the new generic action interface, Document Vault and the shared lifecycle module. The older five-principal native chat path is a separate compatibility profile with `Carries`, `DerivedFrom`, `New` and `Deny`; its schemas must not be conflated with Nova during extraction.
 
-## Proposed next implementation slice
+## Extraction status and remaining deployment work
 
-1. Make the Nova predicate/protocol contract the single source for schema, fixed rules, placement, permitted transfers and translator context. Keep today's names/semantics initially; defer naming cleanup and generalized audit arity.
-2. Extract the principal-scoped messaging protocol into runtime, parameterized by this contract. Nova supplies principals, source authorities, capabilities, group membership, audit goals, observer scope and scripted behavior. Grokbot supplies its UI/framework adapter.
-3. Install a translated Nova policy artifact into a fresh session. Gate, local inference, Why/What-if/search, replay and checkpoint restore must carry the same policy/protocol identity. A feature not yet adapted must reject explicitly rather than fall back to reference rules.
-4. Compare reference and translated Nova through actual send/receive transitions, including denied-body isolation, envelope loss, multi-label propagation, pending interleavings, cross-store injection, duplicate attempts, failed delivery and configuration changes. The independent approval pilot supplies an initial backend-neutral action example; extend conformance to protected FSM execution and additional adapters.
+1. Shared `messaging`, `distributed` and `backend-port` modules now own local closure, event capture, label transfer and controlled delivery. `NovaRuntime` supplies its profile and checkpoint migrations; it no longer implements a separate message engine.
+2. `primitives` exposes readable public names from the same foundation; compatibility profiles and saved artifact hashes retain their vocabulary. The canonical Nova profile accepts reference rules or validated saved translated extensions.
+3. The bounded planner enumerates explicit admissible placements, compares closure/local gates/declared queries, and executes the selected plan in the Nova port trial. It does not synthesize arbitrary channels or prove all asynchronous continuations.
+4. Grokbot's optional authenticated-run adapter is implemented and tested. Production composition-root injection, durable scopes/attempts/transaction coupling, remote-envelope authentication, and every document/tool/context input hook remain integration work. The old native five-principal path is still separate.
 
 Keep the old one-shot results immutable. A translator that now relies on fixed IFC mechanisms solves a changed task; its results must not be presented as a direct accuracy improvement over the earlier prompt that asked the model to generate those mechanisms.
 

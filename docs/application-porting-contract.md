@@ -1,8 +1,8 @@
 # Application porting: policies, mechanisms, execution and observations
 
-Design contract, 2026-11-03. This document defines the target application boundary. It does not introduce a new manifest parser or change the version-1 `runtime.json` format. The generic action SDK and Nova profile implement parts of the boundary; the status table below identifies the remaining work.
+Design contract, 2026-11-03. This document defines the target application boundary. It does not introduce a new manifest parser or change the version-1 `runtime.json` format. The TypeScript action/FSM SDK and backend-neutral messaging port implement the interfaces described below; the status table identifies the deployment limits.
 
-The framework accepts an application's policies and mediates observable operations. Grokbot is one host adapter. An application's backend, agent library, model provider and UI are outside the policy runtime. Resource FSM transitions are a supported mechanism in the target design, alongside optional IFC and capability modules; their execution integration remains to be implemented.
+The framework accepts an application's policies and mediates observable operations. Grokbot is one host adapter. An application's backend, agent library, model provider and UI are outside the policy runtime. Resource FSM execution, IFC propagation and capability checks are implemented in the shared runtime. The backend supplies identity, trusted observations and real effects.
 
 ## 1. Four inputs, with explicit ownership
 
@@ -20,8 +20,8 @@ The existing application-description format remains `app.md`, numbered `policy.m
 ## 2. Connect a backend other than Grokbot
 
 ```text
-Student backend / agent framework
-  └─ trusted adapter
+Application → its backend (or in-app orchestration)
+  └─ trusted adapter / port
        ├─ identity + authoritative observations
        ├─ mediated send / receive / read / tool / resource action
        └─ effect transaction + successful-event receipt
@@ -68,6 +68,8 @@ Transition(Type, Action, From, To)               trusted machine configuration
 ActionTaken(Event, Resource, Action, From, To)   committed execution observation
 EnabledAction(Resource, From, Action)           structural candidate, derived
 ReachableState(Resource, From, To)              graph reachability, derived
+CanTransition(Resource, Action, From, To)        current-state candidate, derived
+ResourceRecovery(Resource, Attempt)             runtime-owned uncertain outcome
 ```
 
 For example, an application defines `draft --approve--> approved --publish--> published`. A policy adds who may approve or publish, separation of duties and any information-flow constraints. A transition edge grants no permission by itself. `EnabledAction` retains its existing state-indexed meaning; the gate must join it with the actual `ResourceState`. `ReachableState` remains structural and does not prove a policy-compliant executable path.
@@ -83,7 +85,7 @@ The protected transition has this contract:
 
 Machine definitions and initial resource registrations are trusted configuration. Ordinary agents request operations; they cannot assert `ResourceState`, `ActionTaken`, grants or a successful approval. Per-resource single-process serialization is an initial implementation scope; cross-worker exclusivity requires an external authoritative transaction/coordination implementation.
 
-Today, `runtime/src/lifecycle.ts` validates supplied type/state uniqueness and deterministic transitions and derives graph relations. It does **not** execute the sequence above. `createPolicySession.execute` already offers serialized authorization/callback/success-observation commit within one session, but only supports additive observations and has no integrated FSM state replacement. Connecting these two mechanisms is the next execution slice, not an already completed feature.
+`RuntimeBinding.mechanisms: ["fsm"]` now enables this execution sequence in `createPolicySession`. The binding must declare the schemas from `LIFECYCLE_PREDICATES`. Installation appends immutable foundation/gate rules, and validates unique types/current states and deterministic transitions. A session serializes operations, replaces current state and records success only after the callback resolves. `EffectNotAppliedError` certifies no effect; other failures enter `ResourceRecovery`. Trusted `reconcile(attemptId, "applied" | "not_applied")` resolves an attempt without repeating its callback. Ordinary input updates cannot rewrite machine definitions, state or history. Recovery bookkeeping and queues are process-local; restart recovery and multi-worker exclusivity need backend-owned durable attempts and transactions.
 
 ## 5. Specify rules and execution semantics separately
 
@@ -191,18 +193,110 @@ Negation requires a complete authoritative scope. `not Approval(D, A)` is meanin
 6. Produce a versioned bundle linking rules, selected mechanisms, schema, protocol and source binding. Validate at installation and replay/restore. This richer artifact is a target beyond the version-1 generic bundle.
 7. Run backend-neutral conformance cases: invalid identity/facts, missing inputs, forbidden/allowed actions, transition ordering, concurrent attempts, callback failure/recovery and denied-payload isolation where applicable. Then evaluate task completion independently.
 
-## 8. Implementation boundary
+## 8. Implemented interfaces and primitive vocabulary
+
+The supported installation API is TypeScript, rather than the illustrative YAML above:
+
+```ts
+import { createBackendPort } from "@rakazo/policy-runtime/backend-port";
+import { novaMessagingProfile } from "../apps/nova/src/ports.js";
+
+// A saved translated artifact or the reviewed reference rules; identical core.
+const profile = novaMessagingProfile(validatedArtifact);
+const port = createBackendPort({
+  profile,
+  observations: [{
+    id: "grants", scope: "application", predicates: ["AgentHasCapability"],
+    read: async () => ({ version: "snapshot-2", complete: true, facts: currentGrants }),
+  }],
+  deliver: async message => inbox.commit(message),
+});
+// The trusted backend binds this from its authenticated run context.
+const agent = port.bind(authenticatedPrincipal);
+await agent.send(recipient, stableAttemptId, body);
+agent.query('?- Knows(A,T).');
+```
+
+A different backend supplies the same `deliver` and observation contracts. `createMessagingProfile` constructs a new app profile without importing Nova: principals, source authorities, configuration, application relation schemas/rules, and their local/replicated/observer placement. For a new application, use its own schemas, config and source rather than importing Nova:
+
+```ts
+import { createMessagingProfile } from "@rakazo/policy-runtime/messaging";
+import { parsePolicyRules } from "@rakazo/policy-runtime/query";
+
+const profile = createMessagingProfile({
+  principals, sourceAuthorities, configuration,
+  application: {
+    predicates: applicationSchemas,
+    rules: parsePolicyRules(reviewedOrTranslatedDatalog),
+    ruleEncoding: "parsed",
+    local: applicationLocalPlacement,
+    replicated: shareableApplicationInputs,
+    observer: observerHeads,
+  },
+});
+```
+
+`parsePolicyRules` rejects ground fact injection and embedded queries. Profile/runtime installation checks the parsed rules against the declared schema, foundation and locality. Translation must target this exact admitted vocabulary; the Nova translator's fixed schema does not automatically translate arbitrary student apps. The generic action translator already targets an app-owned `runtime.json`; arbitrary messaging-app translation still needs its matching prompt/bundle integration.
+
+Application rules cannot replace foundation heads (except adding denials), schemas or primitive placements. `MessagingRuntime` is the trusted execution implementation; hand agents only the bound port. Profiles, snapshot restoration, observation functions and administrator inspection are trusted surfaces, not model tools.
+
+| Primitive | Kind / arguments | Implemented meaning and writer |
+| --- | --- | --- |
+| `MessageSender(A,M)` | EDB | Runtime send hook binds actual sender. |
+| `MessageReceived(A,M)` | EDB | Port commits only after confirmed accepted delivery. |
+| `ReceiveAttempt(A,M)` | Temporary EDB | Runtime stages before the receiver's gate; removes on resolution. |
+| `ReceivedBeforeSend(Min,Mout)` | EDB | Runtime records previously received messages when output is created. |
+| `SourceTag(M,T)` | EDB | Trusted `ingest`, restricted to declared source authorities. |
+| `ImportedTag(M,T)` | EDB | Engine imports the sender's derived envelope; retains only on successful receipt. |
+| `AgentHasCapability(A,C)` | EDB | Trusted app configuration or complete authoritative grant snapshot. |
+| `TagRequiresCapability(T,C)` | EDB | Trusted policy configuration. |
+| `TagGroup(T,G)` | EDB | App's label/group configuration. |
+| `MessageDependsOn(Mout,Min)` | IDB | Same sender's prior receipt plus receive-before-send relation. Conservative dependency, independent of message prose. |
+| `MessageCarries(M,T)` | IDB | Source/import bridge plus recursive dependency propagation. |
+| `Knows(A,T)` | IDB | Successfully received tracked label. It does not infer all semantic knowledge of an agent. |
+| `DenyReceive(A,M)` | IDB | Foundation capability check plus application denials. Absence of a denial permits a well-formed attempt after successful complete evaluation. |
+
+FSM schemas above are also exported through `primitives`. Legacy Nova UI/checkpoints and saved translation artifacts retain `Sender`, `Received`, `Incoming`, `TrustedSource`, `TransportTag`, `HasCap`, `Requires`, `MayDependOn`, `MessageTag`, `HasReceivedTag`. `PRIMITIVE_NAMES` maps these to the public names; both profiles use the same six-rule foundation. The canonical Nova port adds its app rules over that foundation. The old saved artifact hash is not silently redefined.
+
+### Evaluation, EDB and effect schedule
+
+1. Construct a profile and validate schemas, rule safety/stratification and locality. Register real snapshot producers and the delivery callback. Unsupported foreign-local dependencies/negation are rejected; no implicit remote query is invented.
+2. Before each send, read every declared snapshot producer. Each must return a nonempty version and `complete: true`; failure blocks the operation. Replace its declared relations, including removals/revocations. Producers cannot write message/runtime event relations. Producer scope/version/completeness are trusted assertions by the binding code, not cryptographic proofs or automatically coordinated multi-source snapshots.
+3. Serialize refresh, send staging, sender closure/envelope export, receiver closure and actual delivery callback. An unsuccessful evaluation or denied gate releases no payload to the callback. The sender conservatively records its attempted output; denied imported facts never become successful knowledge.
+4. On confirmed callback success, commit receiver receipt and retained imports. Exact replay returns the prior outcome without repeating delivery. A callback certifying no effect leaves the attempt pending for refresh/recheck. An uncertain callback freezes dispatch until trusted `reconcile(messageId, "delivered" | "not_delivered")`.
+5. Recompute local closure for queries. The observer closes only observer heads over the union of local closures; it does not rerun local denials globally. Agent queries exclude temporary imports and cannot inject rules/facts. Query visibility still needs the app's authorization policy.
+
+The runtime queue is one process-local session. No automatic cross-worker lock, durable message/attempt storage, distributed atomic commit, authenticated remote transport or complete read/tool instrumentation is supplied. Backends must make authoritative reads and external effects valid under their own transaction/freshness contract. A plain callback does not make a database write and in-memory receipt crash-atomic.
+
+### Bounded protocol selection
+
+`synthesizeProtocol` accepts the installed program, reachable witness snapshots, declared shareable-input and rule-placement alternatives, optional local query observations, cost weights and an exact-search budget. It enumerates the finite space, preserves the full-copy program's closure and every observed local receive gate, and preserves declared queries against the original distributed profile. It returns a least-cost feasible plan with program/witness/search hashes and explicit scope. `applyProtocolPlan` binds the result to its program before installation.
+
+The engine chooses storage/rule placement; the adapter supplies the fixed admissible source authorities and transport channels. Private grants cannot be made shareable by the search. Snapshot preservation is finite evidence, not a proof for all executions or asynchronous networks. Cost counts stored input tuples across snapshots, deployed rule copies and replicated tuple copies; it does not measure latency or bytes.
+
+Nova's executable `port-demo-run.ts` loads either reviewed reference rules or an existing validated translated artifact, chooses a plan, executes delivery callbacks, and explicitly materializes authorized observer completion into an `AuditComplete` EDB for the report resource authority. Its report then follows `draft → approved → published` through actual FSM callbacks. That observation bridge is deliberate; global observer facts never appear in a local gate automatically.
+
+### Where Grokbot needs the adapter
+
+`grokbot/packages/adapters/src/message-policy-port.ts` implements a run-scoped adapter. `forRun(run)` binds the logical principal using verified `spaceId`, `userId`, `botId`; `send` derives an attempt ID from run ID and delivery key. Model arguments cannot choose the sender. Offline tests invoke the real shared port and show a forbidden report never reaches its delivery callback.
+
+The production `messageBot` path in `grokbot/packages/adapters/src/bot-messages.ts` resolves/authorizes the recipient, locks both threads, deduplicates the delivery key and checks run validity before creating outbound/inbound blocks, task context and a recipient wake-up. For deployment, create one durable port/authority per policy scope at the composition root; bind the authenticated run after identity resolution; place the protected database commit inside the port's delivery boundary. The gate must precede **inbound block, model-context and wake-up creation**, and successful receipt must correspond to that transaction's confirmed commit. Keep notifications/enqueue after the commit, and bind policy attempts to existing idempotency keys. Do not acquire/release a gate lock separately from changing the state it authorized.
+
+Instrument initial assignments, document reads, sandbox/tool results, memory/context imports and other relevant inputs as trusted ingestion before use. A send-only adapter cannot track information learned through unobserved tools. The existing native five-principal Grokbot policy path remains a compatibility path; the new adapter is available and tested but is not silently enabled for every production `messageBot` call. Persisting attempts and connecting all those sources are required before claiming full-host mediation.
+
+## 9. Implementation boundary
 
 | Capability | Current evidence | Work remaining |
 | --- | --- | --- |
-| Backend-independent local action gate | Existing SDK, Document Vault and independent approval pilot | Distributable adapter examples and non-TypeScript service transport |
-| Schemas and safe policy inference | Input/derived and arity checks, bounded stratified evaluation | Rich runtime types, producer/authority and complete placement validation |
-| IFC/capability foundations | Fixed shared rules and executable Nova hooks | Generic messaging adapter, authoritative-source completeness and remote transport security |
-| FSM definitions and graph analysis | Lifecycle validator and enabled/reachable relations | Transition + authorization + real effect + state/history commit, with appropriate recovery |
-| Stores and closure schedule | Generic session-local queue; Nova principal-local stores and observer | Unified validated execution profile and source/version binding |
-| EDB materialization | Trusted facts passed by adapter; Nova hardcoded event producers | Explicit producer registry and authoritative snapshot/update contract |
-| External effect recovery | Responsibility documented and failure boundary demonstrated | Adapter transaction/idempotency/reconciliation implementations per backend |
+| Backend-independent action/FSM gate | Shared SDK, Document Vault, concurrent FSM execution and recovery tests | Durable sessions, external transactions and non-TypeScript service transport |
+| IFC/capability messaging | Shared runtime used by Nova; same port tested with inbox/event-log sinks | Authenticated remote envelope transport and complete input mediation |
+| Readable primitives | Canonical vocabulary plus explicit legacy aliases from one foundation | Rich entity types and additional implemented modules as policies require |
+| Stores and closure | Generic principal-local stores and observer; remote-local rule rejection | General remote-query protocols and asynchronous correctness proof |
+| EDB snapshots | Declared, versioned, complete producers; revocation before gating | Backend-specific freshness, coherent source transactions and authenticity |
+| Protocol optimization | Exact bounded placement search, query/gate comparisons and deployed Nova plan | Channel synthesis, exhaustive/universal correctness, production cost measurements |
+| External effects | Actual callbacks, replay protection, explicit uncertain-outcome reconciliation | Durable attempt recovery and crash-atomic commit per backend |
+| Grokbot | Optional authenticated-run message adapter and offline callback tests | Production injection, durable scope management, all read/tool/context hooks |
 
-This is the system boundary to freeze before expanding the student corpus or claiming broad expressiveness. RQ1 can then separate rule expressibility from missing observations/mechanisms; RQ2 can evaluate translation within a fixed contract; RQ3 can test actual mediated effects and legal task completion.
+RQ1 must separate rule expressibility from missing observations/mechanisms; RQ2 evaluates translation within this fixed contract; RQ3 tests actual mediated effects and legal task completion. These experiments establish a testable boundary, not a completed student-corpus study.
 
 [Runtime API](../runtime/README.md) · [Nova-specific inventory](nova-runtime-contract.md) · [Pilot evidence](nova-evaluation-pilot.md) · [Manuscript submodule](research/)

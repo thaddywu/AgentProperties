@@ -1,7 +1,15 @@
 import type { PolicyFact } from "@rakazo/policy-runtime/datalog";
 import { factKey } from "@rakazo/policy-runtime/datalog";
-import { derivedAt, localClosure, reconstructDebugView } from "./local-store.js";
-import { CONFIG, contains, f, validateInput } from "./policy.js";
+import type {
+  MessageEvent,
+  MessageInputRecord,
+  MessageStores,
+  MessagingState,
+  PolicyMessage,
+} from "@rakazo/policy-runtime/messaging";
+import { MessagingRuntime } from "@rakazo/policy-runtime/messaging";
+import { derivedAt, reconstructDebugView } from "./local-store.js";
+import { CONFIG, contains, f, PREDICATES, validateInput } from "./policy.js";
 import { migratePredicateNames } from "./predicate-migration.js";
 import { accepts, PROTOCOL } from "./protocol.js";
 import { PRINCIPALS } from "./shared.js";
@@ -15,47 +23,17 @@ import {
 import { migrateTagSchema } from "./tag-migration.js";
 
 import type { NovaPolicyArtifact } from "./translated-policy.js";
-import { readPolicyArtifact } from "./translated-policy.js";
+import { readPolicyArtifact, rulesFor } from "./translated-policy.js";
 
 export { NAMES, PRINCIPALS } from "./shared.js";
-export type InputRecord = {
-  fact: PolicyFact;
-  owner: string;
-  source: "config" | "trusted app" | "runtime" | "analysis" | "protocol";
-  event?: number;
-  replicated?: boolean;
-  lifetime: "global" | "local" | "temporary";
-};
-export type Message = {
-  id: string;
-  from: string;
-  to: string;
-  body: string;
-  status: "pending" | "delivered" | "denied";
-  labels: PolicyFact[];
-};
-export type RuntimeEvent = {
-  seq: number;
-  kind: "send" | "receive" | "deny";
-  message: string;
-  actor: string;
-  added: PolicyFact[];
-  removed: PolicyFact[];
-  before: LocalStores;
-  after: LocalStores;
-  check?: PolicyFact[];
-  rule?: string;
-};
-export type LocalStores = Record<string, InputRecord[]>;
-export type RuntimeState = {
-  policy?: NovaPolicyArtifact;
+export type InputRecord = MessageInputRecord;
+export type Message = PolicyMessage;
+export type RuntimeEvent = MessageEvent;
+export type LocalStores = MessageStores;
+export type RuntimeState = MessagingState<NovaPolicyArtifact> & {
   storeSchemaVersion: 1;
   protocolVersion?: 1 | 2 | 3;
   tagSchemaVersion?: 1;
-  stores: LocalStores;
-  messages: Message[];
-  events: RuntimeEvent[];
-  revision: number;
 };
 export type LegacyRuntimeState = Omit<RuntimeState, "stores" | "storeSchemaVersion" | "events"> & {
   records: InputRecord[];
@@ -85,14 +63,14 @@ export function inputRecord(
     lifetime: PROTOCOL.temporary.some((p) => p === fact.predicate) ? "temporary" : "local",
   };
 }
-/** Stores share an in-process host, but each policy evaluation receives one owner only. */
-export class NovaRuntime {
-  state: RuntimeState;
+/** Nova supplies its profile and legacy checkpoint migrations; the runtime owns execution. */
+export class NovaRuntime extends MessagingRuntime<NovaPolicyArtifact, RuntimeState> {
   constructor(state?: RuntimeState | LegacyRuntimeState) {
+    let normalized: RuntimeState;
     const policy =
       state && state.policy !== undefined ? readPolicyArtifact(state.policy) : undefined;
     if (state && "stores" in state)
-      this.state = clone({
+      normalized = clone({
         ...(policy ? { policy } : {}),
         storeSchemaVersion: 1,
         protocolVersion: state.protocolVersion,
@@ -114,7 +92,7 @@ export class NovaRuntime {
         }
       }
       const { records, events, ...rest } = legacy;
-      this.state = {
+      normalized = {
         ...rest,
         ...(policy ? { policy } : {}),
         storeSchemaVersion: 1,
@@ -131,7 +109,7 @@ export class NovaRuntime {
         })),
       };
     } else {
-      this.state = {
+      normalized = {
         storeSchemaVersion: 1,
         protocolVersion: 1,
         tagSchemaVersion: 1,
@@ -140,13 +118,13 @@ export class NovaRuntime {
         events: [],
         revision: 0,
       };
-      for (const fact of CONFIG) putRecord(this.state, inputRecord(fact, "config"));
+      for (const fact of CONFIG) putRecord(normalized, inputRecord(fact, "config"));
     }
     // Old summary facts are no longer runtime inputs. Keep messages and gate history.
-    if (!this.state.protocolVersion || this.state.protocolVersion < 2) {
+    if (!normalized.protocolVersion || normalized.protocolVersion < 2) {
       const keep = (r: InputRecord) => r.fact.predicate !== "AuditReceipt";
-      filterRecords(this.state, keep);
-      for (const event of this.state.events) {
+      filterRecords(normalized, keep);
+      for (const event of normalized.events) {
         filterRecords({ stores: event.before }, keep);
         filterRecords({ stores: event.after }, keep);
         event.added = event.added.filter((f) => f.predicate !== "AuditReceipt");
@@ -157,153 +135,37 @@ export class NovaRuntime {
             !(event.actor === "board" && ["Audited", "Covered"].includes(f.predicate)),
         );
       }
-      this.state.protocolVersion = 2;
+      normalized.protocolVersion = 2;
     }
-    migratePredicateNames(this.state);
-    this.state.protocolVersion = 3;
+    migratePredicateNames(normalized);
+    normalized.protocolVersion = 3;
+    super(
+      {
+        principals: PRINCIPALS,
+        sourceAuthorities: ["board"],
+        predicates: PREDICATES,
+        protocol: PROTOCOL,
+        rules: rulesFor(normalized),
+        ruleEncoding: normalized.policy ? "parsed" : "raw",
+        configuration: CONFIG,
+        engine: "souffle",
+        roles: {
+          sender: "Sender",
+          received: "Received",
+          incoming: "Incoming",
+          order: "ReceivedBeforeSend",
+          source: "TrustedSource",
+          imported: "TransportTag",
+          carries: "MessageTag",
+          deny: "DenyReceive",
+        },
+      },
+      normalized,
+    );
   }
-  snapshot() {
-    return clone(this.state);
-  }
-  closure(owner: string) {
-    return localClosure(this.state, owner);
-  }
-  private append(record: InputRecord) {
-    putRecord(this.state, record);
-  }
-  configure(config: PolicyFact[]) {
-    const records = config.map((fact) => inputRecord(fact, "config"));
-    const next = { stores: clone(this.state.stores) };
-    filterRecords(next, (r) => r.source !== "config");
-    for (const record of records) putRecord(next, record);
-    this.state.stores = next.stores;
-  }
-  private event(
-    kind: RuntimeEvent["kind"],
-    msg: Message,
-    before: LocalStores,
-    check?: PolicyFact[],
-    rule?: string,
-  ) {
-    const after = allRecords(this.state),
-      beforeRows = Object.values(before).flat(),
-      beforeKeys = new Set(beforeRows.map(recordKey)),
-      afterKeys = new Set(after.map(recordKey));
-    const seq = ++this.state.revision;
-    for (const r of allRecords(this.state)) if (!beforeKeys.has(recordKey(r))) r.event = seq;
-    this.state.events.push({
-      seq,
-      kind,
-      message: msg.id,
-      actor: kind === "send" ? msg.from : msg.to,
-      added: after.filter((r) => !beforeKeys.has(recordKey(r))).map((r) => r.fact),
-      removed: beforeRows.filter((r) => !afterKeys.has(recordKey(r))).map((r) => r.fact),
-      before,
-      after: clone(this.state.stores),
-      check,
-      rule,
-    });
-  }
-  /** Only this application-owned entrypoint can introduce a trusted source tag. */
   assign(id: string, to: string, tag: string, body: string) {
     this.send("board", to, id, body, { tag });
     return this.settle(id);
-  }
-  /** Local send runtime computes temporal input facts from successful receive history. */
-  send(from: string, to: string, id: string, body: string, trusted?: { tag: string }) {
-    if (
-      !PRINCIPALS.includes(from as (typeof PRINCIPALS)[number]) ||
-      !PRINCIPALS.includes(to as (typeof PRINCIPALS)[number])
-    )
-      throw new Error("Unknown sender or receiver.");
-    if (!/^[a-z][A-Za-z0-9_]*$/.test(id) || this.state.messages.some((m) => m.id === id))
-      throw new Error("Message ID must be a new lowercase-leading identifier.");
-    if (!body.trim()) throw new Error("Message body is required.");
-    if (trusted && from !== "board")
-      throw new Error("Only trusted Board assignment ingestion can attach a source tag.");
-    const before = clone(this.state.stores);
-    this.append(inputRecord(f("Sender", from, id), "runtime", from));
-    if (trusted) this.append(inputRecord(f("TrustedSource", id, trusted.tag), "trusted app", from));
-    // Source assignment is trusted ingestion, not a Board computation over its full history.
-    if (!trusted)
-      for (const record of before[from]!)
-        if (
-          record.owner === from &&
-          record.fact.predicate === "Received" &&
-          record.fact.args[0] === from
-        )
-          this.append(
-            inputRecord(f("ReceivedBeforeSend", record.fact.args[1]!, id), "runtime", from),
-          );
-    this.append(inputRecord(f("Incoming", to, id), "runtime", to));
-    const labels = this.closure(from).facts.filter(
-      (fact) =>
-        fact.predicate === PROTOCOL.transfers.message.export &&
-        fact.args[PROTOCOL.transfers.message.messageArgument] === id,
-    );
-    const message: Message = { id, from, to, body, labels, status: "pending" };
-    this.state.messages.push(message);
-    for (const label of labels) {
-      const record = inputRecord(
-        f(PROTOCOL.transfers.message.import, ...label.args),
-        "protocol",
-        to,
-      );
-      record.lifetime = "temporary";
-      this.append(record);
-    }
-    this.event("send", message, before);
-    return clone(message);
-  }
-  /** Gate and delivery use the same Datalog program as all four analyses. */
-  settle(id: string) {
-    const msg = this.state.messages.find((m) => m.id === id);
-    if (msg?.status !== "pending") throw new Error("Select a pending message.");
-    const localInput = this.state.stores[msg.to]!;
-    if (!localInput.some((r) => factKey(r.fact) === factKey(f("Incoming", msg.to, id))))
-      throw new Error(`Missing local receive intent for ${id}; delivery was not attempted.`);
-    for (const label of msg.labels)
-      if (
-        !localInput.some(
-          (r) => factKey(r.fact) === factKey(f(PROTOCOL.transfers.message.import, ...label.args)),
-        )
-      )
-        throw new Error(`Incomplete tag envelope for ${id}; delivery was not attempted.`);
-    const before = clone(this.state.stores),
-      evaluation = this.closure(msg.to),
-      denial = f("DenyReceive", msg.to, id);
-    const denied = contains(evaluation.facts, denial);
-    this.state.stores[msg.to] = this.state.stores[msg.to]!.filter(
-      (r) => factKey(r.fact) !== factKey(f("Incoming", msg.to, id)),
-    );
-    if (!denied) {
-      this.append(inputRecord(f("Received", msg.to, id), "runtime", msg.to));
-    }
-    this.state.stores[msg.to] = this.state.stores[msg.to]!.filter((r) => {
-      if (
-        r.owner !== msg.to ||
-        r.fact.predicate !== PROTOCOL.transfers.message.import ||
-        r.fact.args[0] !== id
-      )
-        return true;
-      if (denied) return false;
-      r.lifetime = "local";
-      return true;
-    });
-    msg.status = denied ? "denied" : "delivered";
-    this.event(
-      denied ? "deny" : "receive",
-      msg,
-      before,
-      evaluation.facts,
-      denied ? "Soufflé: DenyReceive" : undefined,
-    );
-    return { allowed: !denied, evaluation, message: clone(msg) };
-  }
-  accessible(principal: string) {
-    return this.state.messages
-      .filter((m) => m.from === principal || (m.to === principal && m.status === "delivered"))
-      .map(clone);
   }
 }
 
@@ -381,8 +243,9 @@ export function createEpisode(
   preset: "initial" | "earlier" | "denial" = "denial",
   policy?: NovaPolicyArtifact,
 ) {
-  const runtime = new NovaRuntime();
-  if (policy) runtime.state.policy = readPolicyArtifact(policy);
+  const runtime = policy
+    ? new NovaRuntime({ ...new NovaRuntime().snapshot(), policy: readPolicyArtifact(policy) })
+    : new NovaRuntime();
   if (preset === "initial") return runtime;
   for (const assignment of assignments)
     runtime.assign(assignment.id, assignment.to, assignment.tag, assignment.body);

@@ -2,6 +2,8 @@
 
 这轮实验确认：通用 action gate 已能承载一个新的本地应用；Nova 在当前受控消息流程中能阻止违规交付。但学生接入仍需要明确的可信观测与 adapter，现有安装检查也不足以覆盖配置变化后的翻译语义。三个 RQ 都已有可运行的 pilot，尚未形成论文级评估。
 
+以下各节记录提取前的 pilot；JSON 与当时的源码 hash 保留不变。后续实现状态见文末。
+
 原有未提交改动先保存为基线提交 `a5f29523`。本轮新增评估代码和输出单独组织，没有更改生产 runtime、现有政策、生成结果或安装标准。
 
 ## 1. System port：实际试了什么
@@ -109,3 +111,11 @@ Covered(T) :- Auditor(P), Received(P, M), MessageTag(M, T), TagGroup(T, G).
 389 个基线相关测试通过；新增五个评估检查通过；Nova、runtime 与 translation 的类型检查通过。新增代码经 Biome 检查。未运行会打开真实窗口的 Electron E2E；这轮没有产品 UI 修改。
 
 完整方法与命令见 [evaluation README](../apps/nova/evaluation/README.md)。公开的 [结果目录](evaluation/nova-pilot/) 保存逐项 JSON 和源码 hash manifest；原始模型请求／响应及私有连接配置不纳入公开文件。所有应用内容、账号和外部效果都使用虚构数据。
+
+## 后续实现：共享 port、FSM 与有界协议选择
+
+现已按 `app → their backend/in-app logic → trusted port → enforcement runtime` 提取共享消息机制。`NovaRuntime` 委托给共享 runtime；canonical Nova profile 可以装入参考规则或既有真实翻译结果。新增可读 primitives、权威 EDB 快照刷新/撤销、受控 delivery callback、重放/不确定结果恢复，以及 protected FSM state replacement。上文的两个远端 locality 反例现在在安装前被拒绝；历史结果不覆盖为新结果。
+
+可复现命令见 [Nova README](../apps/nova/README.md#backend-neutral-port-and-fsm-experiment)。190 个生成快照、96 个 placement 候选、四项声明查询，每个规则来源各有 24 个候选通过。参考规则成本从 19,833 降到 10,329；保存的 trial-1 翻译从 19,839 降到 10,335。成本仅统计 tuple/rule/replication 副本。部署所选 plan 后，缺少权限的 HR 交付未调用 sink；合法路由完成审计，授权 observer 显式提供完成 EDB，报告 FSM 执行批准、发布。证据保存在 [nova-ports](evaluation/nova-ports/)。
+
+这是独立的实现/集成实验，不能当作 RQ1 的 corpus 覆盖率、RQ2 的新准确率或 RQ3 的生产效果。当前 430 个相关测试及 runtime/Nova/translation/adapters 类型检查通过。Grokbot 的可选 run adapter 已实现；生产事务接线、全部读/tool/context hooks、持久化与跨 worker 恢复仍需按后端完成。详细接口与边界见 [porting contract](application-porting-contract.md#8-implemented-interfaces-and-primitive-vocabulary)。

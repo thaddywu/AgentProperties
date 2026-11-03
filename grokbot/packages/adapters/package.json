@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     "./policy-translation": "./src/policy-translation.ts",
+    "./message-policy-port": "./src/message-policy-port.ts",
     ".": "./src/index.ts"
   },
   "scripts": {
@@ -30,6 +31,7 @@
     "@rakazo/core": "workspace:*",
     "@rakazo/db": "workspace:*",
     "@rakazo/logging": "workspace:*",
+    "@rakazo/policy-runtime": "workspace:*",
     "chat": "4.40.0",
     "chat-adapter-lark": "0.3.1",
     "chat-adapter-sendblue": "0.2.0",

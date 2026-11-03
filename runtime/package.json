@@ -12,7 +12,12 @@
     "./application": "./src/application.ts",
     "./binding": "./src/binding.ts",
     "./messaging-policy": "./src/messaging-policy.ts",
-    "./messaging-protocol": "./src/messaging-protocol.ts"
+    "./messaging-protocol": "./src/messaging-protocol.ts",
+    "./primitives": "./src/primitives.ts",
+    "./distributed": "./src/distributed.ts",
+    "./messaging": "./src/messaging.ts",
+    "./backend-port": "./src/backend-port.ts",
+    "./protocol-planner": "./src/protocol-planner.ts"
   },
   "scripts": {
     "check": "tsc --noEmit -p tsconfig.json",

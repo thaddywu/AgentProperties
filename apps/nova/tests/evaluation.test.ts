@@ -11,25 +11,12 @@ import { comparePrevention } from "../src/prevention.js";
 import { createPolicyArtifact, readPolicyArtifact, ruleSource } from "../src/translated-policy.js";
 
 describe("research pilot checks and independent counterexamples", () => {
-  it("exposes foreign dependencies that pass the sampled installer checks but have no evidence route", () => {
+  it("rejects foreign dependencies before installation when the protocol has no evidence route", () => {
     const results = localityPilot();
-    expect(
-      results.every((r) => r.schemaAccepted && r.predefinedCasesPassed === 8 && !r.equivalent),
-    ).toBe(true);
-    expect(results[0]!.localVersusFullCopy).toContainEqual({
-      principal: "auditor_b",
-      message: "target",
-      localDeny: true,
-      fullCopyDeny: false,
-    });
-    expect(results[1]!.localVersusFullCopy).toContainEqual({
-      principal: "auditor_b",
-      message: "target",
-      localDeny: false,
-      fullCopyDeny: true,
-    });
-    expect(results.map((r) => r.actualAllowed)).toEqual([false, true]);
+    expect(results).toHaveLength(2);
+    expect(results.every((result) => result.rejected && /remote/.test(result.reason))).toBe(true);
   });
+
   it("ports a new approval adapter and demonstrates the session and transaction boundaries", async () => {
     const result = await portabilityPilot();
     expect(result.sameSessionProtected).toBe(true);

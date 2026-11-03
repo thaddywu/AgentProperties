@@ -167,6 +167,15 @@ export function parseGroundFacts(source: string): PolicyFact[] {
   return parsed.facts.map((f) => ({ ...f, args: f.args.map(decode) }));
 }
 
+/** Parse policy source without admitting input facts or embedded query commands. */
+export function parsePolicyRules(source: string): Rule[] {
+  const parsed = parseProgram(`${source}\n?- RuntimeSentinel().`);
+  if (parsed.facts.length) throw new Error("Policies must contain rules, not ground facts.");
+  if (parsed.rules.filter((rule) => rule.id === "query").length !== 1)
+    throw new Error("Policies must not contain queries.");
+  return parsed.rules.filter((rule) => rule.id !== "query");
+}
+
 /** Read-only general query over an executable policy's INPUT state.
  * Policy-derived predicates cannot be injected or overridden by a query program.
  */

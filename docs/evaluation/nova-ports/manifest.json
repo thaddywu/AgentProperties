@@ -1,0 +1,62 @@
+{
+  "scope": "Synthetic offline integration and bounded placement evidence; not a student-corpus accuracy study or asynchronous protocol proof.",
+  "referenceCommand": "pnpm --dir grokbot exec tsx ../apps/nova/src/port-demo-run.ts --output ../translation/output/<new-directory>",
+  "translatedCommand": "pnpm --dir grokbot exec tsx ../apps/nova/src/port-demo-run.ts --artifact ../apps/nova/evaluation/model-trials/trial-1.json --output ../translation/output/<new-directory>",
+  "validation": {
+    "testFiles": 44,
+    "testsPassed": 430,
+    "typeChecks": [
+      "runtime",
+      "nova",
+      "adapters",
+      "translation"
+    ],
+    "manuscriptPages": 12
+  },
+  "sourceHashes": {
+    "apps/nova/evaluation/model-trials/trial-1.json": "f4d79ef45b6fdc2857b523f7cbd3ad3a9f62c80657d5d1c75a4019a3db6013c0",
+    "apps/nova/src/analysis.ts": "d085af3cb75df3057c0c814c207b61a703f178b70e820b44459527e1d8838fb5",
+    "apps/nova/src/config.ts": "7237ddc561112df2fb6d83cc087637333ae5d15e6ee5262bfe78ce4f8828b4a2",
+    "apps/nova/src/documents.ts": "c65e4f581ba8ea1b822dd04f3386fa29daf1bb088318a2a3c4d4c6a3ca232a06",
+    "apps/nova/src/legacy-checkpoint.fixture.ts": "58a011460450a5ece39378262274a82ec0360ac9fe3ff8a79d2a50cc556bc1e5",
+    "apps/nova/src/local-store.ts": "db0bb9615f4073d15ff5c6f2ce33a184154e08ea8ab53491e80ffd111754c650",
+    "apps/nova/src/policy.ts": "2f3f9454f1fe6939b827f0e23c683ff8b3b65c07c96e66c8d0b811e0ae774547",
+    "apps/nova/src/port-demo-run.ts": "a391b5e8200305ddca3ef4fc959c821f5f5dadbe454082d0a5a45945b3b2c1cc",
+    "apps/nova/src/port-demo.ts": "3afd800e47b52cb696ec757d3321bc48a13e2aead4c016c03d9cfe06f4013417",
+    "apps/nova/src/ports.ts": "76bca676a2e783b37af067ea506a0eaa73477dce832823cd9f222fa3dce58ba8",
+    "apps/nova/src/predicate-migration.ts": "88a82c92f9a1fa6ff72c3c79b57aaf79579115f261a0a76d59ae5132a47ccba6",
+    "apps/nova/src/prevention.ts": "11f743eb531192c95fd84f58fb5c8f84b2d6e63f8b816c0d82498ab6925b6629",
+    "apps/nova/src/protocol.ts": "a0cc922a5c397db320bac7376378a2f8156c05f19c2ec477b5f06e3f166f2147",
+    "apps/nova/src/questions.ts": "58e71eda171964082f51a44aac350d0fec6905b8a2de20a2f1d4dd296fb943eb",
+    "apps/nova/src/run.ts": "283bea9ec0067535affa51baca0ddb14351bf76d7ca225e5a9adc3a931d6bb99",
+    "apps/nova/src/runtime.ts": "a86b7e49bf6098f9fcccea6a19100cf010b65869424eef44d8f388fc7d8c22de",
+    "apps/nova/src/service-process.ts": "1fc458b4aeebb53103524cdb16f64dd1b3a891f29eb73cc08621bf34a7685811",
+    "apps/nova/src/service-worker.ts": "902ad4e2f3b52fcec911532d092b46d06e85868f7dd6a9102edce34ed557e2bc",
+    "apps/nova/src/service.ts": "ef056b8b477204564ecc08fad49de9e24afd03cadfc751456b5115ab9f31ba2d",
+    "apps/nova/src/shared.ts": "094105a3fa422fe07dfe54a268ea3349c16dd94de0aaea923e73618f534c238c",
+    "apps/nova/src/store-records.ts": "ff69001d8777b4a87b3022ef33ca2b27218ec16a9f6154dd93cab19da3bac99b",
+    "apps/nova/src/tag-migration.ts": "61f9c11b9286a75c7273f0b896dccc2f020fdb7cd8d1cda8ae562fb57ad1d116",
+    "apps/nova/src/translated-policy.ts": "c1289ace521fdc6621d9069b179c0dfd13ef2f3fb8f4f1bb6c0df87c2d318ff6",
+    "apps/nova/src/translation-review.ts": "1a852f45ba78ed09cc98c183d1e74d92b101aef50c087c5472f31c17f57d5f04",
+    "apps/nova/src/worker-path.ts": "b5d624e6ce0fa0941eff551322619c7534e03763cfccb9600cae8fd60ef0c762",
+    "grokbot/packages/adapters/src/message-policy-port.ts": "ca1282f2ec69150925b6db2d792e87d9642c68888642f3afb7705c86d820c114",
+    "runtime/src/application.ts": "56dd5d4aa279263c22de70df60f869848a39270f594490d89bde2cdbc3cd8dd7",
+    "runtime/src/backend-port.ts": "895a59ce6b7926b77f6c6c897b5c1d650dae67d91faf97c1f798afa7f41e4b44",
+    "runtime/src/binding.ts": "c5a6112900c1305d3e4adb61fbc25252f9ed7bedd45b59158868818e0430c1e5",
+    "runtime/src/datalog.ts": "e2eb64021ae2a944c3f19a626e2a1743373c5f3f8787bd01be0f7858f43d54ed",
+    "runtime/src/distributed.ts": "3c6c828dc3905f5231f1ffcd53a47363054b48dfc124708700fbc666fa8d7dfd",
+    "runtime/src/index.ts": "9d9f05b9850a161a15f3d6ffbafc44037fc35ee1e42df55a1c3cf736f42aeb3b",
+    "runtime/src/lifecycle.ts": "3a473bcaa25ddbc48ee658f66e0d1922f56e384a0dda1169e5a5f3731db27a3d",
+    "runtime/src/messaging-policy.ts": "070a09fc28f15c19396357c6c9071969c9b9ae5c129ba2dddfcc6837fa3ac337",
+    "runtime/src/messaging-protocol.ts": "3370cd5d05ab7ad4c52b462d453522e6a816fc0683b48e934921aab35017c5ab",
+    "runtime/src/messaging.ts": "25ced091b52f5b4190579487e3319f7c8207468ee5a6f282f66420fc34ca232b",
+    "runtime/src/primitives.ts": "4e378b7c790f93bbac570eaa0af94ba9ebb5590773944db1ca3f086ac1b821d9",
+    "runtime/src/protocol-planner.ts": "72a35efe4c9d7f9edf2b0fedbdb07640909f00ce302c0c65f4364f1ea4939cb1",
+    "runtime/src/query.ts": "73af4cef33e70c973945c07bf3d7ec84880c26235364ce9d37f1e8784325c819",
+    "runtime/src/souffle.ts": "7697adfd7be5f6b264476a22f0076fb9be90f83034e6c19372e3505b95524abb"
+  },
+  "resultHashes": {
+    "reference.json": "7305c47e0379abef07b443e222a40da372396e8a3ea3792be1aaa5d5faaa7f8d",
+    "translated.json": "48f9927f99ea34e1663ef75527ea2554942506d3cdc6a921884505caf76a7644"
+  }
+}

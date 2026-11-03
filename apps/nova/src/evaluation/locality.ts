@@ -3,6 +3,7 @@ import { novaDocuments } from "../documents.js";
 import { f, NOVA_RULES } from "../policy.js";
 import { closureConformance, comparePrevention } from "../prevention.js";
 import { createEpisode } from "../runtime.js";
+import type { NovaPolicyArtifact } from "../translated-policy.js";
 import { createPolicyArtifact, ruleSource } from "../translated-policy.js";
 
 /** Synthetic unsupported remote dependencies, never presented as generated model output. */
@@ -12,28 +13,39 @@ export function localityPilot() {
       kind === "foreign-negation"
         ? 'DenyReceive("auditor_b", M) :- Incoming("auditor_b", M), MessageTag(M, T), Requires(T, C), not HasCap("auditor_a", C).'
         : 'DenyReceive("auditor_b", M) :- Incoming("auditor_b", M), HasReceivedTag("auditor_a", "nova_hiring").';
-    const artifact = createPolicyArtifact(
-      novaDocuments(),
-      [
-        { id: "P1", basis: "builtin", datalog: "", notes: "Unchanged foundation" },
-        { id: "P2", basis: "builtin", datalog: "", notes: "Unchanged foundation" },
-        {
-          id: "P3",
-          basis: "extension",
-          datalog: `${ruleSource(NOVA_RULES.filter((r) => r.id.startsWith("three-tag")))}\n${extra}`,
-          notes:
-            "Synthetic locality boundary probe: extra remote dependency, not translation output or a claim about the original P3",
-        },
-        { id: "P4", basis: "builtin", datalog: "", notes: "Unchanged gate" },
-        {
-          id: "P5",
-          basis: "extension",
-          datalog: ruleSource(NOVA_RULES.filter((r) => !r.id.startsWith("three-tag"))),
-          notes: "Unchanged coverage",
-        },
-      ],
-      "synthetic locality probe",
-    );
+    let artifact: NovaPolicyArtifact;
+    try {
+      artifact = createPolicyArtifact(
+        novaDocuments(),
+        [
+          { id: "P1", basis: "builtin", datalog: "", notes: "Unchanged foundation" },
+          { id: "P2", basis: "builtin", datalog: "", notes: "Unchanged foundation" },
+          {
+            id: "P3",
+            basis: "extension",
+            datalog: `${ruleSource(NOVA_RULES.filter((r) => r.id.startsWith("three-tag")))}\n${extra}`,
+            notes:
+              "Synthetic locality boundary probe: extra remote dependency, not translation output or a claim about the original P3",
+          },
+          { id: "P4", basis: "builtin", datalog: "", notes: "Unchanged gate" },
+          {
+            id: "P5",
+            basis: "extension",
+            datalog: ruleSource(NOVA_RULES.filter((r) => !r.id.startsWith("three-tag"))),
+            notes: "Unchanged coverage",
+          },
+        ],
+        "synthetic locality probe",
+      );
+    } catch (error) {
+      return {
+        kind,
+        origin: "Handwritten compiler/placement adversarial control, not a model trial",
+        rule: extra,
+        rejected: true,
+        reason: error instanceof Error ? error.message : "Installation rejected",
+      };
+    }
     const cases = comparePrevention(artifact);
     const runtime = createEpisode("initial", artifact);
     if (kind === "foreign-negation") {
@@ -47,6 +59,8 @@ export function localityPilot() {
     const result = runtime.settle("target");
     return {
       kind,
+      rejected: false,
+      reason: "Unsupported remote dependency was admitted",
       origin: "Handwritten compiler/placement adversarial control, not a model trial",
       rule: extra,
       schemaAccepted: true,
