@@ -1,0 +1,38 @@
+{
+  "domain": "Three known/incoming tags, four grouping configurations, three recipients, two current capability states; prior same-group exposure violations excluded. Revoked capabilities may coexist with prior knowledge.",
+  "corpusOrigin": "Exploratory post-generation probes, not a held-out accuracy benchmark",
+  "oracle": "Independent set-based interpretation of P2/P3 and successful-receipt coverage",
+  "counts": {
+    "snapshots": 1472,
+    "excludedAlreadyViolating": 64,
+    "decisionMatches": 1472,
+    "falseAllows": 0,
+    "falseDenials": 0,
+    "coverageMismatches": 0,
+    "knowledgeMismatches": 0,
+    "nativeCrossChecks": 50
+  },
+  "byScenario": {
+    "configured-nova": {
+      "snapshots": 352,
+      "decisionErrors": 0,
+      "coverageErrors": 0
+    },
+    "same-group-outside-goal": {
+      "snapshots": 352,
+      "decisionErrors": 0,
+      "coverageErrors": 0
+    },
+    "split-groups": {
+      "snapshots": 384,
+      "decisionErrors": 0,
+      "coverageErrors": 0
+    },
+    "ungrouped-goal-part": {
+      "snapshots": 384,
+      "decisionErrors": 0,
+      "coverageErrors": 0
+    }
+  },
+  "counterexamples": []
+}

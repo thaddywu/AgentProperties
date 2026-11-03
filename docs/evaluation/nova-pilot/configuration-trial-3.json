@@ -1,0 +1,15 @@
+{
+  "mutation": "Remove TagGroup(nova_hiring,nova), preserve AuditGoal and capability configuration",
+  "assumption": "The runtime accepts this configuration. If grouping is an application invariant, the adapter must enforce it; this probe does not assert the model was instructed to generalize beyond the supplied configuration.",
+  "deliveries": [
+    true,
+    true,
+    true
+  ],
+  "independentlyComplete": true,
+  "covered": [
+    "nova_facility",
+    "nova_procurement"
+  ],
+  "observerComplete": false
+}

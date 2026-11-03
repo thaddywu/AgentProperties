@@ -31,3 +31,5 @@ See [Nova setup and commands](../apps/nova/README.md), [model connections](../tr
 [Nova runtime contract proposal](nova-runtime-contract.md) inventories predicate ownership, distributed placement, adapter APIs and optional type-state support. It describes the next design, separately from the implemented interfaces above.
 
 [Distributed protocol synthesis RQ](distributed-protocol-rq.md) proposes query-style placement/transfers and a bounded study of storage, communication and inference costs. Nova's Rules dialog presents runtime, app inputs, translated extensions, reference rules/protocol and actual prevention. The equivalence target is the union of local closures plus decision behavior at every location; the current checker supplies snapshot evidence, not a universal proof.
+
+[Nova evaluation pilot](nova-evaluation-pilot.md) records independent porting experiments and initial evidence for expressiveness, translation accuracy and end-to-end safety/task completion, with offline replay and explicit study limits.

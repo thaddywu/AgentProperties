@@ -1,0 +1,92 @@
+[
+  {
+    "id": "missing-envelope",
+    "expected": "Abort without committing or releasing body",
+    "observed": {
+      "refusedMissingEnvelope": true,
+      "unchanged": true
+    },
+    "passed": true
+  },
+  {
+    "id": "interleaved-receives",
+    "expected": "Recheck knowledge at each actual settle",
+    "observed": [
+      true,
+      false
+    ],
+    "passed": true
+  },
+  {
+    "id": "revoked-before-delivery",
+    "expected": "Use current committed capability state",
+    "observed": true,
+    "passed": true
+  },
+  {
+    "id": "refused-lineage",
+    "expected": "Denied information does not label later output",
+    "observed": {
+      "denied": true,
+      "inherited": []
+    },
+    "passed": true
+  },
+  {
+    "id": "rewritten-forwarding",
+    "expected": "Rewriting cannot remove tracked hiring protection",
+    "observed": {
+      "labels": [
+        {
+          "predicate": "MessageTag",
+          "args": [
+            "rewritten",
+            "nova_hiring"
+          ]
+        }
+      ],
+      "denied": true
+    },
+    "passed": true
+  },
+  {
+    "id": "multi-label-forwarding",
+    "expected": "Carry both dependencies and prevent accumulation of the third",
+    "observed": {
+      "labelCount": 2,
+      "bundleAllowed": true,
+      "thirdDenied": true
+    },
+    "passed": true
+  },
+  {
+    "id": "unobserved-source-boundary",
+    "expected": "Expose the instrumentation gap: content without a trusted label is not recognized",
+    "observed": {
+      "allowed": true
+    },
+    "passed": true
+  },
+  {
+    "id": "new-principal-boundary",
+    "expected": "Expose fixed Nova principal configuration",
+    "observed": {
+      "unknownPrincipalRejected": true
+    },
+    "passed": true
+  },
+  {
+    "id": "completion-strategy",
+    "expected": "Planning finds a safe completion before a legal irreversible choice creates a dead end",
+    "observed": {
+      "trace": [
+        "facility->auditor_b",
+        "hr->auditor_a"
+      ],
+      "plannedComplete": true,
+      "legalChoice": true,
+      "deadEndHasPlan": false
+    },
+    "passed": true
+  }
+]

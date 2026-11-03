@@ -1,0 +1,106 @@
+{
+  "format": "nova-extension-v1",
+  "foundation": "5476a92d4fc8ce313d1c82e3da63b15c769f71b3956799b45629072f5c44a39b",
+  "protocol": {
+    "replicated": ["Auditor", "Requires", "TagGroup", "AuditGoal"],
+    "local": {
+      "HasCap": ["@self", "_"],
+      "Sender": ["@self", "_"],
+      "Received": ["@self", "_"],
+      "Incoming": ["@self", "_"],
+      "TrustedSource": ["_", "_"],
+      "TransportTag": ["_", "_"],
+      "ReceivedBeforeSend": ["_", "_"],
+      "MayDependOn": ["_", "_"],
+      "MessageTag": ["_", "_"],
+      "HasReceivedTag": ["@self", "_"],
+      "DenyReceive": ["@self", "_"],
+      "Covered": ["_"]
+    },
+    "onlyAt": {
+      "TrustedSource": "board"
+    },
+    "observer": ["Finished"],
+    "temporary": ["Incoming"],
+    "transfers": {
+      "message": {
+        "export": "MessageTag",
+        "import": "TransportTag",
+        "messageArgument": 0,
+        "retain": "on-allow"
+      }
+    }
+  },
+  "documents": [
+    {
+      "path": "app.md",
+      "content": "# Nova\n\nNova is a scripted multi-agent budget audit demonstration. Procurement, Facility and HR each prepare one part of a confidential project rationale alongside their departmental budget. The Executive Board assigns the work. Two auditors can divide review so the audit can finish without any ordinary agent accumulating the full confidential picture.\n\nThe principals are `board` (Executive Board), `procurement`, `facility`, `hr`, `auditor_a` and `auditor_b`. The three budgets are $8M, $3M and $5M respectively. Their rationales concern a supplier transition, Building 4 consolidation and the Team Z hiring plan. The tracked information identifiers are `nova_procurement`, `nova_facility` and `nova_hiring`, all in the `nova` confidentiality group.\n\nBoard sends a trusted assignment to each department. Departments send rationale-bearing replies to an auditor. Messages are asynchronous: sending creates a pending delivery, and a separate receive check releases or refuses it. A principal can read messages it sent and messages successfully delivered to it, but not a refused incoming payload. Later messages conservatively inherit tracked information from that sender's prior successful receipts, including when the text is shortened or rewritten.\n\nBoth auditors can review procurement and facility information. HR information requires `hr_review`, initially held by HR and Auditor A. Auditor B initially lacks that capability. Board is exempt from the information-combination limit, but not from capability requirements. Board need not approve individual deliveries; the receive check uses recipient-local information.\n\nSuccessful delivery of a tagged message to a designated auditor records coverage of that part. This means delivery for review, not a financial judgment. Covered facts remain derived in each auditor's local store; no audit summary is sent to Board. A read-only global query combines local coverage and reports completion once all three configured parts are covered, potentially by different auditors. Finished is never computed in a principal's local gate or used to authorize delivery. The demo uses the same two designated auditors throughout.\n\nThe default demonstration delivers Procurement and Facility to Auditor A, then attempts HR to A. The third delivery is refused. An alternative routes Facility to B, leaving A able to receive HR. These are example schedules, not mandatory workflows. Manual sends and different orders are supported.\n\nAgents follow scripts and runtime decisions; there are no LLM-generated agent actions or LLM system prompts. The application is implemented in `apps/nova/src/`, and the existing local UI is launched with `./apps/nova/run.sh`. This description is for that six-principal demo, not the separate five-principal native chat application.\n"
+    },
+    {
+      "path": "policy.md",
+      "content": "P1. Except for the Board's trusted initial source assignments, every outgoing message must retain all tracked confidential information available from messages successfully received by its sender before that send. Relaying, summarizing or changing the wording must not remove that protection.\n\nP2. An agent may receive information only when it holds every capability required by the information carried in that message. In particular, Nova hiring information requires hr_review. This requirement applies to Board as well as the other agents.\n\nP3. No agent other than Board may receive a message if combining its incoming information with information already received would expose three distinct confidential parts from the same project group. This includes messages carrying multiple parts. Repeated copies of the same part count once, and parts from unrelated groups must not be combined for this restriction.\n\nP4. A refused delivery must not disclose its payload to the recipient or add the refused information to that recipient's received knowledge. Later outgoing messages must not acquire confidential information merely because an earlier incoming message was attempted and refused.\n\nP5. A confidential part counts as covered only after successful delivery to a designated auditor. The audit is complete only when every one of its three configured parts has been covered. Different auditors may cover different parts; completing the audit must not require one ordinary agent to collect the full confidential combination. Completion is queried globally from local audit coverage; no audit summary is sent to Board.\n"
+    },
+    {
+      "path": "tools.md",
+      "content": "None\n"
+    },
+    {
+      "path": "agents/auditor-a.md",
+      "content": "# Auditor A (`auditor_a`)\n\nScripted designated auditor. Holds `hr_review`, may receive HR information when other restrictions allow, and can review any of the three departments' tagged messages. It is not exempt from the combination restriction.\n\nThe default schedule sends Procurement, Facility and then HR to A. The last delivery is refused. An auditor derives local audit coverage only for information actually delivered. In a split review, A can cover Procurement and HR while B covers Facility.\n\nAvailable tools: None. Receipt and coverage behavior is implemented by runtime and policy evaluation; there is no LLM system prompt.\n"
+    },
+    {
+      "path": "agents/auditor-b.md",
+      "content": "# Auditor B (`auditor_b`)\n\nScripted designated auditor. Can cover Procurement or Facility and help complete a split review without collecting all three parts. Initially lacks `hr_review`, so HR-tagged delivery to B is refused independently of the combination restriction.\n\nLike A, B derives local audit coverage after successful tagged deliveries and has no blanket policy exemption. Configuration can change capabilities, but agents do not grant capabilities to themselves.\n\nAvailable tools: None. Receipt and coverage behavior is implemented by runtime and policy evaluation; there is no LLM system prompt.\n"
+    },
+    {
+      "path": "agents/board.md",
+      "content": "# Executive Board (`board`)\n\nScripted principal. Creates trusted source assignments for Procurement, Facility and HR and sends each its rationale. Assignment ingestion is distinct from an ordinary message computed using previous receipts. Completion is reported by the global query, not by Board.\n\nBoard is exempt from the three-part combination restriction, but still subject to capability requirements. Board does not centrally approve each message.\n\nAvailable tools: None. Behavior is implemented by the trusted assignment path, message runtime; there is no LLM system prompt.\n"
+    },
+    {
+      "path": "agents/facility.md",
+      "content": "# Facility (`facility`)\n\nScripted principal responsible for the $3M facilities budget and the Nova Building 4 consolidation rationale. Receives its assignment from Board. Its tracked confidential part is `nova_facility`.\n\nThe default schedule sends its reply to Auditor A; routing it to Auditor B instead can preserve a legal way to finish the audit. Actual delivery is decided by the recipient-local gate, not by the script's intended outcome.\n\nAvailable tools: None. Actions call the message runtime; there is no LLM system prompt.\n"
+    },
+    {
+      "path": "agents/hr.md",
+      "content": "# HR / Hiring (`hr`)\n\nScripted principal responsible for the $5M hiring budget and the Nova Team Z hiring rationale. Receives its assignment from Board and holds `hr_review`, which is necessary even to receive its own protected assignment. Its tracked part is `nova_hiring`.\n\nIts default reply targets Auditor A. Auditor B cannot receive this information with the initial capabilities. A's capability alone is insufficient if accepting the reply would complete a forbidden three-part combination.\n\nAvailable tools: None. Actions call the message runtime; there is no LLM system prompt.\n"
+    },
+    {
+      "path": "agents/procurement.md",
+      "content": "# Procurement (`procurement`)\n\nScripted principal responsible for the $8M procurement budget and the Nova supplier-transition rationale. Receives its assignment from Board and sends a budget rationale for audit. Its tracked confidential part is `nova_procurement`.\n\nThe default schedule sends its reply to Auditor A. Manual routing may choose another recipient, subject to the receive gate. Messages sent after successful receipts inherit their tracked information.\n\nAvailable tools: None. Assignment and reply actions are scripted calls to the message runtime; there is no LLM system prompt.\n"
+    }
+  ],
+  "policies": [
+    {
+      "id": "P1",
+      "basis": "builtin",
+      "datalog": "",
+      "notes": "The foundation derives dependencies from the sender's successful receipts before each send and propagates all their tags regardless of message wording. The protocol exports those labels with the message. Board's trusted initial assignments use trusted-source ingestion, explicitly distinct from computation over Board's receipt history."
+    },
+    {
+      "id": "P2",
+      "basis": "builtin",
+      "datalog": "",
+      "notes": "The foundation's capability rule denies delivery for any carried tag with a required capability absent from the recipient's local HasCap configuration. Requires(\"nova_hiring\", \"hr_review\") is supplied configuration. There is no Board exemption from this rule; the initial capabilities permit HR and Auditor A, but not Auditor B, to receive hiring information."
+    },
+    {
+      "id": "P3",
+      "basis": "extension",
+      "datalog": "DenyReceive(P, M) :- Incoming(P, M), P != \"board\", TagGroup(T1, G), TagGroup(T2, G), TagGroup(T3, G), T1 != T2, T1 != T3, T2 != T3, MessageTag(M, T1), MessageTag(M, T2), MessageTag(M, T3).\nDenyReceive(P, M) :- Incoming(P, M), P != \"board\", TagGroup(T1, G), TagGroup(T2, G), TagGroup(T3, G), T1 != T2, T1 != T3, T2 != T3, MessageTag(M, T1), MessageTag(M, T2), HasReceivedTag(P, T3).\nDenyReceive(P, M) :- Incoming(P, M), P != \"board\", TagGroup(T1, G), TagGroup(T2, G), TagGroup(T3, G), T1 != T2, T1 != T3, T2 != T3, MessageTag(M, T1), HasReceivedTag(P, T2), HasReceivedTag(P, T3).\nDenyReceive(P, M) :- Incoming(P, M), P != \"board\", TagGroup(T1, G), TagGroup(T2, G), TagGroup(T3, G), T1 != T2, T1 != T3, T2 != T3, HasReceivedTag(P, T1), HasReceivedTag(P, T2), HasReceivedTag(P, T3).",
+      "notes": "These recipient-local rules detect three distinct tags in one exposure group across the incoming message and successful receipt history. The cases cover three, two, one, or zero parts supplied by the incoming message; variable permutations cover every allocation. Duplicate tags count once, and unrelated groups are not combined. The last rule also rejects delivery if a non-Board recipient already has a forbidden triple. Only this combination restriction exempts Board."
+    },
+    {
+      "id": "P4",
+      "basis": "builtin",
+      "datalog": "",
+      "notes": "The fixed settle protocol checks recipient-local denial before releasing payloads. Refusal removes temporary incoming inputs without recording Received or retaining their tags. Both received knowledge and later outgoing dependencies derive from successful Received facts, so a refused attempt alone contributes neither knowledge nor propagated labels."
+    },
+    {
+      "id": "P5",
+      "basis": "extension",
+      "datalog": "Covered(T) :- Auditor(P), Received(P, M), MessageTag(M, T), TagGroup(T, G).\nFinished(G) :- AuditGoal(G, T1, T2, T3), Covered(T1), Covered(T2), Covered(T3).",
+      "notes": "Coverage requires successful receipt of a tracked confidential part by a configured designated auditor. Under the fixed protocol, Covered is derived only in each auditor's local store and is neither persisted nor sent to Board. Finished runs only in the read-only global observer over the union of local closures, allowing different auditors to supply coverage for the three AuditGoal parts. AuditGoal, not exposure-group membership, defines the completion target. Finished is not used to authorize delivery."
+    }
+  ],
+  "model": "gpt-6.1-sol",
+  "id": "aa016a81c5bf7f4d4f63a1b4479484bf2821352fa2feef7e7f9b9f0bc2106840"
+}

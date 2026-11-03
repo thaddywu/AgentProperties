@@ -1,0 +1,79 @@
+{
+  "source": "https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-53r5.pdf",
+  "sourceVersion": "NIST SP 800-53 Revision 5, September 2020, including the December 2020 updates",
+  "method": "Purposive author-coded sample of eight atomic application adaptations, not verbatim controls, complete control implementations, random sampling, or a compliance assessment. Labels require independent review before use as research results.",
+  "items": [
+    {
+      "id": "access",
+      "control": "AC-3",
+      "pdfPage": 50,
+      "adaptation": "Require configured permission before receiving a protected message.",
+      "language": "Representable with the existing capability vocabulary.",
+      "currentNova": "supported-within-instrumented-boundary",
+      "evidence": "P2; exhaustive finite gate snapshots and capability revocation probe. Adapter authentication and trusted grants remain assumptions."
+    },
+    {
+      "id": "metadata-flow",
+      "control": "AC-4(6)",
+      "pdfPage": 57,
+      "adaptation": "Use trusted metadata to decide whether a transfer is permitted.",
+      "language": "Representable over MessageTag and application constraints.",
+      "currentNova": "supported-within-instrumented-boundary",
+      "evidence": "Rewritten and multi-label forwarding probes. An unobserved source bypasses content classification; the prototype is not a remote authenticated transport."
+    },
+    {
+      "id": "separate-review",
+      "control": "AC-5",
+      "pdfPage": 63,
+      "adaptation": "A document author cannot approve that document.",
+      "language": "Representable using authorship, reviewer and action relations plus inequality.",
+      "currentNova": "needs-new-binding",
+      "evidence": "Nova has no approval facts or tool hook. The independent approval adapter executes this rule using the existing generic runtime, without runtime changes."
+    },
+    {
+      "id": "dual-approval",
+      "control": "AC-3(2)",
+      "pdfPage": 50,
+      "adaptation": "A release requires approval from two different authorized reviewers.",
+      "language": "Representable with two bound approval witnesses and inequality.",
+      "currentNova": "needs-new-binding",
+      "evidence": "The independent approval adapter refuses release with one approval and permits it with two distinct authorized reviewers. Trusted observations and the action wrapper are required."
+    },
+    {
+      "id": "session-timeout",
+      "control": "AC-12",
+      "pdfPage": 70,
+      "adaptation": "End an agent session when its configured inactivity limit expires.",
+      "language": "An Expired fact can describe the condition; Datalog does not supply timers or terminate sessions.",
+      "currentNova": "needs-runtime-mechanism",
+      "evidence": "Deadline vocabulary is rejected by the Nova extension compiler. No timer or session-termination executor is provided by this profile."
+    },
+    {
+      "id": "controlled-redaction",
+      "control": "AC-4(23)",
+      "pdfPage": 61,
+      "adaptation": "Redact prohibited fields before releasing data across a boundary.",
+      "language": "Can require a trusted sanitization result; rules cannot establish that redaction is correct.",
+      "currentNova": "needs-runtime-mechanism",
+      "evidence": "Nova deliberately retains conservative lineage and provides no trusted declassification operation."
+    },
+    {
+      "id": "audit-integrity",
+      "control": "AU-9(3)",
+      "pdfPage": 102,
+      "adaptation": "Cryptographically protect audit records against undetected modification.",
+      "language": "A verified-integrity fact can be consumed; rules do not implement cryptography or protected storage.",
+      "currentNova": "needs-runtime-mechanism",
+      "evidence": "A bundle content hash is not an authenticated audit log. A trusted cryptographic/storage adapter is required."
+    },
+    {
+      "id": "audit-retention",
+      "control": "AU-11",
+      "pdfPage": 104,
+      "adaptation": "Keep audit records for the configured retention period.",
+      "language": "Can describe retention eligibility with trusted time facts; persistence and scheduling remain mechanisms.",
+      "currentNova": "needs-runtime-mechanism",
+      "evidence": "The generic session is process-local and does not supply durable retention or expiration scheduling."
+    }
+  ]
+}

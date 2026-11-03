@@ -1,0 +1,39 @@
+{
+  "policyOrigin": "handwritten independent adapter pilot, not model translation",
+  "runtimeFilesChanged": 0,
+  "acceptanceCases": 5,
+  "ordered": {
+    "early": false,
+    "selfReview": false,
+    "review": true,
+    "concurrent": [
+      true,
+      false
+    ],
+    "effects": 2
+  },
+  "sameSessionProtected": true,
+  "crossSession": {
+    "sharedExternalPublications": 2,
+    "coordinated": false
+  },
+  "dualApproval": {
+    "withOneApproval": false,
+    "withTwoApprovals": true
+  },
+  "callbackFailure": {
+    "failureObserved": true,
+    "irreversibleEffects": 1,
+    "committedPublications": 0
+  },
+  "inspection": {
+    "published": [
+      [
+        "draft"
+      ]
+    ],
+    "denialExplained": true,
+    "hypotheticalUnpublished": true,
+    "actualStillDenied": true
+  }
+}

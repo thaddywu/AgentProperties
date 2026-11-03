@@ -1,0 +1,85 @@
+{
+  "workload": "Six department orders × eight initial routes × two capability configurations × three scripted scheduling/retry strategies = 288 workflows per condition",
+  "scope": "Deterministic actual Nova send/settle workflows; not autonomous LLM agents or a general task-completion study. No-gate control bypasses receive authorization only and retains label instrumentation.",
+  "groups": {
+    "sequential": {
+      "workflows": 96,
+      "attempts": 288,
+      "expectedRefusals": 42,
+      "violations": 0,
+      "falseDenials": 0,
+      "denied": 42,
+      "deniedPayloadLeaks": 0,
+      "deniedReceiptWrites": 0,
+      "lineageErrors": 0,
+      "completed": 54,
+      "safelyCompleted": 54,
+      "workflowsWithViolation": 0,
+      "observerDisagreements": 0
+    },
+    "interleaved": {
+      "workflows": 96,
+      "attempts": 288,
+      "expectedRefusals": 42,
+      "violations": 0,
+      "falseDenials": 0,
+      "denied": 42,
+      "deniedPayloadLeaks": 0,
+      "deniedReceiptWrites": 0,
+      "lineageErrors": 0,
+      "completed": 54,
+      "safelyCompleted": 54,
+      "workflowsWithViolation": 0,
+      "observerDisagreements": 0
+    },
+    "retryOtherAuditor": {
+      "workflows": 96,
+      "attempts": 334,
+      "expectedRefusals": 50,
+      "violations": 0,
+      "falseDenials": 0,
+      "denied": 50,
+      "deniedPayloadLeaks": 0,
+      "deniedReceiptWrites": 0,
+      "lineageErrors": 0,
+      "completed": 92,
+      "safelyCompleted": 92,
+      "workflowsWithViolation": 0,
+      "observerDisagreements": 0
+    }
+  },
+  "deadEnds": [
+    {
+      "order": [
+        "procurement",
+        "facility",
+        "hr"
+      ],
+      "routing": 0,
+      "grantB": false,
+      "strategy": "retryOtherAuditor"
+    },
+    {
+      "order": [
+        "procurement",
+        "facility",
+        "hr"
+      ],
+      "routing": 4,
+      "grantB": false,
+      "strategy": "retryOtherAuditor"
+    },
+    {
+      "order": [
+        "facility",
+        "procurement",
+        "hr"
+      ],
+      "routing": 0,
+      "grantB": false,
+      "strategy": "retryOtherAuditor"
+    }
+  ],
+  "elapsedMs": 12798,
+  "timingScope": "Exploratory wall time, affected by native evaluator cache and execution order; not a performance comparison"
+}
