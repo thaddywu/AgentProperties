@@ -16,7 +16,7 @@ export const PRIMITIVE_NAMES = {
   MayDependOn: "MessageDependsOn",
   MessageTag: "MessageCarries",
   HasReceivedTag: "Knows",
-  DenyReceive: "DenyReceive",
+  Deny: "Deny",
 } as const;
 
 export function renameFact<T extends PolicyFact>(
@@ -57,5 +57,5 @@ export const MESSAGE_ROLES = {
   source: "SourceTag",
   imported: "ImportedTag",
   carries: "MessageCarries",
-  deny: "DenyReceive",
+  deny: "Deny",
 } as const;

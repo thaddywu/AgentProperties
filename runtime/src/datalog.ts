@@ -7,6 +7,7 @@ export type Rule = {
   body: Atom[];
   distinct: [string, string][];
   stratum: number;
+  comparisons?: { left: string; operator: "<" | "<=" | ">" | ">="; right: string }[];
 };
 export type Proof = {
   rule: string;
@@ -82,6 +83,34 @@ export function evaluateDatalog(
             })
           )
             continue;
+          if (
+            rule.comparisons?.length &&
+            !rule.comparisons.every((comparison) => {
+              const left = resolve(comparison.left, match.bindings);
+              const right = resolve(comparison.right, match.bindings);
+              const integer = (value: string | undefined) => {
+                const raw = value?.startsWith("c:") ? value.slice(2) : value;
+                if (!raw || !/^(?:0|-?[1-9][0-9]*)$/.test(raw) || raw.length > 20) return undefined;
+                const result = BigInt(raw);
+                return result >= -(2n ** 63n) && result < 2n ** 63n ? result : undefined;
+              };
+              const a = integer(left),
+                b = integer(right);
+              if (a === undefined || b === undefined) return false;
+              switch (comparison.operator) {
+                case "<":
+                  return a < b;
+                case "<=":
+                  return a <= b;
+                case ">":
+                  return a > b;
+                case ">=":
+                  return a >= b;
+              }
+              return false;
+            })
+          )
+            continue;
           const args = rule.head.args.map((term) => {
             const value = resolve(term, match.bindings);
             if (value === undefined) throw new Error(`Unsafe head in ${rule.id}`);
@@ -95,6 +124,10 @@ export function evaluateDatalog(
               rule: rule.id,
               premises: match.premises,
               checks: [
+                ...(rule.comparisons?.map((comparison) => ({
+                  kind: "comparison" as const,
+                  text: `${resolve(comparison.left, match.bindings)} ${comparison.operator} ${resolve(comparison.right, match.bindings)}`,
+                })) ?? []),
                 ...rule.body
                   .filter((a) => a.negative)
                   .map((a) => ({

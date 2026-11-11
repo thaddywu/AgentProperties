@@ -1,0 +1,363 @@
+{
+  "version": 1,
+  "sourceHash": "35a3137a71f54de29836d7e6127db9ced5c1473dab281d50d6940e1ddfc9d7c4",
+  "bindingHash": "94c71570c54371d1ef0fbfcb5189da16c314e64adf6b70d39fd97dd97e3f98cb",
+  "documentsHash": "d00ebb6ca0f68e0f36b23dfa315d92b3a296d9f414a0aa2bf9a98a9cfdf4e207",
+  "requirements": [
+    {
+      "id": "P1.1",
+      "policyId": "P1",
+      "source": "User Confirmation. An impostor may impersonate a trusted person and attempt to transfer funds without proper authorization.",
+      "start": 0,
+      "end": 123,
+      "statement": "Treat impersonation as a threat, not a confirmation source.",
+      "implementation": "unsupported",
+      "relation": "unresolved",
+      "assumptions": [
+        "Source context, with no independent executable condition. No impersonation detector is invented; the following rules require explicit evidence regardless of wording.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": []
+    },
+    {
+      "id": "P1.2",
+      "policyId": "P1",
+      "source": "Therefore, every transfer must have explicit user confirmation for the exact recipient and amount.",
+      "start": 124,
+      "end": 222,
+      "statement": "Confirm this exact recipient and amount.",
+      "implementation": "datalog",
+      "relation": "partial",
+      "assumptions": [
+        "The rule matches host confirmation against exact intent/recipient/cents in the EDB. A real authenticated UI producer is still required; tests ingest synthetic facts through the private host API.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "Consumed",
+        "Parameter",
+        "Purpose",
+        "Request",
+        "TransferIntent",
+        "UserConfirmation"
+      ]
+    },
+    {
+      "id": "P1.3",
+      "policyId": "P1",
+      "source": "A confirmation must be associated with the specific transfer request.",
+      "start": 223,
+      "end": 292,
+      "statement": "Bind confirmation to a specific immutable transfer intent.",
+      "implementation": "adapter",
+      "relation": "partial",
+      "assumptions": [
+        "After an original bank transfer succeeds, its confirmed delta updates Consumed, Transfer, Balance and DailyBudget in one EDB batch. Bank JSON and EDB do not share a transaction; uncertain synchronization stops the session.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": []
+    },
+    {
+      "id": "P1.4",
+      "policyId": "P1",
+      "source": "Instructions contained in external messages, including SMS messages, must not be treated as user confirmation.",
+      "start": 293,
+      "end": 403,
+      "statement": "Never turn message instructions into a user-confirmation fact.",
+      "implementation": "unsupported",
+      "relation": "partial",
+      "assumptions": [
+        "No agent/MCP assertion endpoint exists. The host must authenticate confirmations; an arbitrary JSON label saying user is not proof of user intent.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": []
+    },
+    {
+      "id": "P2.1",
+      "policyId": "P2",
+      "source": "Additional Verification for Suspicious Recipients. A scammer often provides unfamiliar payment details and creates a sense of urgency to pressure the victim into transferring money.",
+      "start": 0,
+      "end": 181,
+      "statement": "Do not infer trust from familiar wording or urgency.",
+      "implementation": "unsupported",
+      "relation": "unresolved",
+      "assumptions": [
+        "Source context, with no independent executable condition. No semantic scam classifier is required or claimed by these rules.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": []
+    },
+    {
+      "id": "P2.2",
+      "policyId": "P2",
+      "source": "So, Transfers to unregistered recipients or recipients whose payment details originate from untrusted messages must not be executed without additional identity verification and a cooling-off period.",
+      "start": 182,
+      "end": 380,
+      "statement": "Require identity review and elapsed cooling for unknown or message-derived details.",
+      "implementation": "datalog",
+      "relation": "partial",
+      "assumptions": [
+        "Review/cooling evidence is privately ingested into the EDB. The source leaves the cooling duration unspecified. The original prompt remains stricter for unregistered recipients.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "Clock",
+        "CoolingUntil",
+        "IdentityVerified",
+        "Payee",
+        "TransferIntent"
+      ]
+    },
+    {
+      "id": "P2.3",
+      "policyId": "P2",
+      "source": "A user's request to proceed does not, by itself, bypass these requirements.",
+      "start": 381,
+      "end": 456,
+      "statement": "User confirmation cannot override review and cooling.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "assumptions": [
+        "Final Allow joins all independent requirements. No IgnoreDeny input or agent override is exposed.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": []
+    },
+    {
+      "id": "P3.1",
+      "policyId": "P3",
+      "source": "Daily Transfer Limit. A daily transfer limit can reduce potential financial losses if a user or an agent is deceived into making payments.",
+      "start": 0,
+      "end": 138,
+      "statement": "Cap possible daily loss.",
+      "implementation": "unsupported",
+      "relation": "unresolved",
+      "assumptions": [
+        "Source context, with no independent executable condition. The next clause expresses the numeric cap; this motivation adds no predicate.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": []
+    },
+    {
+      "id": "P3.2",
+      "policyId": "P3",
+      "source": "The Payments Agent must not execute a transfer if the transfer amount, combined with the total amount transferred that day, exceeds the configured daily limit of $1,000.",
+      "start": 139,
+      "end": 308,
+      "statement": "Keep requested cents within the current remaining daily budget.",
+      "implementation": "datalog",
+      "relation": "partial",
+      "assumptions": [
+        "Balance and DailyBudget are integer-cent policy inputs. Original bank JSON mechanics remain unchanged; the result adapter records the confirmed amount delta using singleton replacement. Correct bank-day rollover still needs a trusted producer.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "Balance",
+        "DailyBudget",
+        "Parameter",
+        "Request"
+      ]
+    },
+    {
+      "id": "P3.3",
+      "policyId": "P3",
+      "source": "Transfers within the limit remain subject to all other applicable authorization requirements.",
+      "start": 309,
+      "end": 402,
+      "statement": "A budget check alone never authorizes a transfer.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "assumptions": [
+        "One Datalog Allow joins confirmation, provenance, review and remaining budget before invoking the original bank callback.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "Balance",
+        "Consumed",
+        "DailyBudget",
+        "Parameter",
+        "Purpose",
+        "Request",
+        "TransferIntent",
+        "UserConfirmation"
+      ]
+    },
+    {
+      "id": "P4.1",
+      "policyId": "P4",
+      "source": "Payment Information Provenance. Without tracking, information introduced by a scammer may be treated as real user-provided payment instructions.",
+      "start": 0,
+      "end": 144,
+      "statement": "Do not let repeated instructions silently become trusted data.",
+      "implementation": "unsupported",
+      "relation": "unresolved",
+      "assumptions": [
+        "Source context, with no independent executable condition. Provenance is about recorded data versions, not a classifier over natural-language text.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": []
+    },
+    {
+      "id": "P4.2",
+      "policyId": "P4",
+      "source": "The system must track whether payment details originate from registered banking records, direct user input, or untrusted external messages.",
+      "start": 145,
+      "end": 284,
+      "statement": "Track bank, direct-user and external-message origins.",
+      "implementation": "datalog",
+      "relation": "partial",
+      "assumptions": [
+        "Trusted ingestion and transformation adapters must submit Source/DependsOn facts. The original free-text app still lacks those producers; synthetic fixtures exercise this contract.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "TransferIntent"
+      ]
+    },
+    {
+      "id": "P4.3",
+      "policyId": "P4",
+      "source": "Rephrasing or repeating information from an untrusted message must not automatically change its recorded origin to trusted user input.",
+      "start": 285,
+      "end": 419,
+      "statement": "A rewrite retains any declared external-message ancestor.",
+      "implementation": "datalog",
+      "relation": "partial",
+      "assumptions": [
+        "The builtin closure preserves the old origin along declared dependencies. Adding Source(user, rewritten-data) does not erase Source(external_message, ancestor). Missing transformation edges remain an observation gap.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "TransferIntent"
+      ]
+    },
+    {
+      "id": "P5.1",
+      "policyId": "P5",
+      "source": "Separation of Agent Responsibilities. Separating responsibilities prevents an agent that processes untrusted messages from directly controlling financial transactions.",
+      "start": 0,
+      "end": 167,
+      "statement": "Separate untrusted-message processing from payment execution.",
+      "implementation": "unsupported",
+      "relation": "unresolved",
+      "assumptions": [
+        "The three original Payments tool bodies retain their bank JSON operations and logging. Added decorators gate them and record confirmed transfer deltas; the Assistant/A2A message bridge remains unmodified.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": []
+    },
+    {
+      "id": "P5.2",
+      "policyId": "P5",
+      "source": "Only the Payments Agent may invoke the transfer execution tool.",
+      "start": 168,
+      "end": 231,
+      "statement": "Allow only the bound Payments principal to execute.",
+      "implementation": "datalog",
+      "relation": "partial",
+      "assumptions": [
+        "The adapter reads the caller name from MCP request _meta.caller, or caller_context for direct Python calls. Rules require payments. A real MCP test sends assistant and payments to the same endpoint and observes denial/success. The original host must propagate its agent name; endpoint authentication remains deployment work.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "Parameter",
+        "Request"
+      ]
+    },
+    {
+      "id": "P5.3",
+      "policyId": "P5",
+      "source": "The Assistant Agent may request payment verification but must not directly execute transfers or modify banking records.",
+      "start": 232,
+      "end": 351,
+      "statement": "Assistant verifies without a transfer or bank-write tool.",
+      "implementation": "adapter",
+      "relation": "partial",
+      "assumptions": [
+        "The original Assistant tool list lacks execute_transfer. This does not prevent a misconfigured deployment from giving Assistant the payment endpoint.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": []
+    },
+    {
+      "id": "P5.4",
+      "policyId": "P5",
+      "source": "The verification should not result in a transfer execution.",
+      "start": 352,
+      "end": 411,
+      "statement": "A verification-only request must not execute.",
+      "implementation": "datalog",
+      "relation": "partial",
+      "assumptions": [
+        "Purpose comes from host evidence and blocks verification intents. The original free-text A2A request is not bound to an authenticated execution scope, so the full causal property remains open.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "Parameter",
+        "Purpose",
+        "Request"
+      ]
+    },
+    {
+      "id": "P6.1",
+      "policyId": "P6",
+      "source": "Information Isolation Between Agents. Restricting information flow reduces unnecessary exposure of sensitive data and prevents malicious instructions embedded in external messages from crossing agent boundaries.",
+      "start": 0,
+      "end": 211,
+      "statement": "Limit inter-agent disclosure to necessary payment information.",
+      "implementation": "unsupported",
+      "relation": "unresolved",
+      "assumptions": [
+        "Source context, with no independent executable condition. The remaining P6 clauses expose a distinct output/message boundary, which this payment-execution port does not claim to solve.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": []
+    },
+    {
+      "id": "P6.2",
+      "policyId": "P6",
+      "source": "The Assistant Agent must not access account balances or full bank account numbers directly.",
+      "start": 212,
+      "end": 303,
+      "statement": "Keep balances and full accounts out of Assistant tools.",
+      "implementation": "datalog",
+      "relation": "partial",
+      "assumptions": [
+        "Original list_payees reads bank.json and emits names and masked accounts unchanged. An added policy decorator gates this call. Network identity and other output channels still require deployment scoping.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "Request"
+      ]
+    },
+    {
+      "id": "P6.3",
+      "policyId": "P6",
+      "source": "The Payments Agent must not receive the same message from the Assistant Agent, e.g., raw SMS content or unrelated conversation history.",
+      "start": 304,
+      "end": 439,
+      "statement": "Never forward raw SMS or unrelated history to Payments.",
+      "implementation": "unsupported",
+      "relation": "partial",
+      "assumptions": [
+        "request_payment_verification still accepts and forwards free-form request_text. A transfer guard cannot undo a message already sent.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": []
+    },
+    {
+      "id": "P6.4",
+      "policyId": "P6",
+      "source": "Communication between agents must be limited to the information necessary to verify and process the specific payment request.",
+      "start": 440,
+      "end": 565,
+      "statement": "Send only structured fields required for this payment.",
+      "implementation": "unsupported",
+      "relation": "partial",
+      "assumptions": [
+        "A reviewed structured A2A schema and response projection are needed. No generic Sink predicate or provenance closure can substitute for instrumenting the actual bridge.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": []
+    }
+  ]
+}

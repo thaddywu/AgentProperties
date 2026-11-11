@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "planHash": "f95838f11d24203633554c93ccc7f18df01c47d24034cba310ceadd6e03b226b",
+  "approvedRequirements": [
+    "P1.1",
+    "P1.2",
+    "P1.3",
+    "P1.4",
+    "P2.1",
+    "P2.2",
+    "P2.3",
+    "P3.1",
+    "P3.2",
+    "P3.3",
+    "P4.1",
+    "P4.2",
+    "P4.3",
+    "P5.1",
+    "P5.2",
+    "P5.3",
+    "P5.4",
+    "P6.1",
+    "P6.2",
+    "P6.3",
+    "P6.4"
+  ],
+  "acknowledgedGaps": [
+    "P1.1",
+    "P1.2",
+    "P1.3",
+    "P1.4",
+    "P2.1",
+    "P2.2",
+    "P3.1",
+    "P3.2",
+    "P4.1",
+    "P4.2",
+    "P4.3",
+    "P5.1",
+    "P5.2",
+    "P5.3",
+    "P5.4",
+    "P6.1",
+    "P6.2",
+    "P6.3",
+    "P6.4"
+  ],
+  "obligations": {
+    "P1.3": "After an original bank transfer succeeds, its confirmed delta updates Consumed, Transfer, Balance and DailyBudget in one EDB batch. Bank JSON and EDB do not share a transaction; uncertain synchronization stops the session. Verify with the original bound tools in tests/verify.py; remaining paths are explicitly excluded.",
+    "P5.3": "The original Assistant tool list lacks execute_transfer. This does not prevent a misconfigured deployment from giving Assistant the payment endpoint. Verify with the original bound tools in tests/verify.py; remaining paths are explicitly excluded."
+  }
+}

@@ -310,13 +310,13 @@ try {
             question: {
               id: "denial",
               category: "Communication",
-              template: "WHY DenyReceive({recipient}, {message})",
+              template: "WHY Deny({message}, message_policy)",
               question: "Why would message mH to Auditor A be blocked?",
               originalQuestion: request.question,
               interpretationSource: "model",
               tab: "why",
               scope: "auditor_a",
-              query: 'DenyReceive("auditor_a", "mH")',
+              query: 'Deny("mH", message_policy)',
             },
           };
     assert.equal(request.mode, "model");
@@ -380,7 +380,7 @@ try {
   );
   assert.equal((await current()).version, beforeInterpretation.version);
   const nlProof = await clickRun("PROOF");
-  assert.match(nlProof.result.fact, /DenyReceive/);
+  assert.match(nlProof.result.fact, /Deny/);
   await page.screenshot({ path: `${output}/nl-query-interpreted.png`, fullPage: true });
   for (const label of ["What-if", "Min-prevention", "Planning"]) {
     await page.getByRole("button", { name: "Questions", exact: true }).click();
@@ -440,7 +440,7 @@ try {
   result = await clickRun("PROOF");
   assert.match(result.result.rule, /HasReceivedTag\("auditor_a",T1\)/);
   assert.match(JSON.stringify(result.result), /TransportTag/);
-  assert.match(result.result.fact, /DenyReceive/);
+  assert.match(result.result.fact, /Deny/);
   await page.screenshot({ path: `${output}/why.png`, fullPage: true });
   console.log("PASS generated proof tree");
 

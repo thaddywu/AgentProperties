@@ -109,8 +109,8 @@ export async function novaReportFsmTrial(auditComplete: boolean) {
   const inputs = [
     f("ResourceType", "report", "audit_report"),
     f("ResourceState", "report", "draft"),
-    f("Transition", "audit_report", "approve", "draft", "approved"),
-    f("Transition", "audit_report", "publish", "approved", "published"),
+    f("AllowedTransition", "audit_report", "approve", "draft", "approved"),
+    f("AllowedTransition", "audit_report", "publish", "approved", "published"),
     f("AgentHasCapability", "reviewer", "approve_report"),
     f("AgentHasCapability", "publisher", "publish_report"),
     f("ReportGroup", "report", "nova"),
@@ -152,7 +152,7 @@ export async function novaReportFsmTrial(auditComplete: boolean) {
       },
       Request: {
         kind: "input",
-        args: ["Request", "Actor", "Action", "Resource"],
+        args: ["Request", "Actor", "Action"],
         meaning: "Runtime-created attempt.",
       },
       Allow: { kind: "derived", args: ["Request"], meaning: "Explicit permission." },
@@ -183,7 +183,7 @@ export async function novaReportFsmTrial(auditComplete: boolean) {
     ],
   };
   const source =
-    'Allow(Q) :- Request(Q, A, "approve", R), AgentHasCapability(A, "approve_report"), ReportGroup(R, G), AuditComplete(G).\nAllow(Q) :- Request(Q, A, "publish", R), AgentHasCapability(A, "publish_report").';
+    'Allow(Q) :- Request(Q, A, "approve"), Parameter(Q, "resource", R), AgentHasCapability(A, "approve_report"), ReportGroup(R, G), AuditComplete(G).\nAllow(Q) :- Request(Q, A, "publish"), Parameter(Q, "resource", R), AgentHasCapability(A, "publish_report").';
   const session = createPolicySession(binding, compileApplicationPolicy(binding, source), inputs);
   let callbacks = 0;
   const effect = async () => ++callbacks;
@@ -196,7 +196,7 @@ export async function novaReportFsmTrial(auditComplete: boolean) {
     published: published.allowed,
     callbacks,
     currentState: session.query('?- ResourceState("report", S).').rows,
-    committedActions: session.query("?- ActionTaken(E,R,A,From,To).").rows.length,
+    committedActions: callbacks,
   };
 }
 

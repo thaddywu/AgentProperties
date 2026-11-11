@@ -1,0 +1,196 @@
+// Source: upstream policies.md P1-P6, revision 2fe55f85a51b65819222816cb5b5b71f7d594355.
+// Subnumbers follow source sentences; walkthrough.json retains the exact original text.
+// Policy inputs describe the original bank; its JSON store and tool bodies remain intact.
+// Confirmed transfer results update only affected EDB facts. Confirmation and data-lineage records
+// require a separate trusted host producer: the original app has no such record store.
+// No agent assertion endpoint is installed. Monetary values below are integer USD cents.
+
+.decl TransferIntent(Intent:symbol, Recipient:symbol, Cents:number, Details:symbol) // Immutable host request binding recipient, amount and versioned payment details.
+.input TransferIntent
+.key TransferIntent(Intent)
+.decl UserConfirmation(Intent:symbol, Recipient:symbol, Cents:number) // Explicit host-recorded user confirmation of this exact request.
+.input UserConfirmation
+.decl Purpose(Intent:symbol, Purpose:symbol) // Host-bound transfer or verification purpose; never a tool-selected privilege.
+.input Purpose
+.key Purpose(Intent)
+.decl Consumed(Intent:symbol) // A previously completed intent cannot be reused in normal operation.
+.input Consumed
+.decl Payee(Id:symbol, Account:symbol) // Reviewed registered payee facts in the EDB.
+.input Payee
+.decl IdentityVerified(Intent:symbol, Recipient:symbol, Cents:number) // Trusted additional identity review for the exact request.
+.input IdentityVerified
+.decl CoolingUntil(Intent:symbol, Deadline:number) // Trusted review record gives the configured cooling deadline.
+.input CoolingUntil
+.key CoolingUntil(Intent)
+.decl Clock(Now:number) // Current server time in seconds, replaced by the adapter before checking.
+.input Clock
+.key Clock()
+.decl DailyBudget(Remaining:number, ConfiguredLimit:number) // Current remaining policy cents; replaced after confirmed original transfers.
+.input DailyBudget
+.key DailyBudget()
+.decl Balance(Cents:number) // Current integer-cent policy balance, recorded from confirmed transfer deltas.
+.input Balance
+.key Balance()
+.decl ConfirmedRequest(Q:symbol, Intent:symbol) // Actual tool arguments match a confirmed unconsumed transfer intent.
+.decl Registered(Recipient:symbol) // The exact recipient identifier or account is registered.
+.decl UntrustedDetails(Intent:symbol) // The payment details may descend from an external message.
+.decl KnownOrigin(Intent:symbol) // At least one declared bank, user or external-message origin exists.
+.decl NeedsReview(Intent:symbol) // Unknown registration or external-message ancestry requires extra review.
+.decl ReviewSatisfied(Intent:symbol) // No extra review is needed, or identity and cooling conditions both hold.
+.decl WithinDailyLimit(Q:symbol) // Positive requested cents fit the current balance and remaining configured limit.
+
+
+.decl Transfer(Id:symbol, Intent:symbol, Account:symbol, Cents:number, Status:symbol) // Committed mock transfer evidence.
+.input Transfer
+.key Transfer(Id)
+.decl PayeeName(Id:symbol, Name:symbol) // Public display names from the original payee shape.
+.input PayeeName
+// Reviewed synthetic initial facts must match the original mock bank at scope startup.
+Payee("payee-1", "FAKE-ACCOUNT-0001").
+PayeeName("payee-1", "Synthetic Payee").
+Balance(500000).
+DailyBudget(90000, 100000).
+Clock(0).
+
+// P1.1: Impersonation motivates confirmation; it does not itself define an identity detector.
+// Source: upstream policies.md P1.
+// Coverage: threat explanation; no scam-classification predicate is invented.
+
+// P1.2: Confirm the exact recipient and amount for a host-created intent.
+// Rule: confirmation | P1.2
+// Bind a real tool call to matching host intent and user confirmation; reject used intents.
+ConfirmedRequest(Q, I) :-
+    Request(Q, "payments", "execute_transfer"),
+    Parameter(Q, "intent_id", I),
+    Parameter(Q, "recipient", R),
+    Parameter(Q, "amount_minor", C),
+    TransferIntent(I, R, C, D),
+    UserConfirmation(I, R, C),
+    Purpose(I, "transfer"),
+    not Consumed(I).
+
+// P1.3: Confirmation belongs to the specific request, not every call with a similar amount.
+// Coverage: the shared intent ID and matching recipient/cents in P1.2 bind the evidence.
+
+// P1.4: Message instructions are never inserted as UserConfirmation facts.
+// Coverage: confirmation requires a trusted UI/authentication producer absent upstream.
+
+// P2.1: Unfamiliar details and urgency are the source motivation, not a semantic classifier.
+// Source: upstream policies.md P2.
+
+// P2.2: Both unregistered recipients and external-message payment details require review.
+// Rule: registered-id | P2.2
+// A bank payee ID is registered.
+Registered(R) :- Payee(R, Account).
+// Rule: registered-account | P2.2
+// A bank-listed account number is also a registered recipient identifier.
+Registered(R) :- Payee(Id, R).
+// Rule: unregistered-review | P2.2
+// A transfer to an unregistered recipient requires additional review.
+NeedsReview(I) :- TransferIntent(I, R, C, D), not Registered(R).
+// Rule: origin-review | P2.2
+// External-message ancestry requires review even if the recipient is registered.
+NeedsReview(I) :- UntrustedDetails(I).
+// Rule: ordinary-review | P2.2
+// Ordinary registered details need no extra identity review, but still need confirmation.
+ReviewSatisfied(I) :- TransferIntent(I, R, C, D), not NeedsReview(I).
+// Rule: verified-cooled | P2.2
+// Reviewed exact details may proceed only after the trusted cooling deadline.
+ReviewSatisfied(I) :-
+    TransferIntent(I, R, C, D),
+    NeedsReview(I),
+    IdentityVerified(I, R, C),
+    CoolingUntil(I, Until),
+    Clock(Now),
+    Until <= Now.
+
+// P2.3: A user's wish to proceed does not remove the independent review conditions.
+// Coverage: final authorization joins confirmation and review instead of overriding Deny.
+
+// P3.1: A daily cap limits possible loss; this is motivation rather than a new predicate.
+// Source: upstream policies.md P3.
+
+// P3.2: Compare positive cents with current remaining budget and balance.
+// Rule: daily-budget | P3.2
+// The EDB limit must be $1,000; successful effects maintain remaining integer cents.
+WithinDailyLimit(Q) :-
+    Request(Q, P, Event),
+    Parameter(Q, "amount_minor", C),
+    DailyBudget(Remaining, 100000),
+    Balance(Available),
+    C > 0,
+    C <= Remaining,
+    C <= Available.
+
+// P3.3: Being within budget is only one condition, never an authorization by itself.
+// Rule: transfer | P3.3
+// Execute only the bound, confirmed, known-origin request after every independent check.
+Allow(Q) :-
+    ConfirmedRequest(Q, I),
+    KnownOrigin(I),
+    ReviewSatisfied(I),
+    WithinDailyLimit(Q).
+
+// P4.1: Repetition can launder apparent trust; do not classify origins from wording.
+// Source: upstream policies.md P4.
+
+// P4.2: Accept only payment details with declared bank, direct-user or message provenance.
+// Rule: bank-origin | P4.2
+// A bank record is a recognized possible payment-detail origin.
+KnownOrigin(I) :- TransferIntent(I, R, C, D), Provenance(D, "bank").
+// Rule: user-origin | P4.2
+// Direct user input is recognized only when the trusted producer records that origin.
+KnownOrigin(I) :- TransferIntent(I, R, C, D), Provenance(D, "user").
+// Rule: message-origin | P4.2
+// External-message details are recognized as untrusted, not silently discarded.
+KnownOrigin(I) :- TransferIntent(I, R, C, D), Provenance(D, "external_message").
+
+// P4.3: A rewritten detail retains external-message ancestry through DependsOn.
+// Rule: external-ancestry | P4.3
+// Any declared external-message ancestor triggers review; adding user origin cannot erase it.
+UntrustedDetails(I) :- TransferIntent(I, R, C, D), Provenance(D, "external_message").
+
+// P5.1: Separate untrusted-message interpretation from payment execution.
+// Source: upstream policies.md P5.
+// Coverage: the guarded payment endpoint remains separate from the Assistant tools.
+
+// P5.2: Only Payments may invoke execute_transfer.
+// Rule: payments-only | P5.2
+// A non-Payments principal is denied even if another rule accidentally permits the call.
+Deny(Q, "payments_only") :- Request(Q, P, "execute_transfer"), P != "payments".
+
+// Rule: payee-read | P5.2
+// Only the bound Payments principal may use the original recipient lookup.
+Allow(Q) :- Request(Q, "payments", "lookup_recipient"), Parameter(Q, "recipient_id", R).
+// Rule: limit-read | P5.2
+// Only Payments may inspect a budget check; the check result is derived in Datalog.
+Allow(Q) :- Request(Q, "payments", "check_daily_limit"), Parameter(Q, "amount_minor", C).
+
+// P5.3: Assistant may verify but may not transfer or edit bank records.
+// Coverage: original Assistant tool registration has no transfer or bank-write handler.
+// Deployment must authenticate the endpoint; a fixed principal string does not do that.
+
+// P5.4: Verification must not execute a transfer.
+// Rule: verification-only | P5.4
+// A host-marked verification intent cannot be used to execute a transfer.
+Deny(Q, "verification_only") :-
+    Request(Q, P, "execute_transfer"),
+    Parameter(Q, "intent_id", I),
+    Purpose(I, "verification").
+// Coverage: this guards typed intents; the original free-text A2A run is not fully scoped.
+
+// P6.1: Minimize cross-agent information; motivation is not a generic taint sanitizer.
+// Source: upstream policies.md P6.
+
+// P6.2: Assistant must not read balance or full accounts directly.
+// Coverage: the public payee adapter masks account numbers; endpoint identity still needs scoping.
+
+// Rule: assistant-payee-read | P6.2
+// The Assistant may request the public payee projection, never raw bank facts.
+Allow(Q) :- Request(Q, "assistant", "list_payees").
+
+// P6.3: Payments must not receive raw SMS or unrelated history.
+// Coverage: unsupported here; the original request_text A2A bridge remains unmodified.
+
+// P6.4: Send only the minimum details needed for this request.
+// Coverage: a structured A2A schema/output adapter is still required; no rule claims this.

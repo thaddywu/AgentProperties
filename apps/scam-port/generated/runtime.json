@@ -1,0 +1,312 @@
+{
+  "version": 1,
+  "id": "application-policy",
+  "context": "Reviewed local application policy.",
+  "predicates": {
+    "Request": {
+      "kind": "input",
+      "args": [
+        "Q",
+        "Principal",
+        "EventKind"
+      ],
+      "meaning": "Runtime-owned immutable request."
+    },
+    "Parameter": {
+      "kind": "input",
+      "args": [
+        "Q",
+        "Name",
+        "Value"
+      ],
+      "meaning": "Runtime-bound request argument."
+    },
+    "Allow": {
+      "kind": "derived",
+      "args": [
+        "Q"
+      ],
+      "meaning": "Explicit request permission."
+    },
+    "Deny": {
+      "kind": "derived",
+      "args": [
+        "Q",
+        "Reason"
+      ],
+      "meaning": "Explicit request refusal; overrides Allow."
+    },
+    "Source": {
+      "kind": "input",
+      "args": [
+        "Principal",
+        "Data"
+      ],
+      "meaning": "Trusted record of a direct data origin; does not establish content truth."
+    },
+    "DependsOn": {
+      "kind": "input",
+      "args": [
+        "Output",
+        "Input"
+      ],
+      "meaning": "Direct conservative data dependency, supplied by actual instrumentation or application records."
+    },
+    "Provenance": {
+      "kind": "derived",
+      "args": [
+        "Data",
+        "Principal"
+      ],
+      "meaning": "Possible origin propagated through declared dependencies; no mandatory security labels."
+    },
+    "TransferIntent": {
+      "kind": "input",
+      "args": [
+        "Intent",
+        "Recipient",
+        "Cents",
+        "Details"
+      ],
+      "meaning": "Immutable host request binding recipient, amount and versioned payment details.",
+      "types": [
+        "symbol",
+        "symbol",
+        "number",
+        "symbol"
+      ],
+      "key": [
+        "Intent"
+      ]
+    },
+    "UserConfirmation": {
+      "kind": "input",
+      "args": [
+        "Intent",
+        "Recipient",
+        "Cents"
+      ],
+      "meaning": "Explicit host-recorded user confirmation of this exact request.",
+      "types": [
+        "symbol",
+        "symbol",
+        "number"
+      ]
+    },
+    "Purpose": {
+      "kind": "input",
+      "args": [
+        "Intent",
+        "Purpose"
+      ],
+      "meaning": "Host-bound transfer or verification purpose; never a tool-selected privilege.",
+      "key": [
+        "Intent"
+      ]
+    },
+    "Consumed": {
+      "kind": "input",
+      "args": [
+        "Intent"
+      ],
+      "meaning": "A previously completed intent cannot be reused in normal operation."
+    },
+    "Payee": {
+      "kind": "input",
+      "args": [
+        "Id",
+        "Account"
+      ],
+      "meaning": "Reviewed registered payee facts in the EDB."
+    },
+    "IdentityVerified": {
+      "kind": "input",
+      "args": [
+        "Intent",
+        "Recipient",
+        "Cents"
+      ],
+      "meaning": "Trusted additional identity review for the exact request.",
+      "types": [
+        "symbol",
+        "symbol",
+        "number"
+      ]
+    },
+    "CoolingUntil": {
+      "kind": "input",
+      "args": [
+        "Intent",
+        "Deadline"
+      ],
+      "meaning": "Trusted review record gives the configured cooling deadline.",
+      "types": [
+        "symbol",
+        "number"
+      ],
+      "key": [
+        "Intent"
+      ]
+    },
+    "Clock": {
+      "kind": "input",
+      "args": [
+        "Now"
+      ],
+      "meaning": "Current server time in seconds, replaced by the adapter before checking.",
+      "types": [
+        "number"
+      ],
+      "key": []
+    },
+    "DailyBudget": {
+      "kind": "input",
+      "args": [
+        "Remaining",
+        "ConfiguredLimit"
+      ],
+      "meaning": "Current remaining policy cents; replaced after confirmed original transfers.",
+      "types": [
+        "number",
+        "number"
+      ],
+      "key": []
+    },
+    "Balance": {
+      "kind": "input",
+      "args": [
+        "Cents"
+      ],
+      "meaning": "Current integer-cent policy balance, recorded from confirmed transfer deltas.",
+      "types": [
+        "number"
+      ],
+      "key": []
+    },
+    "ConfirmedRequest": {
+      "kind": "derived",
+      "args": [
+        "Q",
+        "Intent"
+      ],
+      "meaning": "Actual tool arguments match a confirmed unconsumed transfer intent."
+    },
+    "Registered": {
+      "kind": "derived",
+      "args": [
+        "Recipient"
+      ],
+      "meaning": "The exact recipient identifier or account is registered."
+    },
+    "UntrustedDetails": {
+      "kind": "derived",
+      "args": [
+        "Intent"
+      ],
+      "meaning": "The payment details may descend from an external message."
+    },
+    "KnownOrigin": {
+      "kind": "derived",
+      "args": [
+        "Intent"
+      ],
+      "meaning": "At least one declared bank, user or external-message origin exists."
+    },
+    "NeedsReview": {
+      "kind": "derived",
+      "args": [
+        "Intent"
+      ],
+      "meaning": "Unknown registration or external-message ancestry requires extra review."
+    },
+    "ReviewSatisfied": {
+      "kind": "derived",
+      "args": [
+        "Intent"
+      ],
+      "meaning": "No extra review is needed, or identity and cooling conditions both hold."
+    },
+    "WithinDailyLimit": {
+      "kind": "derived",
+      "args": [
+        "Q"
+      ],
+      "meaning": "Positive requested cents fit the current balance and remaining configured limit."
+    },
+    "Transfer": {
+      "kind": "input",
+      "args": [
+        "Id",
+        "Intent",
+        "Account",
+        "Cents",
+        "Status"
+      ],
+      "meaning": "Committed mock transfer evidence.",
+      "types": [
+        "symbol",
+        "symbol",
+        "symbol",
+        "number",
+        "symbol"
+      ],
+      "key": [
+        "Id"
+      ]
+    },
+    "PayeeName": {
+      "kind": "input",
+      "args": [
+        "Id",
+        "Name"
+      ],
+      "meaning": "Public display names from the original payee shape."
+    }
+  },
+  "decision": {
+    "request": "Request",
+    "parameters": "Parameter",
+    "allow": "Allow",
+    "deny": "Deny"
+  },
+  "tests": [],
+  "configuration": [
+    {
+      "predicate": "Payee",
+      "args": [
+        "payee-1",
+        "FAKE-ACCOUNT-0001"
+      ]
+    },
+    {
+      "predicate": "PayeeName",
+      "args": [
+        "payee-1",
+        "Synthetic Payee"
+      ]
+    },
+    {
+      "predicate": "Balance",
+      "args": [
+        "500000"
+      ]
+    },
+    {
+      "predicate": "DailyBudget",
+      "args": [
+        "90000",
+        "100000"
+      ]
+    },
+    {
+      "predicate": "Clock",
+      "args": [
+        "0"
+      ]
+    }
+  ],
+  "invariants": [],
+  "mechanisms": [
+    "provenance"
+  ]
+}

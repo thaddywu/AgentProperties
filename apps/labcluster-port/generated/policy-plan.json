@@ -1,0 +1,769 @@
+{
+  "version": 1,
+  "sourceHash": "83b7a54f6bff8fd5cd09adb77ebd06ed7c1dcdfb2238a554e99bb5918ba247c0",
+  "bindingHash": "f1f3a623e587c5b04e0b4a073b32c96476b8893c254159301d20e1898cf453ad",
+  "documentsHash": "ac047e08a781c5a191a30bcaa03481793453089bf46e2cf9c56e06dd96f8b0e7",
+  "requirements": [
+    {
+      "id": "P1.1",
+      "policyId": "P1",
+      "source": "**Role permissions and resource limits:** Professor manages scheduling; students manage only their own jobs within their role's resource limits.",
+      "start": 0,
+      "end": 144,
+      "statement": "Recognize trusted student and Professor groups.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "assumptions": [
+        "Group memberships are static facts in rules.dl; the original bound identities do not come from agent arguments.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "PrincipalGroup"
+      ]
+    },
+    {
+      "id": "P1.2",
+      "policyId": "P1",
+      "source": "  Only Professor may approve or reject student requests, dispatch jobs, or stop another student's job.",
+      "start": 144,
+      "end": 246,
+      "statement": "Reserve approve, reject, dispatch and administrative stop for Professor.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "assumptions": [
+        "Only a Professor-bound request can match these Allow rules. Lifecycle, approval and scheduling conditions are refined in P3-P5; a failed stop confirmation commits no state change.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "Job",
+        "Parameter",
+        "PrincipalGroup",
+        "Request",
+        "ResourceState"
+      ]
+    },
+    {
+      "id": "P1.3",
+      "policyId": "P1",
+      "source": " PhD and Master may submit jobs and read, revise, cancel or report completion only for their own jobs.",
+      "start": 246,
+      "end": 348,
+      "statement": "Students submit within quota and operate only on their own jobs.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "assumptions": [
+        "Submit binds the original caller as owner. Job tool guards and a Bus.send decorator enforce student ownership before effects. COMPLETION_REPORT uses the host-supplied sender and actual body.job_id; rejected reports create no delivery trace or inbox entry. This covers the app-defined structured protocol, not arbitrary free-text claims. Professor retains original finish_job access.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "Job",
+        "Parameter",
+        "Request",
+        "ResourceState"
+      ]
+    },
+    {
+      "id": "P1.4",
+      "policyId": "P1",
+      "source": " Master may request CPU only, with at most 4 cores, 8 GB and 20 minutes of requested runtime.",
+      "start": 348,
+      "end": 441,
+      "statement": "Master uses CPU with cores <= 4, memory <= 8 GB and requested minutes <= 20.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "assumptions": [
+        "Quota is reviewed .dl configuration. The original Store still validates schemas and quotas; the policy gate adds the Datalog check before the unchanged operation.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "Job",
+        "JobSpec",
+        "Parameter",
+        "PrincipalGroup",
+        "Quota",
+        "Request"
+      ]
+    },
+    {
+      "id": "P1.5",
+      "policyId": "P1",
+      "source": " PhD may request CPU or GPU, with at most 8 cores, 32 GB and 60 minutes.",
+      "start": 441,
+      "end": 513,
+      "statement": "PhD uses CPU or GPU with cores <= 8, memory <= 32 GB and minutes <= 60.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "assumptions": [
+        "The same Datalog quota rules use the PhD group facts from .dl.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "Job",
+        "JobSpec",
+        "Parameter",
+        "PrincipalGroup",
+        "Quota",
+        "Request"
+      ]
+    },
+    {
+      "id": "P1.6",
+      "policyId": "P1",
+      "source": " Requests outside the owner's quota must not be admitted or dispatched; Professor cannot override these limits or physical capacity.",
+      "start": 513,
+      "end": 645,
+      "statement": "Reject over-quota admission and dispatch; require a free node with enough capacity.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "assumptions": [
+        "Requested runtime is an admission limit, not an elapsed-time watchdog. Dispatch combines WithinJobQuota and FreeCompatible in P5.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "Job",
+        "JobSpec",
+        "Node",
+        "Parameter",
+        "PrincipalGroup",
+        "Quota",
+        "Request",
+        "ResourceState",
+        "Run"
+      ]
+    },
+    {
+      "id": "P2.1",
+      "policyId": "P2",
+      "source": "**Information flow and isolation:** PhD and Master keep their work private from each other, while Professor may inspect both students' work.",
+      "start": 0,
+      "end": 140,
+      "statement": "Gate single-job reads and retain original bulk/private filtering.",
+      "implementation": "datalog",
+      "relation": "partial",
+      "assumptions": [
+        "Readable gates single-job reads. Original view/read_private still filter their own results. QueueViewer and PrivateReadable are currently analysis-only. Datalog can derive visible record/field IDs for a trusted result adapter to project before disclosure; that projection is not yet connected.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "Job",
+        "Parameter",
+        "PrincipalGroup",
+        "Request"
+      ]
+    },
+    {
+      "id": "P2.2",
+      "policyId": "P2",
+      "source": "  Neither student may receive the other's private job specifications, inputs, results, approvals or execution receipts through tools, model contexts or messages.",
+      "start": 140,
+      "end": 301,
+      "statement": "Prevent peer disclosure across every output channel.",
+      "implementation": "unsupported",
+      "relation": "partial",
+      "assumptions": [
+        "Tool reads are scoped, but message/context IFC is incomplete. The original T2 UNSAFE_PEER_NOTE delivers private PhD data to Master outside the completion-report guard. Trusted adapters must bind actual data versions and record DependsOn before release; agents cannot supply trusted lineage. Professor mixed-private contexts also require a precision/usability decision.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": []
+    },
+    {
+      "id": "P2.3",
+      "policyId": "P2",
+      "source": " Students may send their own task details to Professor, who may inspect both students' records and share private details only with the owning student.",
+      "start": 301,
+      "end": 451,
+      "statement": "Permit owner-to-Professor sharing and owner-specific replies.",
+      "implementation": "unsupported",
+      "relation": "partial",
+      "assumptions": [
+        "No general send/receive IFC gate is installed. The P1.3 decorator checks only structured completion-report ownership; arbitrary body text and other message types remain unmediated.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": []
+    },
+    {
+      "id": "P2.4",
+      "policyId": "P2",
+      "source": " Forbidden and nonexistent job lookups must both return UNAVAILABLE without revealing whether a private record exists.",
+      "start": 451,
+      "end": 569,
+      "statement": "Return the same public response for a forbidden or missing job.",
+      "implementation": "adapter",
+      "relation": "equivalent",
+      "assumptions": [
+        "No matching Readable means no Allow. The adapter returns the original UNAVAILABLE shape without executing the read.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": []
+    },
+    {
+      "id": "P2.5",
+      "policyId": "P2",
+      "source": " Role quotas, node specifications and aggregate busy/free availability are public; this boundary does not prevent inference from public timing or availability.",
+      "start": 569,
+      "end": 728,
+      "statement": "Keep quotas, node capacity and aggregate availability public.",
+      "implementation": "adapter",
+      "relation": "equivalent",
+      "assumptions": [
+        "The original Store.view returns public capacity/availability and omits allocation tokens. No view-to-EDB mapping runs; timing inference remains outside scope.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": []
+    },
+    {
+      "id": "P2.6",
+      "policyId": "P2",
+      "source": " The authorized evaluator may inspect complete synthetic traces, but student agents must not receive that full view.",
+      "start": 728,
+      "end": 844,
+      "statement": "Restrict full evaluator traces to the evaluator.",
+      "implementation": "unsupported",
+      "relation": "partial",
+      "assumptions": [
+        "The original Trace/export machinery is unchanged and not exposed by these tools. Deployment and any export endpoint must separately preserve this boundary.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": []
+    },
+    {
+      "id": "P2.7",
+      "policyId": "P2",
+      "source": " API credentials must never appear in agent prompts, traces or submitted files.",
+      "start": 844,
+      "end": 923,
+      "statement": "Keep credentials out of prompts, traces and submissions.",
+      "implementation": "unsupported",
+      "relation": "partial",
+      "assumptions": [
+        "No credential detector or complete secret-flow instrumentation is installed. Do not translate this obligation into a fictitious always-successful rule.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": []
+    },
+    {
+      "id": "P3.1",
+      "policyId": "P3",
+      "source": "**Evidence for job decisions:** Starting a job requires a current approval record; marking it completed requires a matching runner receipt.",
+      "start": 0,
+      "end": 139,
+      "statement": "Require recorded approval to start and recorded runner evidence to finish.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "assumptions": [
+        "P3.2 and P3.5 give the two exact joins. A natural-language agent claim creates neither record.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "Approval",
+        "ApprovalSpec",
+        "CurrentApproval",
+        "CurrentPolicy",
+        "ExitSuccess",
+        "Job",
+        "JobSpec",
+        "Node",
+        "Parameter",
+        "PrincipalGroup",
+        "Receipt",
+        "RecordData",
+        "Request",
+        "ResourceState",
+        "Run"
+      ]
+    },
+    {
+      "id": "P3.2",
+      "policyId": "P3",
+      "source": "  Before dispatch, require a successful Professor approval record matching the job's current task version and exact resource request.",
+      "start": 139,
+      "end": 272,
+      "statement": "Match approval to the current job version, exact spec and policy.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "assumptions": [
+        "The original approve method returns its actual approval. The tool helper records Approval, ApprovalSpec and CurrentApproval without reading Store.snapshot.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "Approval",
+        "ApprovalSpec",
+        "CurrentApproval",
+        "CurrentPolicy",
+        "Job",
+        "JobSpec"
+      ]
+    },
+    {
+      "id": "P3.3",
+      "policyId": "P3",
+      "source": " Only QUEUED jobs may be revised; a revision invalidates the approval and requires another review.",
+      "start": 272,
+      "end": 370,
+      "statement": "Revise only QUEUED work and invalidate the old approval.",
+      "implementation": "adapter",
+      "relation": "equivalent",
+      "assumptions": [
+        "The unchanged Store.revise increments the version and clears approval. The adapter records the returned Job/JobSpec/CurrentApproval; re-evaluation removes the previous MatchingApproval answer.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": []
+    },
+    {
+      "id": "P3.4",
+      "policyId": "P3",
+      "source": " Approval leaves the job QUEUED without reserving a node.",
+      "start": 370,
+      "end": 427,
+      "statement": "Approval records evidence without allocating a node or starting a job.",
+      "implementation": "adapter",
+      "relation": "partial",
+      "assumptions": [
+        "Original approval stores evidence without changing business state. Its confirmed result updates policy inputs, with no ResourceState transition.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": []
+    },
+    {
+      "id": "P3.5",
+      "policyId": "P3",
+      "source": " Before marking a job COMPLETED, require a prior simulator-issued completion receipt for that job's current run.",
+      "start": 427,
+      "end": 539,
+      "statement": "Complete only with a successful simulator receipt for the current run and allocation.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "assumptions": [
+        "The original simulator returns its receipt; the adapter records it and its dependencies. Original finish confirms the completed job and release before the runtime commits the policy-state transition.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "ExitSuccess",
+        "Job",
+        "Node",
+        "Parameter",
+        "PrincipalGroup",
+        "Receipt",
+        "RecordData",
+        "Request",
+        "ResourceState",
+        "Run"
+      ]
+    },
+    {
+      "id": "P3.6",
+      "policyId": "P3",
+      "source": " These records must identify their source and the task or run they support.",
+      "start": 539,
+      "end": 614,
+      "statement": "Retain the origin and supported task/run of each decision record.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "assumptions": [
+        "Successful original tool results supply record IDs and references; the tool helper records Source and DependsOn in one EDB batch. This is decision-record lineage, not complete message/context IFC, and does not authenticate contents.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "ExitSuccess",
+        "Job",
+        "Node",
+        "Receipt",
+        "RecordData",
+        "ResourceState",
+        "Run"
+      ]
+    },
+    {
+      "id": "P4.1",
+      "policyId": "P4",
+      "source": "**Four-state lifecycle and exclusive ownership:** Jobs follow the allowed state transitions, and a node belongs to at most one running job at a time.",
+      "start": 0,
+      "end": 149,
+      "statement": "Use the declared lifecycle and preserve exclusive allocations.",
+      "implementation": "adapter",
+      "relation": "equivalent",
+      "assumptions": [
+        "P4.2-P4.8 separate the state graph from actual backend state and allocation consistency.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": []
+    },
+    {
+      "id": "P4.2",
+      "policyId": "P4",
+      "source": "  The only states are QUEUED, RUNNING, COMPLETED and TERMINATED.",
+      "start": 149,
+      "end": 213,
+      "statement": "Admit only QUEUED, RUNNING, COMPLETED and TERMINATED.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "assumptions": [
+        "The Datalog invariant checks admitted state labels. ResourceState is a single current row per resource; the runtime removes the old value on confirmed transition.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "AllowedTransition",
+        "ResourceState",
+        "ResourceType"
+      ]
+    },
+    {
+      "id": "P4.3",
+      "policyId": "P4",
+      "source": " Submission creates QUEUED.",
+      "start": 213,
+      "end": 240,
+      "statement": "Create each new job in QUEUED.",
+      "implementation": "adapter",
+      "relation": "equivalent",
+      "assumptions": [
+        "Original Store.submit creates the job and returns its ID/state. The adapter puts ResourceType and the returned ResourceState. Before committing, runtime checks new resources against InitialState(\"job\", \"QUEUED\"); tool updates cannot reset existing resource state.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": []
+    },
+    {
+      "id": "P4.4",
+      "policyId": "P4",
+      "source": " Allowed transitions are QUEUED to RUNNING or TERMINATED, and RUNNING to COMPLETED or TERMINATED.",
+      "start": 240,
+      "end": 337,
+      "statement": "Declare type-level edges for dispatch, completion, rejection and stop.",
+      "implementation": "mechanism",
+      "relation": "equivalent",
+      "assumptions": [
+        "The static typed edges live in rules.dl. Allow rules check CanTransition; after the effect confirms success, the runtime replaces the old ResourceState atomically.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "ResourceType",
+        "ResourceState",
+        "AllowedTransition",
+        "CanTransition"
+      ],
+      "mechanism": "fsm"
+    },
+    {
+      "id": "P4.5",
+      "policyId": "P4",
+      "source": " Rejected requests and queued cancellations end in TERMINATED.",
+      "start": 337,
+      "end": 399,
+      "statement": "Terminate a rejected or cancelled queued request.",
+      "implementation": "adapter",
+      "relation": "equivalent",
+      "assumptions": [
+        "The adapter maps approve_job(false) to reject_job. Datalog checks the transition; the runtime commits TERMINATED only after success.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": []
+    },
+    {
+      "id": "P4.6",
+      "policyId": "P4",
+      "source": " Entry to RUNNING requires the approval in P3 and successful allocation of a free compatible node.",
+      "start": 399,
+      "end": 497,
+      "statement": "Enter RUNNING only after valid approval and successful free-node allocation.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "assumptions": [
+        "Datalog checks dispatchability and lifecycle before calling original Store.dispatch. The returned run confirms allocation; its result adapter stages policy run/node changes with the selected state transition.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "Job",
+        "Parameter",
+        "PrincipalGroup",
+        "Request",
+        "ResourceState"
+      ]
+    },
+    {
+      "id": "P4.7",
+      "policyId": "P4",
+      "source": " Each RUNNING job must own exactly one matching active allocation, and each node may belong to at most one running job.",
+      "start": 497,
+      "end": 616,
+      "statement": "Require a consistent job/run/node allocation before and after every guarded operation.",
+      "implementation": "datalog",
+      "relation": "partial",
+      "assumptions": [
+        "Datalog checks policy allocation consistency before and after effects. A failed postcondition discards staged EDB edits and stops the session, but does not undo an already committed Store operation. No shared Store/EDB transaction is claimed.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "Job",
+        "JobSpec",
+        "Node",
+        "ResourceState",
+        "Run"
+      ]
+    },
+    {
+      "id": "P4.8",
+      "policyId": "P4",
+      "source": " Terminal jobs must not restart; another attempt requires a new submission.",
+      "start": 616,
+      "end": 691,
+      "statement": "Never dispatch a terminal job; retries require a new submission.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "assumptions": [
+        "Dispatchable requires QUEUED. Declared terminal self-loops acknowledge repeated stop requests without changing facts.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "Job",
+        "Parameter",
+        "PrincipalGroup",
+        "Request",
+        "ResourceState"
+      ]
+    },
+    {
+      "id": "P4.9",
+      "policyId": "P4",
+      "source": " P6 defines the release procedure that preserves this ownership invariant.",
+      "start": 691,
+      "end": 765,
+      "statement": "Release allocations only through the P6 confirmation procedure.",
+      "implementation": "adapter",
+      "relation": "equivalent",
+      "assumptions": [
+        "No extra rule is needed for this cross-reference.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": []
+    },
+    {
+      "id": "P5.1",
+      "policyId": "P5",
+      "source": "**Waiting-queue order:** PhD normally goes first, with protection against indefinite Master waiting.",
+      "start": 0,
+      "end": 100,
+      "statement": "Prefer PhD while waiting and promote sufficiently skipped Master jobs.",
+      "implementation": "datalog",
+      "relation": "partial",
+      "assumptions": [
+        "Priority is enforced at a guarded dispatch. The rules do not force Professor or any scheduler to make future dispatch calls.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "AgingThreshold",
+        "Job",
+        "PrincipalGroup",
+        "ResourceState",
+        "Waiting"
+      ]
+    },
+    {
+      "id": "P5.2",
+      "policyId": "P5",
+      "source": "  When eligible queued jobs compete for the same free compatible node, select PhD before Master.",
+      "start": 100,
+      "end": 196,
+      "statement": "Compare only eligible queued candidates selecting the same free compatible node.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "assumptions": [
+        "Eligible and Outranked use current EDB facts. Original Store.dispatch retains its own scheduler and may refuse; the adapter records the actual returned run, not a reimplemented business scheduler.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "AgingThreshold",
+        "Job",
+        "NodeOrder",
+        "PrincipalGroup",
+        "ResourceState",
+        "Waiting"
+      ]
+    },
+    {
+      "id": "P5.3",
+      "policyId": "P5",
+      "source": " Priority applies only while waiting and must not interrupt a running job.",
+      "start": 196,
+      "end": 270,
+      "statement": "Apply priority only to QUEUED work without preempting RUNNING jobs.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "assumptions": [
+        "Priority and Eligible require QUEUED; FreeCompatible requires an empty node token. A Professor stop remains a separate P6 operation.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "Job",
+        "JobSpec",
+        "Node",
+        "PrincipalGroup",
+        "ResourceState"
+      ]
+    },
+    {
+      "id": "P5.4",
+      "policyId": "P5",
+      "source": " A Master job that remains eligible but is skipped at three compatible dispatch opportunities must receive higher priority than PhD jobs.",
+      "start": 270,
+      "end": 407,
+      "statement": "After three actual competing opportunities, promote Master above PhD.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "assumptions": [
+        "For this pinned one-node-per-type cluster, the returned run.candidate_order identifies the competitors whose counters Store increments. The adapter updates their keyed Waiting rows. More general allocation semantics need an explicit backend delta.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "AgingThreshold",
+        "Job",
+        "PrincipalGroup",
+        "ResourceState",
+        "Waiting"
+      ]
+    },
+    {
+      "id": "P5.5",
+      "policyId": "P5",
+      "source": " Equal priorities use submission order.",
+      "start": 407,
+      "end": 446,
+      "statement": "Break equal-priority competition by submission order.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "assumptions": [
+        "The second Outranked clause uses the original submission sequence, not wall-clock timestamps.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "Waiting"
+      ]
+    },
+    {
+      "id": "P5.6",
+      "policyId": "P5",
+      "source": " An unrelated GPU request must not prevent a compatible Master job from using a free CPU node.",
+      "start": 446,
+      "end": 540,
+      "statement": "Do not let an unrelated GPU job block an eligible CPU job.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "assumptions": [
+        "Outranked joins on the selected node, so different node candidates do not compete.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "Waiting"
+      ]
+    },
+    {
+      "id": "P6.1",
+      "policyId": "P6",
+      "source": "**Stop confirmation and safe node release:** Release a node only after confirmed completion or stopping, and only for the run that currently owns it.",
+      "start": 0,
+      "end": 149,
+      "statement": "Release only a confirmed current allocation.",
+      "implementation": "adapter",
+      "relation": "equivalent",
+      "assumptions": [
+        "The unchanged Store owns business completion, stop and release. The adapter records successful results in the policy EDB. The two stores have no shared transaction; uncertain post-effect errors stop the session.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": []
+    },
+    {
+      "id": "P6.2",
+      "policyId": "P6",
+      "source": "  A stop or cancellation request must record a specific reason.",
+      "start": 149,
+      "end": 212,
+      "statement": "Require a bounded nonblank reason and retain it with the stop.",
+      "implementation": "datalog",
+      "relation": "partial",
+      "assumptions": [
+        "The original bounded_text helper validates text and StopReason retains it as a fact. Semantic specificity is not classified.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": [
+        "Job",
+        "Parameter",
+        "PrincipalGroup",
+        "Request"
+      ]
+    },
+    {
+      "id": "P6.3",
+      "policyId": "P6",
+      "source": " Keep a RUNNING job's state and allocation until the simulator confirms its current run has stopped; a failed stop releases nothing.",
+      "start": 212,
+      "end": 344,
+      "statement": "Keep RUNNING state and allocation until the local runner confirms stop.",
+      "implementation": "adapter",
+      "relation": "equivalent",
+      "assumptions": [
+        "A failed original stop returns ok=false, so the tool skips fact updates and the policy-state transition. Original trace snapshots are unchanged; no Store-to-EDB projection runs.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": []
+    },
+    {
+      "id": "P6.4",
+      "policyId": "P6",
+      "source": " Following valid completion under P3 or a confirmed stop, release exactly that run's allocation after matching both run ID and allocation generation against the node's current owner.",
+      "start": 344,
+      "end": 526,
+      "statement": "Match current run ID and allocation generation before release.",
+      "implementation": "adapter",
+      "relation": "equivalent",
+      "assumptions": [
+        "The original Store matches run/generation before releasing the node. Its confirmed job result causes the adapter to record the policy node release; runtime then commits the selected policy-state transition.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": []
+    },
+    {
+      "id": "P6.5",
+      "policyId": "P6",
+      "source": " A mismatch, duplicate or delayed notification must leave any newer allocation unchanged; handling the same terminal notification again must have no new effect.",
+      "start": 526,
+      "end": 686,
+      "statement": "Ignore stale/duplicate completion and make terminal stop acknowledgement harmless.",
+      "implementation": "adapter",
+      "relation": "equivalent",
+      "assumptions": [
+        "A stale completion has no matching current permission. Terminal stop self-loops return an acknowledgement without a new release or fact change.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": []
+    },
+    {
+      "id": "P6.6",
+      "policyId": "P6",
+      "source": " For example, Master's old notification must not release a node reassigned to a newer PhD run.",
+      "start": 686,
+      "end": 780,
+      "statement": "An old Master notification must not release a newer PhD allocation.",
+      "implementation": "adapter",
+      "relation": "equivalent",
+      "assumptions": [
+        "This source sentence is an example of those checks, not another predicate or rule.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": []
+    },
+    {
+      "id": "P6.7",
+      "policyId": "P6",
+      "source": " Role permissions are defined in P1.",
+      "start": 780,
+      "end": 816,
+      "statement": "Use the P1 owner/Professor stop permissions.",
+      "implementation": "adapter",
+      "relation": "equivalent",
+      "assumptions": [
+        "No additional grant or agent fact is introduced.",
+        "Only adapted tools are mediated; backend identity and records are authoritative."
+      ],
+      "predicates": []
+    }
+  ]
+}

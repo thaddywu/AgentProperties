@@ -1,0 +1,111 @@
+{
+  "kind": "Executed synthetic backend/query evidence; authored reference rules; no model called",
+  "scope": "One simulated cluster captured by an administrator without business callbacks",
+  "observationVersions": {},
+  "inputHash": "c1a8fd96161cfdd0cf71bd6aac101299cfdce95bb5d69e8367899083fc99c979",
+  "policyHash": "42224d3debf756fb82ec41a81e53fa9fafd49577328a915ffd1a933c232a8976",
+  "jobs": {
+    "Master": "JOB-001",
+    "PhD": "JOB-002"
+  },
+  "sourceHash": "ed796a5f28e7da5e3c3aac88c8e85cae197512ca266dc7a03f83368f5bf889ec",
+  "bindingHash": "ef36f74c77e9a9b08a37e047272c53db3ba62809c7e8b4edb090f15b8e2d1663",
+  "queries": [
+    {
+      "query": "?- WithinJobQuota(J).",
+      "columns": [
+        "J"
+      ],
+      "rows": [
+        [
+          "JOB-001"
+        ],
+        [
+          "JOB-002"
+        ]
+      ]
+    },
+    {
+      "query": "?- MatchingApproval(J).",
+      "columns": [
+        "J"
+      ],
+      "rows": [
+        [
+          "JOB-001"
+        ],
+        [
+          "JOB-002"
+        ]
+      ]
+    },
+    {
+      "query": "?- Priority(J, P).",
+      "columns": [
+        "J",
+        "P"
+      ],
+      "rows": [
+        [
+          "JOB-001",
+          "0"
+        ],
+        [
+          "JOB-002",
+          "10"
+        ]
+      ]
+    },
+    {
+      "query": "?- Eligible(J, N).",
+      "columns": [
+        "J",
+        "N"
+      ],
+      "rows": [
+        [
+          "JOB-001",
+          "cpu-1"
+        ],
+        [
+          "JOB-002",
+          "cpu-1"
+        ]
+      ]
+    },
+    {
+      "query": "?- Outranked(J, N).",
+      "columns": [
+        "J",
+        "N"
+      ],
+      "rows": [
+        [
+          "JOB-001",
+          "cpu-1"
+        ]
+      ]
+    },
+    {
+      "query": "?- Dispatchable(J).",
+      "columns": [
+        "J"
+      ],
+      "rows": [
+        [
+          "JOB-002"
+        ]
+      ]
+    }
+  ],
+  "whatIf": {
+    "change": "Master compatible-skip counter becomes 3 in a complete hypothetical snapshot",
+    "masterAllowedBefore": false,
+    "phdAllowedBefore": true,
+    "masterAllowedHypothetically": true,
+    "phdAllowedHypothetically": false,
+    "liveMasterStillDenied": true,
+    "businessCallbacksDuringAnalysis": 0,
+    "liveSnapshotUnchanged": true
+  }
+}

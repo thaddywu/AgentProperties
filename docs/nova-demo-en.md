@@ -55,7 +55,7 @@ EDB facts are inputs. Rules derive further facts. Below, `P` is a principal, `M`
 | `MessageTag(M, T)` | M carries information T, including inherited tags. |
 | `MayDependOn(M2, M1)` | M2 may use M1. Tracks possible dependence, not proven use. |
 | `HasReceivedTag(P, T)` | P has successfully received information tagged T. |
-| `DenyReceive(P, M)` | Refuse delivery to P; shared or app rules can derive this. |
+| `Deny(M, message_policy)` | Refuse delivery to P; shared or app rules can derive this. |
 | `Covered(T)`, `Finished(G)` | Nova's review coverage and completion result. |
 
 Three shared rules illustrate the foundation:
@@ -65,7 +65,7 @@ MessageTag(M, T) :- TransportTag(M, T).
 
 HasReceivedTag(P, T) :- Received(P, M), MessageTag(M, T).
 
-DenyReceive(P, M) :- Incoming(P, M), MessageTag(M, T),
+Deny(M, message_policy) :- Incoming(P, M), MessageTag(M, T),
                      Requires(T, C), not HasCap(P, C).
 ```
 
@@ -105,7 +105,7 @@ P3 describes the information limit:
 One reference rule handles two previously received parts plus one incoming part:
 
 ```prolog
-DenyReceive(P, M) :-
+Deny(M, message_policy) :-
     Incoming(P, M),
     HasReceivedTag(P, T1), HasReceivedTag(P, T2), MessageTag(M, T3),
     TagGroup(T1, G), TagGroup(T2, G), TagGroup(T3, G),
@@ -147,9 +147,9 @@ Start with a fact lookup, then follow four analysis questions: **Why was it bloc
 | What permission does A have? | Capability → `HasCap({principal}, Cap)` | Query: `?- HasCap(auditor_a, Cap).` | A; `hr_review`. |
 | Why can't B receive HR? | Capability → `Requires({tag}, Cap), not HasCap({principal}, Cap)` | Query: `?- Requires(nova_hiring, Cap), not HasCap(auditor_b, Cap).` | B; missing `hr_review`. |
 | Who has received HR information so far? | Information flow → `HasReceivedTag(P, {tag})` | Query: `?- HasReceivedTag(P, nova_hiring).` | Global debug view; `hr`, not A or B. |
-| Why would A's pending HR delivery be refused? | Communication → `WHY DenyReceive({recipient}, {message})` | Why / FACT: `DenyReceive(auditor_a, mH)` | A; proof combines two previously received tags with the incoming HR tag. |
-| Would it still be refused without the earlier Facility receipt? | Communication → What-if | FACT: `DenyReceive(auditor_a, mH)`; REMOVE: `Received(auditor_a, mF).`; ADD: empty | Result: false. This changes a hypothetical input state, not the live history. |
-| What is the smallest set of earlier deliveries to avoid so A can receive HR? | Communication → Min-prevention | FACT: `DenyReceive(auditor_a, mH)`; use the two candidate receipt events: Procurement → A and Facility → A. | Two alternatives: prevent the Procurement receipt alone or the Facility receipt alone. Each removes the block; neither result by itself is a complete audit plan. |
+| Why would A's pending HR delivery be refused? | Communication → `WHY Deny({message}, message_policy)` | Why / FACT: `Deny(mH, message_policy)` | A; proof combines two previously received tags with the incoming HR tag. |
+| Would it still be refused without the earlier Facility receipt? | Communication → What-if | FACT: `Deny(mH, message_policy)`; REMOVE: `Received(auditor_a, mF).`; ADD: empty | Result: false. This changes a hypothetical input state, not the live history. |
+| What is the smallest set of earlier deliveries to avoid so A can receive HR? | Communication → Min-prevention | FACT: `Deny(mH, message_policy)`; use the two candidate receipt events: Procurement → A and Facility → A. | Two alternatives: prevent the Procurement receipt alone or the Facility receipt alone. Each removes the block; neither result by itself is a complete audit plan. |
 
 **Query** uses `?-` and a final period; **Why** takes a single fact. The global scope is **Debug · reconstruct all local stores**.
 

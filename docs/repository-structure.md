@@ -15,6 +15,11 @@ grokbot/                 Existing host implementation, including UI customizatio
   pnpm-lock.yaml         Preserved dependency resolutions
   node_modules/          Ignored dependency installation
 apps/
+  scam-port/              Original bank MCP handlers plus policy decorators and evidence gaps
+  labcluster-port/        Original Store/tools plus incremental policy EDB hooks
+    tests/                Original dependency loader and end-to-end checks
+    tools/                Rebuild generated translation metadata
+    generated/            Binding/coverage artifacts derived from the policy
   document-vault/         Independent app, trusted runtime binding and gated document service
   nova/
     app.md               Application specification and interaction description
@@ -26,7 +31,8 @@ apps/
     tests/
     run.sh               Docker/UI entry point, invoked from the repository root
 runtime/                 Generic action gate, Datalog, queries, provenance and lifecycle
-translation/             One-shot natural-language-to-Datalog research prototype
+  python/                Standalone Python/Soufflé action runtime and optional private pipe client
+translation/             NL distillation, reviewed coverage and Datalog translation; Nova experiments
   output/                Ignored experiments and validated policy bundles
 docs/                    README, LICENSE and repository design documents
   research/              Git submodule containing the canonical manuscript, main.tex
@@ -54,6 +60,8 @@ The UI remains in Grokbot. Nova can also run without it using `pnpm --dir grokbo
 
 For student applications, the first generic porting interface now accepts an adapter-owned runtime binding, a translated bundle, trusted observations and an action callback. The [runtime SDK](../runtime/README.md) supplies execute/check/query/why/whatIf; [Document Vault](../apps/document-vault/README.md) is an independent example. Its `runtime.json` describes actual instrumentation and acceptance cases; it can also be supplied separately with `--binding`, so it does not redefine student Markdown requirements. Automatic source instrumentation, distributed transactions, persistent generic sessions and general prevention/completion planning remain unimplemented.
 
+The registered `action-port` binds identity and immutable request parameters to registered operations, refreshes complete versioned sources inside the execution queue, and stages runtime state until a backend transaction confirms commit. The standalone Python runtime implements that action contract over native Soufflé, without a Node dependency. Its optional private subprocess client defaults to the Python worker and supports the existing TS worker with an explicit command. Generic foundation schemas/rules have one JSON source shared by both languages; conformance tests compare hashes, closures and decisions. The adapter still owns authentication, transactions, durable attempts and full source/effect coverage. No student implementation or submission metadata is embedded in the runtime. LabCluster reuses original agents, schema helpers and scenario choreography from a pinned external checkout; its Store and business methods are unchanged, with inline tool fact updates, caller-context tool annotations and a structured completion-report decorator in its exact patch. Its confirmed-result mapping and coverage assessment live under apps/labcluster-port. Both student ports use the Python managed EDB; optional external observation profiles remain supported separately.
+
 Our application-description interface is app.md, policy.md, tools.md and agents/*.md. LLM agents document their actual system prompts; scripted agents document their actual decision logic. Episodes are optional examples, not required for translation, standalone execution or a runtime binding. The existing loader and tests accept an application without episodes/. Nova keeps two illustrative examples. Course-only submission requirements do not define the framework contract; no archives are generated. Source/README and package metadata are not required translator inputs.
 
 ## Infrastructure and patches
@@ -64,7 +72,7 @@ Our application-description interface is app.md, policy.md, tools.md and agents/
 
 Current module READMEs and the design manuscript are the documentation sources. Superseded demo launch guides, archived Relay specifications, upstream marketing/changelog notes and redundant research indexes have been removed; Git history retains earlier versions.
 
-The [application porting contract](application-porting-contract.md) owns the target boundary between policies, optional builtin/FSM configuration, execution protocols and trusted EDB producers. The `docs/research` submodule owns the canonical `main.tex` and its build-output ignore rules. The root `main.tex` loads that source for local compilation and contains no separate manuscript copy. Initialize the paper with `git submodule update --init --recursive` when needed; paper-repository access is required, while core application commands remain independent. Commit/push paper changes in the submodule first, then commit the new `docs/research` gitlink in the parent. The parent uses a sibling-relative repository URL so forks must provide access or configure their own paper remote. The illustrative combined manifest remains design notation. The version-1 binding now supports `mechanisms: ["fsm"]` for protected transition execution and recovery; the messaging profile/source API is TypeScript.
+The [application porting contract](application-porting-contract.md) owns the target boundary between policies, optional builtin/FSM configuration, execution protocols and trusted EDB producers. The `docs/research` submodule owns the canonical `main.tex` and its build-output ignore rules. The root `main.tex` loads that source for local compilation and contains no separate manuscript copy. Initialize the paper with `git submodule update --init --recursive` when needed; paper-repository access is required, while core application commands remain independent. Commit/push paper changes in the submodule first, then commit the new `docs/research` gitlink in the parent. The parent uses a sibling-relative repository URL so forks must provide access or configure their own paper remote. The file-based Python API loads reviewed declarations, static input configuration and clauses together. FSM execution has current state and shared typed edges, without public recovery/history predicates. The optional messaging profile/source API is TypeScript.
 
 ## Rakazo updates
 

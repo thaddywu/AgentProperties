@@ -1,3 +1,4 @@
+export * from "./action-port.js";
 export * from "./application.js";
 export * from "./backend-port.js";
 export * from "./binding.js";
@@ -5,10 +6,12 @@ export * from "./bounded-equivalence.js";
 export * from "./datalog.js";
 export * from "./distributed.js";
 export * from "./finite-domain.js";
+export * from "./foundations.js";
 export * from "./lifecycle.js";
 export * from "./messaging.js";
 export * from "./messaging-policy.js";
 export * from "./messaging-protocol.js";
+export * from "./observations.js";
 export * from "./primitives.js";
 export * from "./protocol-planner.js";
 export { parseGroundFacts, parsePolicyRules, parseProgram, queryDatalog } from "./query.js";

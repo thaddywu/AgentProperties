@@ -122,7 +122,7 @@ Covered(T) :- Auditor(P), Received(P, M), MessageTag(M, T), TagGroup(T, G).
 
 ## 三个 RQ 的 evaluation plan 与新小实验
 
-论文现有独立的 Evaluation Plan 一节。RQ1 以人工分析为主，逐条说明 policy、需要的事实来源、执行 hook 和机制，区分语言限制与缺失 adapter；正式 corpus 由两人独立标注。RQ2 假定有审阅过的 reference，只要求预先指定的输出相等，例如 `DenyReceive`；completion 另测。必须写清楚比较所有 schema-valid EDB，还是满足应用前提的 EDB。RQ3 对同一任务比较关闭 enforcement、reference enforcement、translated enforcement，分别计违规、完成、安全完成、错误拒绝，以及真实模型 input/output tokens 和重试成本。
+论文现有独立的 Evaluation Plan 一节。RQ1 以人工分析为主，逐条说明 policy、需要的事实来源、执行 hook 和机制，区分语言限制与缺失 adapter；正式 corpus 由两人独立标注。RQ2 假定有审阅过的 reference，只要求预先指定的输出相等，例如 `Deny`；completion 另测。必须写清楚比较所有 schema-valid EDB，还是满足应用前提的 EDB。RQ3 对同一任务比较关闭 enforcement、reference enforcement、translated enforcement，分别计违规、完成、安全完成、错误拒绝，以及真实模型 input/output tokens 和重试成本。
 
 新 [lab 命令与方法](../apps/nova/evaluation/README.md#three-rq-lab-observable-equality-and-measured-model-usage) 已实现正向 UCQ fragment 的精确包含检查、递归 EDB 对照测试和实际 routing-model/token 实验。完整 Nova 有否定、`!=` 和递归，不能全部当成正向 UCQ。该轮尚未实现 SAT/SMT，后续实现见文末；不能把“在某个 domain 内找不到反例”说成任意 EDB 上相等。
 

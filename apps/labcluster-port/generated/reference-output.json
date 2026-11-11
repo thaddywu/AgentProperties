@@ -1,0 +1,393 @@
+{
+  "rules": [
+    {
+      "id": "r0",
+      "datalog": "Student(A) :-\n  PrincipalGroup(A, \"MasterStudent\")."
+    },
+    {
+      "id": "r1",
+      "datalog": "Student(A) :-\n  PrincipalGroup(A, \"PhDStudent\")."
+    },
+    {
+      "id": "r2",
+      "datalog": "UserAgent(A) :-\n  Student(A)."
+    },
+    {
+      "id": "r3",
+      "datalog": "UserAgent(A) :-\n  PrincipalGroup(A, \"Professor\")."
+    },
+    {
+      "id": "r8",
+      "datalog": "Allow(Q) :-\n  Request(Q, A, \"approve_job\"),\n  Parameter(Q, \"job_id\", J),\n  PrincipalGroup(A, \"Professor\"),\n  Job(J, Owner, V, H, RunId),\n  ResourceState(J, \"QUEUED\"),\n  Parameter(Q, \"expected_version\", V),\n  Parameter(Q, \"approve\", \"true\"),\n  WithinJobQuota(J)."
+    },
+    {
+      "id": "r9",
+      "datalog": "Allow(Q) :-\n  Request(Q, A, \"reject_job\"),\n  Parameter(Q, \"job_id\", J),\n  PrincipalGroup(A, \"Professor\"),\n  Job(J, Owner, V, H, RunId),\n  ResourceState(J, \"QUEUED\"),\n  Parameter(Q, \"expected_version\", V),\n  Parameter(Q, \"approve\", \"false\"),\n  CanTransition(J, \"reject_job\", From, To)."
+    },
+    {
+      "id": "r29",
+      "datalog": "Allow(Q) :-\n  Request(Q, A, \"dispatch_job\"),\n  Parameter(Q, \"job_id\", J),\n  PrincipalGroup(A, \"Professor\"),\n  Dispatchable(J),\n  CanTransition(J, \"dispatch_job\", \"QUEUED\", \"RUNNING\")."
+    },
+    {
+      "id": "r31",
+      "datalog": "Allow(Q) :-\n  Request(Q, A, \"kill_job\"),\n  Parameter(Q, \"job_id\", J),\n  PrincipalGroup(A, \"Professor\"),\n  Job(J, Owner, V, H, RunId),\n  Parameter(Q, \"reason\", Reason),\n  CanTransition(J, \"kill_job\", From, To)."
+    },
+    {
+      "id": "r6",
+      "datalog": "Allow(Q) :-\n  Request(Q, A, \"submit_job\"),\n  Student(A),\n  WithinRequestQuota(Q)."
+    },
+    {
+      "id": "r7",
+      "datalog": "Allow(Q) :-\n  Request(Q, A, \"revise_job\"),\n  Parameter(Q, \"job_id\", J),\n  Student(A),\n  Job(J, A, V, H, RunId),\n  ResourceState(J, \"QUEUED\"),\n  WithinRequestQuota(Q)."
+    },
+    {
+      "id": "r30",
+      "datalog": "Allow(Q) :-\n  Request(Q, A, \"cancel_job\"),\n  Parameter(Q, \"job_id\", J),\n  Student(A),\n  Job(J, A, V, H, RunId),\n  Parameter(Q, \"reason\", Reason),\n  CanTransition(J, \"cancel_job\", From, To)."
+    },
+    {
+      "id": "completion-report",
+      "datalog": "Allow(Q) :-\n  Request(Q, A, \"send_message\"),\n  Parameter(Q, \"message_type\", \"COMPLETION_REPORT\"),\n  Parameter(Q, \"job_id\", J),\n  Student(A),\n  Job(J, A, V, H, RunId)."
+    },
+    {
+      "id": "r4",
+      "datalog": "WithinRequestQuota(Q) :-\n  Request(Q, A, Op),\n  Parameter(Q, \"spec_node_type\", T),\n  Parameter(Q, \"spec_cpu_cores\", C),\n  Parameter(Q, \"spec_memory_gb\", M),\n  Parameter(Q, \"spec_runtime_minutes\", Time),\n  PrincipalGroup(A, Group),\n  Quota(Group, T, MaxC, MaxM, MaxTime),\n  C <= MaxC, M <= MaxM, Time <= MaxTime."
+    },
+    {
+      "id": "r5",
+      "datalog": "WithinJobQuota(J) :-\n  Job(J, A, V, H, RunId),\n  JobSpec(J, T, C, M, Time),\n  PrincipalGroup(A, Group),\n  Quota(Group, T, MaxC, MaxM, MaxTime),\n  C <= MaxC, M <= MaxM, Time <= MaxTime."
+    },
+    {
+      "id": "r20",
+      "datalog": "FreeCompatible(J, N) :-\n  JobSpec(J, T, C, M, Time),\n  Node(N, T, MaxC, MaxM, \"\", Gen),\n  C <= MaxC, M <= MaxM."
+    },
+    {
+      "id": "r10",
+      "datalog": "Readable(A, J) :-\n  Student(A),\n  Job(J, A, V, H, RunId)."
+    },
+    {
+      "id": "r11",
+      "datalog": "Readable(A, J) :-\n  PrincipalGroup(A, \"Professor\"),\n  Job(J, Owner, V, H, RunId)."
+    },
+    {
+      "id": "r12",
+      "datalog": "QueueViewer(A) :-\n  PrincipalGroup(A, \"Professor\")."
+    },
+    {
+      "id": "private-owner",
+      "datalog": "PrivateReadable(A, A) :- Student(A)."
+    },
+    {
+      "id": "private-professor",
+      "datalog": "PrivateReadable(A, Owner) :- PrincipalGroup(A, \"Professor\"), UserAgent(Owner)."
+    },
+    {
+      "id": "r13",
+      "datalog": "Allow(Q) :-\n  Request(Q, A, \"read_job\"),\n  Parameter(Q, \"job_id\", J),\n  Readable(A, J)."
+    },
+    {
+      "id": "r14",
+      "datalog": "Allow(Q) :-\n  Request(Q, A, \"view\"),\n  UserAgent(A)."
+    },
+    {
+      "id": "r15",
+      "datalog": "Allow(Q) :-\n  Request(Q, A, \"read_private\"),\n  UserAgent(A)."
+    },
+    {
+      "id": "r16",
+      "datalog": "MatchingApproval(J) :-\n  Job(J, Owner, V, H, RunId),\n  CurrentApproval(J, Id),\n  Approval(Id, J, V, H, \"Professor\", Digest),\n  CurrentPolicy(Digest),\n  JobSpec(J, T, C, M, Time),\n  ApprovalSpec(Id, T, C, M, Time)."
+    },
+    {
+      "id": "r17",
+      "datalog": "MatchingReceipt(J, ReceiptId) :-\n  Job(J, Owner, V, H, RunId),\n  ResourceState(J, \"RUNNING\"),\n  Run(RunId, J, N, Gen, H, V),\n  Node(N, T, C, M, RunId, Gen),\n  Receipt(ReceiptId, RunId, J, N, Gen, H, \"SimulatedRunner\", \"completion\"),\n  ExitSuccess(ReceiptId),\n  RecordData(\"receipt\", ReceiptId, D),\n  Provenance(D, Owner)."
+    },
+    {
+      "id": "r18",
+      "datalog": "Allow(Q) :-\n  Request(Q, A, \"finish_job\"),\n  Parameter(Q, \"job_id\", J),\n  Readable(A, J),\n  Parameter(Q, \"receipt_id\", ReceiptId),\n  MatchingReceipt(J, ReceiptId),\n  CanTransition(J, \"finish_job\", \"RUNNING\", \"COMPLETED\")."
+    },
+    {
+      "id": "r19",
+      "datalog": "Allow(Q) :-\n  Request(Q, A, \"record_completion\"),\n  PrincipalGroup(A, \"Runner\"),\n  Job(J, Owner, V, H, RunId),\n  ResourceState(J, \"RUNNING\"),\n  Parameter(Q, \"run_id\", RunId),\n  Run(RunId, J, N, Gen, H, V)."
+    },
+    {
+      "id": "r38",
+      "datalog": "JobState(S) :-\n  AllowedTransition(\"job\", E, S, To)."
+    },
+    {
+      "id": "r39",
+      "datalog": "JobState(S) :-\n  AllowedTransition(\"job\", E, From, S)."
+    },
+    {
+      "id": "r40",
+      "datalog": "AllocationViolation(J) :-\n  ResourceType(J, \"job\"),\n  ResourceState(J, S),\n  not JobState(S)."
+    },
+    {
+      "id": "r32",
+      "datalog": "ActiveRun(RunId) :-\n  Node(N, T, C, M, RunId, Gen),\n  RunId != \"\"."
+    },
+    {
+      "id": "r33",
+      "datalog": "KnownRun(RunId) :-\n  Run(RunId, J, N, Gen, H, V)."
+    },
+    {
+      "id": "r34",
+      "datalog": "ValidAllocation(J, RunId) :-\n  ResourceState(J, \"RUNNING\"),\n  Job(J, Owner, V, H, RunId),\n  Run(RunId, J, N, Gen, H, V),\n  Node(N, T, MaxC, MaxM, RunId, Gen),\n  JobSpec(J, T, C, M, Time),\n  C <= MaxC, M <= MaxM."
+    },
+    {
+      "id": "r35",
+      "datalog": "AllocationViolation(J) :-\n  ResourceState(J, \"RUNNING\"),\n  Job(J, Owner, V, H, RunId),\n  not ValidAllocation(J, RunId)."
+    },
+    {
+      "id": "r36",
+      "datalog": "AllocationViolation(RunId) :-\n  ActiveRun(RunId),\n  not KnownRun(RunId)."
+    },
+    {
+      "id": "r37",
+      "datalog": "AllocationViolation(RunId) :-\n  ActiveRun(RunId),\n  Run(RunId, J, N, Gen, H, V),\n  not ValidAllocation(J, RunId)."
+    },
+    {
+      "id": "misplaced-allocation",
+      "datalog": "AllocationViolation(N) :-\n  Node(N, T, C, M, RunId, Gen),\n  Run(RunId, J, ExpectedNode, ExpectedGen, H, V),\n  RunId != \"\",\n  N != ExpectedNode."
+    },
+    {
+      "id": "r21",
+      "datalog": "EarlierNode(J, N) :-\n  FreeCompatible(J, N),\n  FreeCompatible(J, Earlier),\n  NodeOrder(Earlier, A),\n  NodeOrder(N, B),\n  A < B."
+    },
+    {
+      "id": "r22",
+      "datalog": "Eligible(J, N) :-\n  Job(J, Owner, V, H, RunId),\n  ResourceState(J, \"QUEUED\"),\n  WithinJobQuota(J),\n  MatchingApproval(J),\n  FreeCompatible(J, N),\n  not EarlierNode(J, N)."
+    },
+    {
+      "id": "r23",
+      "datalog": "Priority(J, \"10\") :-\n  Job(J, Owner, V, H, RunId),\n  PrincipalGroup(Owner, \"PhDStudent\"),\n  ResourceState(J, \"QUEUED\")."
+    },
+    {
+      "id": "r24",
+      "datalog": "Priority(J, \"0\") :-\n  Job(J, Owner, V, H, RunId),\n  PrincipalGroup(Owner, \"MasterStudent\"),\n  ResourceState(J, \"QUEUED\"),\n  Waiting(J, Skips, Seq),\n  AgingThreshold(Limit),\n  Skips < Limit."
+    },
+    {
+      "id": "r26",
+      "datalog": "Outranked(J, N) :-\n  Eligible(J, N),\n  Eligible(Other, N),\n  Priority(J, Low),\n  Priority(Other, High),\n  Low < High."
+    },
+    {
+      "id": "r28",
+      "datalog": "Dispatchable(J) :-\n  Eligible(J, N),\n  Priority(J, P),\n  not Outranked(J, N)."
+    },
+    {
+      "id": "r25",
+      "datalog": "Priority(J, \"20\") :-\n  Job(J, Owner, V, H, RunId),\n  PrincipalGroup(Owner, \"MasterStudent\"),\n  ResourceState(J, \"QUEUED\"),\n  Waiting(J, Skips, Seq),\n  AgingThreshold(Limit),\n  Limit <= Skips."
+    },
+    {
+      "id": "r27",
+      "datalog": "Outranked(J, N) :-\n  Eligible(J, N),\n  Eligible(Other, N),\n  Priority(J, P),\n  Priority(Other, P),\n  Waiting(J, A, Later),\n  Waiting(Other, B, Earlier),\n  Earlier < Later."
+    }
+  ],
+  "coverage": [
+    {
+      "id": "P1.1",
+      "ruleIds": [
+        "r0",
+        "r1",
+        "r2",
+        "r3"
+      ],
+      "notes": "Group memberships are static facts in rules.dl; the original bound identities do not come from agent arguments. Developer-authored reference; no model called."
+    },
+    {
+      "id": "P1.2",
+      "ruleIds": [
+        "r8",
+        "r9",
+        "r29",
+        "r31"
+      ],
+      "notes": "Only a Professor-bound request can match these Allow rules. Lifecycle, approval and scheduling conditions are refined in P3-P5; a failed stop confirmation commits no state change. Developer-authored reference; no model called."
+    },
+    {
+      "id": "P1.3",
+      "ruleIds": [
+        "r6",
+        "r7",
+        "r30",
+        "completion-report",
+        "r10",
+        "r13",
+        "r18"
+      ],
+      "notes": "Submit binds the original caller as owner. Job tool guards and a Bus.send decorator enforce student ownership before effects. COMPLETION_REPORT uses the host-supplied sender and actual body.job_id; rejected reports create no delivery trace or inbox entry. This covers the app-defined structured protocol, not arbitrary free-text claims. Professor retains original finish_job access. Developer-authored reference; no model called."
+    },
+    {
+      "id": "P1.4",
+      "ruleIds": [
+        "r4",
+        "r5"
+      ],
+      "notes": "Quota is reviewed .dl configuration. The original Store still validates schemas and quotas; the policy gate adds the Datalog check before the unchanged operation. Developer-authored reference; no model called."
+    },
+    {
+      "id": "P1.5",
+      "ruleIds": [
+        "r4",
+        "r5"
+      ],
+      "notes": "The same Datalog quota rules use the PhD group facts from .dl. Developer-authored reference; no model called."
+    },
+    {
+      "id": "P1.6",
+      "ruleIds": [
+        "r20",
+        "r4",
+        "r5",
+        "r22",
+        "r34"
+      ],
+      "notes": "Requested runtime is an admission limit, not an elapsed-time watchdog. Dispatch combines WithinJobQuota and FreeCompatible in P5. Developer-authored reference; no model called."
+    },
+    {
+      "id": "P2.1",
+      "ruleIds": [
+        "r10",
+        "r11",
+        "r12",
+        "r13",
+        "r14",
+        "r15",
+        "private-owner",
+        "private-professor"
+      ],
+      "notes": "Readable gates single-job reads. Original view/read_private still filter their own results. QueueViewer and PrivateReadable are currently analysis-only. Datalog can derive visible record/field IDs for a trusted result adapter to project before disclosure; that projection is not yet connected. Developer-authored reference; no model called."
+    },
+    {
+      "id": "P3.1",
+      "ruleIds": [
+        "r16",
+        "r17",
+        "r18",
+        "r29"
+      ],
+      "notes": "P3.2 and P3.5 give the two exact joins. A natural-language agent claim creates neither record. Developer-authored reference; no model called."
+    },
+    {
+      "id": "P3.2",
+      "ruleIds": [
+        "r16"
+      ],
+      "notes": "The original approve method returns its actual approval. The tool helper records Approval, ApprovalSpec and CurrentApproval without reading Store.snapshot. Developer-authored reference; no model called."
+    },
+    {
+      "id": "P3.5",
+      "ruleIds": [
+        "r17",
+        "r18",
+        "r19"
+      ],
+      "notes": "The original simulator returns its receipt; the adapter records it and its dependencies. Original finish confirms the completed job and release before the runtime commits the policy-state transition. Developer-authored reference; no model called."
+    },
+    {
+      "id": "P3.6",
+      "ruleIds": [
+        "r17"
+      ],
+      "notes": "Successful original tool results supply record IDs and references; the tool helper records Source and DependsOn in one EDB batch. This is decision-record lineage, not complete message/context IFC, and does not authenticate contents. Developer-authored reference; no model called."
+    },
+    {
+      "id": "P4.2",
+      "ruleIds": [
+        "r38",
+        "r39",
+        "r40"
+      ],
+      "notes": "The Datalog invariant checks admitted state labels. ResourceState is a single current row per resource; the runtime removes the old value on confirmed transition. Developer-authored reference; no model called."
+    },
+    {
+      "id": "P4.6",
+      "ruleIds": [
+        "r22",
+        "r29"
+      ],
+      "notes": "Datalog checks dispatchability and lifecycle before calling original Store.dispatch. The returned run confirms allocation; its result adapter stages policy run/node changes with the selected state transition. Developer-authored reference; no model called."
+    },
+    {
+      "id": "P4.7",
+      "ruleIds": [
+        "r32",
+        "r33",
+        "r34",
+        "r35",
+        "r36",
+        "r37",
+        "misplaced-allocation"
+      ],
+      "notes": "Datalog checks policy allocation consistency before and after effects. A failed postcondition discards staged EDB edits and stops the session, but does not undo an already committed Store operation. No shared Store/EDB transaction is claimed. Developer-authored reference; no model called."
+    },
+    {
+      "id": "P4.8",
+      "ruleIds": [
+        "r22",
+        "r29"
+      ],
+      "notes": "Dispatchable requires QUEUED. Declared terminal self-loops acknowledge repeated stop requests without changing facts. Developer-authored reference; no model called."
+    },
+    {
+      "id": "P5.1",
+      "ruleIds": [
+        "r23",
+        "r24",
+        "r25"
+      ],
+      "notes": "Priority is enforced at a guarded dispatch. The rules do not force Professor or any scheduler to make future dispatch calls. Developer-authored reference; no model called."
+    },
+    {
+      "id": "P5.2",
+      "ruleIds": [
+        "r21",
+        "r22",
+        "r23",
+        "r24",
+        "r26",
+        "r28"
+      ],
+      "notes": "Eligible and Outranked use current EDB facts. Original Store.dispatch retains its own scheduler and may refuse; the adapter records the actual returned run, not a reimplemented business scheduler. Developer-authored reference; no model called."
+    },
+    {
+      "id": "P5.3",
+      "ruleIds": [
+        "r20",
+        "r22",
+        "r23"
+      ],
+      "notes": "Priority and Eligible require QUEUED; FreeCompatible requires an empty node token. A Professor stop remains a separate P6 operation. Developer-authored reference; no model called."
+    },
+    {
+      "id": "P5.4",
+      "ruleIds": [
+        "r25",
+        "r26",
+        "r28"
+      ],
+      "notes": "For this pinned one-node-per-type cluster, the returned run.candidate_order identifies the competitors whose counters Store increments. The adapter updates their keyed Waiting rows. More general allocation semantics need an explicit backend delta. Developer-authored reference; no model called."
+    },
+    {
+      "id": "P5.5",
+      "ruleIds": [
+        "r27"
+      ],
+      "notes": "The second Outranked clause uses the original submission sequence, not wall-clock timestamps. Developer-authored reference; no model called."
+    },
+    {
+      "id": "P5.6",
+      "ruleIds": [
+        "r26",
+        "r27"
+      ],
+      "notes": "Outranked joins on the selected node, so different node candidates do not compete. Developer-authored reference; no model called."
+    },
+    {
+      "id": "P6.2",
+      "ruleIds": [
+        "r30",
+        "r31"
+      ],
+      "notes": "The original bounded_text helper validates text and StopReason retains it as a fact. Semantic specificity is not classified. Developer-authored reference; no model called."
+    }
+  ]
+}

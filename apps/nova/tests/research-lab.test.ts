@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { parsePolicyRules } from "@rakazo/policy-runtime/query";
 import { describe, expect, it } from "vitest";
+import { recordedPolicy } from "../src/evaluation/recorded-policy.js";
 import { recursiveComparison } from "../src/evaluation/recursive.js";
 import {
   createRoutingEpisode,
@@ -8,7 +9,6 @@ import {
   parseRoutes,
 } from "../src/evaluation/routing-agent.js";
 import { compareUcq } from "../src/evaluation/ucq.js";
-import { readPolicyArtifact } from "../src/translated-policy.js";
 
 describe("observable translation and execution lab", () => {
   it("proves positive UCQ equivalence despite variable names and duplicate body atoms", () => {
@@ -37,7 +37,7 @@ describe("observable translation and execution lab", () => {
       );
   });
   it("tests recursive propagation independently and finds the missing-rule control", () => {
-    const artifact = readPolicyArtifact(
+    const artifact = recordedPolicy(
       JSON.parse(
         readFileSync(new URL("../evaluation/model-trials/trial-1.json", import.meta.url), "utf8"),
       ),
@@ -45,12 +45,12 @@ describe("observable translation and execution lab", () => {
     const trial = recursiveComparison(artifact);
     expect(trial.snapshots).toBe(2048);
     expect(trial.oracleMismatches).toBe(0);
-    expect(trial.mismatches.DenyReceive).toBeGreaterThan(0);
-    expect(trial.byPriorState.no_prior_exposure!.mismatches.DenyReceive).toBe(0);
-    expect(trial.byPriorState.already_exposed!.mismatches.DenyReceive).toBeGreaterThan(0);
+    expect(trial.mismatches.Deny).toBeGreaterThan(0);
+    expect(trial.byPriorState.no_prior_exposure!.mismatches.Deny).toBe(0);
+    expect(trial.byPriorState.already_exposed!.mismatches.Deny).toBeGreaterThan(0);
     expect(trial.mismatches.Covered).toBeGreaterThan(0);
     const control = recursiveComparison(artifact, true);
-    expect(control.mismatches.DenyReceive).toBeGreaterThan(0);
+    expect(control.mismatches.Deny).toBeGreaterThan(0);
   });
   it("counts actual forbidden deliveries separately from incomplete protected workflows", async () => {
     for (const mode of ["disabled", "reference"] as const) {

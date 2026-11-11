@@ -61,7 +61,7 @@ describe("CS239 documents and prompt", () => {
     expect(prompt).toContain(JSON.stringify(documents, null, 2));
     expect(prompt).toContain("recipient-local");
     expect(prompt).toContain("No global cross-store joins");
-    expect(prompt).not.toMatch(/DenyReceive\([^\n]*:-|REASONING_RULES|three-tag-exposure/);
+    expect(prompt).not.toMatch(/Deny\([^\n]*:-|REASONING_RULES|three-tag-exposure/);
     // Reference metadata may be inspected by the TEST, never by prompt construction.
     const { INPUT_ARITIES, REASONING_RULES } = await import("@rakazo/nova/policy");
     for (const [predicate, arity] of Object.entries(INPUT_ARITIES))
@@ -76,7 +76,7 @@ describe("CS239 documents and prompt", () => {
 describe("untrusted translation output", () => {
   const policies = [{ id: "P1", text: "Synthetic test policy." }];
   it("parses a recording wrapper and preserves the model's Datalog verbatim", () => {
-    const datalog = "DenyReceive(A, M) :- Incoming(A, M).";
+    const datalog = "Deny(M, message_policy) :- Incoming(A, M).";
     const wrapper = JSON.stringify({
       policies: [{ id: "P1", datalog, notes: "Synthetic over-restrictive test output." }],
     });
@@ -91,19 +91,19 @@ describe("untrusted translation output", () => {
   it.each([
     ["Imaginary(A, M) :- Incoming(A, M).", "unsupported_schema"],
     ["constructor(A, M) :- Incoming(A, M).", "unsupported_schema"],
-    ["DenyReceive(A) :- Incoming(A, M).", "unsupported_schema"],
+    ["Deny(A) :- Incoming(A, M).", "unsupported_schema"],
     ["HasCap(A, C) :- Requires(A, C).", "unsupported_schema"],
-    ["DenyReceive(A, M) :- not Incoming(A, M).", "syntax_or_compilation_failure"],
+    ["Deny(M, message_policy) :- not Incoming(A, M).", "syntax_or_compilation_failure"],
     ['.include "private.dl"', "syntax_or_compilation_failure"],
     [
-      "DenyReceive(A, M) :- Incoming(A, M), not DenyReceive(A, M).",
+      "Deny(M, message_policy) :- Incoming(A, M), not Deny(M, message_policy).",
       "syntax_or_compilation_failure",
     ],
   ])("detects invalid output without repairing it: %s", (source, expected) => {
     expect(validateDatalog(source).status).toBe(expected);
   });
   it("checks a legal program and explicitly distinguishes missing native validation", () => {
-    const result = validateDatalog("DenyReceive(A, M) :- Incoming(A, M).");
+    const result = validateDatalog("Deny(M, message_policy) :- Incoming(A, M).");
     expect(result.typescript).toBe("passed");
     expect(["valid_translation_output", "validation_blocked"]).toContain(result.status);
     expect(result.message).toMatch(/semantic correctness is unproven|requires souffle/);

@@ -1,6 +1,7 @@
 .deepsec/
 node_modules
 __pycache__/
+*.egg-info/
 *.py[cod]
 .turbo
 dist

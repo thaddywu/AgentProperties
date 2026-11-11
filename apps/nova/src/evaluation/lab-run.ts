@@ -3,8 +3,9 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { encodeRule } from "@rakazo/policy-runtime/query";
-import { readPolicyArtifact, rulesFor } from "../translated-policy.js";
+import { rulesFor } from "../translated-policy.js";
 import { expressivenessPilot } from "./expressiveness.js";
+import { recordedPolicy } from "./recorded-policy.js";
 import { recursiveComparison } from "./recursive.js";
 import { createRoutingEpisode } from "./routing-agent.js";
 import { translationPilot } from "./translation.js";
@@ -26,7 +27,7 @@ for (let trial = 1; trial <= 3; trial++) {
     new URL(`../../evaluation/model-trials/trial-${trial}.json`, import.meta.url),
     "utf8",
   );
-  const artifact = readPolicyArtifact(JSON.parse(source));
+  const artifact = recordedPolicy(JSON.parse(source));
   const translated = rulesFor({ policy: artifact });
   const result = {
     trial,
@@ -38,9 +39,9 @@ for (let trial = 1; trial <= 3; trial++) {
       "Covered",
     ),
     wholeReceiveProgram: compareUcq(
-      reference.filter((r) => r.head.predicate === "DenyReceive"),
-      translated.filter((r) => r.head.predicate === "DenyReceive"),
-      "DenyReceive",
+      reference.filter((r) => r.head.predicate === "Deny"),
+      translated.filter((r) => r.head.predicate === "Deny"),
+      "Deny",
     ),
     snapshots: translationPilot(artifact),
     recursive: recursiveComparison(artifact),
@@ -54,7 +55,7 @@ for (let trial = 1; trial <= 3; trial++) {
 }
 save("rq2.json", {
   observables: {
-    enforcement: ["DenyReceive"],
+    enforcement: ["Deny"],
     task: ["Covered", "Finished"],
     information: ["Knows"],
   },
@@ -62,7 +63,7 @@ save("rq2.json", {
     "The exact UCQ coverage fragment treats MessageTag as a leaf relation; full Nova has recursion, negation and comparisons. Finite tests are not universal equivalence. The three artifacts and exploratory counterexample domain predate this lab; no held-out accuracy claim.",
   trials: results,
   recursionControl: recursiveComparison(
-    readPolicyArtifact(
+    recordedPolicy(
       JSON.parse(
         readFileSync(
           new URL("../../evaluation/model-trials/trial-1.json", import.meta.url),

@@ -1,6 +1,11 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
-import { compileApplicationPolicy, createPolicySession } from "../src/application.js";
+import {
+  compileApplicationPolicy,
+  createPolicySession,
+  EffectNotAppliedError,
+  EffectUncertainError,
+} from "../src/application.js";
 import { readRuntimeBinding } from "../src/binding.js";
 
 const binding = readRuntimeBinding(
@@ -12,8 +17,8 @@ const binding = readRuntimeBinding(
 const source = `
 Accessible(A, D) :- Actor(A), Public(D), not Suspended(A).
 Accessible(A, D) :- Actor(A), Confidential(D), Reader(A, D), Role(A, "reviewer"), not Suspended(A).
-Allow(R) :- Request(R, A, "read", D), Accessible(A, D).
-Deny(R, "suspended") :- Request(R, A, X, D), Suspended(A).
+Allow(R) :- Request(R, A, "read"), Parameter(R, "resource", D), Accessible(A, D).
+Deny(R, "suspended") :- Request(R, A, X), Parameter(R, "resource", D), Suspended(A).
 `;
 const inputs = [
   { predicate: "Actor", args: ["visitor"] },
@@ -35,7 +40,7 @@ describe("application-neutral policy boundary", () => {
       args: ["Left", "Right"],
       meaning: "Synthetic cross product.",
     };
-    const expensive = `${source}\nPair(X, Y) :- Request(R, A, Op, D), Token(X), Token(Y).`;
+    const expensive = `${source}\nPair(X, Y) :- Request(R, A, Op), Parameter(R, "resource", D), Token(X), Token(Y).`;
     const session = createPolicySession(extended, compileApplicationPolicy(extended, expensive), [
       ...inputs,
       ...Array.from({ length: 120 }, (_, i) => ({ predicate: "Token", args: [String(i)] })),
@@ -141,6 +146,8 @@ describe("application-neutral policy boundary", () => {
   });
   it("pins the trusted binding, checks bundle integrity and snapshots mutable inputs", () => {
     const artifact = bundle();
+    const legacy = JSON.parse(JSON.stringify({ ...artifact, version: 1 }));
+    expect(() => createPolicySession(binding, legacy, inputs)).toThrow("recompile");
     expect(() =>
       createPolicySession(binding, { ...artifact, source: `${source}\n// tamper` }, inputs),
     ).toThrow("hash mismatch");
@@ -166,14 +173,25 @@ describe("application-neutral policy boundary", () => {
     const session = createPolicySession(binding, bundle(), inputs);
     await expect(
       session.execute(request, async () => {
-        throw new Error("storage failed");
+        throw new EffectNotAppliedError("storage failed");
       }, [{ predicate: "Read", args: ["visitor", "guide"] }]),
     ).rejects.toThrow("storage failed");
     expect(session.query("?- Read(A, D).").rows).toEqual([]);
     expect((await session.execute(request, async () => "retry")).allowed).toBe(true);
   });
+  it("uses the same uncertain-outcome contract for callback and observed execution", async () => {
+    const session = createPolicySession(binding, bundle(), inputs);
+    await expect(
+      session.execute(request, async () => {
+        throw new Error("response lost after effect");
+      }),
+    ).rejects.toBeInstanceOf(EffectUncertainError);
+    const effect = vi.fn(async () => "duplicate");
+    await expect(session.execute(request, effect)).rejects.toThrow("session is stopped");
+    expect(effect).not.toHaveBeenCalled();
+  });
   it("serializes check/effect/commit so concurrent requests cannot reuse an old decision", async () => {
-    const once = `${source}\nDeny(R, "already_read") :- Request(R, A, "read", D), Read(A, D).`;
+    const once = `${source}\nDeny(R, "already_read") :- Request(R, A, "read"), Parameter(R, "resource", D), Read(A, D).`;
     const session = createPolicySession(binding, compileApplicationPolicy(binding, once), inputs);
     expect(session.check(request).allowed).toBe(true);
     const effect = vi.fn(async () => "body");

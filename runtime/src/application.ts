@@ -3,13 +3,15 @@ import type { ActionIntent, RuntimeBinding } from "./binding.js";
 import { readRuntimeBinding, validateInputs, validateIntent } from "./binding.js";
 import type { PolicyFact, Rule } from "./datalog.js";
 import { evaluateDatalog, factKey } from "./datalog.js";
+import { FOUNDATIONS } from "./foundations.js";
 import {
   LIFECYCLE_INPUT_ARITIES,
   LIFECYCLE_PREDICATES,
   LIFECYCLE_RULES,
-  lifecycleGateRules,
   validateLifecycleInputs,
 } from "./lifecycle.js";
+import type { ObservationSnapshot } from "./observations.js";
+import { readPolicyDocument } from "./policy-source.js";
 import {
   decode,
   encodeFact,
@@ -20,7 +22,7 @@ import {
   validateAndStratify,
 } from "./query.js";
 
-export type PolicyBundle = { version: 1; binding: RuntimeBinding; source: string; hash: string };
+export type PolicyBundle = { version: 2; binding: RuntimeBinding; source: string; hash: string };
 export type Explanation = {
   fact: PolicyFact;
   rule?: string;
@@ -34,21 +36,75 @@ export type ActionDecision = {
   request: ActionIntent & { id: string };
   reasons: string[];
   evidence: Explanation[];
-  transition?: { from: string; to: string };
+  transition?: { resource: string; from: string; to: string };
+  observationVersions?: Record<string, string>;
 };
+
+export type ActionContext = Readonly<{
+  request: Readonly<
+    Omit<ActionIntent, "parameters"> & { id: string; parameters?: Readonly<Record<string, string>> }
+  >;
+  policyHash: string;
+}>;
+export type InputSnapshot = ObservationSnapshot & {
+  id: string;
+  predicates: string[];
+};
+export type EffectOutcome<T> =
+  | { status: "applied"; value: T; observations?: PolicyFact[] }
+  | { status: "not_applied"; reason: string }
+  | { status: "unknown" };
+/** Must hold the backend's serialization/snapshot boundary through effect and confirmed commit. */
+export type ActionTransaction = <T>(
+  context: ActionContext,
+  run: () => Promise<ExecutionResult<T>>,
+) => Promise<unknown>;
+export type ObservedExecution<T> = {
+  observe?: (context: ActionContext) => Promise<InputSnapshot[]>;
+  effect: (context: ActionContext) => Promise<EffectOutcome<T>>;
+  transaction?: ActionTransaction;
+};
+export type ExecutionResult<T> =
+  | { allowed: false; decision: ActionDecision }
+  | { allowed: true; decision: ActionDecision; value: T };
 
 /** A trusted effect adapter may certify that a failed call produced no external effect. */
 export class EffectNotAppliedError extends Error {}
-export class EffectRecoveryRequiredError extends Error {
+export class EffectUncertainError extends Error {
   constructor(public readonly attemptId: string) {
-    super("External outcome requires reconciliation before this resource can be used again.");
+    super("Execution was not confirmed; this session is stopped.");
   }
 }
 const hasFsm = (binding: RuntimeBinding) => binding.mechanisms?.includes("fsm") === true;
+const needsTransition = (binding: RuntimeBinding, action: string) =>
+  hasFsm(binding) && (!binding.fsmActions || binding.fsmActions.includes(action));
 const lifecycleInput = (fact: PolicyFact) => Object.hasOwn(LIFECYCLE_INPUT_ARITIES, fact.predicate);
 
 function parsePolicy(binding: RuntimeBinding, source: string) {
-  const rules = parsePolicyRules(source);
+  const parsed = readPolicyDocument(source);
+  if (
+    parsed.configuration.some(
+      (fact) => !binding.configuration?.some((allowed) => factKey(allowed) === factKey(fact)),
+    )
+  )
+    throw new Error("Static policy facts do not match the reviewed configuration.");
+  for (const [name, schema] of Object.entries(parsed.predicates)) {
+    const expected = Object.hasOwn(binding.predicates, name) ? binding.predicates[name] : undefined;
+    if (
+      !expected ||
+      schema.kind !== expected.kind ||
+      canonical(schema.args) !== canonical(expected.args)
+    )
+      throw new Error("Policy declarations do not match the trusted binding.");
+    if (canonical(schema.key ?? null) !== canonical(expected.key ?? null))
+      throw new Error("Policy keys do not match the trusted binding.");
+    if (
+      canonical(schema.types ?? schema.args.map(() => "symbol")) !==
+      canonical(expected.types ?? expected.args.map(() => "symbol"))
+    )
+      throw new Error("Policy field types do not match the trusted binding.");
+  }
+  const rules = parsePolicyRules(parsed.rules);
   if (!rules.length) throw new Error("Policy contains no rules.");
   for (const rule of rules) {
     for (const atom of [rule.head, ...rule.body]) {
@@ -60,14 +116,23 @@ function parsePolicy(binding: RuntimeBinding, source: string) {
     }
     if (binding.predicates[rule.head.predicate]!.kind !== "derived")
       throw new Error(`Policy cannot write runtime input: ${rule.head.predicate}`);
-    if (hasFsm(binding) && Object.hasOwn(LIFECYCLE_PREDICATES, rule.head.predicate))
-      throw new Error(`Policy cannot replace FSM foundation: ${rule.head.predicate}`);
+    if (
+      (hasFsm(binding) && Object.hasOwn(LIFECYCLE_PREDICATES, rule.head.predicate)) ||
+      Object.entries(FOUNDATIONS).some(
+        ([name, foundation]) =>
+          binding.mechanisms?.includes(name as keyof typeof FOUNDATIONS) &&
+          Object.hasOwn(foundation.predicates, rule.head.predicate),
+      )
+    )
+      throw new Error(
+        `Policy cannot replace selected mechanism foundation: ${rule.head.predicate}`,
+      );
   }
-  const combined = hasFsm(binding)
-    ? [...LIFECYCLE_RULES, ...lifecycleGateRules(binding.decision.request, binding.decision.deny)]
-        .map(encodeRule)
-        .concat(rules)
-    : rules;
+  const foundation = hasFsm(binding) ? [...LIFECYCLE_RULES] : [];
+  for (const [name, selected] of Object.entries(FOUNDATIONS))
+    if (binding.mechanisms?.includes(name as keyof typeof FOUNDATIONS))
+      foundation.push(...selected.rules);
+  const combined = foundation.map(encodeRule).concat(rules);
   validateAndStratify([], combined);
   return combined;
 }
@@ -105,19 +170,50 @@ function decide(
   rules: Rule[],
   inputs: PolicyFact[],
   intent: ActionIntent,
+  requestId = randomUUID(),
 ): ActionDecision {
   validateIntent(intent);
-  const request = { ...intent, id: randomUUID() };
+  if (Object.keys(intent.parameters ?? {}).length && !binding.decision.parameters)
+    throw new Error("This binding does not declare request parameters.");
+  const request = { ...structuredClone(intent), id: requestId };
+  const requestArgs = [request.id, request.actor, request.action];
+  const parameters = { ...intent.parameters };
+  if (intent.resource !== undefined) {
+    if (parameters.resource !== undefined && parameters.resource !== intent.resource)
+      throw new Error("Conflicting resource parameter.");
+    parameters.resource = intent.resource;
+  }
+  const resource = intent.resource ?? parameters[binding.fsmTarget ?? "resource"];
   const result = evaluate(
     [
       ...inputs,
       {
         predicate: binding.decision.request,
-        args: [request.id, request.actor, request.action, request.resource],
+        args: requestArgs,
       },
+      ...Object.entries(parameters).map(([key, value]) => ({
+        predicate: binding.decision.parameters!,
+        args: [request.id, key, value],
+      })),
     ],
     rules,
   );
+  const transitionFact = needsTransition(binding, intent.action)
+    ? result.facts.find(
+        (fact) =>
+          fact.predicate === "CanTransition" &&
+          decode(fact.args[0]!) === resource &&
+          decode(fact.args[1]!) === intent.action,
+      )
+    : undefined;
+  if (needsTransition(binding, intent.action) && !transitionFact)
+    result.facts.push(
+      encodeFact({ predicate: binding.decision.deny, args: [request.id, "invalid_transition"] }),
+    );
+  if (result.facts.some((fact) => binding.invariants?.includes(fact.predicate)))
+    result.facts.push(
+      encodeFact({ predicate: binding.decision.deny, args: [request.id, "invariant_violation"] }),
+    );
   const evidence = result.facts.filter(
     (fact) =>
       [binding.decision.allow, binding.decision.deny].includes(fact.predicate) &&
@@ -127,15 +223,7 @@ function decide(
   const allowed =
     denials.length === 0 && evidence.some((fact) => fact.predicate === binding.decision.allow);
   const budget = { nodes: 512 };
-  const transition =
-    allowed && hasFsm(binding)
-      ? result.facts.find(
-          (fact) =>
-            fact.predicate === "CanTransition" &&
-            decode(fact.args[0]!) === intent.resource &&
-            decode(fact.args[1]!) === intent.action,
-        )
-      : undefined;
+  const transition = allowed ? transitionFact : undefined;
   return {
     allowed,
     policyHash: hash,
@@ -147,7 +235,13 @@ function decide(
         : ["no_explicit_allow"],
     evidence: evidence.map((fact) => explain(result, fact, budget)),
     ...(transition
-      ? { transition: { from: decode(transition.args[2]!), to: decode(transition.args[3]!) } }
+      ? {
+          transition: {
+            resource: resource!,
+            from: decode(transition.args[2]!),
+            to: decode(transition.args[3]!),
+          },
+        }
       : {}),
   };
 }
@@ -167,14 +261,15 @@ export function compileApplicationPolicy(bindingInput: unknown, source: string):
   const binding = readRuntimeBinding(bindingInput);
   const rules = parsePolicy(binding, source);
   const hash = createHash("sha256")
-    .update(canonical({ version: 1, binding, source }))
+    .update(canonical({ version: 2, binding, source, rules }))
     .digest("hex");
   for (const test of binding.tests) {
-    if (hasFsm(binding)) validateLifecycleInputs(test.inputs.filter(lifecycleInput));
+    if (hasFsm(binding))
+      validateLifecycleInputs(test.inputs.filter(lifecycleInput), binding.fsmActions);
     const decision = decide(binding, hash, rules, test.inputs, test.request);
     if (decision.allowed !== test.allowed) throw new Error(`Acceptance case failed: ${test.name}`);
   }
-  return { version: 1, binding, source, hash };
+  return { version: 2, binding, source, hash };
 }
 
 /** In-process trusted-adapter boundary; callers never hand a decision token back to execute. */
@@ -183,7 +278,10 @@ export function createPolicySession(
   bundleInput: PolicyBundle,
   initialInputs: PolicyFact[] = [],
 ) {
-  if (bundleInput.version !== 1) throw new Error("Unsupported policy bundle version.");
+  if (readRuntimeBinding(bindingInput).fsmState === "backend")
+    throw new Error("Backend-authoritative FSM execution requires the Python runtime.");
+  if (bundleInput.version !== 2)
+    throw new Error("Unsupported policy bundle version; recompile with the trusted binding.");
   const bundle = compileApplicationPolicy(bindingInput, bundleInput.source);
   if (bundle.hash !== bundleInput.hash) throw new Error("Policy bundle hash mismatch.");
   if (canonical(bundle.binding) !== canonical(bundleInput.binding))
@@ -193,21 +291,16 @@ export function createPolicySession(
   let inputs: PolicyFact[] = [];
   let pending = 0;
   let queue: Promise<unknown> = Promise.resolve();
-  const recoveries = new Map<
-    string,
-    {
-      request: ActionDecision["request"];
-      transition: { from: string; to: string };
-      observations: PolicyFact[];
-    }
-  >();
+  let failed = false;
   const protectedInputs = (facts: PolicyFact[]) =>
     [...new Set(facts.filter(lifecycleInput).map(factKey))].sort();
   const checked = (facts: PolicyFact[]) => {
     validateInputs(binding, facts);
     const copy = structuredClone(facts);
-    if (hasFsm(binding)) validateLifecycleInputs(copy.filter(lifecycleInput));
-    evaluate(copy, rules); // Reject resource-limit failures before changing state or running an effect.
+    if (hasFsm(binding)) validateLifecycleInputs(copy.filter(lifecycleInput), binding.fsmActions);
+    const closure = evaluate(copy, rules); // Reject invalid snapshots before any external effect.
+    if (closure.facts.some((fact) => binding.invariants?.includes(fact.predicate)))
+      throw new Error("An application invariant was violated.");
     return copy;
   };
   inputs = checked(initialInputs);
@@ -227,6 +320,138 @@ export function createPolicySession(
     if (pending)
       throw new Error("Session has an in-flight operation; await it before inspecting state.");
   };
+  const validateCommit = (facts: PolicyFact[]) => {
+    validateInputs(binding, facts);
+    if (hasFsm(binding) && facts.some(lifecycleInput))
+      throw new Error("Successful FSM transitions are committed only by the runtime.");
+  };
+  const refresh = (current: PolicyFact[], snapshots: InputSnapshot[]) => {
+    if (!Array.isArray(snapshots) || snapshots.length > 64)
+      throw new Error("Invalid observation snapshots.");
+    const replaced = new Set<string>();
+    const versions: Record<string, string> = Object.create(null);
+    const facts: PolicyFact[] = [];
+    for (const snapshot of snapshots) {
+      if (
+        !snapshot ||
+        typeof snapshot.id !== "string" ||
+        !snapshot.id.length ||
+        snapshot.id.length > 1024 ||
+        Object.hasOwn(versions, snapshot.id) ||
+        typeof snapshot.version !== "string" ||
+        !snapshot.version.trim() ||
+        snapshot.version.length > 1024 ||
+        snapshot.complete !== true ||
+        !Array.isArray(snapshot.predicates) ||
+        !snapshot.predicates.length ||
+        snapshot.predicates.some(
+          (predicate) =>
+            typeof predicate !== "string" ||
+            replaced.has(predicate) ||
+            binding.predicates[predicate]?.kind !== "input" ||
+            [binding.decision.request, binding.decision.parameters].includes(predicate) ||
+            (hasFsm(binding) && Object.hasOwn(LIFECYCLE_INPUT_ARITIES, predicate)),
+        )
+      )
+        throw new Error(
+          "Observations need distinct declared inputs and complete, versioned sources.",
+        );
+      validateInputs(binding, snapshot.facts);
+      if (
+        new Set(snapshot.predicates).size !== snapshot.predicates.length ||
+        snapshot.facts.some((fact) => !snapshot.predicates.includes(fact.predicate))
+      )
+        throw new Error("An observation source wrote an undeclared relation.");
+      for (const predicate of snapshot.predicates) replaced.add(predicate);
+      versions[snapshot.id] = snapshot.version;
+      facts.push(...structuredClone(snapshot.facts));
+    }
+    return {
+      facts: checked([...current.filter((fact) => !replaced.has(fact.predicate)), ...facts]),
+      versions,
+    };
+  };
+  const execute = <T>(
+    intent: ActionIntent,
+    options: ObservedExecution<T>,
+    commitInputs: PolicyFact[] = [],
+  ): Promise<ExecutionResult<T>> => {
+    validateIntent(intent);
+    validateCommit(commitInputs);
+    const captured = structuredClone({ intent, commitInputs });
+    const { observe, effect, transaction } = options;
+    return exclusive(async () => {
+      const request = Object.freeze({
+        ...captured.intent,
+        id: randomUUID(),
+        ...(captured.intent.parameters
+          ? { parameters: Object.freeze(captured.intent.parameters) }
+          : {}),
+      });
+      const context: ActionContext = Object.freeze({ request, policyHash: bundle.hash });
+      if (failed)
+        throw new Error("An earlier execution was not confirmed; this session is stopped.");
+      let staged: PolicyFact[] | undefined;
+      let decision: ActionDecision | undefined;
+      let observations = captured.commitInputs;
+      let effectStarted = false;
+      let entered = false;
+      let transactionActive = true;
+      let produced: ExecutionResult<T> | undefined;
+      const run = async (): Promise<ExecutionResult<T>> => {
+        if (entered || !transactionActive)
+          throw new Error("A transaction must invoke its operation exactly once before returning.");
+        entered = true;
+        const snapshot = refresh(inputs, observe ? await observe(context) : []);
+        if (!transactionActive)
+          throw new Error("The backend transaction ended before observation completed.");
+        decision = decide(binding, bundle.hash, rules, snapshot.facts, captured.intent, request.id);
+        if (Object.keys(snapshot.versions).length) decision.observationVersions = snapshot.versions;
+        if (!decision.allowed) {
+          staged = snapshot.facts;
+          produced = { allowed: false, decision };
+          return produced;
+        }
+        if (needsTransition(binding, captured.intent.action) && !decision.transition)
+          throw new Error("Missing validated current transition.");
+        const next = (commits: PolicyFact[]) =>
+          checked(
+            decision!.transition
+              ? transitionInputs(snapshot.facts, decision!.transition, commits)
+              : [...snapshot.facts, ...commits],
+          );
+        next(observations); // Validate known commits and resource bounds before touching the backend.
+        effectStarted = true;
+        const outcome = await effect(context);
+        if (outcome?.status === "not_applied") throw new EffectNotAppliedError(outcome.reason);
+        if (outcome?.status !== "applied") throw new Error("External outcome is uncertain.");
+        const committed = structuredClone(outcome.observations ?? []);
+        validateCommit(committed);
+        observations = [...observations, ...committed];
+        staged = next(observations);
+        produced = { allowed: true, decision, value: outcome.value };
+        return produced;
+      };
+      try {
+        if (transaction) await transaction(context, run);
+        else await run();
+        transactionActive = false;
+        if (!produced || !staged)
+          throw new Error(
+            "A transaction must await its operation and confirm commit before returning.",
+          );
+        inputs = staged;
+        return produced;
+      } catch (error) {
+        transactionActive = false;
+        if (effectStarted && !(error instanceof EffectNotAppliedError)) {
+          failed = true;
+          throw new EffectUncertainError(request.id);
+        }
+        throw error;
+      }
+    });
+  };
   return {
     policyHash: bundle.hash,
     snapshot: () => {
@@ -241,9 +466,7 @@ export function createPolicySession(
           hasFsm(binding) &&
           JSON.stringify(protectedInputs(copy)) !== JSON.stringify(protectedInputs(inputs))
         )
-          throw new Error(
-            "FSM state, machine and success history are runtime-owned after registration.",
-          );
+          throw new Error("FSM state and machine are runtime-owned after registration.");
         inputs = checked(copy);
       });
     },
@@ -287,104 +510,38 @@ export function createPolicySession(
         ? explain(result, encoded)
         : null;
     },
-    execute<T>(
-      intent: ActionIntent,
-      effect: () => Promise<T>,
-      commitInputs: PolicyFact[] = [],
-    ): Promise<
-      | { allowed: false; decision: ActionDecision }
-      | { allowed: true; decision: ActionDecision; value: T }
-    > {
-      validateIntent(intent);
-      validateInputs(binding, commitInputs);
-      if (hasFsm(binding) && commitInputs.some(lifecycleInput))
-        throw new Error("Successful FSM transitions are committed only by the runtime.");
-      const captured = structuredClone({ intent, commitInputs });
-      return exclusive(async () => {
-        const decision = decide(binding, bundle.hash, rules, inputs, captured.intent);
-        if (!decision.allowed) return { allowed: false as const, decision };
-        if (hasFsm(binding) && !decision.transition)
-          throw new Error("Missing validated current transition.");
-        const next = checked(
-          decision.transition
-            ? transitionInputs(inputs, decision.request, decision.transition, captured.commitInputs)
-            : [...inputs, ...captured.commitInputs],
-        );
-        let value: T;
-        try {
-          value = await effect();
-        } catch (error) {
-          if (decision.transition && !(error instanceof EffectNotAppliedError)) {
-            recoveries.set(decision.request.id, {
-              request: decision.request,
-              transition: decision.transition,
-              observations: captured.commitInputs,
-            });
-            inputs = [
-              ...inputs,
-              {
-                predicate: "ResourceRecovery",
-                args: [captured.intent.resource, decision.request.id],
-              },
-            ];
-            throw new EffectRecoveryRequiredError(decision.request.id);
-          }
-          throw error;
-        }
-        inputs = next; // A failed effect never commits observations. External effects need app-owned transactions.
-        return { allowed: true as const, decision, value };
-      });
+    execute<T>(intent: ActionIntent, effect: () => Promise<T>, commitInputs: PolicyFact[] = []) {
+      return execute(
+        intent,
+        { effect: async () => ({ status: "applied", value: await effect() }) },
+        commitInputs,
+      );
     },
-    reconcile(attemptId: string, outcome: "applied" | "not_applied") {
-      if (!hasFsm(binding) || !["applied", "not_applied"].includes(outcome))
-        throw new Error("Reconciliation needs an FSM session and a confirmed external outcome.");
-      return exclusive(async () => {
-        const attempt = recoveries.get(attemptId);
-        if (!attempt)
-          throw new Error(
-            "Unknown pending attempt; durable recovery requires adapter-owned attempt persistence.",
-          );
-        const withoutRecovery = inputs.filter(
-          (f) => !(f.predicate === "ResourceRecovery" && f.args[1] === attemptId),
-        );
-        inputs = checked(
-          outcome === "applied"
-            ? transitionInputs(
-                withoutRecovery,
-                attempt.request,
-                attempt.transition,
-                attempt.observations,
-              )
-            : withoutRecovery,
-        );
-        recoveries.delete(attemptId);
-      });
+    executeObserved<T>(intent: ActionIntent, options: ObservedExecution<T>) {
+      return execute(intent, options);
     },
   };
 }
 
 function transitionInputs(
   inputs: PolicyFact[],
-  request: ActionDecision["request"],
-  transition: { from: string; to: string },
+  transition: { resource: string; from: string; to: string },
   observations: PolicyFact[],
 ) {
   if (
     !inputs.some(
       (f) =>
         f.predicate === "ResourceState" &&
-        f.args[0] === request.resource &&
+        f.args[0] === transition.resource &&
         f.args[1] === transition.from,
     )
   )
     throw new Error("Resource changed before the protected transition could commit.");
   return [
-    ...inputs.filter((f) => !(f.predicate === "ResourceState" && f.args[0] === request.resource)),
+    ...inputs.filter(
+      (f) => !(f.predicate === "ResourceState" && f.args[0] === transition.resource),
+    ),
     ...observations,
-    { predicate: "ResourceState", args: [request.resource, transition.to] },
-    {
-      predicate: "ActionTaken",
-      args: [request.id, request.resource, request.action, transition.from, transition.to],
-    },
+    { predicate: "ResourceState", args: [transition.resource, transition.to] },
   ];
 }

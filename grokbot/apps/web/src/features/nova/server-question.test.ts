@@ -29,7 +29,7 @@ it("compiles a model selection, shows its concrete question, and leaves executio
     originalQuestion: "Why can A not receive the pending HR message?",
     question: "Why would message mH to Auditor A be blocked?",
     scope: "auditor_a",
-    query: 'DenyReceive("auditor_a", "mH")',
+    query: 'Deny("mH", message_policy)',
     interpretationSource: "model",
   });
   expect(nova.runtime.snapshot()).toEqual(before);

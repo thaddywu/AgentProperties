@@ -13,6 +13,15 @@ export const encodeRule = (r: Rule): Rule => {
     head: { ...r.head, args: r.head.args.map(term) },
     body: r.body.map((a) => ({ ...a, args: a.args.map(term) })),
     distinct: r.distinct.map(([a, b]) => [term(a), term(b)]),
+    ...(r.comparisons?.length
+      ? {
+          comparisons: r.comparisons.map((c) => ({
+            ...c,
+            left: term(c.left),
+            right: term(c.right),
+          })),
+        }
+      : {}),
   };
 };
 
@@ -21,7 +30,7 @@ export function parseProgram(source: string) {
   if (source.length > 20_000) throw new Error("Program is too long (20,000 characters maximum).");
   const tokens: string[] = [];
   const scanner =
-    /\s+|\/\/[^\n]*|%[^\n]*|"(?:\\.|[^"\\])*"|:-|\?-|!=|[A-Za-z_][A-Za-z_0-9]*|-?\d+(?:\.\d+)?|[(),.]/gy;
+    /\s+|\/\/[^\n]*|%[^\n]*|"(?:\\.|[^"\\])*"|:-|\?-|!=|<=|>=|[<>]|[A-Za-z_][A-Za-z_0-9]*|-?\d+(?:\.\d+)?|[(),.]/gy;
   let offset = 0;
   while (offset < source.length) {
     scanner.lastIndex = offset;
@@ -66,6 +75,7 @@ export function parseProgram(source: string) {
   const body = () => {
     const atoms: Atom[] = [],
       distinct: [string, string][] = [];
+    const comparisons: NonNullable<Rule["comparisons"]> = [];
     do {
       if (peek() === ",") take();
       if (peek() === "not") {
@@ -75,11 +85,16 @@ export function parseProgram(source: string) {
         const a = term();
         take("!=");
         distinct.push([a, term()]);
+      } else if (["<", "<=", ">", ">="].includes(tokens[pos + 1] ?? "")) {
+        const left = term();
+        const operator = take() as NonNullable<Rule["comparisons"]>[number]["operator"];
+        comparisons.push({ left, operator, right: term() });
       } else atoms.push(atom());
     } while (peek() === ",");
     return {
       body: [...atoms.filter((a) => !a.negative), ...atoms.filter((a) => a.negative)],
       distinct,
+      ...(comparisons.length ? { comparisons } : {}),
     };
   };
   const facts: PolicyFact[] = [],
@@ -137,6 +152,7 @@ export function validateAndStratify(facts: PolicyFact[], rules: Rule[]) {
       ...rule.head.args,
       ...rule.body.filter((a) => a.negative).flatMap((a) => a.args),
       ...rule.distinct.flat(),
+      ...(rule.comparisons?.flatMap((c) => [c.left, c.right]) ?? []),
     ])
       if (isVariable(value) && !bound.has(value))
         throw new Error(`Unsafe variable ${value}: bind it in a positive atom.`);

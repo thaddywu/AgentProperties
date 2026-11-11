@@ -23,7 +23,7 @@ store Incoming(P, M) at P       lifetime pending(M)
 store HasCap(P, C) at P         authority capability_config
 
 eval HasReceivedTag(P, T) at P
-eval DenyReceive(P, M) at P     hook receive(M)
+eval Deny(M, message_policy) at P     hook receive(M)
 
 on send(S, D, M):
   export MessageTag@S(M, T)
@@ -49,7 +49,7 @@ An export query reads its permitted source store. It is not permission to run a 
 
 ## State machines and inference
 
-In current Nova, the message lifecycle participates through `Incoming`, `Received` and imperative guards in `send`/`settle`. No `ResourceState`, `Transition` or `EnabledAction` relation occurs in a `DenyReceive` rule. The separate lifecycle module has inference rules for graph enablement and reachability, but no connected action executor.
+In current Nova, the message lifecycle participates through `Incoming`, `Received` and imperative guards in `send`/`settle`. No `ResourceState`, `Transition` or `EnabledAction` relation occurs in a `Deny` rule. The separate lifecycle module has inference rules for graph enablement and reachability, but no connected action executor.
 
 One future encoding could derive an invalid-state denial from a trusted current resource state and permitted transition relation, then compose it with IFC and access-control denials. Transition validity is necessary but not sufficient authorization. Resource state must be committed by the runtime/adapter after the actual transition, not asserted by model output. Unknown or invalid protocol state can also abort before policy inference; not every runtime failure needs to be represented as a business-policy Deny fact.
 
@@ -77,7 +77,7 @@ Keep two comparisons separate: (a) translated policy versus golden policy, and (
 
 `not HasCap(P, C)` is meaningful only when the deciding store has a valid, complete authoritative capability snapshot for the relevant decision version. A delayed grant is not evidence of absence. The required revocation/freshness model must be specified; missing completeness evidence should block/fail the decision under the protocol rather than turn into a successful proof of a negative fact.
 
-The same problem affects “allow if no DenyReceive”: absence of a denial is safe only after the required local inputs and rule strata have been evaluated for that attempt. A state that might later receive missing input cannot automatically stand in for the intended decision snapshot. Pending receives also require sequencing or another concurrency contract so that two individually acceptable receives do not both commit using the same stale local knowledge.
+The same problem affects “allow if no Deny”: absence of a denial is safe only after the required local inputs and rule strata have been evaluated for that attempt. A state that might later receive missing input cannot automatically stand in for the intended decision snapshot. Pending receives also require sequencing or another concurrency contract so that two individually acceptable receives do not both commit using the same stale local knowledge.
 
 Existing work provides context rather than a claim of novelty: [WebdamLog](https://arxiv.org/abs/1304.4187) studies distributing Datalog-style data and programs among autonomous peers. [Keeping CALM](https://arxiv.org/abs/1901.01930) discusses the connection between monotonic logic and coordination-free distributed consistency. Our proposed question adds application enforcement boundaries, authorized disclosure, observable query/provenance requirements and protocol-plan synthesis. These papers do not by themselves establish an optimality or correctness result for this proposed interface.
 
@@ -95,7 +95,7 @@ This separates two questions: whether natural language was translated into the i
 
 The Rules dialog has five views: `Runtime`, `Nova input`, `Translated`, `Reference` and `Prevention`. Runtime shows the builtin predicate schemas, inference rules, protocol placement/transfers and app-supplied configuration values. Nova input shows the exact checked-in Markdown; imported artifacts retain their own exact input snapshot. Translated shows per-policy builtin/extension coverage, generated rules, model identifier and inherited protocol. Reference preserves handwritten app rules and the complete fixed protocol. Prevention runs actual send/settle comparisons in fresh sessions and a separate full-copy diagnostic on the selected snapshot.
 
-`Start reference session` and `Start translated session` explicitly replace the demo with a new initial session. No hot policy replacement occurs inside an existing history. The active mode and content identity are visible. Failed artifact checks leave the existing session intact. Generated extensions can write DenyReceive, Covered and Finished, but cannot replace the fixed propagation/knowledge rules, write input facts, change trusted configuration or replace the protocol. The versioned artifact is revalidated when restored from a checkpoint; query, Why, What-if, search and replay use the same installed rules.
+`Start reference session` and `Start translated session` explicitly replace the demo with a new initial session. No hot policy replacement occurs inside an existing history. The active mode and content identity are visible. Failed artifact checks leave the existing session intact. Generated extensions can write Deny, Covered and Finished, but cannot replace the fixed propagation/knowledge rules, write input facts, change trusted configuration or replace the protocol. The versioned artifact is revalidated when restored from a checkpoint; query, Why, What-if, search and replay use the same installed rules.
 
 The key copy is “Fixed protocol inherited; protocol synthesis is not implemented.” and “Checks passed; semantic equivalence is unproven.” These distinctions are necessary to avoid presenting fixed protocol reuse as agent-generated deployment or finite tests as proof. “Prevention uses fresh sessions and baseline configuration. Closure comparison uses the selected snapshot.” distinguishes the two experiments. Details and evidence are revealed inside the dialog rather than adding persistent explanations to the main interface. The active Reference/Translated label remains visible because it changes which rules enforce delivery.
 

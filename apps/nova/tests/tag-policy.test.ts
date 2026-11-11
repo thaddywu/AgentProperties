@@ -6,8 +6,8 @@ import { createEpisode, NovaRuntime } from "../src/runtime.js";
 import { allRecords } from "../src/store-records.js";
 
 const group = [f("TagGroup", "red", "g"), f("TagGroup", "blue", "g"), f("TagGroup", "green", "g")];
-const deny = (facts: PolicyFact[], actor = "auditor_a") =>
-  contains(evaluate(facts).facts, f("DenyReceive", actor, "incoming"));
+const deny = (facts: PolicyFact[]) =>
+  contains(evaluate(facts).facts, f("Deny", "incoming", "message_policy"));
 const twoKnown = [
   f("Received", "auditor_a", "one"),
   f("TransportTag", "one", "red"),
@@ -49,14 +49,11 @@ describe("opaque taint tags and grouped exposure", () => {
     ).toBe(true);
     expect(deny([...group, ...incoming, f("TransportTag", "incoming", "red")])).toBe(true);
     expect(
-      deny(
-        [
-          ...group,
-          f("Incoming", "board", "incoming"),
-          ...["red", "blue", "green"].map((tag) => f("TransportTag", "incoming", tag)),
-        ],
-        "board",
-      ),
+      deny([
+        ...group,
+        f("Incoming", "board", "incoming"),
+        ...["red", "blue", "green"].map((tag) => f("TransportTag", "incoming", tag)),
+      ]),
     ).toBe(false);
   });
   it("uses configured tags for completion, not fixed part names", () => {
@@ -147,7 +144,7 @@ describe("opaque taint tags and grouped exposure", () => {
         ),
       );
     }
-    expect(migrated.closure("auditor_a").facts).toContainEqual(f("DenyReceive", "auditor_a", "mH"));
+    expect(migrated.closure("auditor_a").facts).toContainEqual(f("Deny", "mH", "message_policy"));
     expect(new NovaRuntime(migrated.snapshot()).state).toEqual(migrated.state);
   });
 });

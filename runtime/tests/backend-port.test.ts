@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { EffectNotAppliedError } from "../src/application.js";
-import { createBackendPort, DeliveryRecoveryRequiredError } from "../src/backend-port.js";
+import { EffectNotAppliedError, EffectUncertainError } from "../src/application.js";
+import { createBackendPort } from "../src/backend-port.js";
 import type { PolicyFact } from "../src/datalog.js";
 import { createMessagingProfile, createMessagingRuntime } from "../src/messaging.js";
 import { parsePolicyRules } from "../src/query.js";
@@ -26,7 +26,9 @@ describe("backend intervention and observation port", () => {
       application: {
         predicates: { BlockedRecipient: { kind: "input", args: ["Agent"] } },
         local: { BlockedRecipient: ["@self"] },
-        rules: parsePolicyRules("DenyReceive(A,M) :- ReceiveAttempt(A,M), BlockedRecipient(A)."),
+        rules: parsePolicyRules(
+          "Deny(M, message_policy) :- ReceiveAttempt(A,M), BlockedRecipient(A).",
+        ),
         ruleEncoding: "parsed",
       },
     });
@@ -61,7 +63,7 @@ describe("backend intervention and observation port", () => {
     const remote = profile();
     remote.rules.push({
       id: "foreign-grant",
-      head: f("DenyReceive", "A", "M"),
+      head: f("Deny", "M", "message_policy"),
       body: [f("ReceiveAttempt", "A", "M"), f("AgentHasCapability", "B", "C")],
       distinct: [],
       stratum: 1,
@@ -198,24 +200,23 @@ describe("backend intervention and observation port", () => {
       /undeclared/,
     );
   });
-  it("requires confirmation after an uncertain delivery and never repeats a confirmed effect", async () => {
+  it("stops after uncertain delivery without retrying the external effect", async () => {
     const effect = vi.fn(async () => {
       throw new Error("Lost acknowledgement after external write.");
     });
     const port = createBackendPort({ profile: profile(), deliver: effect });
     await expect(port.bind("Reader-B").send("Reader-A", "m", "plain")).rejects.toBeInstanceOf(
-      DeliveryRecoveryRequiredError,
+      EffectUncertainError,
     );
     expect(port.snapshot().messages[0]!.status).toBe("pending");
     expect(
       port.snapshot().stores["Reader-A"]!.some((r) => r.fact.predicate === "MessageReceived"),
     ).toBe(false);
     await expect(port.bind("Reader-B").send("Reader-A", "m", "plain")).rejects.toBeInstanceOf(
-      DeliveryRecoveryRequiredError,
+      EffectUncertainError,
     );
     expect(effect).toHaveBeenCalledTimes(1);
-    await port.reconcile("m", "delivered");
-    expect((await port.bind("Reader-B").send("Reader-A", "m", "plain")).replayed).toBe(true);
+    expect("reconcile" in port).toBe(false);
     expect(effect).toHaveBeenCalledTimes(1);
   });
   it("rechecks a pending attempt after a confirmed no-effect failure", async () => {

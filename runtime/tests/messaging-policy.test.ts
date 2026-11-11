@@ -20,7 +20,7 @@ describe("fixed messaging foundation", () => {
       predicate: "HasReceivedTag",
       args: ["reader", "medical"],
     });
-    expect(result.facts).toContainEqual({ predicate: "DenyReceive", args: ["reader", "reply"] });
+    expect(result.facts).toContainEqual({ predicate: "Deny", args: ["reply", "message_policy"] });
   });
   it("does not impose an application exposure threshold or audit goal", () => {
     const result = evaluateDatalog(
@@ -35,9 +35,7 @@ describe("fixed messaging foundation", () => {
     );
     expect(result.facts.filter((fact) => fact.predicate === "MessageTag")).toHaveLength(3);
     expect(
-      result.facts.some((fact) =>
-        ["DenyReceive", "Finished", "HasReceivedTag"].includes(fact.predicate),
-      ),
+      result.facts.some((fact) => ["Deny", "Finished", "HasReceivedTag"].includes(fact.predicate)),
     ).toBe(false);
   });
 });

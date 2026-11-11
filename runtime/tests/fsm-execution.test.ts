@@ -1,168 +1,112 @@
-import { describe, expect, it, vi } from "vitest";
+import { expect, it, vi } from "vitest";
 import {
   compileApplicationPolicy,
   createPolicySession,
   EffectNotAppliedError,
-  EffectRecoveryRequiredError,
+  EffectUncertainError,
 } from "../src/application.js";
 import type { RuntimeBinding } from "../src/binding.js";
-import type { PolicyFact } from "../src/datalog.js";
 import { LIFECYCLE_PREDICATES } from "../src/lifecycle.js";
 
-const f = (predicate: string, ...args: string[]): PolicyFact => ({ predicate, args });
+const f = (predicate: string, ...args: string[]) => ({ predicate, args });
 const initial = [
   f("ResourceType", "draft", "document"),
   f("ResourceState", "draft", "draft"),
-  f("Transition", "document", "approve", "draft", "approved"),
-  f("Transition", "document", "publish", "approved", "published"),
-  f("Role", "reviewer", "reviewer"),
-  f("Role", "publisher", "publisher"),
+  f("AllowedTransition", "document", "approve", "draft", "approved"),
+  f("AllowedTransition", "document", "publish", "approved", "published"),
 ];
-const intent = (action: string, resource = "draft") => ({
-  actor: action === "approve" ? "reviewer" : "publisher",
-  action,
-  resource,
-});
 const binding: RuntimeBinding = {
   version: 1,
   id: "fsm-documents",
-  context: "Trusted document service with real protected operations.",
+  context: "Shared typed machine, current state only.",
   mechanisms: ["fsm"],
   predicates: {
-    ...Object.fromEntries(
-      Object.entries(LIFECYCLE_PREDICATES).map(([name, schema]) => [
-        name,
-        { kind: schema.kind, args: [...schema.args], meaning: name },
-      ]),
-    ),
-    Role: { kind: "input", args: ["Actor", "Role"], meaning: "Authoritative current role." },
-    Request: {
-      kind: "input",
-      args: ["RequestId", "Actor", "Action", "Resource"],
-      meaning: "Runtime attempt.",
-    },
-    Allow: { kind: "derived", args: ["RequestId"], meaning: "Permission." },
-    Deny: { kind: "derived", args: ["RequestId", "Reason"], meaning: "Refusal." },
+    ...LIFECYCLE_PREDICATES,
+    Request: { kind: "input", args: ["Q", "Principal", "EventKind"], meaning: "Request." },
+    Allow: { kind: "derived", args: ["Q"], meaning: "Permission." },
+    Deny: { kind: "derived", args: ["Q", "Reason"], meaning: "Refusal." },
   },
   decision: { request: "Request", allow: "Allow", deny: "Deny" },
-  tests: [
-    { name: "review-draft", inputs: initial, request: intent("approve"), allowed: true },
-    { name: "cannot-publish-draft", inputs: initial, request: intent("publish"), allowed: false },
-  ],
+  tests: [],
 };
-const policy =
-  'Allow(Q) :- Request(Q, A, "approve", D), Role(A, "reviewer").\nAllow(Q) :- Request(Q, A, "publish", D), Role(A, "publisher").';
-const session = (extra: PolicyFact[] = []) =>
-  createPolicySession(binding, compileApplicationPolicy(binding, policy), [...initial, ...extra]);
+const rules = "Allow(Q) :- Request(Q, P, E).";
+const session = () =>
+  createPolicySession(binding, compileApplicationPolicy(binding, rules), initial);
+const request = (action: string, resource = "draft") => ({ actor: "operator", action, resource });
 
-describe("protected FSM execution independent of any backend", () => {
-  it("composes structural transitions and authorization using the same rules as query and proof", async () => {
-    const runtime = session();
-    const effect = vi.fn(async () => "done");
-    const denied = await runtime.execute(intent("publish"), effect);
-    expect(denied.allowed).toBe(false);
-    expect(denied.decision.reasons).toContain("invalid_transition");
-    expect(
-      denied.decision.evidence.some(
-        (p) => p.fact.predicate === "Deny" && p.rule === "invalid-transition",
-      ),
-    ).toBe(true);
-    expect(effect).not.toHaveBeenCalled();
-    expect(runtime.query('?- CanTransition("draft", Action, From, To).').rows).toEqual([
-      ["approve", "draft", "approved"],
-    ]);
-    expect((await runtime.execute(intent("approve"), effect)).allowed).toBe(true);
-    expect((await runtime.execute(intent("publish"), effect)).allowed).toBe(true);
-    expect(runtime.snapshot().filter((f) => f.predicate === "ResourceState")).toEqual([
+it("shares machine edges by type while replacing current state without execution-history predicates", async () => {
+  const runtime = session(),
+    effect = vi.fn(async () => "done");
+  expect(runtime.query('?- ReachableState("document", "draft", S).').rows.sort()).toEqual([
+    ["approved"],
+    ["published"],
+  ]);
+  expect((await runtime.execute(request("publish"), effect)).decision.reasons).toContain(
+    "invalid_transition",
+  );
+  expect((await runtime.execute(request("approve"), effect)).allowed).toBe(true);
+  expect((await runtime.execute(request("publish"), effect)).allowed).toBe(true);
+  expect(runtime.query("?- ResourceState(R, S).").rows).toEqual([["draft", "published"]]);
+  expect(effect).toHaveBeenCalledTimes(2);
+  expect(runtime.snapshot().some((fact) => fact.predicate === "ActionTaken")).toBe(false);
+});
+
+it("serializes two calls so a consumed transition cannot be used twice", async () => {
+  const runtime = session(),
+    effect = vi.fn(async () => "done");
+  const results = await Promise.all([
+    runtime.execute(request("approve"), effect),
+    runtime.execute(request("approve"), effect),
+  ]);
+  expect(results.map((result) => result.allowed)).toEqual([true, false]);
+  expect(effect).toHaveBeenCalledTimes(1);
+});
+
+it("keeps machine configuration and runtime-owned state out of effect observations", async () => {
+  const runtime = session();
+  const initialOnly = { ...binding, fsmActions: [] };
+  expect(
+    createPolicySession(initialOnly, compileApplicationPolicy(initialOnly, rules), [
+      f("InitialState", "document", "draft"),
+    ]).query("?- InitialState(T, S).").rows,
+  ).toEqual([["document", "draft"]]);
+  expect(() =>
+    createPolicySession(binding, compileApplicationPolicy(binding, rules), [
+      ...initial,
+      f("InitialState", "document", "draft"),
+      f("InitialState", "document", "published"),
+    ]),
+  ).toThrow("initial state");
+  expect(() =>
+    runtime.execute(request("approve"), async () => "done", [
       f("ResourceState", "draft", "published"),
-    ]);
-    expect(runtime.snapshot().filter((f) => f.predicate === "ActionTaken")).toHaveLength(2);
-    expect((await runtime.execute(intent("publish"), effect)).allowed).toBe(false);
-    expect(
-      (await runtime.execute(intent("publish", "missing"), effect)).decision.reasons,
-    ).toContain("unknown_resource");
-    expect(effect).toHaveBeenCalledTimes(2);
-  });
-  it("serializes actual operations so concurrent attempts cannot reuse the old state", async () => {
-    const runtime = session();
-    const effect = vi.fn(async () => "approved");
-    const results = await Promise.all([
-      runtime.execute(intent("approve"), effect),
-      runtime.execute(intent("approve"), effect),
-    ]);
-    expect(results.map((r) => r.allowed)).toEqual([true, false]);
-    expect(effect).toHaveBeenCalledTimes(1);
-    expect(runtime.query("?- ActionTaken(E, R, A, From, To).").rows).toHaveLength(1);
-  });
-  it("keeps runtime-owned state/history immutable through policy and observation APIs", async () => {
-    const runtime = session();
-    const effect = vi.fn(async () => "body");
-    expect(() =>
-      runtime.execute(intent("approve"), effect, [f("ResourceState", "draft", "published")]),
-    ).toThrow(/runtime/);
-    await expect(
-      runtime.replaceInputs(
-        initial.map((fact) =>
-          fact.predicate === "ResourceState" ? f("ResourceState", "draft", "published") : fact,
-        ),
-      ),
-    ).rejects.toThrow(/runtime-owned/);
-    expect(() =>
-      compileApplicationPolicy(
-        binding,
-        `${policy}\nEnabledAction(R, S, A) :- ResourceState(R, S), Transition(T, A, S, To).`,
-      ),
-    ).toThrow(/foundation/);
-    expect(() => session([f("ResourceState", "draft", "published")])).toThrow(/Conflicting/);
-    const changed = initial.filter((fact) => fact.predicate !== "Role");
-    await runtime.replaceInputs(changed);
-    expect((await runtime.execute(intent("approve"), effect)).allowed).toBe(false);
-    expect(effect).not.toHaveBeenCalled();
-  });
-  it("distinguishes confirmed no-effect failures from uncertain external outcomes", async () => {
-    const runtime = session();
-    await expect(
-      runtime.execute(intent("approve"), async () => {
-        throw new EffectNotAppliedError("Rejected before effect.");
-      }),
-    ).rejects.toBeInstanceOf(EffectNotAppliedError);
-    expect(runtime.query("?- ResourceRecovery(R, Q).").rows).toEqual([]);
-    let attempt = "";
-    try {
-      await runtime.execute(intent("approve"), async () => {
-        throw new Error("Uncertain outcome.");
-      });
-    } catch (error) {
-      expect(error).toBeInstanceOf(EffectRecoveryRequiredError);
-      attempt = (error as EffectRecoveryRequiredError).attemptId;
-    }
-    expect(runtime.snapshot().filter((f) => f.predicate === "ActionTaken")).toEqual([]);
-    expect(runtime.check(intent("approve")).reasons).toContain("recovery_required");
-    await runtime.reconcile(attempt, "not_applied");
-    expect(runtime.check(intent("approve")).allowed).toBe(true);
-  });
-  it("reconciles confirmed success without repeating the effect or discarding other resource updates", async () => {
-    const runtime = session([
-      f("ResourceType", "other", "document"),
-      f("ResourceState", "other", "draft"),
-    ]);
-    let attempt = "";
-    const effect = vi.fn(async () => {
-      throw new Error("Response lost after write.");
-    });
-    try {
-      await runtime.execute(intent("approve"), effect);
-    } catch (error) {
-      attempt = (error as EffectRecoveryRequiredError).attemptId;
-    }
-    await runtime.execute(intent("approve", "other"), async () => "done");
-    await runtime.reconcile(attempt, "applied");
-    expect(runtime.query("?- ResourceState(R, S).").rows.sort()).toEqual([
-      ["draft", "approved"],
-      ["other", "approved"],
-    ]);
-    expect(runtime.query("?- ActionTaken(E, R, A, From, To).").rows).toHaveLength(2);
-    expect(effect).toHaveBeenCalledTimes(1);
-    await expect(runtime.reconcile(attempt, "applied")).rejects.toThrow(/Unknown/);
-  });
+    ]),
+  ).toThrow("runtime");
+  await expect(
+    runtime.replaceInputs([...initial, f("ResourceState", "draft", "published")]),
+  ).rejects.toThrow();
+  expect(() =>
+    compileApplicationPolicy(
+      binding,
+      `${rules}\nCanTransition(R, E, A, B) :- ResourceState(R, A), AllowedTransition(T, E, A, B).`,
+    ),
+  ).toThrow("foundation");
+});
+
+it("certified no-effect errors leave a session usable; uncertainty stops it without reconciliation machinery", async () => {
+  const runtime = session();
+  await expect(
+    runtime.execute(request("approve"), async () => {
+      throw new EffectNotAppliedError("no write");
+    }),
+  ).rejects.toBeInstanceOf(EffectNotAppliedError);
+  await expect(
+    runtime.execute(request("approve"), async () => {
+      throw new Error("response lost");
+    }),
+  ).rejects.toBeInstanceOf(EffectUncertainError);
+  const effect = vi.fn(async () => "duplicate");
+  await expect(runtime.execute(request("approve"), effect)).rejects.toThrow("session is stopped");
+  expect(effect).not.toHaveBeenCalled();
+  expect(runtime.snapshot().map((fact) => fact.predicate)).not.toContain("ResourceRecovery");
 });

@@ -21,7 +21,7 @@ const binding: RuntimeBinding = {
       ["Publisher", "input", ["Actor"]],
       ["Approved", "input", ["Document", "Reviewer"]],
       ["Published", "input", ["Document"]],
-      ["Attempt", "input", ["RequestId", "Actor", "Action", "Resource"]],
+      ["Attempt", "input", ["RequestId", "Actor", "Action"]],
       ["Permit", "derived", ["RequestId"]],
       ["Refuse", "derived", ["RequestId", "Reason"]],
     ].map(([name, kind, args]) => [
@@ -59,11 +59,11 @@ const binding: RuntimeBinding = {
   ],
 };
 const source = `
-Permit(R) :- Attempt(R, A, "approve", D), Reviewer(A), Author(D, Owner), A != Owner.
-Permit(R) :- Attempt(R, A, "publish", D), Publisher(A), Author(D, Owner), Approved(D, Reviewer), not Published(D).
-Permit(R) :- Attempt(R, A, "dual_publish", D), Publisher(A), Author(D, Owner), Approved(D, X), Approved(D, Y), Reviewer(X), Reviewer(Y), X != Y, not Published(D).
-Refuse(R, "author_review") :- Attempt(R, A, "approve", D), Author(D, A).
-Refuse(R, "already_published") :- Attempt(R, A, "publish", D), Published(D).
+Permit(R) :- Attempt(R, A, "approve"), Parameter(R, "resource", D), Reviewer(A), Author(D, Owner), A != Owner.
+Permit(R) :- Attempt(R, A, "publish"), Parameter(R, "resource", D), Publisher(A), Author(D, Owner), Approved(D, Reviewer), not Published(D).
+Permit(R) :- Attempt(R, A, "dual_publish"), Parameter(R, "resource", D), Publisher(A), Author(D, Owner), Approved(D, X), Approved(D, Y), Reviewer(X), Reviewer(Y), X != Y, not Published(D).
+Refuse(R, "author_review") :- Attempt(R, A, "approve"), Parameter(R, "resource", D), Author(D, A).
+Refuse(R, "already_published") :- Attempt(R, A, "publish"), Parameter(R, "resource", D), Published(D).
 `;
 
 /** An actual new adapter exercise, with handwritten policy to isolate porting from translation. */

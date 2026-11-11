@@ -12,7 +12,7 @@ export const MESSAGING_PROTOCOL = {
     MayDependOn: ["_", "_"],
     MessageTag: ["_", "_"],
     HasReceivedTag: ["@self", "_"],
-    DenyReceive: ["@self", "_"],
+    Deny: ["_", "_"],
   } as Record<string, string[]>,
   temporary: ["Incoming"],
   message: {

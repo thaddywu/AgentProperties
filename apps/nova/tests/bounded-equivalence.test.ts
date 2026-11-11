@@ -5,9 +5,9 @@ import { testFiniteEquivalence } from "@rakazo/policy-runtime/finite-domain";
 import { parsePolicyRules } from "@rakazo/policy-runtime/query";
 import { describe, expect, it, vi } from "vitest";
 import { novaComparison } from "../src/evaluation/comparison-domain.js";
+import { recordedPolicy } from "../src/evaluation/recorded-policy.js";
 import { miniSatSolver } from "../src/evaluation/sat-solver.js";
 import { testNovaTraces } from "../src/evaluation/trace-testing.js";
-import { readPolicyArtifact } from "../src/translated-policy.js";
 
 const f = (predicate: string, ...args: string[]) => ({ predicate, args });
 const schema: FiniteSchema = {
@@ -33,7 +33,7 @@ const comparison = (
   space: { required: [], optional },
 });
 const policy = () =>
-  readPolicyArtifact(
+  recordedPolicy(
     JSON.parse(
       readFileSync(new URL("../evaluation/model-trials/trial-1.json", import.meta.url), "utf8"),
     ),
@@ -141,7 +141,7 @@ describe("finite SAT encoding and differential testing", () => {
     const all = novaComparison(policy(), {
       grouping: "fixed",
       noPriorExposure: false,
-      observables: ["DenyReceive"],
+      observables: ["Deny"],
     });
     const witness = boundedEquivalence(all, miniSatSolver());
     expect(witness.status).toBe("different");
@@ -149,7 +149,7 @@ describe("finite SAT encoding and differential testing", () => {
     const constrained = novaComparison(policy(), {
       grouping: "fixed",
       noPriorExposure: true,
-      observables: ["DenyReceive"],
+      observables: ["Deny"],
     });
     expect(boundedEquivalence(constrained, miniSatSolver()).status).toBe("equivalent_within_bound");
     const exhaustive = testFiniteEquivalence(constrained, { mode: "exhaustive", cases: 8192 });

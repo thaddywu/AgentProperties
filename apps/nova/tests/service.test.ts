@@ -35,13 +35,13 @@ describe("Nova local service", () => {
     const service = new NovaService(),
       before = JSON.stringify(service.runtime.state);
     expect(() =>
-      service.run({ operation: "why", revision: 0, query: "DenyReceive(auditor_a, mH)" }),
+      service.run({ operation: "why", revision: 0, query: "Deny(mH, message_policy)" }),
     ).toThrow(/changed/);
     service.run({
       operation: "what-if",
       revision: 1,
       remove: "Received(auditor_a, mF).",
-      query: "DenyReceive(auditor_a, mH)",
+      query: "Deny(mH, message_policy)",
     });
     expect(JSON.stringify(service.runtime.state)).toBe(before);
   });
@@ -70,11 +70,11 @@ describe("Nova local service", () => {
         revision: 2,
         event: 12,
         side: "check",
-        query: "DenyReceive(auditor_a, mH)",
+        query: "Deny(mH, message_policy)",
       }),
     ).toMatchObject({ rule: expect.stringContaining('HasReceivedTag("auditor_a",T1)') });
     expect(
-      service.run({ operation: "why", revision: 2, query: "DenyReceive(auditor_a, mH)" }),
+      service.run({ operation: "why", revision: 2, query: "Deny(mH, message_policy)" }),
     ).toBeNull();
   });
   it("keeps an explicit earlier-state search separate and commits a returned trace through runtime", () => {

@@ -58,7 +58,6 @@ export function createGrokbotMessagePort(options: {
       };
     },
     ingest: port.ingest,
-    reconcile: port.reconcile,
     snapshot: port.snapshot,
   };
 }

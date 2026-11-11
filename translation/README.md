@@ -1,24 +1,46 @@
 # Application policy translation
 
-One real LLM invocation translates an application's Markdown policies directly into Datalog. Applications with a trusted runtime binding can export a validated bundle that their adapter loads into the generic runtime gate. There is no IR, policy template, repair loop or reference-rule substitution.
+Generic authoring separates original NL, a traceable NL requirement plan, developer assessment and Datalog translation. Unsupported clauses, builtin mechanisms and backend obligations remain visible. Model generation is optional; reviewed Datalog can be compiled offline with either the Python or TS runtime.
 
-## Application → translation → runtime
+## Original NL → reviewed NL plan → Datalog
+
+From the repository root:
 
 ```bash
-pnpm --dir grokbot install --frozen-lockfile
-pnpm --dir translation translate ../apps/document-vault --connection /path/to/private-models-connect.json
-pnpm --dir apps/document-vault start --bundle ../../translation/output/document-vault/<run-id>/policy-bundle.json
+pnpm --dir grokbot policy:translate apps/labcluster-port \
+  --binding apps/labcluster-port/generated/runtime.json \
+  --connection /path/to/private-models-connect.json
 ```
 
-The application description is `app.md`, numbered `policy.md`, `tools.md` and `agents/*.md`. Episodes are optional, and the framework accepts one or more policies. A developer supplies the separate adapter-owned `runtime.json` (or `--binding <path>`): observed predicates, argument order, decision outputs, runtime guarantees and independent acceptance cases. This file documents actual instrumentation; it is not a student-authored policy language or a model-generated authority source.
+Without `--plan`, the generic command performs one distillation call and saves a candidate `policy-plan.json`. It returns `policy_review_required`, emits no executable bundle and does not request rules. The plan includes source spans, distilled statements, assumptions, observations, implementation classification and relation to the original wording. Every non-whitespace source character must be accounted for. This detects omitted spans, not semantic misinterpretation. Application documents are untrusted; the model cannot approve its own output.
 
-The generic path has no Nova schema, reference rules, comparison oracle or Nova imports. It sends only the binding's vocabulary/context and application Markdown to the model; acceptance cases stay out of the prompt. Validation uses the shared bounded TypeScript Datalog engine. Successful validation produces `policy-bundle.json` under `translation/output/<binding-id>/<run-id>/`. Unknown predicates, input writes, unsafe rules, negative recursion, failed cases or empty policy translations prevent bundle creation. The application explicitly loads the artifact and revalidates it against its trusted binding before use. The CLI itself does not launch the application or modify a running session.
+Review the candidate against the real backend and the admitted Datalog fragment. A separate developer-supplied `policy-review.json` pins the exact plan hash, approves each requirement, supplies concrete verification obligations for builtin/backend coverage, and acknowledges every unsupported, ambiguous, partial, strengthened or weakened requirement. The plan also pins the original application documents, numbered source policies and complete trusted binding. Any such change invalidates the assessment. Review artifacts record an assessment; they do not prove equivalence or enforce access control against someone who can replace trusted application code.
 
-The [Document Vault walkthrough](../apps/document-vault/README.md) exercises actual allowed/denied callbacks and query/Why/What-if using that artifact. [Runtime API](../runtime/README.md) describes the porting contract and transaction limits. A third-party app can call the same SDK from its own trusted adapter; source-code instrumentation is still the developer's responsibility.
+Then translate only the approved Datalog targets:
+
+```bash
+pnpm --dir grokbot policy:translate apps/labcluster-port \
+  --binding apps/labcluster-port/generated/runtime.json \
+  --connection /path/to/private-models-connect.json \
+  --plan apps/labcluster-port/generated/policy-plan.json \
+  --review apps/labcluster-port/generated/policy-review.json
+```
+
+The checked-in LabCluster plan/review are developer-authored reference artifacts. A new model-distilled candidate needs its own assessment. `src/policy-plan.ts` exports `policyPlanHash` and the plan/review types; `apps/labcluster-port/tools/build_artifacts.py` demonstrates deterministic reference artifact authoring. `approvedRequirements` is the full list of IDs, `obligations` maps non-rule IDs to concrete verification descriptions, and `acknowledgedGaps` lists changed or unsupported IDs.
+
+An assessment with no Datalog targets returns `reviewed_without_datalog`, saves coverage, calls no model and emits no executable authorization bundle.
+
+The second model response contains shared `rules: [{id, datalog}]` and `coverage: [{id, ruleIds, notes}]`. Several requirements can reference one rule without duplicating it. Only Datalog targets require rule references; builtin/backend/unsupported requirements do not need fabricated clauses. Unknown rule references, missing targets and unreferenced rules fail validation. The assembled program must satisfy schema, head ownership, safety, stratification, resource limits and independent acceptance cases.
+
+A successful run writes `policy-bundle.json`, the pinned plan/review and `coverage.json` under the ignored `translation/output/<binding-id>/<run-id>/`. Acknowledged gaps produce `validated_partial_policy_bundle`; complete assessed coverage produces `validated_policy_bundle`. Both retain `semanticCorrectness: unproven`. Source snapshots, prompts, raw response and failed validation remain available. The command never installs a running policy or modifies the app. No repair loop or reference-rule substitution occurs.
+
+Application documents remain `app.md`, numbered `policy.md`, `tools.md` and `agents/*.md`; episodes are optional. The adapter developer supplies `runtime.json` or `--binding`: actual observation vocabulary, meanings, gate contract and independent acceptance cases. Tests stay out of model prompts. Datalog cannot invent authenticated identity, source evidence, transactions, semantic classifiers or future scheduler progress.
+
+The generic compiler uses the bounded TS engine; the standalone Python/Soufflé loader independently reparses and validates the same version-2 bundle. [The Python adapter guide](../runtime/python/README.md) explains execution. [LabCluster adaptation record](../apps/labcluster-port/ADAPTATION.md) tests an actual external student backend with `--bundle`; its default reference run is explicitly authored, not a model experiment. [Document Vault](../apps/document-vault/README.md) remains the earlier independent TS example. Existing saved one-shot translations are historical evidence, not newly distilled runs.
 
 ## Existing Nova experiment
 
-Nova supports two experiments. Add `--nova-extension` to provide the immutable foundation and fixed protocol and ask for app-specific extensions only. That path writes `nova-policy.json`, which Nova can review and load into a fresh session; see the [five-part walkthrough](../apps/nova/README.md). Its generated heads are limited to DenyReceive, Covered and Finished; inputs, config, propagation rules and protocol cannot be rewritten. Unknown/unsafe/unstratified rules fail validation. One model call is made, with no repair or golden-rule substitution. Exact inputs and raw output are saved before validation, and failed behavior comparisons remain visible.
+Nova supports two experiments. Add `--nova-extension` to provide the immutable foundation and fixed protocol and ask for app-specific extensions only. That path writes `nova-policy.json`, which Nova can review and load into a fresh session; see the [five-part walkthrough](../apps/nova/README.md). Its generated heads are limited to Deny, Covered and Finished; inputs, config, propagation rules and protocol cannot be rewritten. Unknown/unsafe/unstratified rules fail validation. One model call is made, with no repair or golden-rule substitution. Exact inputs and raw output are saved before validation, and failed behavior comparisons remain visible.
 
 The command without `--nova-extension` preserves the legacy whole-policy experiment described below. Its artifacts are not installable Nova extension bundles.
 

@@ -4,11 +4,12 @@ import { novaDocuments } from "../src/documents.js";
 import { expressivenessPilot } from "../src/evaluation/expressiveness.js";
 import { localityPilot } from "../src/evaluation/locality.js";
 import { portabilityPilot } from "../src/evaluation/portability.js";
+import { recordedPolicy } from "../src/evaluation/recorded-policy.js";
 import { translationPilot } from "../src/evaluation/translation.js";
 import { configurationPilot } from "../src/evaluation/workflows.js";
 import { NOVA_RULES } from "../src/policy.js";
 import { comparePrevention } from "../src/prevention.js";
-import { createPolicyArtifact, readPolicyArtifact, ruleSource } from "../src/translated-policy.js";
+import { createPolicyArtifact, ruleSource } from "../src/translated-policy.js";
 
 describe("research pilot checks and independent counterexamples", () => {
   it("rejects foreign dependencies before installation when the protocol has no evidence route", () => {
@@ -74,7 +75,7 @@ describe("research pilot checks and independent counterexamples", () => {
   });
 
   it("reproduces a configuration counterexample that the original installation cases do not detect", () => {
-    const artifact = readPolicyArtifact(
+    const artifact = recordedPolicy(
       JSON.parse(
         readFileSync(new URL("../evaluation/model-trials/trial-1.json", import.meta.url), "utf8"),
       ),

@@ -1,20 +1,15 @@
-import { EffectNotAppliedError } from "./application.js";
+import { EffectNotAppliedError, EffectUncertainError } from "./application.js";
 import type { PolicyFact } from "./datalog.js";
 import type { MessagingProfile, PolicyMessage } from "./messaging.js";
 import { createMessagingRuntime, MessagingRuntime } from "./messaging.js";
+import type { ObservationSnapshot } from "./observations.js";
 
 export type ObservationBinding = {
   id: string;
   predicates: string[];
   scope: string;
-  read: () => Promise<{ version: string; complete: boolean; facts: PolicyFact[] }>;
+  read: () => Promise<ObservationSnapshot>;
 };
-export class DeliveryRecoveryRequiredError extends Error {
-  constructor(public readonly messageId: string) {
-    super("Delivery outcome requires reconciliation.");
-  }
-}
-
 /** The backend calls this trusted surface; agents receive only a principal-bound intent port. */
 export function createBackendPort(options: {
   profile: MessagingProfile;
@@ -24,7 +19,7 @@ export function createBackendPort(options: {
   const runtime = createMessagingRuntime(options.profile);
   let queue: Promise<unknown> = Promise.resolve();
   let pending = 0;
-  let recovery: { id: string; confirmed: typeof runtime } | undefined;
+  let failed: string | undefined;
   const observedPredicates = new Set<string>();
   const runtimeInputs = new Set([
     runtime.profile.roles.sender,
@@ -62,7 +57,7 @@ export function createBackendPort(options: {
     return run;
   };
   const available = () => {
-    if (recovery) throw new DeliveryRecoveryRequiredError(recovery.id);
+    if (failed) throw new EffectUncertainError(failed);
   };
   const refresh = async () => {
     const observations: PolicyFact[] = [];
@@ -125,8 +120,8 @@ export function createBackendPort(options: {
         await options.deliver(structuredClone(decision.message));
       } catch (error) {
         if (error instanceof EffectNotAppliedError) throw error;
-        recovery = { id, confirmed: trial };
-        throw new DeliveryRecoveryRequiredError(id);
+        failed = id;
+        throw new EffectUncertainError(id);
       }
       runtime.state = trial.state;
       return { ...decision, versions, replayed: false };
@@ -163,14 +158,5 @@ export function createBackendPort(options: {
     },
     snapshot: () => runtime.snapshot(),
     inspect: () => runtime.inspect(),
-    async reconcile(messageId: string, outcome: "delivered" | "not_delivered") {
-      if (!["delivered", "not_delivered"].includes(outcome))
-        throw new Error("Reconciliation requires a confirmed delivery outcome.");
-      return exclusive(async () => {
-        if (recovery?.id !== messageId) throw new Error("Unknown delivery recovery attempt.");
-        if (outcome === "delivered") runtime.state = recovery.confirmed.state;
-        recovery = undefined;
-      });
-    },
   };
 }

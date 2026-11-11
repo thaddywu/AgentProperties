@@ -1,0 +1,366 @@
+{
+  "capability": {
+    "predicates": {
+      "Capability": {
+        "kind": "input",
+        "args": [
+          "Principal",
+          "Scope",
+          "EventKind"
+        ],
+        "meaning": "Explicit operation grant on a resource or permission scope."
+      },
+      "PrincipalGroup": {
+        "kind": "input",
+        "args": [
+          "Principal",
+          "Group"
+        ],
+        "meaning": "Principal membership; a group can itself be a member."
+      },
+      "ResourceGroup": {
+        "kind": "input",
+        "args": [
+          "Parent",
+          "Child"
+        ],
+        "meaning": "Permission-scope membership; grants on a parent apply to its descendants."
+      },
+      "Can": {
+        "kind": "derived",
+        "args": [
+          "Principal",
+          "Resource",
+          "EventKind"
+        ],
+        "meaning": "Grant including declared principal and resource memberships; not final authorization."
+      }
+    },
+    "rules": [
+      {
+        "id": "direct-grant",
+        "head": {
+          "predicate": "Can",
+          "args": [
+            "P",
+            "R",
+            "E"
+          ]
+        },
+        "body": [
+          {
+            "predicate": "Capability",
+            "args": [
+              "P",
+              "R",
+              "E"
+            ]
+          }
+        ],
+        "distinct": [],
+        "stratum": 0,
+        "explanation": "An explicit capability grants this operation on the specified scope."
+      },
+      {
+        "id": "principal-grant",
+        "head": {
+          "predicate": "Can",
+          "args": [
+            "P",
+            "R",
+            "E"
+          ]
+        },
+        "body": [
+          {
+            "predicate": "PrincipalGroup",
+            "args": [
+              "P",
+              "G"
+            ]
+          },
+          {
+            "predicate": "Can",
+            "args": [
+              "G",
+              "R",
+              "E"
+            ]
+          }
+        ],
+        "distinct": [],
+        "stratum": 0,
+        "explanation": "A principal inherits grants available to a group it belongs to."
+      },
+      {
+        "id": "resource-grant",
+        "head": {
+          "predicate": "Can",
+          "args": [
+            "P",
+            "Child",
+            "E"
+          ]
+        },
+        "body": [
+          {
+            "predicate": "ResourceGroup",
+            "args": [
+              "Parent",
+              "Child"
+            ]
+          },
+          {
+            "predicate": "Can",
+            "args": [
+              "P",
+              "Parent",
+              "E"
+            ]
+          }
+        ],
+        "distinct": [],
+        "stratum": 0,
+        "explanation": "A grant on a parent resource scope also applies to each declared child."
+      }
+    ]
+  },
+  "provenance": {
+    "predicates": {
+      "Source": {
+        "kind": "input",
+        "args": [
+          "Principal",
+          "Data"
+        ],
+        "meaning": "Trusted record of a direct data origin; does not establish content truth."
+      },
+      "DependsOn": {
+        "kind": "input",
+        "args": [
+          "Output",
+          "Input"
+        ],
+        "meaning": "Direct conservative data dependency, supplied by actual instrumentation or application records."
+      },
+      "Provenance": {
+        "kind": "derived",
+        "args": [
+          "Data",
+          "Principal"
+        ],
+        "meaning": "Possible origin propagated through declared dependencies; no mandatory security labels."
+      }
+    },
+    "rules": [
+      {
+        "id": "direct-origin",
+        "head": {
+          "predicate": "Provenance",
+          "args": [
+            "D",
+            "P"
+          ]
+        },
+        "body": [
+          {
+            "predicate": "Source",
+            "args": [
+              "P",
+              "D"
+            ]
+          }
+        ],
+        "distinct": [],
+        "stratum": 0,
+        "explanation": "A directly recorded source is a possible origin of this data object."
+      },
+      {
+        "id": "derived-origin",
+        "head": {
+          "predicate": "Provenance",
+          "args": [
+            "Out",
+            "P"
+          ]
+        },
+        "body": [
+          {
+            "predicate": "DependsOn",
+            "args": [
+              "Out",
+              "In"
+            ]
+          },
+          {
+            "predicate": "Provenance",
+            "args": [
+              "In",
+              "P"
+            ]
+          }
+        ],
+        "distinct": [],
+        "stratum": 0,
+        "explanation": "An output inherits possible origins from every declared input dependency."
+      }
+    ]
+  },
+  "fsm": {
+    "predicates": {
+      "ResourceType": {
+        "kind": "input",
+        "args": [
+          "Resource",
+          "Type"
+        ],
+        "meaning": "Resource type, supplied by the application."
+      },
+      "ResourceState": {
+        "kind": "input",
+        "args": [
+          "Resource",
+          "State"
+        ],
+        "meaning": "Current state in the declared application scope; replaces obsolete state."
+      },
+      "InitialState": {
+        "kind": "input",
+        "args": [
+          "Type",
+          "State"
+        ],
+        "meaning": "Reviewed initial state for newly created resources of this type; never resets existing resources."
+      },
+      "AllowedTransition": {
+        "kind": "input",
+        "args": [
+          "Type",
+          "EventKind",
+          "From",
+          "To"
+        ],
+        "meaning": "Configured state-machine edge shared by resources of this type."
+      },
+      "ReachableState": {
+        "kind": "derived",
+        "args": [
+          "Type",
+          "From",
+          "To"
+        ],
+        "meaning": "Nonempty path in the configured machine; not a record of past execution."
+      },
+      "CanTransition": {
+        "kind": "derived",
+        "args": [
+          "Resource",
+          "EventKind",
+          "From",
+          "To"
+        ],
+        "meaning": "Configured edge matching current state; other policy conditions still apply."
+      }
+    },
+    "rules": [
+      {
+        "id": "direct-reachability",
+        "head": {
+          "predicate": "ReachableState",
+          "args": [
+            "T",
+            "From",
+            "To"
+          ]
+        },
+        "body": [
+          {
+            "predicate": "AllowedTransition",
+            "args": [
+              "T",
+              "E",
+              "From",
+              "To"
+            ]
+          }
+        ],
+        "distinct": [],
+        "stratum": 0,
+        "explanation": "Each allowed transition is a nonempty path between its states."
+      },
+      {
+        "id": "transitive-reachability",
+        "head": {
+          "predicate": "ReachableState",
+          "args": [
+            "T",
+            "From",
+            "To"
+          ]
+        },
+        "body": [
+          {
+            "predicate": "ReachableState",
+            "args": [
+              "T",
+              "From",
+              "Mid"
+            ]
+          },
+          {
+            "predicate": "AllowedTransition",
+            "args": [
+              "T",
+              "E",
+              "Mid",
+              "To"
+            ]
+          }
+        ],
+        "distinct": [],
+        "stratum": 0,
+        "explanation": "Extend a nonempty state path by one allowed transition of the same resource type."
+      },
+      {
+        "id": "current-transition",
+        "head": {
+          "predicate": "CanTransition",
+          "args": [
+            "R",
+            "E",
+            "From",
+            "To"
+          ]
+        },
+        "body": [
+          {
+            "predicate": "ResourceType",
+            "args": [
+              "R",
+              "T"
+            ]
+          },
+          {
+            "predicate": "ResourceState",
+            "args": [
+              "R",
+              "From"
+            ]
+          },
+          {
+            "predicate": "AllowedTransition",
+            "args": [
+              "T",
+              "E",
+              "From",
+              "To"
+            ]
+          }
+        ],
+        "distinct": [],
+        "stratum": 0,
+        "explanation": "A resource can take an event edge only when its type and current state match the edge."
+      }
+    ]
+  }
+}

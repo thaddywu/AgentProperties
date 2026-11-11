@@ -1,0 +1,6 @@
+.decl Grant(Principal:symbol, Document:symbol)
+.input Grant
+.decl Read(Principal:symbol, Document:symbol)
+.input Read
+
+Allow(Q) :- Request(Q, P, "read"), Parameter(Q, "resource", D), Grant(P, D).

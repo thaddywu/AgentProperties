@@ -10,14 +10,14 @@ describe("readable primitive vocabulary", () => {
       { predicate: "TagRequiresCapability", args: ["hiring", "hr_review"] },
     ];
     expect(queryDatalog(input, PRIMITIVE_MESSAGING_RULES, "?- Knows(A,T).").rows).toEqual([]);
-    expect(queryDatalog(input, PRIMITIVE_MESSAGING_RULES, "?- DenyReceive(A,M).").rows).toEqual([
-      ["reader", "m"],
-    ]);
+    expect(
+      queryDatalog(input, PRIMITIVE_MESSAGING_RULES, "?- Deny(M, message_policy).").rows,
+    ).toEqual([["m"]]);
     expect(
       queryDatalog(
         [...input, { predicate: "AgentHasCapability", args: ["reader", "hr_review"] }],
         PRIMITIVE_MESSAGING_RULES,
-        "?- DenyReceive(A,M).",
+        "?- Deny(M, message_policy).",
       ).rows,
     ).toEqual([]);
     expect(

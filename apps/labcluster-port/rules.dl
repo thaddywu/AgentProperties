@@ -1,0 +1,603 @@
+// Source: upstream policies.md, P1-P6, revision c5ca03d0cc35651fa49c8d637074e8258a1a715e.
+// Pn.m identifies one source sentence, in original reading order; walkthrough.json explains every sentence.
+// Runtime: Request, Parameter, Allow, Deny. Optional shared predicates are provided by Policy.
+// Initial policy facts live here. The adapter records confirmed original tool results; no per-call Store projection runs.
+
+
+.decl Job(JobId:symbol, Owner:symbol, Version:number, TaskHash:symbol, RunId:symbol) // Current job metadata recorded from successful original tool results.
+.input Job
+.key Job(JobId) // A put removes the old tuple for this JobId before inserting the new tuple.
+.decl JobSpec(Job:symbol, Type:symbol, Cores:number, Memory:number, Minutes:number) // The current exact resource request.
+.input JobSpec
+.key JobSpec(Job)
+.decl Quota(Group:symbol, Type:symbol, Cores:number, Memory:number, Minutes:number) // Reviewed group quota facts.
+.input Quota
+.decl Node(Node:symbol, Type:symbol, Cores:number, Memory:number, Run:symbol, Generation:number) // Current physical capacity and allocation token.
+.input Node
+.key Node(Node)
+.decl NodeOrder(Node:symbol, Index:number) // Stable node order used by the existing allocator.
+.input NodeOrder
+.decl Approval(Id:symbol, Job:symbol, Version:number, TaskHash:symbol, Issuer:symbol, PolicyDigest:symbol) // Evidence written by a permitted approval tool.
+.input Approval
+.key Approval(Id)
+.decl ApprovalSpec(Id:symbol, Type:symbol, Cores:number, Memory:number, Minutes:number) // Exact approved resources from the approval record.
+.input ApprovalSpec
+.key ApprovalSpec(Id)
+.decl CurrentApproval(Job:symbol, Approval:symbol) // The job's current approval reference.
+.input CurrentApproval
+.key CurrentApproval(Job)
+.decl CurrentPolicy(Digest:symbol) // Hash of the authoritative current cluster configuration.
+.input CurrentPolicy
+.decl Run(Run:symbol, Job:symbol, Node:symbol, Generation:number, TaskHash:symbol, Version:number) // Actual run and generation-bound allocation record.
+.input Run
+.key Run(Run)
+.decl Receipt(Id:symbol, Run:symbol, Job:symbol, Node:symbol, Generation:number, TaskHash:symbol, Source:symbol, Kind:symbol) // Actual simulator-issued receipt.
+.input Receipt
+.key Receipt(Id)
+.decl ExitSuccess(Receipt:symbol) // Zero exit code on a stored completion receipt.
+.input ExitSuccess
+.decl Waiting(Job:symbol, Skips:number, Submission:number) // Current skip count and submission order in the EDB.
+.input Waiting
+.key Waiting(Job)
+.decl AgingThreshold(Skips:number) // Configured promotion threshold.
+.input AgingThreshold
+.decl WithinRequestQuota(Q:symbol) // The intercepted request fits an owner group quota.
+.decl WithinJobQuota(Job:symbol) // The current stored job fits its owner group quota.
+.decl MatchingApproval(Job:symbol) // A current exact approval exists for this job.
+.decl FreeCompatible(Job:symbol, Node:symbol) // This free node can physically hold the job.
+.decl EarlierNode(Job:symbol, Node:symbol) // An earlier free compatible node exists for the job.
+.decl Eligible(Job:symbol, Node:symbol) // This queued approved job selects this free compatible node.
+.decl Priority(Job:symbol, Value:number) // The current waiting priority; larger values win.
+.decl Outranked(Job:symbol, Node:symbol) // Another candidate for this node has priority or submission precedence.
+.decl Dispatchable(Job:symbol) // The eligible job has no better competitor on its selected node.
+.decl MatchingReceipt(Job:symbol, Receipt:symbol) // A matching successful receipt supports this current run.
+.decl Student(Actor:symbol) // An authenticated principal belongs to a student group.
+.decl UserAgent(Actor:symbol) // A principal may use the ordinary user observation tools.
+.decl Readable(Actor:symbol, Job:symbol) // The principal may read this stored job.
+.decl PrivateReadable(Principal:symbol, Owner:symbol) // Private fixture owners visible to this caller.
+.decl QueueViewer(Actor:symbol) // The principal may inspect queue metadata.
+.decl RecordData(Kind:symbol, Record:symbol, Data:symbol) // Confirmed tool record mapped to a version-specific runtime data handle.
+.input RecordData
+.key RecordData(Kind, Record)
+.decl JobState(State:symbol) // States admitted by the job machine.
+.decl ActiveRun(Run:symbol) // A node currently refers to this run.
+.decl KnownRun(Run:symbol) // Run exists in the EDB.
+.decl ValidAllocation(Job:symbol, Run:symbol) // Current job, run and node share the same allocation token.
+.decl AllocationViolation(Resource:symbol) // Must remain empty before and after protected operations.
+
+
+
+.decl JobOutcome(Job:symbol, Reason:symbol) // Latest confirmed business outcome of this job.
+.input JobOutcome
+.key JobOutcome(Job)
+.decl StopReason(Job:symbol, Reason:symbol) // Confirmed stop reason retained as a fact.
+.input StopReason
+.key StopReason(Job)
+
+// Fixed membership and quota facts are reviewed application configuration.
+// The original Store keeps its business data; these are policy inputs.
+PrincipalGroup("Master", "MasterStudent").
+PrincipalGroup("PhD", "PhDStudent").
+PrincipalGroup("Professor", "Professor").
+PrincipalGroup("Runner", "Runner").
+Quota("MasterStudent", "CPU", 4, 8, 20).
+Quota("PhDStudent", "CPU", 8, 32, 60).
+Quota("PhDStudent", "GPU", 8, 32, 60).
+AgingThreshold(3).
+CurrentPolicy("56b6b1f170f4ab9563e14e4fa1dba1f8b9432775a1301420c4165f07fcc80b1a").
+// Keyed initial rows are mutable EDB seeds, replaced on confirmed operations.
+Node("cpu-1", "CPU", 8, 32, "", 0).
+Node("gpu-1", "GPU", 8, 32, "", 0).
+NodeOrder("cpu-1", 0).
+NodeOrder("gpu-1", 1).
+
+// P1.1: Recognize trusted student and Professor groups.
+// Source: upstream policies.md P1; subnumbers follow its sentences.
+// Rule: r0 | P1.1
+// Recognize a Master principal as a student.
+Student(A) :-
+  PrincipalGroup(A, "MasterStudent").
+
+// Rule: r1 | P1.1
+// Recognize a PhD principal as a student.
+Student(A) :-
+  PrincipalGroup(A, "PhDStudent").
+
+// Rule: r2 | P1.1
+// Students may use the ordinary user observation tools.
+UserAgent(A) :-
+  Student(A).
+
+// Rule: r3 | P1.1
+// Professor may use the ordinary user observation tools.
+UserAgent(A) :-
+  PrincipalGroup(A, "Professor").
+
+
+// P1.2: Reserve approve, reject, dispatch and administrative stop for Professor.
+// Rule: r8 | P1.2
+// Permit Professor approval only for this QUEUED version and a quota-compliant job.
+Allow(Q) :-
+  Request(Q, A, "approve_job"),
+  Parameter(Q, "job_id", J),
+  PrincipalGroup(A, "Professor"),
+  Job(J, Owner, V, H, RunId),
+  ResourceState(J, "QUEUED"),
+  Parameter(Q, "expected_version", V),
+  Parameter(Q, "approve", "true"),
+  WithinJobQuota(J).
+
+// Rule: r9 | P1.2
+// Permit Professor rejection only for this QUEUED version and a false approval decision.
+Allow(Q) :-
+  Request(Q, A, "reject_job"),
+  Parameter(Q, "job_id", J),
+  PrincipalGroup(A, "Professor"),
+  Job(J, Owner, V, H, RunId),
+  ResourceState(J, "QUEUED"),
+  Parameter(Q, "expected_version", V),
+  Parameter(Q, "approve", "false"),
+  CanTransition(J, "reject_job", From, To).
+
+// Rule: r29 | P1.2
+// Only Professor may dispatch, and only a Dispatchable job can be selected.
+Allow(Q) :-
+  Request(Q, A, "dispatch_job"),
+  Parameter(Q, "job_id", J),
+  PrincipalGroup(A, "Professor"),
+  Dispatchable(J),
+  CanTransition(J, "dispatch_job", "QUEUED", "RUNNING").
+
+// Rule: r31 | P1.2
+// Only Professor may request an administrative stop; a real stop confirmation is required.
+Allow(Q) :-
+  Request(Q, A, "kill_job"),
+  Parameter(Q, "job_id", J),
+  PrincipalGroup(A, "Professor"),
+  Job(J, Owner, V, H, RunId),
+  Parameter(Q, "reason", Reason),
+  CanTransition(J, "kill_job", From, To).
+
+
+// P1.3: Students submit within quota and operate only on their own jobs.
+// Rule: r6 | P1.3
+// Permit student submission only when the requested resources fit the quota.
+Allow(Q) :-
+  Request(Q, A, "submit_job"),
+  Student(A),
+  WithinRequestQuota(Q).
+
+// Rule: r7 | P1.3
+// Permit revision of an owned QUEUED job within the new request quota.
+Allow(Q) :-
+  Request(Q, A, "revise_job"),
+  Parameter(Q, "job_id", J),
+  Student(A),
+  Job(J, A, V, H, RunId),
+  ResourceState(J, "QUEUED"),
+  WithinRequestQuota(Q).
+
+// Rule: r30 | P1.3
+// Only a student owner may cancel a job; the tool validates text and records the reason.
+Allow(Q) :-
+  Request(Q, A, "cancel_job"),
+  Parameter(Q, "job_id", J),
+  Student(A),
+  Job(J, A, V, H, RunId),
+  Parameter(Q, "reason", Reason),
+  CanTransition(J, "cancel_job", From, To).
+
+// Rule: completion-report | P1.3
+// A student may send a structured completion report only for a job they own.
+Allow(Q) :-
+  Request(Q, A, "send_message"),
+  Parameter(Q, "message_type", "COMPLETION_REPORT"),
+  Parameter(Q, "job_id", J),
+  Student(A),
+  Job(J, A, V, H, RunId).
+
+
+// P1.4: Master uses CPU with cores <= 4, memory <= 8 GB and requested minutes <= 20.
+// Rule: r4 | P1.4
+// The requested node type and all three numeric limits must fit a group quota.
+WithinRequestQuota(Q) :-
+  Request(Q, A, Op),
+  Parameter(Q, "spec_node_type", T),
+  Parameter(Q, "spec_cpu_cores", C),
+  Parameter(Q, "spec_memory_gb", M),
+  Parameter(Q, "spec_runtime_minutes", Time),
+  PrincipalGroup(A, Group),
+  Quota(Group, T, MaxC, MaxM, MaxTime),
+  C <= MaxC, M <= MaxM, Time <= MaxTime.
+
+// Rule: r5 | P1.4
+// A stored job must still fit its owner group quota.
+WithinJobQuota(J) :-
+  Job(J, A, V, H, RunId),
+  JobSpec(J, T, C, M, Time),
+  PrincipalGroup(A, Group),
+  Quota(Group, T, MaxC, MaxM, MaxTime),
+  C <= MaxC, M <= MaxM, Time <= MaxTime.
+
+
+// P1.5: PhD uses CPU or GPU with cores <= 8, memory <= 32 GB and minutes <= 60.
+// Coverage: Same rules; different quota facts.
+
+// P1.6: Reject over-quota admission and dispatch; require a free node with enough capacity.
+// Rule: r20 | P1.6
+// A compatible node must be free, have the required type, and fit cores and memory.
+FreeCompatible(J, N) :-
+  JobSpec(J, T, C, M, Time),
+  Node(N, T, MaxC, MaxM, "", Gen),
+  C <= MaxC, M <= MaxM.
+
+
+// P2.1: Gate single-job reads; retain the original app's bulk and private filtering.
+// Source: upstream policies.md P2; subnumbers follow its sentences.
+// Rule: r10 | P2.1
+// A student may read only jobs whose stored owner is that student.
+Readable(A, J) :-
+  Student(A),
+  Job(J, A, V, H, RunId).
+
+// Rule: r11 | P2.1
+// Professor may read any stored job.
+Readable(A, J) :-
+  PrincipalGroup(A, "Professor"),
+  Job(J, Owner, V, H, RunId).
+
+// Rule: r12 | P2.1
+// Model who may see queue details; the original Store enforces actual view filtering.
+QueueViewer(A) :-
+  PrincipalGroup(A, "Professor").
+
+// Rule: private-owner | P2.1
+// Model a student's permitted private fixture owner; the original tool selects the actual fixture.
+PrivateReadable(A, A) :- Student(A).
+// Rule: private-professor | P2.1
+// Model Professor's permitted fixture owners; the original tool supplies their fixtures.
+PrivateReadable(A, Owner) :- PrincipalGroup(A, "Professor"), UserAgent(Owner).
+// Rule: r13 | P2.1
+// Permit a single-job read only when Readable holds for its actual job_id.
+Allow(Q) :-
+  Request(Q, A, "read_job"),
+  Parameter(Q, "job_id", J),
+  Readable(A, J).
+
+// Rule: r14 | P2.1
+// Permit an ordinary user overview; the original Store filters each returned collection by its bound caller.
+Allow(Q) :-
+  Request(Q, A, "view"),
+  UserAgent(A).
+
+// Rule: r15 | P2.1
+// Permit an ordinary user's private-fixture call; the original tool selects fixtures by its bound role.
+Allow(Q) :-
+  Request(Q, A, "read_private"),
+  UserAgent(A).
+
+
+// P2.2: Prevent peer disclosure across every output channel.
+// Coverage: Partial: storage tools only.
+
+// P2.3: Permit owner-to-Professor sharing and owner-specific replies.
+// Coverage: Not enforced on messages.
+
+// P2.4: Return the same public response for a forbidden or missing job.
+// Coverage: Rules + refusal adapter.
+
+// P2.5: Keep quotas, node capacity and aggregate availability public.
+// Coverage: Original Store.view output; no per-call EDB projection.
+
+// P2.6: Restrict full evaluator traces to the evaluator.
+// Coverage: Original convention; not a runtime guarantee.
+
+// P2.7: Keep credentials out of prompts, traces and submissions.
+// Coverage: Not established by these rules.
+
+// P3.1: Require recorded approval to start and recorded runner evidence to finish.
+// Source: upstream policies.md P3; subnumbers follow its sentences.
+// Coverage: Datalog + committed EDB evidence.
+
+// P3.2: Match approval to the current job version, exact spec and policy.
+// Rule: r16 | P3.2
+// Approval must match the current reference, version, hash, policy and exact resource limits.
+MatchingApproval(J) :-
+  Job(J, Owner, V, H, RunId),
+  CurrentApproval(J, Id),
+  Approval(Id, J, V, H, "Professor", Digest),
+  CurrentPolicy(Digest),
+  JobSpec(J, T, C, M, Time),
+  ApprovalSpec(Id, T, C, M, Time).
+
+
+// P3.3: Revise only QUEUED work and invalidate the old approval.
+// Coverage: Datalog + tool fact edits.
+
+// P3.4: Approval records evidence without allocating a node or starting a job.
+// Coverage: Tool evidence updates + SDK lifecycle protection.
+
+// P3.5: Complete only with a successful simulator receipt for the current run and allocation.
+// Rule: r17 | P3.5
+// Completion evidence must match the active allocation and have a declared owner provenance.
+MatchingReceipt(J, ReceiptId) :-
+  Job(J, Owner, V, H, RunId),
+  ResourceState(J, "RUNNING"),
+  Run(RunId, J, N, Gen, H, V),
+  Node(N, T, C, M, RunId, Gen),
+  Receipt(ReceiptId, RunId, J, N, Gen, H, "SimulatedRunner", "completion"),
+  ExitSuccess(ReceiptId),
+  RecordData("receipt", ReceiptId, D),
+  Provenance(D, Owner).
+
+// Rule: r18 | P3.5
+// Permit completion only with readable job access and the requested matching receipt.
+Allow(Q) :-
+  Request(Q, A, "finish_job"),
+  Parameter(Q, "job_id", J),
+  Readable(A, J),
+  Parameter(Q, "receipt_id", ReceiptId),
+  MatchingReceipt(J, ReceiptId),
+  CanTransition(J, "finish_job", "RUNNING", "COMPLETED").
+
+// Rule: r19 | P3.5
+// Only the bound Runner may record completion for an existing RUNNING job run.
+Allow(Q) :-
+  Request(Q, A, "record_completion"),
+  PrincipalGroup(A, "Runner"),
+  Job(J, Owner, V, H, RunId),
+  ResourceState(J, "RUNNING"),
+  Parameter(Q, "run_id", RunId),
+  Run(RunId, J, N, Gen, H, V).
+
+
+// P3.6: Retain the origin and supported task/run of each decision record.
+// Coverage: Shared provenance + app joins.
+
+// P4.1: Use the declared lifecycle and preserve exclusive allocations.
+// Source: upstream policies.md P4; subnumbers follow its sentences.
+// Coverage: FSM + application invariant.
+
+// P4.2: Admit only QUEUED, RUNNING, COMPLETED and TERMINATED.
+// Rule: r38 | P4.2
+// A state appearing as a job transition origin is an admitted job state.
+JobState(S) :-
+  AllowedTransition("job", E, S, To).
+
+// Rule: r39 | P4.2
+// A state appearing as a job transition destination is an admitted job state.
+JobState(S) :-
+  AllowedTransition("job", E, From, S).
+
+// Rule: r40 | P4.2
+// Report a current job state outside the declared job machine.
+AllocationViolation(J) :-
+  ResourceType(J, "job"),
+  ResourceState(J, S),
+  not JobState(S).
+
+
+// P4.3: Create each new job in QUEUED.
+// Fact: initial-state | P4.3
+// A newly created job resource starts in QUEUED; existing resources are never reset.
+InitialState("job", "QUEUED").
+
+// P4.4: Declare type-level edges for dispatch, completion, rejection and stop.
+// Fact: f0 | P4.4
+// dispatch_job: QUEUED -> RUNNING.
+AllowedTransition("job", "dispatch_job", "QUEUED", "RUNNING").
+
+// Fact: f1 | P4.4
+// finish_job: RUNNING -> COMPLETED.
+AllowedTransition("job", "finish_job", "RUNNING", "COMPLETED").
+
+// Fact: f2 | P4.4
+// reject_job: QUEUED -> TERMINATED.
+AllowedTransition("job", "reject_job", "QUEUED", "TERMINATED").
+
+// Fact: f3 | P4.4
+// cancel_job: QUEUED -> TERMINATED.
+AllowedTransition("job", "cancel_job", "QUEUED", "TERMINATED").
+
+// Fact: f4 | P4.4
+// cancel_job: RUNNING -> TERMINATED.
+AllowedTransition("job", "cancel_job", "RUNNING", "TERMINATED").
+
+// Fact: f5 | P4.4
+// cancel_job: COMPLETED -> COMPLETED. Harmless terminal acknowledgement; no restart.
+AllowedTransition("job", "cancel_job", "COMPLETED", "COMPLETED").
+
+// Fact: f6 | P4.4
+// cancel_job: TERMINATED -> TERMINATED. Harmless terminal acknowledgement; no restart.
+AllowedTransition("job", "cancel_job", "TERMINATED", "TERMINATED").
+
+// Fact: f7 | P4.4
+// kill_job: QUEUED -> TERMINATED.
+AllowedTransition("job", "kill_job", "QUEUED", "TERMINATED").
+
+// Fact: f8 | P4.4
+// kill_job: RUNNING -> TERMINATED.
+AllowedTransition("job", "kill_job", "RUNNING", "TERMINATED").
+
+// Fact: f9 | P4.4
+// kill_job: COMPLETED -> COMPLETED. Harmless terminal acknowledgement; no restart.
+AllowedTransition("job", "kill_job", "COMPLETED", "COMPLETED").
+
+// Fact: f10 | P4.4
+// kill_job: TERMINATED -> TERMINATED. Harmless terminal acknowledgement; no restart.
+AllowedTransition("job", "kill_job", "TERMINATED", "TERMINATED").
+
+
+// P4.5: Terminate a rejected or cancelled queued request.
+// Coverage: Datalog FSM + event adapter.
+
+// P4.6: Enter RUNNING only after valid approval and successful free-node allocation.
+// Coverage: Datalog + atomic EDB commit.
+
+// P4.7: Require a consistent job/run/node allocation before and after every guarded operation.
+// Rule: r32 | P4.7
+// A nonempty node allocation token identifies an active run.
+ActiveRun(RunId) :-
+  Node(N, T, C, M, RunId, Gen),
+  RunId != "".
+
+// Rule: r33 | P4.7
+// Every stored Run record identifies a known run.
+KnownRun(RunId) :-
+  Run(RunId, J, N, Gen, H, V).
+
+// Rule: r34 | P4.7
+// A valid allocation joins one RUNNING job, run and node on version, hash and generation.
+ValidAllocation(J, RunId) :-
+  ResourceState(J, "RUNNING"),
+  Job(J, Owner, V, H, RunId),
+  Run(RunId, J, N, Gen, H, V),
+  Node(N, T, MaxC, MaxM, RunId, Gen),
+  JobSpec(J, T, C, M, Time),
+  C <= MaxC, M <= MaxM.
+
+// Rule: r35 | P4.7
+// Report a RUNNING job with no matching valid allocation.
+AllocationViolation(J) :-
+  ResourceState(J, "RUNNING"),
+  Job(J, Owner, V, H, RunId),
+  not ValidAllocation(J, RunId).
+
+// Rule: r36 | P4.7
+// Report a node token that refers to no stored run.
+AllocationViolation(RunId) :-
+  ActiveRun(RunId),
+  not KnownRun(RunId).
+
+// Rule: r37 | P4.7
+// Report an active run whose matching RUNNING allocation is absent.
+AllocationViolation(RunId) :-
+  ActiveRun(RunId),
+  Run(RunId, J, N, Gen, H, V),
+  not ValidAllocation(J, RunId).
+
+
+// Rule: misplaced-allocation | P4.7
+// Each allocated node must be the node recorded for that run; a valid other node is insufficient.
+AllocationViolation(N) :-
+  Node(N, T, C, M, RunId, Gen),
+  Run(RunId, J, ExpectedNode, ExpectedGen, H, V),
+  RunId != "",
+  N != ExpectedNode.
+
+// P4.8: Never dispatch a terminal job; retries require a new submission.
+// Coverage: Rules + FSM.
+
+// P4.9: Release allocations only through the P6 confirmation procedure.
+// Coverage: See P6.
+
+// P5.1: Prefer PhD while waiting and promote sufficiently skipped Master jobs.
+// Source: upstream policies.md P5; subnumbers follow its sentences.
+// Coverage: Rules; liveness is conditional.
+
+// P5.2: Compare only eligible queued candidates selecting the same free compatible node.
+// Rule: r21 | P5.2
+// Node N is not the first choice for job J if another free compatible node precedes N in the configured node order.
+EarlierNode(J, N) :-
+  FreeCompatible(J, N),
+  FreeCompatible(J, Earlier),
+  NodeOrder(Earlier, A),
+  NodeOrder(N, B),
+  A < B.
+
+// Rule: r22 | P5.2
+// Job J is eligible on node N if it is queued, within quota, currently approved, and N is its first free compatible node.
+Eligible(J, N) :-
+  Job(J, Owner, V, H, RunId),
+  ResourceState(J, "QUEUED"),
+  WithinJobQuota(J),
+  MatchingApproval(J),
+  FreeCompatible(J, N),
+  not EarlierNode(J, N).
+
+// Rule: r23 | P5.2
+// Assign ordinary PhD waiting priority 10.
+Priority(J, "10") :-
+  Job(J, Owner, V, H, RunId),
+  PrincipalGroup(Owner, "PhDStudent"),
+  ResourceState(J, "QUEUED").
+
+// Rule: r24 | P5.2
+// Assign unaged Master waiting priority 0.
+Priority(J, "0") :-
+  Job(J, Owner, V, H, RunId),
+  PrincipalGroup(Owner, "MasterStudent"),
+  ResourceState(J, "QUEUED"),
+  Waiting(J, Skips, Seq),
+  AgingThreshold(Limit),
+  Skips < Limit.
+
+// Rule: r26 | P5.2
+// A candidate loses to a higher-priority candidate for the same selected node.
+Outranked(J, N) :-
+  Eligible(J, N),
+  Eligible(Other, N),
+  Priority(J, Low),
+  Priority(Other, High),
+  Low < High.
+
+// Rule: r28 | P5.2
+// Job J is dispatchable if it is eligible on a selected node, has a priority, and no competing eligible job outranks it on that node.
+Dispatchable(J) :-
+  Eligible(J, N),
+  Priority(J, P),
+  not Outranked(J, N).
+
+
+// P5.3: Apply priority only to QUEUED work without preempting RUNNING jobs.
+// Coverage: Datalog + confirmed effects.
+
+// P5.4: After three actual competing opportunities, promote Master above PhD.
+// Rule: r25 | P5.4
+// Promote a queued Master to priority 20 when its observed skip count reaches the threshold.
+Priority(J, "20") :-
+  Job(J, Owner, V, H, RunId),
+  PrincipalGroup(Owner, "MasterStudent"),
+  ResourceState(J, "QUEUED"),
+  Waiting(J, Skips, Seq),
+  AgingThreshold(Limit),
+  Limit <= Skips.
+
+
+// P5.5: Break equal-priority competition by submission order.
+// Rule: r27 | P5.5
+// At equal priority, a candidate loses to an earlier submission for the same node.
+Outranked(J, N) :-
+  Eligible(J, N),
+  Eligible(Other, N),
+  Priority(J, P),
+  Priority(Other, P),
+  Waiting(J, A, Later),
+  Waiting(Other, B, Earlier),
+  Earlier < Later.
+
+
+// P5.6: Do not let an unrelated GPU job block an eligible CPU job.
+// Coverage: Rules.
+
+// P6.1: Release only a confirmed current allocation.
+// Source: upstream policies.md P6; subnumbers follow its sentences.
+// Coverage: Confirmed local effects + atomic EDB commit.
+
+// P6.2: Require a bounded nonblank reason and retain it with the stop.
+// Coverage: Partial: backend text validation.
+
+// P6.3: Keep RUNNING state and allocation until the local runner confirms stop.
+// Coverage: Simulator confirmation + atomic EDB commit.
+
+// P6.4: Match current run ID and allocation generation before release.
+// Coverage: Datalog invariant + atomic local effects.
+
+// P6.5: Ignore stale/duplicate completion and make terminal stop acknowledgement harmless.
+// Coverage: Datalog FSM + idempotent effects.
+
+// P6.6: An old Master notification must not release a newer PhD allocation.
+// Coverage: Same checks as P6.4-P6.5.
+
+// P6.7: Use the P1 owner/Professor stop permissions.
+// Coverage: See P1.

@@ -20,6 +20,8 @@ async function main() {
     options: {
       connection: { type: "string" },
       binding: { type: "string" },
+      plan: { type: "string" },
+      review: { type: "string" },
       "nova-extension": { type: "boolean" },
       provider: { type: "string" },
       model: { type: "string" },
@@ -31,7 +33,7 @@ async function main() {
   });
   if (values.help) {
     console.log(
-      "From the repository root: pnpm --dir translation translate <app-directory> --connection <private-models-connect.json> [--binding <runtime.json>]\nThe app's runtime.json is used by default. Existing Nova experiments retain their legacy path; --nova-extension generates only app extensions and writes nova-policy.json.\nOr --provider <id> --model <id> --api-key-env <variable> [--base-url <url>]\nOutputs go to this package's ignored output/<binding-id>/<run-id>/; --output overrides it relative to your working directory. The app is not modified.",
+      "From the repository root: pnpm --dir translation translate <app-directory> --connection <private-models-connect.json> [--binding <runtime.json>]\nThe app's runtime.json is used by default. Without --plan, distillation emits a candidate plan for review; --plan <policy-plan.json> --review <policy-review.json> translates its approved Datalog targets. Existing Nova experiments retain their legacy path; --nova-extension generates only app extensions and writes nova-policy.json.\nOr --provider <id> --model <id> --api-key-env <variable> [--base-url <url>]\nOutputs go to this package's ignored output/<binding-id>/<run-id>/; --output overrides it relative to your working directory. The app is not modified.",
     );
     return;
   }
@@ -40,6 +42,7 @@ async function main() {
       "Usage: pnpm --dir translation translate <app-directory> --connection <private-models-connect.json> [--binding <runtime.json>]",
     );
   const directory = resolve(positionals[0]!);
+  if (values.review && !values.plan) throw new Error("--review requires --plan.");
   const documents = await loadApplication(directory);
   const bindingPath = values.binding ? resolve(values.binding) : join(directory, "runtime.json");
   let binding: RuntimeBinding | undefined;
@@ -88,10 +91,6 @@ async function main() {
   );
   const parsed = ModelConnectInputSchema.safeParse(rawConnection);
   const connection = parsed.success && parsed.data.modelId?.trim() ? parsed.data : undefined;
-  if (!connection)
-    console.error(
-      "Missing model configuration. Supply --connection <private-models-connect.json> or --provider --model --api-key-env [--base-url]. No model was called.",
-    );
   const options = {
     documents,
     output,
@@ -123,13 +122,25 @@ async function main() {
   const result = values["nova-extension"]
     ? await (await import("./nova-extension.js")).translateNovaExtension(options)
     : binding
-      ? await translateApplication({ ...options, binding })
+      ? await translateApplication({
+          ...options,
+          binding,
+          ...(values.plan ? { plan: JSON.parse(readFileSync(resolve(values.plan), "utf8")) } : {}),
+          ...(values.review
+            ? { review: JSON.parse(readFileSync(resolve(values.review), "utf8")) }
+            : {}),
+        })
       : await (await import("./experiment.js")).runExperiment(options);
   console.log(`${result.status}\nArtifacts: ${output}`);
   if (
-    !["valid_translation_output", "validated_policy_bundle", "validated_nova_extension"].includes(
-      String(result.status),
-    )
+    ![
+      "valid_translation_output",
+      "validated_policy_bundle",
+      "validated_partial_policy_bundle",
+      "policy_review_required",
+      "reviewed_without_datalog",
+      "validated_nova_extension",
+    ].includes(String(result.status))
   )
     process.exitCode = 1;
 }

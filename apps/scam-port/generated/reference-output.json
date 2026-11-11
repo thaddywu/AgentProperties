@@ -1,0 +1,159 @@
+{
+  "rules": [
+    {
+      "id": "confirmation",
+      "datalog": "ConfirmedRequest(Q, I) :-\n    Request(Q, \"payments\", \"execute_transfer\"),\n    Parameter(Q, \"intent_id\", I),\n    Parameter(Q, \"recipient\", R),\n    Parameter(Q, \"amount_minor\", C),\n    TransferIntent(I, R, C, D),\n    UserConfirmation(I, R, C),\n    Purpose(I, \"transfer\"),\n    not Consumed(I)."
+    },
+    {
+      "id": "registered-id",
+      "datalog": "Registered(R) :- Payee(R, Account)."
+    },
+    {
+      "id": "registered-account",
+      "datalog": "Registered(R) :- Payee(Id, R)."
+    },
+    {
+      "id": "unregistered-review",
+      "datalog": "NeedsReview(I) :- TransferIntent(I, R, C, D), not Registered(R)."
+    },
+    {
+      "id": "origin-review",
+      "datalog": "NeedsReview(I) :- UntrustedDetails(I)."
+    },
+    {
+      "id": "ordinary-review",
+      "datalog": "ReviewSatisfied(I) :- TransferIntent(I, R, C, D), not NeedsReview(I)."
+    },
+    {
+      "id": "verified-cooled",
+      "datalog": "ReviewSatisfied(I) :-\n    TransferIntent(I, R, C, D),\n    NeedsReview(I),\n    IdentityVerified(I, R, C),\n    CoolingUntil(I, Until),\n    Clock(Now),\n    Until <= Now."
+    },
+    {
+      "id": "daily-budget",
+      "datalog": "WithinDailyLimit(Q) :-\n    Request(Q, P, Event),\n    Parameter(Q, \"amount_minor\", C),\n    DailyBudget(Remaining, 100000),\n    Balance(Available),\n    C > 0,\n    C <= Remaining,\n    C <= Available."
+    },
+    {
+      "id": "transfer",
+      "datalog": "Allow(Q) :-\n    ConfirmedRequest(Q, I),\n    KnownOrigin(I),\n    ReviewSatisfied(I),\n    WithinDailyLimit(Q)."
+    },
+    {
+      "id": "bank-origin",
+      "datalog": "KnownOrigin(I) :- TransferIntent(I, R, C, D), Provenance(D, \"bank\")."
+    },
+    {
+      "id": "user-origin",
+      "datalog": "KnownOrigin(I) :- TransferIntent(I, R, C, D), Provenance(D, \"user\")."
+    },
+    {
+      "id": "message-origin",
+      "datalog": "KnownOrigin(I) :- TransferIntent(I, R, C, D), Provenance(D, \"external_message\")."
+    },
+    {
+      "id": "external-ancestry",
+      "datalog": "UntrustedDetails(I) :- TransferIntent(I, R, C, D), Provenance(D, \"external_message\")."
+    },
+    {
+      "id": "payments-only",
+      "datalog": "Deny(Q, \"payments_only\") :- Request(Q, P, \"execute_transfer\"), P != \"payments\"."
+    },
+    {
+      "id": "payee-read",
+      "datalog": "Allow(Q) :- Request(Q, \"payments\", \"lookup_recipient\"), Parameter(Q, \"recipient_id\", R)."
+    },
+    {
+      "id": "limit-read",
+      "datalog": "Allow(Q) :- Request(Q, \"payments\", \"check_daily_limit\"), Parameter(Q, \"amount_minor\", C)."
+    },
+    {
+      "id": "verification-only",
+      "datalog": "Deny(Q, \"verification_only\") :-\n    Request(Q, P, \"execute_transfer\"),\n    Parameter(Q, \"intent_id\", I),\n    Purpose(I, \"verification\")."
+    },
+    {
+      "id": "assistant-payee-read",
+      "datalog": "Allow(Q) :- Request(Q, \"assistant\", \"list_payees\")."
+    }
+  ],
+  "coverage": [
+    {
+      "id": "P1.2",
+      "ruleIds": [
+        "confirmation"
+      ],
+      "notes": "The rule matches host confirmation against exact intent/recipient/cents in the EDB. A real authenticated UI producer is still required; tests ingest synthetic facts through the private host API. Developer-authored reference; no model called."
+    },
+    {
+      "id": "P2.2",
+      "ruleIds": [
+        "registered-id",
+        "registered-account",
+        "unregistered-review",
+        "origin-review",
+        "ordinary-review",
+        "verified-cooled"
+      ],
+      "notes": "Review/cooling evidence is privately ingested into the EDB. The source leaves the cooling duration unspecified. The original prompt remains stricter for unregistered recipients. Developer-authored reference; no model called."
+    },
+    {
+      "id": "P2.3",
+      "ruleIds": [
+        "transfer"
+      ],
+      "notes": "Final Allow joins all independent requirements. No IgnoreDeny input or agent override is exposed. Developer-authored reference; no model called."
+    },
+    {
+      "id": "P3.2",
+      "ruleIds": [
+        "daily-budget"
+      ],
+      "notes": "Balance and DailyBudget are integer-cent policy inputs. Original bank JSON mechanics remain unchanged; the result adapter records the confirmed amount delta using singleton replacement. Correct bank-day rollover still needs a trusted producer. Developer-authored reference; no model called."
+    },
+    {
+      "id": "P3.3",
+      "ruleIds": [
+        "transfer",
+        "confirmation",
+        "daily-budget"
+      ],
+      "notes": "One Datalog Allow joins confirmation, provenance, review and remaining budget before invoking the original bank callback. Developer-authored reference; no model called."
+    },
+    {
+      "id": "P4.2",
+      "ruleIds": [
+        "bank-origin",
+        "user-origin",
+        "message-origin"
+      ],
+      "notes": "Trusted ingestion and transformation adapters must submit Source/DependsOn facts. The original free-text app still lacks those producers; synthetic fixtures exercise this contract. Developer-authored reference; no model called."
+    },
+    {
+      "id": "P4.3",
+      "ruleIds": [
+        "external-ancestry"
+      ],
+      "notes": "The builtin closure preserves the old origin along declared dependencies. Adding Source(user, rewritten-data) does not erase Source(external_message, ancestor). Missing transformation edges remain an observation gap. Developer-authored reference; no model called."
+    },
+    {
+      "id": "P5.2",
+      "ruleIds": [
+        "payments-only",
+        "payee-read",
+        "limit-read"
+      ],
+      "notes": "The adapter reads the caller name from MCP request _meta.caller, or caller_context for direct Python calls. Rules require payments. A real MCP test sends assistant and payments to the same endpoint and observes denial/success. The original host must propagate its agent name; endpoint authentication remains deployment work. Developer-authored reference; no model called."
+    },
+    {
+      "id": "P5.4",
+      "ruleIds": [
+        "verification-only"
+      ],
+      "notes": "Purpose comes from host evidence and blocks verification intents. The original free-text A2A request is not bound to an authenticated execution scope, so the full causal property remains open. Developer-authored reference; no model called."
+    },
+    {
+      "id": "P6.2",
+      "ruleIds": [
+        "assistant-payee-read"
+      ],
+      "notes": "Original list_payees reads bank.json and emits names and masked accounts unchanged. An added policy decorator gates this call. Network identity and other output channels still require deployment scoping. Developer-authored reference; no model called."
+    }
+  ]
+}

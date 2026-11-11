@@ -347,9 +347,7 @@ export class MessagingRuntime<
         throw new Error(`Incomplete tag envelope for ${id}; delivery was not attempted.`);
     const before = copy(this.state.stores),
       evaluation = this.closure(message.to);
-    const denied = evaluation.facts.some(
-      (f) => factKey(f) === factKey({ predicate: roles.deny, args: [message.to, id] }),
-    );
+    const denied = evaluation.facts.some((f) => f.predicate === roles.deny && f.args[0] === id);
     this.state.stores[message.to] = this.state.stores[message.to]!.filter(
       (r) => factKey(r.fact) !== factKey({ predicate: roles.incoming, args: [message.to, id] }),
     );

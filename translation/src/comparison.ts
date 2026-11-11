@@ -10,13 +10,7 @@ export function compareGenerated(source: string) {
   const extra = facts.map((fact) => ({ ...fact, args: fact.args.map((arg) => arg.slice(2)) }));
   const f = (predicate: string, ...args: string[]): PolicyFact => ({ predicate, args });
   const tags = ["nova_procurement", "nova_facility", "nova_hiring"];
-  const observables = new Set([
-    "MessageTag",
-    "HasReceivedTag",
-    "DenyReceive",
-    "Covered",
-    "Finished",
-  ]);
+  const observables = new Set(["MessageTag", "HasReceivedTag", "Deny", "Covered", "Finished"]);
   const keys = (input: PolicyFact[]) =>
     new Set(
       input

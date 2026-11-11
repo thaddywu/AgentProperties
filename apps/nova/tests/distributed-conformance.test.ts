@@ -50,7 +50,7 @@ describe("distributed policy completeness against a diagnostic oracle", () => {
         const reference = evaluate(inputs(runtime.state)).facts;
         compare(runtime);
         const expectedAllow = !reference.some(
-          (fact) => factKey(fact) === factKey(f("DenyReceive", receiver, `reply${i}`)),
+          (fact) => factKey(fact) === factKey(f("Deny", `reply${i}`, "message_policy")),
         );
         expect(runtime.settle(`reply${i}`).allowed).toBe(expectedAllow);
         compare(runtime);
@@ -97,8 +97,8 @@ describe("distributed policy completeness against a diagnostic oracle", () => {
     );
     const distributed = derivedKeys(reconstructDebugView(runtime.state).facts);
     const reference = derivedKeys(evaluate(inputs(runtime.state)).facts);
-    expect(reference).toContain(factKey(f("DenyReceive", "auditor_a", "mH")));
-    expect(distributed).not.toContain(factKey(f("DenyReceive", "auditor_a", "mH")));
+    expect(reference).toContain(factKey(f("Deny", "mH", "message_policy")));
+    expect(distributed).not.toContain(factKey(f("Deny", "mH", "message_policy")));
     const before = runtime.snapshot();
     expect(() => runtime.settle("mH")).toThrow(/Incomplete tag envelope/);
     expect(runtime.snapshot()).toEqual(before);
@@ -164,7 +164,7 @@ describe("distributed policy completeness against a diagnostic oracle", () => {
     expect(
       terminalQuery(runtime.state, "?- HasReceivedTag(auditor_a, Tag).", "auditor_a").rows,
     ).toHaveLength(2);
-    expect(why(runtime.state, "DenyReceive(auditor_a, mH)", "auditor_a")).not.toBeNull();
+    expect(why(runtime.state, "Deny(mH, message_policy)", "auditor_a")).not.toBeNull();
     expect(() => terminalQuery(runtime.state, "?- Auditor(A).", "debug")).toThrow(
       /Remote store accessed/,
     );

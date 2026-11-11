@@ -19,44 +19,44 @@ export function expressivenessPilot() {
       policy: "Reject two distinct same-group parts in one incoming message.",
       expected: true,
       source:
-        'DenyReceive(P, M) :- Incoming(P, M), MessageTag(M, A), MessageTag(M, B), TagGroup(A, G), TagGroup(B, G), A != B, P != "board".',
+        'Deny(M, message_policy) :- Incoming(P, M), MessageTag(M, A), MessageTag(M, B), TagGroup(A, G), TagGroup(B, G), A != B, P != "board".',
     },
     {
       id: "four-part-limit",
       policy: "Reject four distinct same-group parts in one incoming message.",
       expected: true,
       source:
-        'DenyReceive(P, M) :- Incoming(P, M), MessageTag(M, A), MessageTag(M, B), MessageTag(M, C), MessageTag(M, D), TagGroup(A, G), TagGroup(B, G), TagGroup(C, G), TagGroup(D, G), A != B, A != C, A != D, B != C, B != D, C != D, P != "board".',
+        'Deny(M, message_policy) :- Incoming(P, M), MessageTag(M, A), MessageTag(M, B), MessageTag(M, C), MessageTag(M, D), TagGroup(A, G), TagGroup(B, G), TagGroup(C, G), TagGroup(D, G), A != B, A != C, A != D, B != C, B != D, C != D, P != "board".',
     },
     {
       id: "helper-relation",
       policy: "Factor a policy through a new reusable helper relation.",
       expected: false,
-      source: "NeedsReview(P, M) :- Incoming(P, M). DenyReceive(P, M) :- NeedsReview(P, M).",
+      source: "NeedsReview(P, M) :- Incoming(P, M). Deny(M, message_policy) :- NeedsReview(P, M).",
     },
     {
       id: "approval-observation",
       policy: "Receive a document only after independent approval.",
       expected: false,
-      source: "DenyReceive(P, M) :- Incoming(P, M), not Approved(M).",
+      source: "Deny(M, message_policy) :- Incoming(P, M), not Approved(M).",
     },
     {
       id: "deadline",
       policy: "Reject a message after its deadline.",
       expected: false,
-      source: "DenyReceive(P, M) :- Incoming(P, M), Expired(M).",
+      source: "Deny(M, message_policy) :- Incoming(P, M), Expired(M).",
     },
     {
       id: "arithmetic",
       policy: "Limit total cost to a numeric budget using arithmetic comparisons.",
       expected: false,
-      source: "DenyReceive(P, M) :- Incoming(P, M), Cost(M, V), V > 100.",
+      source: "Deny(M, message_policy) :- Incoming(P, M), Cost(M, V), V > 100.",
     },
     {
       id: "global-local-gate",
       policy: "Make a local delivery depend on global audit completion.",
       expected: false,
-      source: "DenyReceive(P, M) :- Incoming(P, M), Finished(G).",
+      source: "Deny(M, message_policy) :- Incoming(P, M), Finished(G).",
     },
     {
       id: "mint-capability",
@@ -107,7 +107,7 @@ export function expressivenessPilot() {
           witnesses.push({
             labels: count,
             expectedDeny: count >= threshold,
-            observedDeny: facts.some((f) => f.predicate === "DenyReceive"),
+            observedDeny: facts.some((f) => f.predicate === "Deny"),
           });
         }
       }

@@ -33,15 +33,53 @@ export function souffleProgram(input: PolicyFact[], rules: Rule[]) {
   const outputs = [...new Set(rules.map((r) => r.head.predicate))].map(
     (name) => `.output ${name}(IO=file, rfc4180=true)`,
   );
+  const numeric = rules.some((rule) => rule.comparisons?.length);
+  const integers = new Set<string>();
+  if (numeric) {
+    if (arities.has("RuntimeIntegerValue")) throw new Error("Reserved numeric relation.");
+    const values = [
+      ...input.flatMap((fact) => fact.args),
+      ...rules.flatMap((rule) =>
+        [
+          ...rule.head.args,
+          ...rule.body.flatMap((atom) => atom.args),
+          ...(rule.comparisons?.flatMap((comparison) => [comparison.left, comparison.right]) ?? []),
+        ]
+          .filter((value) => !/^[A-Z]/.test(value))
+          .map((value) => (value.startsWith("c:") ? value.slice(2) : value)),
+      ),
+    ];
+    for (const raw of values)
+      if (
+        /^(?:0|-?[1-9][0-9]*)$/.test(raw) &&
+        raw.length <= 20 &&
+        BigInt(raw) >= -(2n ** 63n) &&
+        BigInt(raw) < 2n ** 63n
+      )
+        integers.add(raw);
+    declarations.push(".decl RuntimeIntegerValue(Value:symbol, Integer:number)");
+  }
   return [
     ...declarations,
     ...outputs,
     ...input.map((f) => `${atom(f, true)}.`),
+    ...[...integers].map((value) => `RuntimeIntegerValue(${quote(value)}, ${value}).`),
     ...rules.map(
       (r) =>
         `// ${r.id}\n${atom(r.head)} :- ${[
           ...r.body.map((b) => `${b.negative ? "!" : ""}${atom(b)}`),
           ...r.distinct.map(([a, b]) => `${term(a)} != ${term(b)}`),
+          ...(r.comparisons?.flatMap((comparison, index) => {
+            if (!["<", "<=", ">", ">="].includes(comparison.operator))
+              throw new Error("Invalid numeric comparison.");
+            const left = `_PolicyNumber${index}Left`,
+              right = `_PolicyNumber${index}Right`;
+            return [
+              `RuntimeIntegerValue(${term(comparison.left)}, ${left})`,
+              `RuntimeIntegerValue(${term(comparison.right)}, ${right})`,
+              `${left} ${comparison.operator} ${right}`,
+            ];
+          }) ?? []),
         ].join(", ")}.`,
     ),
   ].join("\n");
@@ -112,7 +150,7 @@ function csv(source: string): string[][] {
     const c = source[i];
     if (c === '"') {
       if (quoted && source[i + 1] === '"') {
-        value = value.slice(0, -1) + '"';
+        value = `${value.slice(0, -1)}"`;
         i++;
       } else quoted = !quoted;
     } else if (!quoted && (c === "," || c === "\n")) {

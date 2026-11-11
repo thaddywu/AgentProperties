@@ -1,0 +1,818 @@
+{
+  "version": 1,
+  "id": "application-policy",
+  "context": "Reviewed local application policy.",
+  "predicates": {
+    "Request": {
+      "kind": "input",
+      "args": [
+        "Q",
+        "Principal",
+        "EventKind"
+      ],
+      "meaning": "Runtime-owned immutable request."
+    },
+    "Parameter": {
+      "kind": "input",
+      "args": [
+        "Q",
+        "Name",
+        "Value"
+      ],
+      "meaning": "Runtime-bound request argument."
+    },
+    "Allow": {
+      "kind": "derived",
+      "args": [
+        "Q"
+      ],
+      "meaning": "Explicit request permission."
+    },
+    "Deny": {
+      "kind": "derived",
+      "args": [
+        "Q",
+        "Reason"
+      ],
+      "meaning": "Explicit request refusal; overrides Allow."
+    },
+    "Capability": {
+      "kind": "input",
+      "args": [
+        "Principal",
+        "Scope",
+        "EventKind"
+      ],
+      "meaning": "Explicit operation grant on a resource or permission scope."
+    },
+    "PrincipalGroup": {
+      "kind": "input",
+      "args": [
+        "Principal",
+        "Group"
+      ],
+      "meaning": "Principal membership; a group can itself be a member."
+    },
+    "ResourceGroup": {
+      "kind": "input",
+      "args": [
+        "Parent",
+        "Child"
+      ],
+      "meaning": "Permission-scope membership; grants on a parent apply to its descendants."
+    },
+    "Can": {
+      "kind": "derived",
+      "args": [
+        "Principal",
+        "Resource",
+        "EventKind"
+      ],
+      "meaning": "Grant including declared principal and resource memberships; not final authorization."
+    },
+    "Source": {
+      "kind": "input",
+      "args": [
+        "Principal",
+        "Data"
+      ],
+      "meaning": "Trusted record of a direct data origin; does not establish content truth."
+    },
+    "DependsOn": {
+      "kind": "input",
+      "args": [
+        "Output",
+        "Input"
+      ],
+      "meaning": "Direct conservative data dependency, supplied by actual instrumentation or application records."
+    },
+    "Provenance": {
+      "kind": "derived",
+      "args": [
+        "Data",
+        "Principal"
+      ],
+      "meaning": "Possible origin propagated through declared dependencies; no mandatory security labels."
+    },
+    "ResourceType": {
+      "kind": "input",
+      "args": [
+        "Resource",
+        "Type"
+      ],
+      "meaning": "Resource type, supplied by the application."
+    },
+    "ResourceState": {
+      "kind": "input",
+      "args": [
+        "Resource",
+        "State"
+      ],
+      "meaning": "Current state in the declared application scope; replaces obsolete state."
+    },
+    "InitialState": {
+      "kind": "input",
+      "args": [
+        "Type",
+        "State"
+      ],
+      "meaning": "Reviewed initial state for newly created resources of this type; never resets existing resources."
+    },
+    "AllowedTransition": {
+      "kind": "input",
+      "args": [
+        "Type",
+        "EventKind",
+        "From",
+        "To"
+      ],
+      "meaning": "Configured state-machine edge shared by resources of this type."
+    },
+    "ReachableState": {
+      "kind": "derived",
+      "args": [
+        "Type",
+        "From",
+        "To"
+      ],
+      "meaning": "Nonempty path in the configured machine; not a record of past execution."
+    },
+    "CanTransition": {
+      "kind": "derived",
+      "args": [
+        "Resource",
+        "EventKind",
+        "From",
+        "To"
+      ],
+      "meaning": "Configured edge matching current state; other policy conditions still apply."
+    },
+    "Job": {
+      "kind": "input",
+      "args": [
+        "JobId",
+        "Owner",
+        "Version",
+        "TaskHash",
+        "RunId"
+      ],
+      "meaning": "Current job metadata recorded from successful original tool results.",
+      "types": [
+        "symbol",
+        "symbol",
+        "number",
+        "symbol",
+        "symbol"
+      ],
+      "key": [
+        "JobId"
+      ]
+    },
+    "JobSpec": {
+      "kind": "input",
+      "args": [
+        "Job",
+        "Type",
+        "Cores",
+        "Memory",
+        "Minutes"
+      ],
+      "meaning": "The current exact resource request.",
+      "types": [
+        "symbol",
+        "symbol",
+        "number",
+        "number",
+        "number"
+      ],
+      "key": [
+        "Job"
+      ]
+    },
+    "Quota": {
+      "kind": "input",
+      "args": [
+        "Group",
+        "Type",
+        "Cores",
+        "Memory",
+        "Minutes"
+      ],
+      "meaning": "Reviewed group quota facts.",
+      "types": [
+        "symbol",
+        "symbol",
+        "number",
+        "number",
+        "number"
+      ]
+    },
+    "Node": {
+      "kind": "input",
+      "args": [
+        "Node",
+        "Type",
+        "Cores",
+        "Memory",
+        "Run",
+        "Generation"
+      ],
+      "meaning": "Current physical capacity and allocation token.",
+      "types": [
+        "symbol",
+        "symbol",
+        "number",
+        "number",
+        "symbol",
+        "number"
+      ],
+      "key": [
+        "Node"
+      ]
+    },
+    "NodeOrder": {
+      "kind": "input",
+      "args": [
+        "Node",
+        "Index"
+      ],
+      "meaning": "Stable node order used by the existing allocator.",
+      "types": [
+        "symbol",
+        "number"
+      ]
+    },
+    "Approval": {
+      "kind": "input",
+      "args": [
+        "Id",
+        "Job",
+        "Version",
+        "TaskHash",
+        "Issuer",
+        "PolicyDigest"
+      ],
+      "meaning": "Evidence written by a permitted approval tool.",
+      "types": [
+        "symbol",
+        "symbol",
+        "number",
+        "symbol",
+        "symbol",
+        "symbol"
+      ],
+      "key": [
+        "Id"
+      ]
+    },
+    "ApprovalSpec": {
+      "kind": "input",
+      "args": [
+        "Id",
+        "Type",
+        "Cores",
+        "Memory",
+        "Minutes"
+      ],
+      "meaning": "Exact approved resources from the approval record.",
+      "types": [
+        "symbol",
+        "symbol",
+        "number",
+        "number",
+        "number"
+      ],
+      "key": [
+        "Id"
+      ]
+    },
+    "CurrentApproval": {
+      "kind": "input",
+      "args": [
+        "Job",
+        "Approval"
+      ],
+      "meaning": "The job's current approval reference.",
+      "key": [
+        "Job"
+      ]
+    },
+    "CurrentPolicy": {
+      "kind": "input",
+      "args": [
+        "Digest"
+      ],
+      "meaning": "Hash of the authoritative current cluster configuration."
+    },
+    "Run": {
+      "kind": "input",
+      "args": [
+        "Run",
+        "Job",
+        "Node",
+        "Generation",
+        "TaskHash",
+        "Version"
+      ],
+      "meaning": "Actual run and generation-bound allocation record.",
+      "types": [
+        "symbol",
+        "symbol",
+        "symbol",
+        "number",
+        "symbol",
+        "number"
+      ],
+      "key": [
+        "Run"
+      ]
+    },
+    "Receipt": {
+      "kind": "input",
+      "args": [
+        "Id",
+        "Run",
+        "Job",
+        "Node",
+        "Generation",
+        "TaskHash",
+        "Source",
+        "Kind"
+      ],
+      "meaning": "Actual simulator-issued receipt.",
+      "types": [
+        "symbol",
+        "symbol",
+        "symbol",
+        "symbol",
+        "number",
+        "symbol",
+        "symbol",
+        "symbol"
+      ],
+      "key": [
+        "Id"
+      ]
+    },
+    "ExitSuccess": {
+      "kind": "input",
+      "args": [
+        "Receipt"
+      ],
+      "meaning": "Zero exit code on a stored completion receipt."
+    },
+    "Waiting": {
+      "kind": "input",
+      "args": [
+        "Job",
+        "Skips",
+        "Submission"
+      ],
+      "meaning": "Current skip count and submission order in the EDB.",
+      "types": [
+        "symbol",
+        "number",
+        "number"
+      ],
+      "key": [
+        "Job"
+      ]
+    },
+    "AgingThreshold": {
+      "kind": "input",
+      "args": [
+        "Skips"
+      ],
+      "meaning": "Configured promotion threshold.",
+      "types": [
+        "number"
+      ]
+    },
+    "WithinRequestQuota": {
+      "kind": "derived",
+      "args": [
+        "Q"
+      ],
+      "meaning": "The intercepted request fits an owner group quota."
+    },
+    "WithinJobQuota": {
+      "kind": "derived",
+      "args": [
+        "Job"
+      ],
+      "meaning": "The current stored job fits its owner group quota."
+    },
+    "MatchingApproval": {
+      "kind": "derived",
+      "args": [
+        "Job"
+      ],
+      "meaning": "A current exact approval exists for this job."
+    },
+    "FreeCompatible": {
+      "kind": "derived",
+      "args": [
+        "Job",
+        "Node"
+      ],
+      "meaning": "This free node can physically hold the job."
+    },
+    "EarlierNode": {
+      "kind": "derived",
+      "args": [
+        "Job",
+        "Node"
+      ],
+      "meaning": "An earlier free compatible node exists for the job."
+    },
+    "Eligible": {
+      "kind": "derived",
+      "args": [
+        "Job",
+        "Node"
+      ],
+      "meaning": "This queued approved job selects this free compatible node."
+    },
+    "Priority": {
+      "kind": "derived",
+      "args": [
+        "Job",
+        "Value"
+      ],
+      "meaning": "The current waiting priority; larger values win.",
+      "types": [
+        "symbol",
+        "number"
+      ]
+    },
+    "Outranked": {
+      "kind": "derived",
+      "args": [
+        "Job",
+        "Node"
+      ],
+      "meaning": "Another candidate for this node has priority or submission precedence."
+    },
+    "Dispatchable": {
+      "kind": "derived",
+      "args": [
+        "Job"
+      ],
+      "meaning": "The eligible job has no better competitor on its selected node."
+    },
+    "MatchingReceipt": {
+      "kind": "derived",
+      "args": [
+        "Job",
+        "Receipt"
+      ],
+      "meaning": "A matching successful receipt supports this current run."
+    },
+    "Student": {
+      "kind": "derived",
+      "args": [
+        "Actor"
+      ],
+      "meaning": "An authenticated principal belongs to a student group."
+    },
+    "UserAgent": {
+      "kind": "derived",
+      "args": [
+        "Actor"
+      ],
+      "meaning": "A principal may use the ordinary user observation tools."
+    },
+    "Readable": {
+      "kind": "derived",
+      "args": [
+        "Actor",
+        "Job"
+      ],
+      "meaning": "The principal may read this stored job."
+    },
+    "PrivateReadable": {
+      "kind": "derived",
+      "args": [
+        "Principal",
+        "Owner"
+      ],
+      "meaning": "Private fixture owners visible to this caller."
+    },
+    "QueueViewer": {
+      "kind": "derived",
+      "args": [
+        "Actor"
+      ],
+      "meaning": "The principal may inspect queue metadata."
+    },
+    "RecordData": {
+      "kind": "input",
+      "args": [
+        "Kind",
+        "Record",
+        "Data"
+      ],
+      "meaning": "Confirmed tool record mapped to a version-specific runtime data handle.",
+      "key": [
+        "Kind",
+        "Record"
+      ]
+    },
+    "JobState": {
+      "kind": "derived",
+      "args": [
+        "State"
+      ],
+      "meaning": "States admitted by the job machine."
+    },
+    "ActiveRun": {
+      "kind": "derived",
+      "args": [
+        "Run"
+      ],
+      "meaning": "A node currently refers to this run."
+    },
+    "KnownRun": {
+      "kind": "derived",
+      "args": [
+        "Run"
+      ],
+      "meaning": "Run exists in the EDB."
+    },
+    "ValidAllocation": {
+      "kind": "derived",
+      "args": [
+        "Job",
+        "Run"
+      ],
+      "meaning": "Current job, run and node share the same allocation token."
+    },
+    "AllocationViolation": {
+      "kind": "derived",
+      "args": [
+        "Resource"
+      ],
+      "meaning": "Must remain empty before and after protected operations."
+    },
+    "JobOutcome": {
+      "kind": "input",
+      "args": [
+        "Job",
+        "Reason"
+      ],
+      "meaning": "Latest confirmed business outcome of this job.",
+      "key": [
+        "Job"
+      ]
+    },
+    "StopReason": {
+      "kind": "input",
+      "args": [
+        "Job",
+        "Reason"
+      ],
+      "meaning": "Confirmed stop reason retained as a fact.",
+      "key": [
+        "Job"
+      ]
+    }
+  },
+  "decision": {
+    "request": "Request",
+    "parameters": "Parameter",
+    "allow": "Allow",
+    "deny": "Deny"
+  },
+  "tests": [],
+  "configuration": [
+    {
+      "predicate": "PrincipalGroup",
+      "args": [
+        "Master",
+        "MasterStudent"
+      ]
+    },
+    {
+      "predicate": "PrincipalGroup",
+      "args": [
+        "PhD",
+        "PhDStudent"
+      ]
+    },
+    {
+      "predicate": "PrincipalGroup",
+      "args": [
+        "Professor",
+        "Professor"
+      ]
+    },
+    {
+      "predicate": "PrincipalGroup",
+      "args": [
+        "Runner",
+        "Runner"
+      ]
+    },
+    {
+      "predicate": "Quota",
+      "args": [
+        "MasterStudent",
+        "CPU",
+        "4",
+        "8",
+        "20"
+      ]
+    },
+    {
+      "predicate": "Quota",
+      "args": [
+        "PhDStudent",
+        "CPU",
+        "8",
+        "32",
+        "60"
+      ]
+    },
+    {
+      "predicate": "Quota",
+      "args": [
+        "PhDStudent",
+        "GPU",
+        "8",
+        "32",
+        "60"
+      ]
+    },
+    {
+      "predicate": "AgingThreshold",
+      "args": [
+        "3"
+      ]
+    },
+    {
+      "predicate": "CurrentPolicy",
+      "args": [
+        "56b6b1f170f4ab9563e14e4fa1dba1f8b9432775a1301420c4165f07fcc80b1a"
+      ]
+    },
+    {
+      "predicate": "Node",
+      "args": [
+        "cpu-1",
+        "CPU",
+        "8",
+        "32",
+        "",
+        "0"
+      ]
+    },
+    {
+      "predicate": "Node",
+      "args": [
+        "gpu-1",
+        "GPU",
+        "8",
+        "32",
+        "",
+        "0"
+      ]
+    },
+    {
+      "predicate": "NodeOrder",
+      "args": [
+        "cpu-1",
+        "0"
+      ]
+    },
+    {
+      "predicate": "NodeOrder",
+      "args": [
+        "gpu-1",
+        "1"
+      ]
+    },
+    {
+      "predicate": "InitialState",
+      "args": [
+        "job",
+        "QUEUED"
+      ]
+    },
+    {
+      "predicate": "AllowedTransition",
+      "args": [
+        "job",
+        "dispatch_job",
+        "QUEUED",
+        "RUNNING"
+      ]
+    },
+    {
+      "predicate": "AllowedTransition",
+      "args": [
+        "job",
+        "finish_job",
+        "RUNNING",
+        "COMPLETED"
+      ]
+    },
+    {
+      "predicate": "AllowedTransition",
+      "args": [
+        "job",
+        "reject_job",
+        "QUEUED",
+        "TERMINATED"
+      ]
+    },
+    {
+      "predicate": "AllowedTransition",
+      "args": [
+        "job",
+        "cancel_job",
+        "QUEUED",
+        "TERMINATED"
+      ]
+    },
+    {
+      "predicate": "AllowedTransition",
+      "args": [
+        "job",
+        "cancel_job",
+        "RUNNING",
+        "TERMINATED"
+      ]
+    },
+    {
+      "predicate": "AllowedTransition",
+      "args": [
+        "job",
+        "cancel_job",
+        "COMPLETED",
+        "COMPLETED"
+      ]
+    },
+    {
+      "predicate": "AllowedTransition",
+      "args": [
+        "job",
+        "cancel_job",
+        "TERMINATED",
+        "TERMINATED"
+      ]
+    },
+    {
+      "predicate": "AllowedTransition",
+      "args": [
+        "job",
+        "kill_job",
+        "QUEUED",
+        "TERMINATED"
+      ]
+    },
+    {
+      "predicate": "AllowedTransition",
+      "args": [
+        "job",
+        "kill_job",
+        "RUNNING",
+        "TERMINATED"
+      ]
+    },
+    {
+      "predicate": "AllowedTransition",
+      "args": [
+        "job",
+        "kill_job",
+        "COMPLETED",
+        "COMPLETED"
+      ]
+    },
+    {
+      "predicate": "AllowedTransition",
+      "args": [
+        "job",
+        "kill_job",
+        "TERMINATED",
+        "TERMINATED"
+      ]
+    }
+  ],
+  "invariants": [
+    "AllocationViolation"
+  ],
+  "mechanisms": [
+    "capability",
+    "provenance",
+    "fsm"
+  ],
+  "fsmState": "runtime",
+  "fsmTarget": "job_id",
+  "fsmActions": [
+    "cancel_job",
+    "dispatch_job",
+    "finish_job",
+    "kill_job",
+    "reject_job"
+  ]
+}

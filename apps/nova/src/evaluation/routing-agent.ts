@@ -26,8 +26,7 @@ export async function createRoutingEpisode(
     throw new Error("Translated condition requires an artifact.");
   const profile = novaMessagingProfile(mode === "translated" ? policy : undefined);
   // Evaluation-only comparator: retain the entire message path and IFC, bypass just receive denials.
-  if (mode === "disabled")
-    profile.rules = profile.rules.filter((r) => r.head.predicate !== "DenyReceive");
+  if (mode === "disabled") profile.rules = profile.rules.filter((r) => r.head.predicate !== "Deny");
   const released: { id: string; to: string }[] = [];
   const port = createBackendPort({
     profile,

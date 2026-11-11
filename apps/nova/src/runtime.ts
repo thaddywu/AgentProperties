@@ -157,7 +157,7 @@ export class NovaRuntime extends MessagingRuntime<NovaPolicyArtifact, RuntimeSta
           source: "TrustedSource",
           imported: "TransportTag",
           carries: "MessageTag",
-          deny: "DenyReceive",
+          deny: "Deny",
         },
       },
       normalized,

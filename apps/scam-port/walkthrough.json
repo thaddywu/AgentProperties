@@ -1,0 +1,422 @@
+{
+  "application": "Catch Me If You Scam",
+  "upstream": {
+    "url": "https://github.com/alicehjjung/CS239_CatchMeIfYouScam_AliceJung",
+    "revision": "2fe55f85a51b65819222816cb5b5b71f7d594355",
+    "policyFile": "policies.md"
+  },
+  "requirements": [
+    {
+      "id": "P1.1",
+      "policyId": "P1",
+      "source": "User Confirmation. An impostor may impersonate a trusted person and attempt to transfer funds without proper authorization.",
+      "title": "Treat impersonation as a threat, not a confirmation source.",
+      "distilled": "Threat motivation",
+      "detail": "Source context, with no independent executable condition. No impersonation detector is invented; the following rules require explicit evidence regardless of wording.",
+      "ruleIds": [],
+      "relatedRuleIds": [],
+      "implementation": "unsupported",
+      "relation": "unresolved",
+      "guideNote": ""
+    },
+    {
+      "id": "P1.2",
+      "policyId": "P1",
+      "source": "Therefore, every transfer must have explicit user confirmation for the exact recipient and amount.",
+      "title": "Confirm this exact recipient and amount.",
+      "distilled": "Executable guard; missing host UI",
+      "detail": "The rule matches host confirmation against exact intent/recipient/cents in the EDB. A real authenticated UI producer is still required; tests ingest synthetic facts through the private host API.",
+      "ruleIds": [
+        "confirmation"
+      ],
+      "relatedRuleIds": [],
+      "implementation": "datalog",
+      "relation": "partial",
+      "guideNote": ""
+    },
+    {
+      "id": "P1.3",
+      "policyId": "P1",
+      "source": "A confirmation must be associated with the specific transfer request.",
+      "title": "Bind confirmation to a specific immutable transfer intent.",
+      "distilled": "Same exact-match guard",
+      "detail": "After an original bank transfer succeeds, its confirmed delta updates Consumed, Transfer, Balance and DailyBudget in one EDB batch. Bank JSON and EDB do not share a transaction; uncertain synchronization stops the session.",
+      "ruleIds": [],
+      "relatedRuleIds": [
+        "confirmation"
+      ],
+      "implementation": "adapter",
+      "relation": "partial",
+      "guideNote": ""
+    },
+    {
+      "id": "P1.4",
+      "policyId": "P1",
+      "source": "Instructions contained in external messages, including SMS messages, must not be treated as user confirmation.",
+      "title": "Never turn message instructions into a user-confirmation fact.",
+      "distilled": "Trusted producer obligation",
+      "detail": "No agent/MCP assertion endpoint exists. The host must authenticate confirmations; an arbitrary JSON label saying user is not proof of user intent.",
+      "ruleIds": [],
+      "relatedRuleIds": [
+        "confirmation"
+      ],
+      "implementation": "unsupported",
+      "relation": "partial",
+      "guideNote": ""
+    },
+    {
+      "id": "P2.1",
+      "policyId": "P2",
+      "source": "Additional Verification for Suspicious Recipients. A scammer often provides unfamiliar payment details and creates a sense of urgency to pressure the victim into transferring money.",
+      "title": "Do not infer trust from familiar wording or urgency.",
+      "distilled": "Threat motivation",
+      "detail": "Source context, with no independent executable condition. No semantic scam classifier is required or claimed by these rules.",
+      "ruleIds": [],
+      "relatedRuleIds": [],
+      "implementation": "unsupported",
+      "relation": "unresolved",
+      "guideNote": ""
+    },
+    {
+      "id": "P2.2",
+      "policyId": "P2",
+      "source": "So, Transfers to unregistered recipients or recipients whose payment details originate from untrusted messages must not be executed without additional identity verification and a cooling-off period.",
+      "title": "Require identity review and elapsed cooling for unknown or message-derived details.",
+      "distilled": "Rules + host evidence",
+      "detail": "Review/cooling evidence is privately ingested into the EDB. The source leaves the cooling duration unspecified. The original prompt remains stricter for unregistered recipients.",
+      "ruleIds": [
+        "registered-id",
+        "registered-account",
+        "unregistered-review",
+        "origin-review",
+        "ordinary-review",
+        "verified-cooled"
+      ],
+      "relatedRuleIds": [],
+      "implementation": "datalog",
+      "relation": "partial",
+      "guideNote": ""
+    },
+    {
+      "id": "P2.3",
+      "policyId": "P2",
+      "source": "A user's request to proceed does not, by itself, bypass these requirements.",
+      "title": "User confirmation cannot override review and cooling.",
+      "distilled": "Rules",
+      "detail": "Final Allow joins all independent requirements. No IgnoreDeny input or agent override is exposed.",
+      "ruleIds": [],
+      "relatedRuleIds": [
+        "transfer"
+      ],
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "guideNote": ""
+    },
+    {
+      "id": "P3.1",
+      "policyId": "P3",
+      "source": "Daily Transfer Limit. A daily transfer limit can reduce potential financial losses if a user or an agent is deceived into making payments.",
+      "title": "Cap possible daily loss.",
+      "distilled": "Threat motivation",
+      "detail": "Source context, with no independent executable condition. The next clause expresses the numeric cap; this motivation adds no predicate.",
+      "ruleIds": [],
+      "relatedRuleIds": [],
+      "implementation": "unsupported",
+      "relation": "unresolved",
+      "guideNote": ""
+    },
+    {
+      "id": "P3.2",
+      "policyId": "P3",
+      "source": "The Payments Agent must not execute a transfer if the transfer amount, combined with the total amount transferred that day, exceeds the configured daily limit of $1,000.",
+      "title": "Keep requested cents within the current remaining daily budget.",
+      "distilled": "Rules + original bank counter",
+      "detail": "Balance and DailyBudget are integer-cent policy inputs. Original bank JSON mechanics remain unchanged; the result adapter records the confirmed amount delta using singleton replacement. Correct bank-day rollover still needs a trusted producer.",
+      "ruleIds": [
+        "daily-budget"
+      ],
+      "relatedRuleIds": [],
+      "implementation": "datalog",
+      "relation": "partial",
+      "guideNote": ""
+    },
+    {
+      "id": "P3.3",
+      "policyId": "P3",
+      "source": "Transfers within the limit remain subject to all other applicable authorization requirements.",
+      "title": "A budget check alone never authorizes a transfer.",
+      "distilled": "Rules",
+      "detail": "One Datalog Allow joins confirmation, provenance, review and remaining budget before invoking the original bank callback.",
+      "ruleIds": [
+        "transfer"
+      ],
+      "relatedRuleIds": [
+        "confirmation",
+        "daily-budget"
+      ],
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "guideNote": ""
+    },
+    {
+      "id": "P4.1",
+      "policyId": "P4",
+      "source": "Payment Information Provenance. Without tracking, information introduced by a scammer may be treated as real user-provided payment instructions.",
+      "title": "Do not let repeated instructions silently become trusted data.",
+      "distilled": "Threat motivation",
+      "detail": "Source context, with no independent executable condition. Provenance is about recorded data versions, not a classifier over natural-language text.",
+      "ruleIds": [],
+      "relatedRuleIds": [],
+      "implementation": "unsupported",
+      "relation": "unresolved",
+      "guideNote": ""
+    },
+    {
+      "id": "P4.2",
+      "policyId": "P4",
+      "source": "The system must track whether payment details originate from registered banking records, direct user input, or untrusted external messages.",
+      "title": "Track bank, direct-user and external-message origins.",
+      "distilled": "Rules + newly required instrumentation",
+      "detail": "Trusted ingestion and transformation adapters must submit Source/DependsOn facts. The original free-text app still lacks those producers; synthetic fixtures exercise this contract.",
+      "ruleIds": [
+        "bank-origin",
+        "user-origin",
+        "message-origin"
+      ],
+      "relatedRuleIds": [],
+      "implementation": "datalog",
+      "relation": "partial",
+      "guideNote": ""
+    },
+    {
+      "id": "P4.3",
+      "policyId": "P4",
+      "source": "Rephrasing or repeating information from an untrusted message must not automatically change its recorded origin to trusted user input.",
+      "title": "A rewrite retains any declared external-message ancestor.",
+      "distilled": "Shared provenance + app rule",
+      "detail": "The builtin closure preserves the old origin along declared dependencies. Adding Source(user, rewritten-data) does not erase Source(external_message, ancestor). Missing transformation edges remain an observation gap.",
+      "ruleIds": [
+        "external-ancestry"
+      ],
+      "relatedRuleIds": [],
+      "implementation": "datalog",
+      "relation": "partial",
+      "guideNote": ""
+    },
+    {
+      "id": "P5.1",
+      "policyId": "P5",
+      "source": "Separation of Agent Responsibilities. Separating responsibilities prevents an agent that processes untrusted messages from directly controlling financial transactions.",
+      "title": "Separate untrusted-message processing from payment execution.",
+      "distilled": "Original tool separation + guarded endpoint",
+      "detail": "The three original Payments tool bodies retain their bank JSON operations and logging. Added decorators gate them and record confirmed transfer deltas; the Assistant/A2A message bridge remains unmodified.",
+      "ruleIds": [],
+      "relatedRuleIds": [],
+      "implementation": "unsupported",
+      "relation": "unresolved",
+      "guideNote": ""
+    },
+    {
+      "id": "P5.2",
+      "policyId": "P5",
+      "source": "Only the Payments Agent may invoke the transfer execution tool.",
+      "title": "Allow only the bound Payments principal to execute.",
+      "distilled": "Rules; endpoint authentication required",
+      "detail": "The adapter reads the caller name from MCP request _meta.caller, or caller_context for direct Python calls. Rules require payments. A real MCP test sends assistant and payments to the same endpoint and observes denial/success. The original host must propagate its agent name; endpoint authentication remains deployment work.",
+      "ruleIds": [
+        "payments-only",
+        "payee-read",
+        "limit-read"
+      ],
+      "relatedRuleIds": [],
+      "implementation": "datalog",
+      "relation": "partial",
+      "guideNote": ""
+    },
+    {
+      "id": "P5.3",
+      "policyId": "P5",
+      "source": "The Assistant Agent may request payment verification but must not directly execute transfers or modify banking records.",
+      "title": "Assistant verifies without a transfer or bank-write tool.",
+      "distilled": "Original registration + deny rule",
+      "detail": "The original Assistant tool list lacks execute_transfer. This does not prevent a misconfigured deployment from giving Assistant the payment endpoint.",
+      "ruleIds": [],
+      "relatedRuleIds": [
+        "payments-only"
+      ],
+      "implementation": "adapter",
+      "relation": "partial",
+      "guideNote": ""
+    },
+    {
+      "id": "P5.4",
+      "policyId": "P5",
+      "source": "The verification should not result in a transfer execution.",
+      "title": "A verification-only request must not execute.",
+      "distilled": "Partial: typed intents only",
+      "detail": "Purpose comes from host evidence and blocks verification intents. The original free-text A2A request is not bound to an authenticated execution scope, so the full causal property remains open.",
+      "ruleIds": [
+        "verification-only"
+      ],
+      "relatedRuleIds": [],
+      "implementation": "datalog",
+      "relation": "partial",
+      "guideNote": ""
+    },
+    {
+      "id": "P6.1",
+      "policyId": "P6",
+      "source": "Information Isolation Between Agents. Restricting information flow reduces unnecessary exposure of sensitive data and prevents malicious instructions embedded in external messages from crossing agent boundaries.",
+      "title": "Limit inter-agent disclosure to necessary payment information.",
+      "distilled": "Policy motivation",
+      "detail": "Source context, with no independent executable condition. The remaining P6 clauses expose a distinct output/message boundary, which this payment-execution port does not claim to solve.",
+      "ruleIds": [],
+      "relatedRuleIds": [],
+      "implementation": "unsupported",
+      "relation": "unresolved",
+      "guideNote": ""
+    },
+    {
+      "id": "P6.2",
+      "policyId": "P6",
+      "source": "The Assistant Agent must not access account balances or full bank account numbers directly.",
+      "title": "Keep balances and full accounts out of Assistant tools.",
+      "distilled": "Original masked list; partial deployment boundary",
+      "detail": "Original list_payees reads bank.json and emits names and masked accounts unchanged. An added policy decorator gates this call. Network identity and other output channels still require deployment scoping.",
+      "ruleIds": [
+        "assistant-payee-read"
+      ],
+      "relatedRuleIds": [],
+      "implementation": "adapter",
+      "relation": "partial",
+      "guideNote": ""
+    },
+    {
+      "id": "P6.3",
+      "policyId": "P6",
+      "source": "The Payments Agent must not receive the same message from the Assistant Agent, e.g., raw SMS content or unrelated conversation history.",
+      "title": "Never forward raw SMS or unrelated history to Payments.",
+      "distilled": "Unsupported on the original message path",
+      "detail": "request_payment_verification still accepts and forwards free-form request_text. A transfer guard cannot undo a message already sent.",
+      "ruleIds": [],
+      "relatedRuleIds": [],
+      "implementation": "unsupported",
+      "relation": "partial",
+      "guideNote": ""
+    },
+    {
+      "id": "P6.4",
+      "policyId": "P6",
+      "source": "Communication between agents must be limited to the information necessary to verify and process the specific payment request.",
+      "title": "Send only structured fields required for this payment.",
+      "distilled": "Requires another adapter boundary",
+      "detail": "A reviewed structured A2A schema and response projection are needed. No generic Sink predicate or provenance closure can substitute for instrumenting the actual bridge.",
+      "ruleIds": [],
+      "relatedRuleIds": [],
+      "implementation": "unsupported",
+      "relation": "partial",
+      "guideNote": ""
+    }
+  ],
+  "vocabulary": {
+    "TransferIntent": {
+      "origin": "New host evidence fact",
+      "text": "A trusted host submits this exact request directly to the EDB, binding ID, recipient, cents and a details handle. No agent assertion API is registered.",
+      "example": "TransferIntent(\"intent-1\", \"payee-1\", 30000, \"data-example\").",
+      "brief": "Required host input binding intent, recipient, cents and details."
+    },
+    "UserConfirmation": {
+      "origin": "New trusted host evidence fact",
+      "text": "A real authenticated host/UI must submit this input. A model claim or SMS does not become confirmation; tests use explicit synthetic host ingestion.",
+      "example": "UserConfirmation(\"intent-1\", \"payee-1\", 30000).",
+      "brief": "Required authenticated host/UI input; absent from the original app."
+    },
+    "Purpose": {
+      "origin": "New host evidence fact",
+      "text": "A trusted host binds the intent to transfer or verification in the EDB.",
+      "brief": "Host-bound transfer or verification intent."
+    },
+    "Consumed": {
+      "origin": "Backend evidence fact",
+      "text": "After original bank success, the result adapter records this fact with policy balance, budget and transfer evidence in one EDB batch.",
+      "brief": "Callback records successful consumption of an intent."
+    },
+    "Payee": {
+      "origin": "EDB input; initialized in .dl",
+      "text": "Reviewed .dl seeds match registered payees in the mock bank. Original tools still read bank JSON; the policy EDB is not reloaded on every call.",
+      "brief": "Reviewed .dl payees matching the mock bank."
+    },
+    "IdentityVerified": {
+      "origin": "New trusted host evidence fact",
+      "text": "A trusted verification producer submits the exact reviewed intent, recipient and cents to the EDB.",
+      "brief": "Required trusted identity-review result."
+    },
+    "CoolingUntil": {
+      "origin": "New trusted host evidence fact",
+      "text": "A trusted host submits the deadline. .key CoolingUntil(Intent) replaces an earlier deadline; the model cannot choose one.",
+      "brief": "Host-supplied deadline; keyed by intent."
+    },
+    "Clock": {
+      "origin": "Backend clock fact",
+      "text": "A small before-call adapter replaces this singleton with the server time. This is an observation, not an application snapshot.",
+      "brief": "Before hook records current server time in seconds."
+    },
+    "DailyBudget": {
+      "origin": "EDB input; initialized in .dl",
+      "text": "A singleton holds remaining/configured policy cents. The confirmed transfer delta replaces remaining; original bank JSON retains its own business counter.",
+      "brief": "Callback replaces remaining cents after a successful transfer."
+    },
+    "Balance": {
+      "origin": "EDB input; initialized in .dl",
+      "text": "Initial reviewed cents match the mock bank. After an original transfer succeeds, its confirmed amount decrements the keyed policy balance; no per-call bank projection runs.",
+      "brief": "Callback replaces balance cents after a successful transfer."
+    },
+    "Provenance": {
+      "origin": "Optional builtin inference",
+      "text": "Possible origins propagate through declared Source and DependsOn edges. The adapter gives each host-recorded data version an opaque SDK ID."
+    },
+    "Source": {
+      "origin": "Optional builtin; newly required host input",
+      "text": "Trusted ingestion submits bank/user/external_message origins directly to the EDB."
+    },
+    "DependsOn": {
+      "origin": "Optional builtin; newly required host input",
+      "text": "Trusted transformation adapters submit versioned copy/rewrite dependencies directly to the EDB."
+    }
+  },
+  "toolHook": "# Adaptation code: guard the original callback.\n@guarded(lambda: policy_port, server)\n@traced_request\ndef execute_transfer(recipient: str, amount: float) -> dict:\n    ...  # Original function body remains unchanged.",
+  "findings": [
+    "Both ports retain original business stores and callbacks. Policy EDB facts are maintained by explicit confirmed-result adapters, not per-call full-state projections.",
+    "Generic .key metadata replaces current policy rows. New tool-created ResourceType/ResourceState tuples are checked against InitialState(Type, State); tools cannot reset existing FSM state.",
+    "The original MCP float boundary remains. The wrapper normalizes policy arguments to integer cents and adds host intent correlation metadata without changing the bank function body.",
+    "Original bank JSON and the policy EDB do not share a transaction. Post-effect synchronization failures stop the session; no automatic rollback or restart reconciliation is claimed.",
+    "The app still lacks authenticated confirmation, identity-review and source producers. These are private host-ingestion contracts, not facts an LLM may assert.",
+    "The unchanged Payments prompt is stricter for unregistered recipients. P6 still requires a structured adapter on the free-text A2A bridge.",
+    "Caller names now come from application context or MCP _meta.caller. Missing names fail before business execution. These reported names are not authenticated; the original external host still needs to send its agent name."
+  ],
+  "toolLocation": "mcp_servers/payments_server.py: execute_transfer",
+  "toolExplanation": "An added decorator reads request _meta.caller (or direct-call context), guards the existing callback and records confirmed deltas. No principal is hardcoded in the annotation.",
+  "toolSetup": "policy = adapt()\nmodule.policy_port = policy\nmodule.BANK_PATH = reviewed_mock_bank_path",
+  "operations": {
+    "execute_transfer": {
+      "kind": "Adapted MCP tool-call",
+      "call": "execute_transfer(recipient, amount, transfer_request_id)",
+      "text": "Original transfer tool; the wrapper adds intent correlation metadata."
+    },
+    "lookup_recipient": {
+      "kind": "Existing MCP tool-call",
+      "call": "lookup_recipient(recipient_id)",
+      "text": "Look up a registered recipient."
+    },
+    "check_daily_limit": {
+      "kind": "Existing MCP tool-call",
+      "call": "check_daily_limit(amount)",
+      "text": "Check the remaining mock daily limit."
+    },
+    "list_payees": {
+      "kind": "Existing MCP tool-call",
+      "call": "list_payees()",
+      "text": "Assistant lists payee names and masked accounts."
+    }
+  }
+}

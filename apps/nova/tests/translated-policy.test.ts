@@ -70,9 +70,9 @@ describe("Nova generated extensions and actual enforcement", () => {
     const service = new NovaService();
     service.runtime = createEpisode("denial", policy);
     expect(
-      terminalQuery(service.runtime.state, "?- DenyReceive(auditor_a, mH).", "auditor_a").rows,
+      terminalQuery(service.runtime.state, "?- Deny(mH, message_policy).", "auditor_a").rows,
     ).toHaveLength(1);
-    expect(why(service.runtime.state, "DenyReceive(auditor_a, mH)", "auditor_a")).not.toBeNull();
+    expect(why(service.runtime.state, "Deny(mH, message_policy)", "auditor_a")).not.toBeNull();
     service.run({ operation: "settle", id: "mH", revision: 1 });
     const event = service.runtime.state.events.at(-1)!;
     expect(service.selected({ event: event.seq, side: "before" }).policy?.id).toBe(policy.id);
@@ -90,10 +90,10 @@ describe("Nova generated extensions and actual enforcement", () => {
     expect(service.runtime.state.policy).toBeUndefined();
   });
   it("uses a differing generated policy in Why and What-if, never the golden fallback", () => {
-    const runtime = createEpisode("initial", fixture("DenyReceive(P, M) :- Incoming(P, M)."));
+    const runtime = createEpisode("initial", fixture("Deny(M, message_policy) :- Incoming(P, M)."));
     runtime.send("hr", "auditor_a", "plain", "ordinary message");
-    expect(why(runtime.state, "DenyReceive(auditor_a, plain)", "auditor_a")).not.toBeNull();
-    expect(whatIf(runtime.state, "", "", "DenyReceive(auditor_a, plain)").result).toBe(true);
+    expect(why(runtime.state, "Deny(plain, message_policy)", "auditor_a")).not.toBeNull();
+    expect(whatIf(runtime.state, "", "", "Deny(plain, message_policy)").result).toBe(true);
     expect(runtime.settle("plain").allowed).toBe(false);
     expect(runtime.accessible("auditor_a")).toEqual([]);
   });
@@ -120,7 +120,7 @@ describe("Nova generated extensions and actual enforcement", () => {
       readPolicyArtifact({ ...fixture(), protocol: { ...fixture().protocol, replicated: [] } }),
     ).toThrow(/protocol/);
     expect(() => fixture("HasCap(P, C) :- Requires(T, C), Auditor(P).")).toThrow(/cannot write/);
-    expect(() => fixture("DenyReceive(P, M) :- not HasCap(P, C).")).toThrow();
+    expect(() => fixture("Deny(M, message_policy) :- not HasCap(P, C).")).toThrow();
     expect(() => fixture("Finished(G) :- not Finished(G), AuditGoal(G, A, B, C).")).toThrow();
     expect(() => fixture('Finished("nova").')).toThrow(/ground facts/);
   });

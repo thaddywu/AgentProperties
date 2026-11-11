@@ -1,0 +1,120 @@
+--- a/mcp_servers/payments_server.py
++++ b/mcp_servers/payments_server.py
+@@ -7,13 +7,15 @@
+ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  
+ from tool_log import log_call, traced_request, request_id 
+ 
+-from mcp.server.mcpserver import MCPServer
++from mcp.server.fastmcp import FastMCP as MCPServer
++from tool_adapter import guarded  # Adaptation code: wrap existing callbacks.
+ from mcp.types import ToolAnnotations
+ 
+ server = MCPServer("Payments Tools")
+ 
+ BANK_PATH = Path(__file__).resolve().parent.parent / "data" / "bank.json"
+ AGENT = "payments"
++policy_port = None  # Adaptation code: assigned by the trusted host.
+ 
+ 
+ def load_bank():
+@@ -27,7 +29,8 @@
+ 
+ 
+ @server.tool(annotations=ToolAnnotations(
+-    read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=False))
++    readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False))
++@guarded(lambda: policy_port, server)  # Adaptation code: check the original tool call.
+ @traced_request
+ def lookup_recipient(recipient_id: str) -> dict:
+     """Check whether a recipient is registered."""
+@@ -49,7 +52,8 @@
+ 
+ 
+ @server.tool(annotations=ToolAnnotations(
+-    read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=False))
++    readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False))
++@guarded(lambda: policy_port, server)  # Adaptation code: check the original tool call.
+ @traced_request
+ def check_daily_limit(amount: float) -> dict:
+     """Check whether the amount is within the remaining daily limit."""
+@@ -66,7 +70,8 @@
+ 
+ 
+ @server.tool(annotations=ToolAnnotations(
+-    read_only_hint=False, destructive_hint=True, idempotent_hint=False, open_world_hint=False))
++    readOnlyHint=False, destructiveHint=True, idempotentHint=False, openWorldHint=False))
++@guarded(lambda: policy_port, server)  # Adaptation code: check the original tool call.
+ @traced_request
+ def execute_transfer(recipient: str, amount: float) -> dict:
+     """Execute a mock transfer. `recipient` is a registered payee id or a raw account number."""
+--- a/mcp_servers/assistant_server.py
++++ b/mcp_servers/assistant_server.py
+@@ -6,17 +6,14 @@
+ sys.path.insert(0, str(Path(__file__).resolve().parents[1])) 
+ from tool_log import log_call, traced_request, request_id 
+ 
+-from mcp.server.mcpserver import MCPServer
++from mcp.server.fastmcp import FastMCP as MCPServer
++from tool_adapter import guarded  # Adaptation code: wrap existing callbacks.
+ from mcp.types import ToolAnnotations
+ 
+ import os
+ 
+ import httpx
+ from dotenv import load_dotenv
+-from google.protobuf.json_format import ParseDict
+-from a2a.client import ClientFactory, ClientConfig
+-from a2a.helpers import new_text_message
+-from a2a.types import AgentCard, Role, SendMessageRequest, TaskState
+ 
+ load_dotenv(Path(__file__).resolve().parents[1] / ".env")
+ 
+@@ -24,10 +21,11 @@
+ 
+ DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+ AGENT = "assistant"
++policy_port = None  # Adaptation code: assigned by the trusted host.
+ 
+ 
+ @server.tool(annotations=ToolAnnotations(
+-    read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=False))
++    readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False))
+ @traced_request
+ def read_inbox() -> dict:
+     """Read messages from the user's inbox."""
+@@ -40,7 +38,8 @@
+ 
+ 
+ @server.tool(annotations=ToolAnnotations(
+-    read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=False))
++    readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False))
++@guarded(lambda: policy_port, server)  # Adaptation code: check the original tool call.
+ @traced_request
+ def list_payees() -> dict:
+     """List registered payees without exposing full account numbers."""
+@@ -62,6 +61,10 @@
+ 
+ async def call_payments_a2a(request_text: str) -> str:
+     """Send a verification request to Payments via A2A."""
++    from google.protobuf.json_format import ParseDict
++    from a2a.client import ClientFactory, ClientConfig
++    from a2a.helpers import new_text_message
++    from a2a.types import AgentCard, Role, SendMessageRequest, TaskState
+     url = os.environ["PAYMENTS_A2A_URL"].rstrip("/")
+ 
+     async with httpx.AsyncClient(timeout=180.0) as http_client:
+@@ -108,10 +111,10 @@
+ 
+ 
+ @server.tool(annotations=ToolAnnotations(
+-    read_only_hint=True,
+-    destructive_hint=False,
+-    idempotent_hint=False,
+-    open_world_hint=True,
++    readOnlyHint=True,
++    destructiveHint=False,
++    idempotentHint=False,
++    openWorldHint=True,
+ ))
+ @traced_request
+ async def request_payment_verification(request_text: str) -> dict:

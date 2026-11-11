@@ -47,7 +47,7 @@ export function compileExtensions(policies: PolicyExtension[]): Rule[] {
   const rules = extension.rules.filter((r) => r.id !== "query");
   if (!rules.length) throw new Error("Nova extension contains no rules.");
   for (const rule of rules) {
-    if (!["DenyReceive", "Covered", "Finished"].includes(rule.head.predicate))
+    if (!["Deny", "Covered", "Finished"].includes(rule.head.predicate))
       throw new Error(`Extension cannot write ${rule.head.predicate}.`);
     if (
       rule.head.predicate !== "Finished" &&

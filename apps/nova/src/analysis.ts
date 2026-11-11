@@ -202,7 +202,7 @@ export function applyAction(state: RuntimeState, action: Action) {
     throw new Error(
       `Missing source lineage for ${action.sender}. Deliver the Board assignment first.`,
     );
-  const proof = why(runtime.state, `DenyReceive(${action.receiver}, ${id})`, action.receiver);
+  const proof = why(runtime.state, `Deny(${id}, message_policy)`, action.receiver);
   const decision = runtime.settle(id);
   return { runtime, allowed: decision.allowed, proof };
 }

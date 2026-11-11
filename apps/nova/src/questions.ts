@@ -137,14 +137,14 @@ const definitions: Definition[] = [
     id: "denial",
     category: "Communication",
     description: "Explain why a pending message would be blocked for its recipient",
-    template: "WHY DenyReceive({recipient}, {message})",
+    template: "WHY Deny({message}, message_policy)",
     parameters: { recipient: "principal", message: "message" },
     defaults: { recipient: "auditor_a", message: "mH" },
     build: ({ recipient, message }) => ({
       question: `Why would message ${message} to ${name(recipient)} be blocked?`,
       tab: "why",
       scope: recipient,
-      query: `DenyReceive(${c(recipient)}, ${c(message)})`,
+      query: `Deny(${c(message)}, message_policy)`,
     }),
   },
   {
@@ -153,14 +153,14 @@ const definitions: Definition[] = [
     description:
       "Would a pending message still be blocked without one earlier successful receipt? Hypothetical only",
     template:
-      "WHAT-IF REMOVE Received({recipient}, {earlierMessage}); DenyReceive({recipient}, {message})",
+      "WHAT-IF REMOVE Received({recipient}, {earlierMessage}); Deny({message}, message_policy)",
     parameters: { recipient: "principal", message: "message", earlierMessage: "message" },
     defaults: { recipient: "auditor_a", message: "mH", earlierMessage: "mF" },
     build: ({ recipient, message, earlierMessage }) => ({
       question: `Would message ${message} to ${name(recipient)} still be blocked without its earlier receipt of ${earlierMessage}?`,
       tab: "what-if",
       scope: recipient,
-      query: `DenyReceive(${c(recipient)}, ${c(message)})`,
+      query: `Deny(${c(message)}, message_policy)`,
       remove: `Received(${c(recipient)}, ${c(earlierMessage)}).`,
       add: "",
       argumentNotes: ["ADD is empty: this template changes only the specified earlier receipt."],
@@ -171,14 +171,14 @@ const definitions: Definition[] = [
     category: "Communication",
     description:
       "Find the smallest set of successful receipt events to prevent so a pending message is not blocked. eventMessages is the array of earlier delivered message IDs to consider at recipient; do not supply facts or event names.",
-    template: "MIN-PREVENT({eventMessages}, DenyReceive({recipient}, {message}))",
+    template: "MIN-PREVENT({eventMessages}, Deny({message}, message_policy))",
     parameters: { recipient: "principal", message: "message", eventMessages: "messages" },
     defaults: { recipient: "auditor_a", message: "mH", eventMessages: ["mP", "mF"] },
     build: ({ recipient, message, eventMessages }) => ({
       question: `Among ${eventMessages.join(", ")}, which earlier deliveries to ${name(recipient)} should we prevent so message ${message} is not blocked?`,
       tab: "minimal",
       scope: recipient,
-      query: `DenyReceive(${c(recipient)}, ${c(message)})`,
+      query: `Deny(${c(message)}, message_policy)`,
       events: eventMessages
         .map((id, i) => `event${i + 1}:\n  Received(${c(recipient)}, ${c(id)}).`)
         .join("\n"),

@@ -40,7 +40,7 @@
     },
     "Request": {
       "kind": "input",
-      "args": ["RequestId", "Actor", "Action", "Resource"],
+      "args": ["RequestId", "Actor", "Action"],
       "meaning": "Transient gate request created only by the runtime."
     },
     "Allow": {

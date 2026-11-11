@@ -45,7 +45,7 @@ describe("protocol-defined local stores", () => {
       f("MessageTag", "mH", "nova_hiring"),
     );
     expect(runtime.closure("auditor_a").facts).not.toContainEqual(
-      f("DenyReceive", "auditor_a", "mH"),
+      f("Deny", "mH", "message_policy"),
     );
   });
   it("uses protocol patterns to bind local derivation before evaluation", () => {
@@ -126,7 +126,7 @@ describe("protocol-defined local stores", () => {
     const runtime = new NovaRuntime(old);
     expect(runtime.state.revision).toBe(old.revision);
     expect(runtime.state.messages).toEqual(old.messages);
-    expect(contains(runtime.closure("auditor_a").facts, f("DenyReceive", "auditor_a", "mH"))).toBe(
+    expect(contains(runtime.closure("auditor_a").facts, f("Deny", "mH", "message_policy"))).toBe(
       true,
     );
     expect(new NovaRuntime(runtime.snapshot()).state.stores).toEqual(runtime.state.stores);

@@ -11,8 +11,8 @@ export function localityPilot() {
   return ["foreign-negation", "foreign-positive"].map((kind) => {
     const extra =
       kind === "foreign-negation"
-        ? 'DenyReceive("auditor_b", M) :- Incoming("auditor_b", M), MessageTag(M, T), Requires(T, C), not HasCap("auditor_a", C).'
-        : 'DenyReceive("auditor_b", M) :- Incoming("auditor_b", M), HasReceivedTag("auditor_a", "nova_hiring").';
+        ? 'Deny(M, message_policy) :- Incoming("auditor_b", M), MessageTag(M, T), Requires(T, C), not HasCap("auditor_a", C).'
+        : 'Deny(M, message_policy) :- Incoming("auditor_b", M), HasReceivedTag("auditor_a", "nova_hiring").';
     let artifact: NovaPolicyArtifact;
     try {
       artifact = createPolicyArtifact(

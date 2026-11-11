@@ -53,7 +53,7 @@ describe("Nova predicate vocabulary migration", () => {
       expect(
         terminalQuery(runtime.state, "?- HasReceivedTag(auditor_a, Tag).", "auditor_a").rows,
       ).toHaveLength(2);
-      expect(why(runtime.state, "DenyReceive(auditor_a, mH)", "auditor_a")).not.toBeNull();
+      expect(why(runtime.state, "Deny(mH, message_policy)", "auditor_a")).not.toBeNull();
       expect(new NovaRuntime(runtime.snapshot()).snapshot()).toEqual(runtime.snapshot());
       expect(runtime.settle("mH").allowed).toBe(false);
     }

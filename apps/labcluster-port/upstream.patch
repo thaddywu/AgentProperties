@@ -1,0 +1,175 @@
+--- a/core/tools.py
++++ b/core/tools.py
+@@ -1,23 +1,145 @@
+ """Bound Python tool identities; Runner is a simulator tool, not a fourth agent."""
+ from .access import ROLE_TOOLS
+ from .schemas import ApplicationError, fixture
++# Adaptation code: caller-name context and explicit evidence assignments.
++from adapter import caller_from_tools
++from tool_facts import lookup, record_receipt, record_terminal
+ 
+ class Tools:
+     def __init__(self,role,store,trace):self.role,self.store,self.trace=role,store,trace
++    @caller_from_tools  # Adaptation code: read the existing caller name.
+     def call(self,name,args=None,parents=()):
+         if name not in ROLE_TOOLS.get(self.role,()):raise ApplicationError('Operation unavailable to this role.')
+         a=args or {};s=self.store;r=self.role
+-        if name=='view':fn=lambda _:s.view(r)
+-        elif name=='read_job':fn=lambda _:s.read_job(r,a.get('job_id'))
++        policy = s.policy  # Adaptation code: reuse the policy loaded at startup.
++        if name=='view':
++            @policy(name=name, arguments=a)  # Adaptation code: read caller at invocation.
++            def fn(e):return s.view(r)
++        elif name=='read_job':
++            @policy(name=name, arguments=a)  # Adaptation code: read caller at invocation.
++            def fn(e):return s.read_job(r,a.get('job_id'))
+         elif name=='read_private':
+-            fn=lambda _:{x:fixture(x.lower()+'_private') for x in ('Professor','PhD','Master')} if r=='Professor' else fixture(r.lower()+'_private')
+-        elif name=='submit_job':fn=lambda e:s.submit(r,a['spec'],e)
+-        elif name=='revise_job':fn=lambda e:s.revise(r,a['job_id'],a['spec'],e)
+-        elif name=='approve_job':fn=lambda e:s.approve(r,a['job_id'],a['expected_version'],a['approve'],e)
+-        elif name=='dispatch_job':fn=lambda e:s.dispatch(r,a['job_id'],e)
+-        elif name=='record_completion':fn=lambda e:s.record_completion(a['run_id'],e)
+-        elif name=='finish_job':fn=lambda e:s.finish(r,a['job_id'],a['receipt_id'],e)
+-        else:fn=lambda e:s.kill(r,a['job_id'],a['reason'],e)
++            @policy(name=name, arguments=a)  # Adaptation code: read caller at invocation.
++            def fn(e):
++                return {x:fixture(x.lower()+'_private') for x in ('Professor','PhD','Master')} if r=='Professor' else fixture(r.lower()+'_private')
++        elif name=='submit_job':
++            @policy(name=name, arguments=a)  # Adaptation code: read caller at invocation.
++            def fn(e):
++                result=s.submit(r,a['spec'],e)
++                # Adaptation code: stage only the confirmed job fields.
++                if result.get('ok') is not False:
++                    job=result['job']
++                    policy.put('ResourceType', job['id'], 'job')
++                    policy.put('ResourceState', job['id'], job['state'])
++                    # Current job metadata: ID, owner, version, task hash and run ID.
++                    # Job is keyed by ID; put replaces that job's old tuple.
++                    policy.put('Job', job['id'], job['owner'], job['version'],
++                               job['task_hash'], job['run_id'])
++                    spec=job['spec']
++                    policy.put('JobSpec', job['id'], spec['node_type'], spec['cpu_cores'],
++                               spec['memory_gb'], spec['runtime_minutes'])
++                    policy.put('CurrentApproval', job['id'], job['approval_id'])
++                    policy.put('Waiting', job['id'], job['waiting_dispatches'], job['submission_seq'])
++                    policy.put('JobOutcome', job['id'], job['outcome'])
++                    # Adaptation code: identify this task version and record its owner as origin.
++                    job_data = policy.data.reference('job', job['id'], job['task_hash'])
++                    policy.put('RecordData', 'job', job['id'], job_data)
++                    policy.put('Source', job['owner'], job_data)
++                return result
++        elif name=='revise_job':
++            @policy(name=name, arguments=a)  # Adaptation code: read caller at invocation.
++            def fn(e):
++                result=s.revise(r,a['job_id'],a['spec'],e)
++                # Adaptation code: stage only the confirmed job fields.
++                if result.get('ok') is not False:
++                    job=result['job']
++                    policy.put('Job', job['id'], job['owner'], job['version'],
++                               job['task_hash'], job['run_id'])
++                    spec=job['spec']
++                    policy.put('JobSpec', job['id'], spec['node_type'], spec['cpu_cores'],
++                               spec['memory_gb'], spec['runtime_minutes'])
++                    policy.put('CurrentApproval', job['id'], job['approval_id'])
++                    policy.put('Waiting', job['id'], job['waiting_dispatches'], job['submission_seq'])
++                    policy.put('JobOutcome', job['id'], job['outcome'])
++                    # Adaptation code: identify this task version and record its owner as origin.
++                    job_data = policy.data.reference('job', job['id'], job['task_hash'])
++                    policy.put('RecordData', 'job', job['id'], job_data)
++                    policy.put('Source', job['owner'], job_data)
++                return result
++        elif name=='approve_job':
++            @policy(name=name, arguments=a)  # Adaptation code: read caller at invocation.
++            def fn(e):
++                result=s.approve(r,a['job_id'],a['expected_version'],a['approve'],e)
++                # Adaptation code: approval facts or confirmed rejection evidence.
++                if result.get('ok') is not False:
++                    if a['approve']:
++                        approval=result['approval'];spec=approval['limits']
++                        policy.put('Approval', approval['id'], approval['job_id'], approval['job_version'],
++                              approval['task_hash'], approval['issuer'], approval['policy_digest'])
++                        policy.put('ApprovalSpec', approval['id'], spec['node_type'], spec['cpu_cores'],
++                                   spec['memory_gb'], spec['runtime_minutes'])
++                        policy.put('CurrentApproval', approval['job_id'], approval['id'])
++                        # Adaptation code: link this approval to the current task version.
++                        job_data = next(data for kind, identity, data in policy.rows('RecordData')
++                                        if kind == 'job' and identity == approval['job_id'])
++                        approval_data = policy.data.reference('approval', approval['id'])
++                        policy.put('RecordData', 'approval', approval['id'], approval_data)
++                        policy.put('DependsOn', approval_data, job_data)
++                    else:
++                        record_terminal(policy, result)
++                return result
++        elif name=='dispatch_job':
++            @policy(name=name, arguments=a)  # Adaptation code: read caller at invocation.
++            def fn(e):
++                result=s.dispatch(r,a['job_id'],e)
++                # Adaptation code: record the actual run, allocation and waiting deltas.
++                if result.get('ok') is not False:
++                    run=result['run']
++                    policy.put('Run', run['id'], run['job_id'], run['node_id'], run['generation'],
++                               run['task_hash'], run['job_version'])
++                    node,kind,cores,memory,_,_=lookup(policy, 'Node', run['node_id'])
++                    policy.put('Node', node, kind, cores, memory, run['id'], run['generation'])
++                    job,owner,version,digest,_=lookup(policy, 'Job', run['job_id'])
++                    policy.put('Job', job, owner, version, digest, run['id'])
++                    # This pinned cluster has one node per type; Store returns actual competitors.
++                    for candidate in run['candidate_order']:
++                        if candidate['job_id'] != job:
++                            waiting,skips,sequence=lookup(policy, 'Waiting', candidate['job_id'])
++                            policy.put('Waiting', waiting, int(skips)+1, sequence)
++                    policy.put('JobOutcome', job, 'DISPATCHED')
++                    # Adaptation code: link the actual run to its approval evidence.
++                    approval_data = next(data for kind, identity, data in policy.rows('RecordData')
++                                         if kind == 'approval' and identity == run['approval_id'])
++                    run_data = policy.data.reference('run', run['id'])
++                    policy.put('RecordData', 'run', run['id'], run_data)
++                    policy.put('DependsOn', run_data, approval_data)
++                return result
++        elif name=='record_completion':
++            @policy(name=name, arguments=a)  # Adaptation code: read caller at invocation.
++            def fn(e):
++                result=s.record_completion(a['run_id'],e)
++                # Adaptation code: share receipt field assignments with stop receipts.
++                if result.get('ok') is not False:
++                    record_receipt(policy, result['receipt'])
++                return result
++        elif name=='finish_job':
++            @policy(name=name, arguments=a)  # Adaptation code: read caller at invocation.
++            def fn(e):
++                result=s.finish(r,a['job_id'],a['receipt_id'],e)
++                # Adaptation code: verify completion and record allocation release.
++                if result.get('ok') is not False:
++                    record_terminal(policy, result)
++                return result
++        else:
++            @policy(name=name, arguments=a)  # Adaptation code: read caller at invocation.
++            def fn(e):
++                result=s.kill(r,a['job_id'],a['reason'],e)
++                # Adaptation code: a failed stop records nothing.
++                if result.get('ok') is not False:
++                    record_terminal(policy, result)
++                    if result.get('code') != 'ALREADY_TERMINAL':
++                        policy.put('StopReason', result['job']['id'], result['job']['outcome'])
++                return result
+         sources=['fixtures/cluster.json']
+         if name=='read_private':
+             sources += [f'fixtures/{x.lower()}_private.json' for x in (('Professor','PhD','Master') if r=='Professor' else (r,))]
+--- a/core/messaging.py
++++ b/core/messaging.py
+@@ -1,12 +1,14 @@
+ """Explicit agent mailboxes. Phase 1 free-text messages have no global content guard."""
+ from copy import deepcopy
+ from .schemas import ApplicationError, ROLES
++from message_adapter import guard_completion_reports  # Adaptation code: guard the original sender.
+ 
+ class Bus:
+     def __init__(self, trace):
+         self.trace=trace
+         self.inboxes={r:[] for r in ROLES}
+ 
++    @guard_completion_reports(ApplicationError)  # Adaptation code: authorize before delivery.
+     def send(self, sender, recipient, kind, body, parents=(), origin='application'):
+         if sender not in ROLES or recipient not in ROLES or sender==recipient:
+             raise ApplicationError('Invalid message route.')

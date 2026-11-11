@@ -55,7 +55,7 @@ The current Nova profile has 11 EDB and 6 IDB predicates. “Placement” below 
 | `MayDependOn(Mout, Min)` | IDB at sender, derived from receive/send/order evidence. | Fixed IFC foundation for the selected dependency policy. Not a model-authored opportunity to omit causal inputs. |
 | `MessageTag(M, Tag)` | IDB from trusted source tags, imported envelope tags and dependency inheritance, in each local store. | Fixed IFC foundation. Translator can refer to it but must not replace source/import bridges or weaken propagation. |
 | `HasReceivedTag(P, Tag)` | IDB at P from successful receipts and message labels. | Fixed IFC foundation for tracked received knowledge. Does not mean semantic knowledge of every fact in the world, or knowledge from arbitrary uninstrumented tools. |
-| `DenyReceive(P, M)` | Recipient-local IDB consumed by `settle`. | Reserved kernel decision hook. Translated constraints may derive it; the runtime owns the matching, refusal and cleanup semantics. |
+| `Deny(M, message_policy)` | Recipient-local IDB consumed by `settle`. | Reserved kernel decision hook. Translated constraints may derive it; the runtime owns the matching, refusal and cleanup semantics. |
 | `Covered(Tag)` | IDB derived at each local auditor from successful receipts and configured auditor roles. | App-specific coverage semantics. Translation may define it. No audit-summary export is required by the current Nova protocol. |
 | `Finished(Group)` | Observer-only output computed from the union of local closures. | App-specific goal/result. No privileged kernel meaning. Evaluate at configured observers with sufficient authorized evidence; do not silently join all stores. |
 
@@ -108,7 +108,7 @@ Locality validation must check body access as well as head placement. A rule for
 
 The model may propose a need for an additional observer/export route, but a missing authorized route blocks installation or requests clarification. Merely predicting that a rule would be easier at a global observer must not authorize exporting another principal's data. For the first Nova extraction keep the current routing/locality contract and validate generated rules against it. Later expose a constrained, reviewable deployment-plan proposal if real apps require it.
 
-Keep receive-gate semantics explicit. Nova currently permits a valid, well-formed receive when no `DenyReceive` is derived; the generic action API requires explicit Allow and no Deny. Neither policy can be silently selected by naming a predicate. Preserve Nova's deny-based receive semantics in its profile, while treating validation, invalid-envelope and engine failures as failures that cannot deliver.
+Keep receive-gate semantics explicit. Nova currently permits a valid, well-formed receive when no `Deny` is derived; the generic action API requires explicit Allow and no Deny. Neither policy can be silently selected by naming a predicate. Preserve Nova's deny-based receive semantics in its profile, while treating validation, invalid-envelope and engine failures as failures that cannot deliver.
 
 ## Type-state machines
 

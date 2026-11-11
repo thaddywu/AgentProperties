@@ -15,14 +15,14 @@ import { contains, evaluate, f } from "../src/policy.js";
 import { createEpisode, inputs, NovaRuntime, view } from "../src/runtime.js";
 import { allRecords, putRecord } from "../src/store-records.js";
 
-const q = "DenyReceive(auditor_a, mH)";
+const q = "Deny(mH, message_policy)";
 const findAction = (sender: string, receiver: string) =>
   ACTIONS.find((a) => a.sender === sender && a.receiver === receiver)!;
 
 describe("executable Nova policy reasoning", () => {
   it("derives the base denial from runtime events and proves it back to received protocol labels", () => {
     const r = createEpisode();
-    expect(contains(r.closure("auditor_a").facts, f("DenyReceive", "auditor_a", "mH"))).toBe(true);
+    expect(contains(r.closure("auditor_a").facts, f("Deny", "mH", "message_policy"))).toBe(true);
     const proof = JSON.stringify(why(r.state, q));
     for (const name of ["Incoming", "MessageTag", "HasReceivedTag", "Received", "TransportTag"])
       expect(proof).toContain(name);
@@ -39,7 +39,7 @@ describe("executable Nova policy reasoning", () => {
     const result = whatIf(r.state, "Received(auditor_a, mF).", "", q);
     expect(result.result).toBe(false);
     expect(result.removed).toContainEqual(f("HasReceivedTag", "auditor_a", "nova_facility"));
-    expect(result.removed).toContainEqual(f("DenyReceive", "auditor_a", "mH"));
+    expect(result.removed).toContainEqual(f("Deny", "mH", "message_policy"));
     expect(JSON.stringify(r.state)).toBe(before);
   });
   it("computes both minimum one-event alternatives and responds to changed event sets", () => {
@@ -56,7 +56,7 @@ describe("executable Nova policy reasoning", () => {
       action = findAction("hr", "auditor_b");
     const denied = applyAction(r.state, action);
     expect(denied.allowed).toBe(false);
-    expect(denied.proof?.fact).toBe('DenyReceive("auditor_b", "mH")');
+    expect(denied.proof?.fact).toBe('Deny("mH", "message_policy")');
     expect(denied.runtime.closure("auditor_b").facts).not.toContainEqual(
       f("HasCap", "auditor_b", "hr_review"),
     );
@@ -101,7 +101,7 @@ describe("executable Nova policy reasoning", () => {
       (f) => !["TrustedSource", "TransportTag", "AuditReceipt"].includes(f.predicate),
     );
     const result = evaluate(input);
-    for (const name of ["MessageTag", "HasReceivedTag", "DenyReceive", "Covered", "Finished"])
+    for (const name of ["MessageTag", "HasReceivedTag", "Deny", "Covered", "Finished"])
       expect(result.facts.some((f) => f.predicate === name)).toBe(false);
     expect(() => evaluate([...input, f("Finished", "nova")])).toThrow(/read-only/);
     expect(() =>
@@ -116,7 +116,7 @@ describe("executable Nova policy reasoning", () => {
     expect(r.accessible("auditor_a")).toEqual(before);
     expect(inputs(r.state)).not.toContainEqual(f("Received", "auditor_a", "mH"));
     expect(inputs(r.state).some((f) => f.predicate === "Incoming")).toBe(false);
-    expect(r.state.events.at(-1)?.check).toContainEqual(f("DenyReceive", "auditor_a", "mH"));
+    expect(r.state.events.at(-1)?.check).toContainEqual(f("Deny", "mH", "message_policy"));
     expect(() => r.settle("mH")).toThrow(/pending/);
   });
   it("checks every pending receive against current state, so interleaved sends cannot bypass the limit", () => {
@@ -181,17 +181,17 @@ describe("executable Nova policy reasoning", () => {
       ),
       ...inputs(new NovaRuntime().state),
     ];
-    expect(evaluate(input).facts).toContainEqual(f("DenyReceive", "auditor_a", "bundle"));
+    expect(evaluate(input).facts).toContainEqual(f("Deny", "bundle", "message_policy"));
     const board = input
       .filter((f) => f.predicate !== "Incoming" && f.predicate !== "Requires")
       .concat(f("Incoming", "board", "bundle"));
-    expect(evaluate(board).facts.some((f) => f.predicate === "DenyReceive")).toBe(false);
+    expect(evaluate(board).facts.some((f) => f.predicate === "Deny")).toBe(false);
   });
   it("knows only allowed receives, and no derived fact is persisted as input", () => {
     const r = createEpisode();
     expect(
       allRecords(r.state).some((r) =>
-        ["HasReceivedTag", "MessageTag", "DenyReceive", "Finished"].includes(r.fact.predicate),
+        ["HasReceivedTag", "MessageTag", "Deny", "Finished"].includes(r.fact.predicate),
       ),
     ).toBe(false);
     expect(allRecords(r.state).map((r) => `${r.owner}:${factKey(r.fact)}`).length).toBe(

@@ -22,7 +22,7 @@ describe("observer-only completion", () => {
             id: "P1",
             basis: "extension",
             notes: "test",
-            datalog: `DenyReceive(P, M) :- Incoming(P, M), ${body}.`,
+            datalog: `Deny(M, message_policy) :- Incoming(P, M), ${body}.`,
           },
         ]),
       ).toThrow(/Observer-only/);

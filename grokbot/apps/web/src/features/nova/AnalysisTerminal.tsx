@@ -110,9 +110,9 @@ export function AnalysisTerminal({
 }) {
   const [tab, setTab] = useState<Tab>("query");
   const [program, setProgram] = useState("?- HasReceivedTag(A, Tag).");
-  const [whyQuery, setWhyQuery] = useState("DenyReceive(auditor_a, mH)");
-  const [whatQuery, setWhatQuery] = useState("DenyReceive(auditor_a, mH)");
-  const [minQuery, setMinQuery] = useState("DenyReceive(auditor_a, mH)");
+  const [whyQuery, setWhyQuery] = useState("Deny(mH, message_policy)");
+  const [whatQuery, setWhatQuery] = useState("Deny(mH, message_policy)");
+  const [minQuery, setMinQuery] = useState("Deny(mH, message_policy)");
   const [remove, setRemove] = useState("Received(auditor_a, mF).");
   const [add, setAdd] = useState("");
   const [events, setEvents] = useState(PREVENTABLE_PRESET);

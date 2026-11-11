@@ -6,8 +6,8 @@ import { boundedEquivalence, dimacs } from "@rakazo/policy-runtime/bounded-equiv
 import { factKey } from "@rakazo/policy-runtime/datalog";
 import { testFiniteEquivalence } from "@rakazo/policy-runtime/finite-domain";
 import { runSouffle } from "@rakazo/policy-runtime/souffle";
-import { readPolicyArtifact } from "../translated-policy.js";
 import { novaComparison } from "./comparison-domain.js";
+import { recordedPolicy } from "./recorded-policy.js";
 import { miniSatSolver } from "./sat-solver.js";
 import { testNovaTraces } from "./trace-testing.js";
 
@@ -42,19 +42,19 @@ const artifacts = values.artifact
     );
 const results = [];
 for (const [index, source] of artifacts.entries()) {
-  const policy = readPolicyArtifact(JSON.parse(source));
+  const policy = recordedPolicy(JSON.parse(source));
   const cases = [
     {
       name: "denial-with-prior-exposure-allowed",
       grouping: "fixed" as const,
       noPriorExposure: false,
-      observables: ["DenyReceive"],
+      observables: ["Deny"],
     },
     {
       name: "denial-no-prior-exposure",
       grouping: "fixed" as const,
       noPriorExposure: true,
-      observables: ["DenyReceive"],
+      observables: ["Deny"],
     },
     {
       name: "completion-variable-grouping",

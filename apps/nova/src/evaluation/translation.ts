@@ -19,7 +19,7 @@ const normalize = (rules: Rule[]) => {
 };
 const selectedKeys = (facts: PolicyFact[]) =>
   facts
-    .filter((f) => ["DenyReceive", "Covered", "HasReceivedTag", "MessageTag"].includes(f.predicate))
+    .filter((f) => ["Deny", "Covered", "HasReceivedTag", "MessageTag"].includes(f.predicate))
     .map(factKey)
     .sort();
 const scenarios: { name: string; tags: string[]; groups: [string, string][] }[] = [
@@ -115,7 +115,7 @@ export function translationPilot(policy?: NovaPolicyArtifact) {
               (fact) => ({ ...fact, args: fact.args.map(decode) }),
             );
             const observedAllow = !facts.some(
-              (fact) => factKey(fact) === factKey(f("DenyReceive", recipient, "pending")),
+              (fact) => factKey(fact) === factKey(f("Deny", "pending", "message_policy")),
             );
             const observedCoverage = facts
               .filter((f) => f.predicate === "Covered")

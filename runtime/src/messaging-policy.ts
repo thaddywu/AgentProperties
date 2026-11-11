@@ -24,7 +24,7 @@ export const MESSAGING_PREDICATES: Record<string, PredicateDefinition> = {
   MayDependOn: { args: ["OutputMessage", "InputMessage"], kind: "derived", source: "inference" },
   MessageTag: { args: ["Message", "Tag"], kind: "derived", source: "inference" },
   HasReceivedTag: { args: ["Principal", "Tag"], kind: "derived", source: "inference" },
-  DenyReceive: { args: ["Principal", "Message"], kind: "derived", source: "inference" },
+  Deny: { args: ["Request", "Reason"], kind: "derived", source: "inference" },
 };
 
 const f = (predicate: string, ...args: string[]): PolicyFact => ({ predicate, args });
@@ -59,7 +59,7 @@ export const MESSAGING_RULES = {
   ]),
   capability: rule(
     "capability",
-    f("DenyReceive", "P", "M"),
+    f("Deny", "M", "message_policy"),
     [
       f("Incoming", "P", "M"),
       f("MessageTag", "M", "Tag"),

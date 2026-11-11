@@ -12,7 +12,7 @@ import type { NovaPolicyArtifact } from "../translated-policy.js";
 import { rulesFor } from "../translated-policy.js";
 import { NOVA_TAGS, subset } from "./oracle.js";
 
-const outputs = ["DenyReceive", "HasReceivedTag", "Covered", "Finished"];
+const outputs = ["Deny", "HasReceivedTag", "Covered", "Finished"];
 const projected = (facts: PolicyFact[], predicate: string) =>
   facts
     .filter((f) => f.predicate === predicate)

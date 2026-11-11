@@ -249,10 +249,7 @@ export function NovaApp() {
             <div className="mx-auto max-w-2xl space-y-5">
               {messages.map((message) => {
                 const denial = state?.derived.find(
-                  (r) =>
-                    r.fact.predicate === "DenyReceive" &&
-                    r.fact.args[0] === message.to &&
-                    r.fact.args[1] === message.id,
+                  (r) => r.fact.predicate === "Deny" && r.fact.args[0] === message.id,
                 );
                 return (
                   <article

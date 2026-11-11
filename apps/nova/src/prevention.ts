@@ -24,11 +24,8 @@ export function closureConformance(state: RuntimeState) {
     .map((message) => ({
       principal: message.to,
       message: message.id,
-      localDeny: contains(
-        distributed.stores[message.to]!,
-        f("DenyReceive", message.to, message.id),
-      ),
-      fullCopyDeny: contains(baseline, f("DenyReceive", message.to, message.id)),
+      localDeny: contains(distributed.stores[message.to]!, f("Deny", message.id, "message_policy")),
+      fullCopyDeny: contains(baseline, f("Deny", message.id, "message_policy")),
     }));
   return {
     equivalent:
@@ -148,10 +145,9 @@ function trial(test: Case, policy?: NovaPolicyArtifact) {
   let error: string | null = null;
   try {
     test.execute(runtime, (id, expected) => {
-      const pending = runtime.state.messages.find((message) => message.id === id)!;
       const fullCopyDeny = contains(
         runSouffle(inputs(runtime.state), rulesFor(runtime.state)).facts,
-        f("DenyReceive", pending.to, id),
+        f("Deny", id, "message_policy"),
       );
       const result = runtime.settle(id),
         recipient = result.message.to;
@@ -161,7 +157,7 @@ function trial(test: Case, policy?: NovaPolicyArtifact) {
         allowed: result.allowed,
         expected,
         fullCopyDeny,
-        denyDerived: contains(result.evaluation.facts, f("DenyReceive", recipient, id)),
+        denyDerived: contains(result.evaluation.facts, f("Deny", id, "message_policy")),
         received: contains(
           localClosure(runtime.state, recipient).facts,
           f("Received", recipient, id),

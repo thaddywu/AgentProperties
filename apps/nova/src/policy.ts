@@ -28,7 +28,7 @@ export const NOVA_PREDICATES: Record<string, PredicateDefinition> = {
 export const NOVA_RULES: Rule[] = [
   rule(
     "three-tag-exposure",
-    f("DenyReceive", "P", "M"),
+    f("Deny", "M", "message_policy"),
     [
       f("Incoming", "P", "M"),
       f("MessageTag", "M", "T3"),
@@ -44,7 +44,7 @@ export const NOVA_RULES: Rule[] = [
   // The TeX's single-part case is above. Cover multi-label messages as well.
   rule(
     "three-tag-two-incoming",
-    f("DenyReceive", "P", "M"),
+    f("Deny", "M", "message_policy"),
     [
       f("Incoming", "P", "M"),
       f("MessageTag", "M", "T2"),
@@ -59,7 +59,7 @@ export const NOVA_RULES: Rule[] = [
   ),
   rule(
     "three-tag-all-incoming",
-    f("DenyReceive", "P", "M"),
+    f("Deny", "M", "message_policy"),
     [
       f("Incoming", "P", "M"),
       f("MessageTag", "M", "T1"),

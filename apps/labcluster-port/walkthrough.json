@@ -1,0 +1,982 @@
+{
+  "application": "LabCluster",
+  "upstream": {
+    "url": "https://github.com/CeciliaTheBirb/CS239_LabCluster_QianxunXu",
+    "revision": "c5ca03d0cc35651fa49c8d637074e8258a1a715e",
+    "policyFile": "policies.md"
+  },
+  "requirements": [
+    {
+      "id": "P1.1",
+      "policyId": "P1",
+      "start": 0,
+      "end": 144,
+      "statement": "**Role permissions and resource limits:** Professor manages scheduling; students manage only their own jobs within their role's resource limits.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "title": "Recognize trusted student and Professor groups.",
+      "distilled": "Datalog + bound principal",
+      "detail": "Group memberships are static facts in rules.dl; the original bound identities do not come from agent arguments.",
+      "ruleIds": [
+        "r0",
+        "r1",
+        "r2",
+        "r3"
+      ],
+      "relatedRuleIds": [],
+      "source": "**Role permissions and resource limits:** Professor manages scheduling; students manage only their own jobs within their role's resource limits.",
+      "guideNote": ""
+    },
+    {
+      "id": "P1.2",
+      "policyId": "P1",
+      "start": 144,
+      "end": 246,
+      "statement": "Only Professor may approve or reject student requests, dispatch jobs, or stop another student's job.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "title": "Reserve approve, reject, dispatch and administrative stop for Professor.",
+      "distilled": "Datalog permissions + confirmed tool effects",
+      "detail": "Only a Professor-bound request can match these Allow rules. Lifecycle, approval and scheduling conditions are refined in P3-P5; a failed stop confirmation commits no state change.",
+      "ruleIds": [
+        "r8",
+        "r9",
+        "r29",
+        "r31"
+      ],
+      "relatedRuleIds": [],
+      "source": "  Only Professor may approve or reject student requests, dispatch jobs, or stop another student's job.",
+      "guideNote": ""
+    },
+    {
+      "id": "P1.3",
+      "policyId": "P1",
+      "start": 246,
+      "end": 348,
+      "statement": "PhD and Master may submit jobs and read, revise, cancel or report completion only for their own jobs.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "title": "Students submit within quota and operate only on their own jobs.",
+      "distilled": "Guarded job tools + structured completion-report gate",
+      "detail": "Submit binds the original caller as owner. Job tool guards and a Bus.send decorator enforce student ownership before effects. COMPLETION_REPORT uses the host-supplied sender and actual body.job_id; rejected reports create no delivery trace or inbox entry. This covers the app-defined structured protocol, not arbitrary free-text claims. Professor retains original finish_job access.",
+      "ruleIds": [
+        "r6",
+        "r7",
+        "r30",
+        "completion-report"
+      ],
+      "relatedRuleIds": [
+        "r10",
+        "r13",
+        "r18"
+      ],
+      "source": " PhD and Master may submit jobs and read, revise, cancel or report completion only for their own jobs.",
+      "guideNote": ""
+    },
+    {
+      "id": "P1.4",
+      "policyId": "P1",
+      "start": 348,
+      "end": 441,
+      "statement": "Master may request CPU only, with at most 4 cores, 8 GB and 20 minutes of requested runtime.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "title": "Master uses CPU with cores <= 4, memory <= 8 GB and requested minutes <= 20.",
+      "distilled": "Rules + original backend validation",
+      "detail": "Quota is reviewed .dl configuration. The original Store still validates schemas and quotas; the policy gate adds the Datalog check before the unchanged operation.",
+      "ruleIds": [
+        "r4",
+        "r5"
+      ],
+      "relatedRuleIds": [],
+      "source": " Master may request CPU only, with at most 4 cores, 8 GB and 20 minutes of requested runtime.",
+      "guideNote": "Original validate_spec checks positive integers."
+    },
+    {
+      "id": "P1.5",
+      "policyId": "P1",
+      "start": 441,
+      "end": 513,
+      "statement": "PhD may request CPU or GPU, with at most 8 cores, 32 GB and 60 minutes.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "title": "PhD uses CPU or GPU with cores <= 8, memory <= 32 GB and minutes <= 60.",
+      "distilled": "Same rules; different quota facts",
+      "detail": "The same Datalog quota rules use the PhD group facts from .dl.",
+      "ruleIds": [],
+      "relatedRuleIds": [
+        "r4",
+        "r5"
+      ],
+      "source": " PhD may request CPU or GPU, with at most 8 cores, 32 GB and 60 minutes.",
+      "guideNote": ""
+    },
+    {
+      "id": "P1.6",
+      "policyId": "P1",
+      "start": 513,
+      "end": 645,
+      "statement": "Requests outside the owner's quota must not be admitted or dispatched; Professor cannot override these limits or physical capacity.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "title": "Reject over-quota admission and dispatch; require a free node with enough capacity.",
+      "distilled": "Rules + allocation invariant",
+      "detail": "Requested runtime is an admission limit, not an elapsed-time watchdog. Dispatch combines WithinJobQuota and FreeCompatible in P5.",
+      "ruleIds": [
+        "r20"
+      ],
+      "relatedRuleIds": [
+        "r4",
+        "r5",
+        "r22",
+        "r34"
+      ],
+      "source": " Requests outside the owner's quota must not be admitted or dispatched; Professor cannot override these limits or physical capacity.",
+      "guideNote": ""
+    },
+    {
+      "id": "P2.1",
+      "policyId": "P2",
+      "start": 0,
+      "end": 140,
+      "statement": "**Information flow and isolation:** PhD and Master keep their work private from each other, while Professor may inspect both students' work.",
+      "implementation": "datalog",
+      "relation": "partial",
+      "title": "Gate single-job reads and retain original bulk/private filtering.",
+      "distilled": "Datalog read gate + original output filtering",
+      "detail": "Readable gates single-job reads. Original view/read_private still filter their own results. QueueViewer and PrivateReadable are currently analysis-only. Datalog can derive visible record/field IDs for a trusted result adapter to project before disclosure; that projection is not yet connected.",
+      "ruleIds": [
+        "r10",
+        "r11",
+        "r12",
+        "r13",
+        "r14",
+        "r15",
+        "private-owner",
+        "private-professor"
+      ],
+      "relatedRuleIds": [],
+      "source": "**Information flow and isolation:** PhD and Master keep their work private from each other, while Professor may inspect both students' work.",
+      "guideNote": "Original view/read_private filter outputs; QueueViewer and PrivateReadable are analysis-only."
+    },
+    {
+      "id": "P2.2",
+      "policyId": "P2",
+      "start": 140,
+      "end": 301,
+      "statement": "Neither student may receive the other's private job specifications, inputs, results, approvals or execution receipts through tools, model contexts or messages.",
+      "implementation": "unsupported",
+      "relation": "partial",
+      "title": "Prevent peer disclosure across every output channel.",
+      "distilled": "Partial: storage tools only",
+      "detail": "Tool reads are scoped, but message/context IFC is incomplete. The original T2 UNSAFE_PEER_NOTE delivers private PhD data to Master outside the completion-report guard. Trusted adapters must bind actual data versions and record DependsOn before release; agents cannot supply trusted lineage. Professor mixed-private contexts also require a precision/usability decision.",
+      "ruleIds": [],
+      "relatedRuleIds": [
+        "r10",
+        "r11",
+        "r13",
+        "r14"
+      ],
+      "source": "  Neither student may receive the other's private job specifications, inputs, results, approvals or execution receipts through tools, model contexts or messages.",
+      "guideNote": ""
+    },
+    {
+      "id": "P2.3",
+      "policyId": "P2",
+      "start": 301,
+      "end": 451,
+      "statement": "Students may send their own task details to Professor, who may inspect both students' records and share private details only with the owning student.",
+      "implementation": "unsupported",
+      "relation": "partial",
+      "title": "Permit owner-to-Professor sharing and owner-specific replies.",
+      "distilled": "Not enforced on messages",
+      "detail": "No general send/receive IFC gate is installed. The P1.3 decorator checks only structured completion-report ownership; arbitrary body text and other message types remain unmediated.",
+      "ruleIds": [],
+      "relatedRuleIds": [],
+      "source": " Students may send their own task details to Professor, who may inspect both students' records and share private details only with the owning student.",
+      "guideNote": ""
+    },
+    {
+      "id": "P2.4",
+      "policyId": "P2",
+      "start": 451,
+      "end": 569,
+      "statement": "Forbidden and nonexistent job lookups must both return UNAVAILABLE without revealing whether a private record exists.",
+      "implementation": "adapter",
+      "relation": "equivalent",
+      "title": "Return the same public response for a forbidden or missing job.",
+      "distilled": "Rules + refusal adapter",
+      "detail": "No matching Readable means no Allow. The adapter returns the original UNAVAILABLE shape without executing the read.",
+      "ruleIds": [],
+      "relatedRuleIds": [
+        "r13"
+      ],
+      "source": " Forbidden and nonexistent job lookups must both return UNAVAILABLE without revealing whether a private record exists.",
+      "guideNote": ""
+    },
+    {
+      "id": "P2.5",
+      "policyId": "P2",
+      "start": 569,
+      "end": 728,
+      "statement": "Role quotas, node specifications and aggregate busy/free availability are public; this boundary does not prevent inference from public timing or availability.",
+      "implementation": "adapter",
+      "relation": "equivalent",
+      "title": "Keep quotas, node capacity and aggregate availability public.",
+      "distilled": "Original scoped output",
+      "detail": "The original Store.view returns public capacity/availability and omits allocation tokens. No view-to-EDB mapping runs; timing inference remains outside scope.",
+      "ruleIds": [],
+      "relatedRuleIds": [],
+      "source": " Role quotas, node specifications and aggregate busy/free availability are public; this boundary does not prevent inference from public timing or availability.",
+      "guideNote": "Original Store.view returns public fields and filters private collections."
+    },
+    {
+      "id": "P2.6",
+      "policyId": "P2",
+      "start": 728,
+      "end": 844,
+      "statement": "The authorized evaluator may inspect complete synthetic traces, but student agents must not receive that full view.",
+      "implementation": "unsupported",
+      "relation": "partial",
+      "title": "Restrict full evaluator traces to the evaluator.",
+      "distilled": "Original convention; not a runtime guarantee",
+      "detail": "The original Trace/export machinery is unchanged and not exposed by these tools. Deployment and any export endpoint must separately preserve this boundary.",
+      "ruleIds": [],
+      "relatedRuleIds": [],
+      "source": " The authorized evaluator may inspect complete synthetic traces, but student agents must not receive that full view.",
+      "guideNote": ""
+    },
+    {
+      "id": "P2.7",
+      "policyId": "P2",
+      "start": 844,
+      "end": 923,
+      "statement": "API credentials must never appear in agent prompts, traces or submitted files.",
+      "implementation": "unsupported",
+      "relation": "partial",
+      "title": "Keep credentials out of prompts, traces and submissions.",
+      "distilled": "Not established by these rules",
+      "detail": "No credential detector or complete secret-flow instrumentation is installed. Do not translate this obligation into a fictitious always-successful rule.",
+      "ruleIds": [],
+      "relatedRuleIds": [],
+      "source": " API credentials must never appear in agent prompts, traces or submitted files.",
+      "guideNote": ""
+    },
+    {
+      "id": "P3.1",
+      "policyId": "P3",
+      "start": 0,
+      "end": 139,
+      "statement": "**Evidence for job decisions:** Starting a job requires a current approval record; marking it completed requires a matching runner receipt.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "title": "Require recorded approval to start and recorded runner evidence to finish.",
+      "distilled": "Datalog + committed EDB evidence",
+      "detail": "P3.2 and P3.5 give the two exact joins. A natural-language agent claim creates neither record.",
+      "ruleIds": [],
+      "relatedRuleIds": [
+        "r16",
+        "r17",
+        "r18",
+        "r29"
+      ],
+      "source": "**Evidence for job decisions:** Starting a job requires a current approval record; marking it completed requires a matching runner receipt.",
+      "guideNote": ""
+    },
+    {
+      "id": "P3.2",
+      "policyId": "P3",
+      "start": 139,
+      "end": 272,
+      "statement": "Before dispatch, require a successful Professor approval record matching the job's current task version and exact resource request.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "title": "Match approval to the current job version, exact spec and policy.",
+      "distilled": "Rules + confirmed result adapter",
+      "detail": "The original approve method returns its actual approval. The tool helper records Approval, ApprovalSpec and CurrentApproval without reading Store.snapshot.",
+      "ruleIds": [
+        "r16"
+      ],
+      "relatedRuleIds": [],
+      "source": "  Before dispatch, require a successful Professor approval record matching the job's current task version and exact resource request.",
+      "guideNote": "The approval tool branch directly writes Approval, ApprovalSpec and CurrentApproval."
+    },
+    {
+      "id": "P3.3",
+      "policyId": "P3",
+      "start": 272,
+      "end": 370,
+      "statement": "Only QUEUED jobs may be revised; a revision invalidates the approval and requires another review.",
+      "implementation": "adapter",
+      "relation": "equivalent",
+      "title": "Revise only QUEUED work and invalidate the old approval.",
+      "distilled": "Datalog + original revise result",
+      "detail": "The unchanged Store.revise increments the version and clears approval. The adapter records the returned Job/JobSpec/CurrentApproval; re-evaluation removes the previous MatchingApproval answer.",
+      "ruleIds": [],
+      "relatedRuleIds": [
+        "r7",
+        "r16"
+      ],
+      "source": " Only QUEUED jobs may be revised; a revision invalidates the approval and requires another review.",
+      "guideNote": "Original revise increments version and clears approval; the helper records both."
+    },
+    {
+      "id": "P3.4",
+      "policyId": "P3",
+      "start": 370,
+      "end": 427,
+      "statement": "Approval leaves the job QUEUED without reserving a node.",
+      "implementation": "adapter",
+      "relation": "partial",
+      "title": "Approval records evidence without allocating a node or starting a job.",
+      "distilled": "Original approval + SDK lifecycle protection",
+      "detail": "Original approval stores evidence without changing business state. Its confirmed result updates policy inputs, with no ResourceState transition.",
+      "ruleIds": [],
+      "relatedRuleIds": [],
+      "source": " Approval leaves the job QUEUED without reserving a node.",
+      "guideNote": "Approval leaves the job QUEUED without reserving a node."
+    },
+    {
+      "id": "P3.5",
+      "policyId": "P3",
+      "start": 427,
+      "end": 539,
+      "statement": "Before marking a job COMPLETED, require a prior simulator-issued completion receipt for that job's current run.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "title": "Complete only with a successful simulator receipt for the current run and allocation.",
+      "distilled": "Rules + original finish method",
+      "detail": "The original simulator returns its receipt; the adapter records it and its dependencies. Original finish confirms the completed job and release before the runtime commits the policy-state transition.",
+      "ruleIds": [
+        "r17",
+        "r18",
+        "r19"
+      ],
+      "relatedRuleIds": [],
+      "source": " Before marking a job COMPLETED, require a prior simulator-issued completion receipt for that job's current run.",
+      "guideNote": "The helper records the runner receipt; finish checks it before completion."
+    },
+    {
+      "id": "P3.6",
+      "policyId": "P3",
+      "start": 539,
+      "end": 614,
+      "statement": "These records must identify their source and the task or run they support.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "title": "Retain the origin and supported task/run of each decision record.",
+      "distilled": "Shared provenance + result adapter",
+      "detail": "Successful original tool results supply record IDs and references; the tool helper records Source and DependsOn in one EDB batch. This is decision-record lineage, not complete message/context IFC, and does not authenticate contents.",
+      "ruleIds": [],
+      "relatedRuleIds": [
+        "r17"
+      ],
+      "source": " These records must identify their source and the task or run they support.",
+      "guideNote": "The helper records actual job, approval, run and receipt references."
+    },
+    {
+      "id": "P4.1",
+      "policyId": "P4",
+      "start": 0,
+      "end": 149,
+      "statement": "**Four-state lifecycle and exclusive ownership:** Jobs follow the allowed state transitions, and a node belongs to at most one running job at a time.",
+      "implementation": "adapter",
+      "relation": "equivalent",
+      "title": "Use the declared lifecycle and preserve exclusive allocations.",
+      "distilled": "FSM + application invariant",
+      "detail": "P4.2-P4.8 separate the state graph from actual backend state and allocation consistency.",
+      "ruleIds": [],
+      "relatedRuleIds": [
+        "r34",
+        "r35",
+        "r36",
+        "r37"
+      ],
+      "source": "**Four-state lifecycle and exclusive ownership:** Jobs follow the allowed state transitions, and a node belongs to at most one running job at a time.",
+      "guideNote": "The state and allocation requirements follow below."
+    },
+    {
+      "id": "P4.2",
+      "policyId": "P4",
+      "start": 149,
+      "end": 213,
+      "statement": "The only states are QUEUED, RUNNING, COMPLETED and TERMINATED.",
+      "implementation": "adapter",
+      "relation": "equivalent",
+      "title": "Admit only QUEUED, RUNNING, COMPLETED and TERMINATED.",
+      "distilled": "Rules + shared FSM",
+      "detail": "The Datalog invariant checks admitted state labels. ResourceState is a single current row per resource; the runtime removes the old value on confirmed transition.",
+      "ruleIds": [
+        "r38",
+        "r39",
+        "r40"
+      ],
+      "relatedRuleIds": [],
+      "source": "  The only states are QUEUED, RUNNING, COMPLETED and TERMINATED.",
+      "guideNote": ""
+    },
+    {
+      "id": "P4.3",
+      "policyId": "P4",
+      "start": 213,
+      "end": 240,
+      "statement": "Submission creates QUEUED.",
+      "implementation": "adapter",
+      "relation": "equivalent",
+      "title": "Create each new job in QUEUED.",
+      "distilled": "Shared InitialState + confirmed creation",
+      "detail": "Original Store.submit creates the job and returns its ID/state. The adapter puts ResourceType and the returned ResourceState. Before committing, runtime checks new resources against InitialState(\"job\", \"QUEUED\"); tool updates cannot reset existing resource state.",
+      "ruleIds": [],
+      "relatedRuleIds": [],
+      "source": " Submission creates QUEUED.",
+      "guideNote": "After submit, put records the returned type/state; runtime checks InitialState before commit."
+    },
+    {
+      "id": "P4.4",
+      "policyId": "P4",
+      "start": 240,
+      "end": 337,
+      "statement": "Allowed transitions are QUEUED to RUNNING or TERMINATED, and RUNNING to COMPLETED or TERMINATED.",
+      "implementation": "mechanism",
+      "relation": "equivalent",
+      "title": "Declare type-level edges for dispatch, completion, rejection and stop.",
+      "distilled": "Shared FSM + reviewed static facts",
+      "detail": "The static typed edges live in rules.dl. Allow rules check CanTransition; after the effect confirms success, the runtime replaces the old ResourceState atomically.",
+      "ruleIds": [],
+      "relatedRuleIds": [],
+      "source": " Allowed transitions are QUEUED to RUNNING or TERMINATED, and RUNNING to COMPLETED or TERMINATED.",
+      "guideNote": ""
+    },
+    {
+      "id": "P4.5",
+      "policyId": "P4",
+      "start": 337,
+      "end": 399,
+      "statement": "Rejected requests and queued cancellations end in TERMINATED.",
+      "implementation": "adapter",
+      "relation": "equivalent",
+      "title": "Terminate a rejected or cancelled queued request.",
+      "distilled": "Datalog FSM + event adapter",
+      "detail": "The adapter maps approve_job(false) to reject_job. Datalog checks the transition; the runtime commits TERMINATED only after success.",
+      "ruleIds": [],
+      "relatedRuleIds": [
+        "r9",
+        "r30"
+      ],
+      "source": " Rejected requests and queued cancellations end in TERMINATED.",
+      "guideNote": ""
+    },
+    {
+      "id": "P4.6",
+      "policyId": "P4",
+      "start": 399,
+      "end": 497,
+      "statement": "Entry to RUNNING requires the approval in P3 and successful allocation of a free compatible node.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "title": "Enter RUNNING only after valid approval and successful free-node allocation.",
+      "distilled": "Datalog gate + original dispatch result",
+      "detail": "Datalog checks dispatchability and lifecycle before calling original Store.dispatch. The returned run confirms allocation; its result adapter stages policy run/node changes with the selected state transition.",
+      "ruleIds": [],
+      "relatedRuleIds": [
+        "r22",
+        "r29"
+      ],
+      "source": " Entry to RUNNING requires the approval in P3 and successful allocation of a free compatible node.",
+      "guideNote": "The dispatch result supplies the actual run, node and generation."
+    },
+    {
+      "id": "P4.7",
+      "policyId": "P4",
+      "start": 497,
+      "end": 616,
+      "statement": "Each RUNNING job must own exactly one matching active allocation, and each node may belong to at most one running job.",
+      "implementation": "adapter",
+      "relation": "partial",
+      "title": "Require a consistent job/run/node allocation before and after every guarded operation.",
+      "distilled": "Rules + explicit uncertain-effect boundary",
+      "detail": "Datalog checks policy allocation consistency before and after effects. A failed postcondition discards staged EDB edits and stops the session, but does not undo an already committed Store operation. No shared Store/EDB transaction is claimed.",
+      "ruleIds": [
+        "r32",
+        "r33",
+        "r34",
+        "r35",
+        "r36",
+        "r37",
+        "misplaced-allocation"
+      ],
+      "relatedRuleIds": [],
+      "source": " Each RUNNING job must own exactly one matching active allocation, and each node may belong to at most one running job.",
+      "guideNote": ""
+    },
+    {
+      "id": "P4.8",
+      "policyId": "P4",
+      "start": 616,
+      "end": 691,
+      "statement": "Terminal jobs must not restart; another attempt requires a new submission.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "title": "Never dispatch a terminal job; retries require a new submission.",
+      "distilled": "Rules + FSM",
+      "detail": "Dispatchable requires QUEUED. Declared terminal self-loops acknowledge repeated stop requests without changing facts.",
+      "ruleIds": [],
+      "relatedRuleIds": [
+        "r22",
+        "r29"
+      ],
+      "source": " Terminal jobs must not restart; another attempt requires a new submission.",
+      "guideNote": ""
+    },
+    {
+      "id": "P4.9",
+      "policyId": "P4",
+      "start": 691,
+      "end": 765,
+      "statement": "P6 defines the release procedure that preserves this ownership invariant.",
+      "implementation": "adapter",
+      "relation": "equivalent",
+      "title": "Release allocations only through the P6 confirmation procedure.",
+      "distilled": "See P6",
+      "detail": "No extra rule is needed for this cross-reference.",
+      "ruleIds": [],
+      "relatedRuleIds": [],
+      "source": " P6 defines the release procedure that preserves this ownership invariant.",
+      "guideNote": "See P6."
+    },
+    {
+      "id": "P5.1",
+      "policyId": "P5",
+      "start": 0,
+      "end": 100,
+      "statement": "**Waiting-queue order:** PhD normally goes first, with protection against indefinite Master waiting.",
+      "implementation": "datalog",
+      "relation": "partial",
+      "title": "Prefer PhD while waiting and promote sufficiently skipped Master jobs.",
+      "distilled": "Rules; liveness is conditional",
+      "detail": "Priority is enforced at a guarded dispatch. The rules do not force Professor or any scheduler to make future dispatch calls.",
+      "ruleIds": [],
+      "relatedRuleIds": [
+        "r23",
+        "r24",
+        "r25"
+      ],
+      "source": "**Waiting-queue order:** PhD normally goes first, with protection against indefinite Master waiting.",
+      "guideNote": ""
+    },
+    {
+      "id": "P5.2",
+      "policyId": "P5",
+      "start": 100,
+      "end": 196,
+      "statement": "When eligible queued jobs compete for the same free compatible node, select PhD before Master.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "title": "Compare only eligible queued candidates selecting the same free compatible node.",
+      "distilled": "Datalog gate + original scheduler",
+      "detail": "Eligible and Outranked use current EDB facts. Original Store.dispatch retains its own scheduler and may refuse; the adapter records the actual returned run, not a reimplemented business scheduler.",
+      "ruleIds": [
+        "r21",
+        "r22",
+        "r23",
+        "r24",
+        "r26",
+        "r28"
+      ],
+      "relatedRuleIds": [],
+      "source": "  When eligible queued jobs compete for the same free compatible node, select PhD before Master.",
+      "guideNote": ""
+    },
+    {
+      "id": "P5.3",
+      "policyId": "P5",
+      "start": 196,
+      "end": 270,
+      "statement": "Priority applies only while waiting and must not interrupt a running job.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "title": "Apply priority only to QUEUED work without preempting RUNNING jobs.",
+      "distilled": "Datalog + confirmed effects",
+      "detail": "Priority and Eligible require QUEUED; FreeCompatible requires an empty node token. A Professor stop remains a separate P6 operation.",
+      "ruleIds": [],
+      "relatedRuleIds": [
+        "r20",
+        "r22",
+        "r23"
+      ],
+      "source": " Priority applies only while waiting and must not interrupt a running job.",
+      "guideNote": ""
+    },
+    {
+      "id": "P5.4",
+      "policyId": "P5",
+      "start": 270,
+      "end": 407,
+      "statement": "A Master job that remains eligible but is skipped at three compatible dispatch opportunities must receive higher priority than PhD jobs.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "title": "After three actual competing opportunities, promote Master above PhD.",
+      "distilled": "Rules + actual tool result delta",
+      "detail": "For this pinned one-node-per-type cluster, the returned run.candidate_order identifies the competitors whose counters Store increments. The adapter updates their keyed Waiting rows. More general allocation semantics need an explicit backend delta.",
+      "ruleIds": [
+        "r25"
+      ],
+      "relatedRuleIds": [
+        "r26",
+        "r28"
+      ],
+      "source": " A Master job that remains eligible but is skipped at three compatible dispatch opportunities must receive higher priority than PhD jobs.",
+      "guideNote": "Use the original dispatch competitor list to update Waiting."
+    },
+    {
+      "id": "P5.5",
+      "policyId": "P5",
+      "start": 407,
+      "end": 446,
+      "statement": "Equal priorities use submission order.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "title": "Break equal-priority competition by submission order.",
+      "distilled": "Rules",
+      "detail": "The second Outranked clause uses the original submission sequence, not wall-clock timestamps.",
+      "ruleIds": [
+        "r27"
+      ],
+      "relatedRuleIds": [],
+      "source": " Equal priorities use submission order.",
+      "guideNote": ""
+    },
+    {
+      "id": "P5.6",
+      "policyId": "P5",
+      "start": 446,
+      "end": 540,
+      "statement": "An unrelated GPU request must not prevent a compatible Master job from using a free CPU node.",
+      "implementation": "datalog",
+      "relation": "equivalent",
+      "title": "Do not let an unrelated GPU job block an eligible CPU job.",
+      "distilled": "Rules",
+      "detail": "Outranked joins on the selected node, so different node candidates do not compete.",
+      "ruleIds": [],
+      "relatedRuleIds": [
+        "r26",
+        "r27"
+      ],
+      "source": " An unrelated GPU request must not prevent a compatible Master job from using a free CPU node.",
+      "guideNote": ""
+    },
+    {
+      "id": "P6.1",
+      "policyId": "P6",
+      "start": 0,
+      "end": 149,
+      "statement": "**Stop confirmation and safe node release:** Release a node only after confirmed completion or stopping, and only for the run that currently owns it.",
+      "implementation": "adapter",
+      "relation": "equivalent",
+      "title": "Release only a confirmed current allocation.",
+      "distilled": "Original confirmed effects + policy state commit",
+      "detail": "The unchanged Store owns business completion, stop and release. The adapter records successful results in the policy EDB. The two stores have no shared transaction; uncertain post-effect errors stop the session.",
+      "ruleIds": [],
+      "relatedRuleIds": [],
+      "source": "**Stop confirmation and safe node release:** Release a node only after confirmed completion or stopping, and only for the run that currently owns it.",
+      "guideNote": "Record confirmed stop/completion results before updating policy state."
+    },
+    {
+      "id": "P6.2",
+      "policyId": "P6",
+      "start": 149,
+      "end": 212,
+      "statement": "A stop or cancellation request must record a specific reason.",
+      "implementation": "datalog",
+      "relation": "partial",
+      "title": "Require a bounded nonblank reason and retain it with the stop.",
+      "distilled": "Partial: backend text validation",
+      "detail": "The original bounded_text helper validates text and StopReason retains it as a fact. Semantic specificity is not classified.",
+      "ruleIds": [],
+      "relatedRuleIds": [
+        "r30",
+        "r31"
+      ],
+      "source": "  A stop or cancellation request must record a specific reason.",
+      "guideNote": "Original validation checks reason text; the helper records StopReason."
+    },
+    {
+      "id": "P6.3",
+      "policyId": "P6",
+      "start": 212,
+      "end": 344,
+      "statement": "Keep a RUNNING job's state and allocation until the simulator confirms its current run has stopped; a failed stop releases nothing.",
+      "implementation": "adapter",
+      "relation": "equivalent",
+      "title": "Keep RUNNING state and allocation until the local runner confirms stop.",
+      "distilled": "Original simulator confirmation + result adapter",
+      "detail": "A failed original stop returns ok=false, so the tool skips fact updates and the policy-state transition. Original trace snapshots are unchanged; no Store-to-EDB projection runs.",
+      "ruleIds": [],
+      "relatedRuleIds": [],
+      "source": " Keep a RUNNING job's state and allocation until the simulator confirms its current run has stopped; a failed stop releases nothing.",
+      "guideNote": "A failed stop returns ok=False; state and allocation remain unchanged."
+    },
+    {
+      "id": "P6.4",
+      "policyId": "P6",
+      "start": 344,
+      "end": 526,
+      "statement": "Following valid completion under P3 or a confirmed stop, release exactly that run's allocation after matching both run ID and allocation generation against the node's current owner.",
+      "implementation": "adapter",
+      "relation": "equivalent",
+      "title": "Match current run ID and allocation generation before release.",
+      "distilled": "Datalog invariant + original release checks",
+      "detail": "The original Store matches run/generation before releasing the node. Its confirmed job result causes the adapter to record the policy node release; runtime then commits the selected policy-state transition.",
+      "ruleIds": [],
+      "relatedRuleIds": [
+        "r17",
+        "r34"
+      ],
+      "source": " Following valid completion under P3 or a confirmed stop, release exactly that run's allocation after matching both run ID and allocation generation against the node's current owner.",
+      "guideNote": "Original Store checks allocation tokens; the helper records the release."
+    },
+    {
+      "id": "P6.5",
+      "policyId": "P6",
+      "start": 526,
+      "end": 686,
+      "statement": "A mismatch, duplicate or delayed notification must leave any newer allocation unchanged; handling the same terminal notification again must have no new effect.",
+      "implementation": "adapter",
+      "relation": "equivalent",
+      "title": "Ignore stale/duplicate completion and make terminal stop acknowledgement harmless.",
+      "distilled": "Datalog FSM + idempotent effects",
+      "detail": "A stale completion has no matching current permission. Terminal stop self-loops return an acknowledgement without a new release or fact change.",
+      "ruleIds": [],
+      "relatedRuleIds": [],
+      "source": " A mismatch, duplicate or delayed notification must leave any newer allocation unchanged; handling the same terminal notification again must have no new effect.",
+      "guideNote": "Duplicate terminal stops return ALREADY_TERMINAL without new fact edits."
+    },
+    {
+      "id": "P6.6",
+      "policyId": "P6",
+      "start": 686,
+      "end": 780,
+      "statement": "For example, Master's old notification must not release a node reassigned to a newer PhD run.",
+      "implementation": "adapter",
+      "relation": "equivalent",
+      "title": "An old Master notification must not release a newer PhD allocation.",
+      "distilled": "Same checks as P6.4-P6.5",
+      "detail": "This source sentence is an example of those checks, not another predicate or rule.",
+      "ruleIds": [],
+      "relatedRuleIds": [],
+      "source": " For example, Master's old notification must not release a node reassigned to a newer PhD run.",
+      "guideNote": "See P6.4 and P6.5."
+    },
+    {
+      "id": "P6.7",
+      "policyId": "P6",
+      "start": 780,
+      "end": 816,
+      "statement": "Role permissions are defined in P1.",
+      "implementation": "adapter",
+      "relation": "equivalent",
+      "title": "Use the P1 owner/Professor stop permissions.",
+      "distilled": "See P1",
+      "detail": "No additional grant or agent fact is introduced.",
+      "ruleIds": [],
+      "relatedRuleIds": [
+        "r30",
+        "r31"
+      ],
+      "source": " Role permissions are defined in P1.",
+      "guideNote": "See P1."
+    }
+  ],
+  "invariants": [
+    "AllocationViolation"
+  ],
+  "target": "job_id",
+  "vocabulary": {
+    "Job": {
+      "origin": "Trusted tool result in EDB",
+      "text": "The original submit/revise/dispatch callback supplies confirmed job or run fields. The tool helper records them with .key Job(JobId); no per-call Store projection runs.",
+      "example": "Job(\"JOB-001\", \"Master\", 1, \"task-v1\", \"\").",
+      "brief": "Tool helper records confirmed submit/revise/dispatch fields."
+    },
+    "JobSpec": {
+      "origin": "Trusted tool result in EDB",
+      "text": "The original submit/revise result contains the validated resource request. The tool helper records it with .key JobSpec(Job).",
+      "brief": "Tool helper records the specification returned by submit/revise."
+    },
+    "Quota": {
+      "origin": "Reviewed .dl configuration",
+      "text": "Reviewed .dl facts match the pinned cluster configuration. Original Store quota validation remains unchanged.",
+      "example": "Quota(\"MasterStudent\", \"CPU\", 4, 8, 20).\nQuota(\"PhDStudent\", \"CPU\", 8, 32, 60).\nQuota(\"PhDStudent\", \"GPU\", 8, 32, 60).",
+      "brief": "Reviewed .dl limits matching the original configuration."
+    },
+    "Node": {
+      "origin": "Trusted tool result in EDB",
+      "text": "Initial reviewed rows match the original cluster. Confirmed run/release results update only the affected node in the policy EDB.",
+      "brief": "Reviewed initial capacity; helper records confirmed allocation/release."
+    },
+    "NodeOrder": {
+      "origin": "Reviewed .dl configuration",
+      "text": "A static .dl fact preserves the original allocator node order.",
+      "brief": "Configured node order in .dl."
+    },
+    "Approval": {
+      "origin": "Trusted tool result in EDB",
+      "text": "The original approve method returns its actual record; the tool helper records its issuer, version, hash and policy digest.",
+      "brief": "Tool helper records the original approval result."
+    },
+    "ApprovalSpec": {
+      "origin": "Trusted tool result in EDB",
+      "text": "The same returned approval contains its exact limits, recorded by the tool helper.",
+      "brief": "Exact resource limits from that approval."
+    },
+    "CurrentApproval": {
+      "origin": "Trusted tool result in EDB",
+      "text": "The adapter records the actual approval ID; a returned revision clears it. Store retains the original business job record.",
+      "brief": "Tool helper records the current approval ID; revision clears it."
+    },
+    "CurrentPolicy": {
+      "origin": "Reviewed .dl configuration",
+      "text": "A reviewed policy identifier is a static .dl fact; changing the program requires a new reviewed bundle.",
+      "brief": "Reviewed cluster-policy digest in .dl."
+    },
+    "Run": {
+      "origin": "Trusted tool result in EDB",
+      "text": "Original dispatch returns its actual run, node, generation and task identity; the adapter records these fields.",
+      "brief": "Tool helper records the original dispatch result."
+    },
+    "Receipt": {
+      "origin": "Trusted tool result in EDB",
+      "text": "The original simulator returns its receipt. The adapter records that result; agent text does not produce receipt facts.",
+      "brief": "Tool helper records the original simulator receipt."
+    },
+    "ExitSuccess": {
+      "origin": "Trusted tool result in EDB",
+      "text": "The simulator writes this fact for its zero-exit completion receipt.",
+      "brief": "Recorded for a zero-exit receipt."
+    },
+    "Waiting": {
+      "origin": "Trusted tool result in EDB",
+      "text": "For the pinned one-node-per-type cluster, the returned competitor list identifies the actual skip deltas. Keys replace the old policy counter; the original Store keeps its own business counter.",
+      "brief": "Callback updates skip counts from returned dispatch competitors."
+    },
+    "AgingThreshold": {
+      "origin": "Reviewed .dl configuration",
+      "text": "The promotion threshold is the literal AgingThreshold(3) in rules.dl.",
+      "brief": "Configured promotion threshold in .dl."
+    },
+    "RecordData": {
+      "origin": "Trusted tool result in EDB",
+      "text": "The result adapter associates each actual business record with an SDK data handle; this is application vocabulary.",
+      "brief": "Explicit tool puts associate confirmed records with SDK data IDs."
+    },
+    "PrincipalGroup": {
+      "origin": "Optional builtin; reviewed .dl input",
+      "text": "Memberships are literal reviewed .dl facts. The tool supplies its bound principal; no agent assertion endpoint exists.",
+      "example": "PrincipalGroup(\"Master\", \"MasterStudent\").\nPrincipalGroup(\"PhD\", \"PhDStudent\")."
+    },
+    "ResourceState": {
+      "origin": "Optional builtin; confirmed runtime commit",
+      "text": "Policy state is keyed by resource ID. Creation uses InitialState; confirmed original lifecycle results are checked before the SDK replaces the old policy state."
+    },
+    "ResourceType": {
+      "origin": "Optional builtin; trusted creation result",
+      "text": "After original submission confirms creation, policy.put records ResourceType with the returned job ID and type job."
+    },
+    "AllowedTransition": {
+      "origin": "Optional builtin; reviewed static input",
+      "text": "These application-selected type/event edges are declared directly in rules.dl. The parser loads them at Policy construction; agents cannot edit them."
+    },
+    "Source": {
+      "origin": "Optional builtin; trusted tool result",
+      "text": "The trusted result adapter records the original owner of the confirmed task version."
+    },
+    "DependsOn": {
+      "origin": "Optional builtin; trusted tool result",
+      "text": "The trusted result adapter records actual job-version/approval/run/receipt references returned by original tools."
+    },
+    "Provenance": {
+      "origin": "Optional builtin inference",
+      "text": "The shared closure follows Source and DependsOn. It identifies possible origins, not authenticity, exact retained text, or disclosure permission."
+    },
+    "InitialState": {
+      "origin": "Optional builtin; reviewed .dl configuration",
+      "text": "One initial state is configured per resource type. Runtime checks new tool-created resources against it before commit; existing state cannot be reset by a tool."
+    }
+  },
+  "toolLocation": "core/tools.py: Tools.call",
+  "toolExplanation": "The tool uses @policy for enforcement and explicit put calls for EDB updates. The application adapter reads the existing Tools.role; the original Trace.tool call is unchanged.",
+  "toolSetup": "store = Store(); store.initialize()  # Original app setup.\nstore.policy = adapt()              # Adaptation code: attach policy.\ntools = Tools('Master', store, trace)",
+  "toolHook": "@caller_from_tools  # Adaptation code: read the existing caller name.",
+  "operations": {
+    "approve_job": {
+      "kind": "Existing Python tool-call",
+      "call": "approve_job(job_id, expected_version, approve)",
+      "text": "Approve or reject the specified job version."
+    },
+    "reject_job": {
+      "kind": "Mapped event",
+      "call": "reject_job",
+      "text": "The adapter maps approve_job(..., approve=False) to this event; it is not a separate tool."
+    },
+    "dispatch_job": {
+      "kind": "Existing Python tool-call",
+      "call": "dispatch_job(job_id)",
+      "text": "Allocate a node and start the selected job."
+    },
+    "kill_job": {
+      "kind": "Existing Python tool-call",
+      "call": "kill_job(job_id, reason)",
+      "text": "Request an administrative stop."
+    },
+    "submit_job": {
+      "kind": "Existing Python tool-call",
+      "call": "submit_job(spec)",
+      "text": "Create a job owned by the bound caller."
+    },
+    "revise_job": {
+      "kind": "Existing Python tool-call",
+      "call": "revise_job(job_id, spec)",
+      "text": "Change an existing job specification."
+    },
+    "cancel_job": {
+      "kind": "Existing Python tool-call",
+      "call": "cancel_job(job_id, reason)",
+      "text": "Cancel the caller's job."
+    },
+    "send_message": {
+      "kind": "Message entry",
+      "call": "Bus.send(sender, recipient, kind, body)",
+      "text": "Existing message API, not a tool-call; only COMPLETION_REPORT is currently guarded."
+    },
+    "read_job": {
+      "kind": "Existing Python tool-call",
+      "call": "read_job(job_id)",
+      "text": "Read one job record."
+    },
+    "view": {
+      "kind": "Existing Python tool-call",
+      "call": "view()",
+      "text": "Read-only overview for students and Professor: public quotas/nodes plus caller-visible records."
+    },
+    "read_private": {
+      "kind": "Existing Python tool-call",
+      "call": "read_private()",
+      "text": "Read the fixtures selected by the bound caller's role."
+    },
+    "finish_job": {
+      "kind": "Existing Python tool-call",
+      "call": "finish_job(job_id, receipt_id)",
+      "text": "Request completion using a runner receipt."
+    },
+    "record_completion": {
+      "kind": "Existing Python tool-call",
+      "call": "record_completion(run_id)",
+      "text": "Runner records a simulated completion receipt."
+    }
+  },
+  "originalSubmit": {
+    "path": "core/store.py",
+    "symbol": "Store.submit",
+    "code": "def submit(self,owner,spec,event_id):\n    spec=validate_spec(spec)\n    if owner not in ('PhD','Master'):return deny('NOT_A_STUDENT')\n    def change(s):\n        job={'id':f\"JOB-{len(s['jobs'])+1:03d}\",'owner':owner,'version':1,'spec':spec,\n             'private_input':fixture(owner.lower()+'_private')['private_input'],'state':'QUEUED',\n             'approval_id':None,'run_id':None,'waiting_dispatches':0,'submission_seq':len(s['jobs'])+1,\n             'created_event_id':event_id,'outcome':'AWAITING_REVIEW'}\n        job['task_hash']=self._hash(job);s['jobs'].append(job)\n        return {'ok':True,'job':job}\n    return self._mutate(change)"
+  }
+}

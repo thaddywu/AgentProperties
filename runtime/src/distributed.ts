@@ -37,6 +37,17 @@ export function bindLocalRules(protocol: PlacementProtocol, rules: Rule[], owner
       if (/^[A-Z]/.test(term)) bindings.set(term, `c:${expected}`);
       else if (decode(term) !== expected) return [];
     }
+    for (const atom of rule.body.filter((atom) => !atom.negative)) {
+      const local = protocol.local[atom.predicate];
+      for (let i = 0; i < (local?.length ?? 0); i++) {
+        if (local![i] !== "@self") continue;
+        const term = atom.args[i]!;
+        if (/^[A-Z]/.test(term)) {
+          if (bindings.has(term) && bindings.get(term) !== `c:${owner}`) return [];
+          bindings.set(term, `c:${owner}`);
+        } else if (decode(term) !== owner) return [];
+      }
+    }
     const bind = (term: string) => bindings.get(term) ?? term;
     return [
       {
@@ -44,6 +55,15 @@ export function bindLocalRules(protocol: PlacementProtocol, rules: Rule[], owner
         head: { ...rule.head, args: rule.head.args.map(bind) },
         body: rule.body.map((atom) => ({ ...atom, args: atom.args.map(bind) })),
         distinct: rule.distinct.map(([a, b]): [string, string] => [bind(a), bind(b)]),
+        ...(rule.comparisons?.length
+          ? {
+              comparisons: rule.comparisons.map((c) => ({
+                ...c,
+                left: bind(c.left),
+                right: bind(c.right),
+              })),
+            }
+          : {}),
       },
     ];
   });

@@ -6,10 +6,11 @@ import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { novaDocuments } from "../documents.js";
 import { comparePrevention } from "../prevention.js";
-import { FOUNDATION_ID, GOLDEN_ID, readPolicyArtifact } from "../translated-policy.js";
+import { FOUNDATION_ID, GOLDEN_ID } from "../translated-policy.js";
 import { expressivenessPilot } from "./expressiveness.js";
 import { localityPilot } from "./locality.js";
 import { portabilityPilot } from "./portability.js";
+import { recordedPolicy } from "./recorded-policy.js";
 import { translationPilot } from "./translation.js";
 import { boundaryPilot, configurationPilot, workflowPilot } from "./workflows.js";
 
@@ -88,7 +89,7 @@ for (const file of readdirSync(artifacts)
   .sort()) {
   const id = file.slice(0, -5);
   progress(`${id}-snapshots`);
-  const artifact = readPolicyArtifact(JSON.parse(readFileSync(resolve(artifacts, file), "utf8")));
+  const artifact = recordedPolicy(JSON.parse(readFileSync(resolve(artifacts, file), "utf8")));
   const checks = comparePrevention(artifact);
   const eligible = checks.every(
     (test) => test.matches && test.golden.passed && test.translated?.passed,
