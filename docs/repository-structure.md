@@ -1,5 +1,11 @@
 # Repository structure
 
+The independent student path is `evaluation → translation / query → policy runtime`,
+with evaluation also invoking the runtime through trusted application connectors.
+All three core Python packages are UI-free and import no Grokbot or Nova code.
+`python3 evaluation/run.py` starts the workbench without installing the host workspace.
+The existing TypeScript/Nova stack below remains compatible, not a prerequisite.
+
 ```text
 grokbot/                 Existing host implementation, including UI customizations
   AGENTS.md              Host/client-specific development rules
@@ -30,16 +36,28 @@ apps/
     src/                 Nova application, reference rules, protocol and analyses
     tests/
     run.sh               Docker/UI entry point, invoked from the repository root
-runtime/                 Generic action gate, Datalog, queries, provenance and lifecycle
+runtime/                 Policy layer: generic action gate, Datalog, provenance and lifecycle
   python/                Standalone Python/Soufflé action runtime and optional private pipe client
-translation/             NL distillation, reviewed coverage and Datalog translation; Nova experiments
+translation/             Translation layer
+  python/                Independent policy-translation package and optional model transports
+  src/                   Existing TypeScript authoring and Nova experiments
   output/                Ignored experiments and validated policy bundles
+query/
+  python/                Independent read-only policy-query package
+evaluation/
+  policy_evaluation/     Study records, trusted runner interface and local HTTP composition
+    porting/             Bounded source-inspect/edit/test loop and isolated LabCluster runner
+    static/              Student UI; no business orchestration
+  tests/                 Offline Python and browser checks
+  output/                Ignored private study records
+  run.py                 Python-only checkout launcher
+  port.py                Operator port-in launcher; separate from the student UI
 docs/                    README, LICENSE and repository design documents
   research/              Git submodule containing the canonical manuscript, main.tex
 main.tex                 Local compilation entry point for the manuscript submodule
 ```
 
-The repository root contains the five module/documentation directories, the manuscript compilation entry point, and `AGENTS.md`/`CLAUDE.md` for coding-agent instructions. Project files live with their owner:
+The repository root contains the module/documentation directories, the manuscript compilation entry point, and `AGENTS.md`/`CLAUDE.md` for coding-agent instructions. Project files live with their owner:
 
 | Location | Contents |
 | --- | --- |
@@ -54,9 +72,9 @@ The host workspace explicitly includes adjacent `../apps/*`, `../runtime` and `.
 
 The tracked root dotfiles `.gitignore`, `.gitattributes`, `.dockerignore` and `.gitmodules` govern repository-wide exclusion/line endings, the root Docker build context and the paper submodule. `.github/` contains CI, platform screenshots/releases, issue templates and contribution/security guidance. GitHub workflow discovery requires that location. `.agents/` contains coding-assistant skills (`composio`, `pr-watch`); these are development helpers. Application agent specifications live in `apps/*/agents/`. The root `AGENTS.md` holds repository-wide rules; `grokbot/AGENTS.md` adds host/client rules. `CLAUDE.md` imports the root rules. Local private debug state is ignored and is separate from the module layout.
 
-The enforcement dependency direction is `application → its backend/in-app orchestration → trusted port → policy runtime`. Grokbot is one optional host/adapter; Nova also runs directly against the same runtime. Translation reads an application's Markdown; its optional model adapter comes from Grokbot's existing provider-neutral connection/runtime stack. The generic translation path emits a validated policy bundle which an app explicitly loads through `createPolicySession`. Document Vault runs actual callbacks through that gate and uses the same policy for query/Why/What-if. The legacy whole-policy Nova experiment remains comparison-only. The new Nova extension path supplies the fixed foundation and protocol to the model, compares generated extensions against golden behavior, and exports artifacts that Nova can explicitly install into fresh sessions.
+The enforcement dependency direction is `application → its backend/in-app orchestration → trusted port → policy runtime`. Grokbot is one optional host/adapter; Nova also runs directly against the same runtime. The independent Python translator reads raw policy text and optional application context, with an injected model transport. The historical TypeScript translator still uses the Grokbot connection stack. The generic translation path emits a validated policy bundle which an app explicitly loads through `createPolicySession`. Document Vault runs actual callbacks through that gate and uses the same policy for query/Why/What-if. The legacy whole-policy Nova experiment remains comparison-only. The new Nova extension path supplies the fixed foundation and protocol to the model, compares generated extensions against golden behavior, and exports artifacts that Nova can explicitly install into fresh sessions.
 
-The UI remains in Grokbot. Nova can also run without it using `pnpm --dir grokbot --filter @rakazo/nova start`. The runtime package has no dependency on Grokbot or Nova. Its `messaging-policy` export supplies the fixed IFC/capability rule foundation and input schemas; Nova composes those with its five app-specific reference rules. Nova-specific action search, policy configuration and checkpoint migrations remain with the application. Shared `messaging`, `backend-port` and `distributed` modules own local stores, dependency capture, envelope transfer, receive gating and callback/receipt order. `primitives` projects readable names from the same compatibility foundation. `protocol-planner` supplies bounded exact storage/rule-placement optimization with finite snapshot/query/gate checks, under fixed channels and authority; it is not a universal asynchronous protocol compiler.
+The Nova host UI remains in Grokbot; the student evaluation UI is independent under `evaluation/`. Nova can also run without its host UI using `pnpm --dir grokbot --filter @rakazo/nova start`. The runtime package has no dependency on Grokbot or Nova. Its `messaging-policy` export supplies the fixed IFC/capability rule foundation and input schemas; Nova composes those with its five app-specific reference rules. Nova-specific action search, policy configuration and checkpoint migrations remain with the application. Shared `messaging`, `backend-port` and `distributed` modules own local stores, dependency capture, envelope transfer, receive gating and callback/receipt order. `primitives` projects readable names from the same compatibility foundation. `protocol-planner` supplies bounded exact storage/rule-placement optimization with finite snapshot/query/gate checks, under fixed channels and authority; it is not a universal asynchronous protocol compiler.
 
 For student applications, the first generic porting interface now accepts an adapter-owned runtime binding, a translated bundle, trusted observations and an action callback. The [runtime SDK](../runtime/README.md) supplies execute/check/query/why/whatIf; [Document Vault](../apps/document-vault/README.md) is an independent example. Its `runtime.json` describes actual instrumentation and acceptance cases; it can also be supplied separately with `--binding`, so it does not redefine student Markdown requirements. Automatic source instrumentation, distributed transactions, persistent generic sessions and general prevention/completion planning remain unimplemented.
 

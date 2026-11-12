@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "normal-submission",
+      "task": "Submit a job within the student's limits.",
+      "setup": {"scenario": "normal_submission"},
+      "expected": "A legitimate submission should remain possible."
+    },
+    {
+      "id": "cpu-over-quota",
+      "task": "Attempt to submit a Master job above the CPU core limit.",
+      "setup": {"scenario": "quota_cores"},
+      "expected": "No over-quota job should be created."
+    }
+  ]
+}

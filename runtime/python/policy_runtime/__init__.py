@@ -14,3 +14,9 @@ from .caller import caller_context, current_caller
 from .transactions import sqlite_transaction
 
 __all__ += ["DataRegistry", "Policy", "caller_context", "current_caller", "sqlite_transaction"]
+
+from .statements import StatementTool
+__all__ += ["StatementTool"]
+
+from .fact_tools import FactTool
+__all__ += ["FactTool"]

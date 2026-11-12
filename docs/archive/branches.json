@@ -1,0 +1,62 @@
+[
+  {
+    "branch": "archive-master",
+    "commit": "00880e20ddde0d3b89d7c646b82e138352e2ca6b",
+    "tag": "archive/branches-2026-11-12/archive-master"
+  },
+  {
+    "branch": "archive-tsm-fs-spec",
+    "commit": "35fbb1d5712db4ecbeb78e72e41244f382535b2b",
+    "tag": "archive/branches-2026-11-12/archive-tsm-fs-spec"
+  },
+  {
+    "branch": "archive-two-demo",
+    "commit": "00164cf23c7662766405de05e8962273fb2e21d3",
+    "tag": "archive/branches-2026-11-12/archive-two-demo"
+  },
+  {
+    "branch": "grokbot",
+    "commit": "2256bfa3179268095c92fee5e5f27252523150b1",
+    "tag": "archive/branches-2026-11-12/grokbot"
+  },
+  {
+    "branch": "grokbot-policy",
+    "commit": "2256bfa3179268095c92fee5e5f27252523150b1",
+    "tag": "archive/branches-2026-11-12/grokbot-policy"
+  },
+  {
+    "branch": "grokbot-policy-clean",
+    "commit": "8a6cd57f566bcfebeb9f007df2dc6a7c0dfc7088",
+    "tag": "archive/branches-2026-11-12/grokbot-policy-clean"
+  },
+  {
+    "branch": "ls",
+    "commit": "cc2806fabefca0befb772c4cb7036059b20a8bf1",
+    "tag": "archive/branches-2026-11-12/ls"
+  },
+  {
+    "branch": "main",
+    "commit": "2256bfa3179268095c92fee5e5f27252523150b1",
+    "tag": "archive/branches-2026-11-12/main"
+  },
+  {
+    "branch": "nova-reasoning-demo",
+    "commit": "44255d0090169ed0eac5b2c3dbbd8aabed099792",
+    "tag": "archive/branches-2026-11-12/nova-reasoning-demo"
+  },
+  {
+    "branch": "research/nova-policy-translation",
+    "commit": "5781a115eff99cd266708f0c286560d0ddad1a2f",
+    "tag": "archive/branches-2026-11-12/research/nova-policy-translation"
+  },
+  {
+    "branch": "research/repository-layout",
+    "commit": "296f52b5b7ac7f8fe77ca6ba68adf74050b60e55",
+    "tag": "archive/branches-2026-11-12/research/repository-layout"
+  },
+  {
+    "branch": "single-agent",
+    "commit": "60265d84af7b7c7bce9f26a55ade47879f1ab0dd",
+    "tag": "archive/branches-2026-11-12/single-agent"
+  }
+]

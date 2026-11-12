@@ -66,16 +66,19 @@ class Policy:
     """Load one reviewed .dl file; wrap existing business functions at the tool boundary."""
 
     def __init__(self, path, *, facts=None, transaction=None, target="resource", event=None,
-                 after=None, completed=None, refused=None, invariants=(), bundle=None, inputs=(), data=None, before=None, local_effects=False):
+                 after=None, completed=None, refused=None, invariants=(), bundle=None, inputs=(), data=None, before=None, local_effects=False, mechanisms=()):
         if facts is not None and (data is not None or before is not None or inputs):
             raise ValueError('Choose managed EDB or backend observation, not two state authorities.')
+        requested = tuple(mechanisms)
+        if len(set(requested)) != len(requested) or any(name not in CATALOG for name in requested):
+            raise ValueError('Select distinct supported mechanisms.')
         source = Path(path).read_text()
         _, rule_source, configuration = read_policy_document(source)
         clauses, _ = parse(rule_source)
         used = {atom["predicate"] for clause in clauses for atom in [clause["head"], *clause["body"]]}
         used.update(row["predicate"] for row in configuration)
         mechanisms = [name for name, module in CATALOG.items()
-                      if used.intersection(module["predicates"])]
+                      if used.intersection(module["predicates"]) or name in requested]
         self.data = DataRegistry()
         self.events = []
         self._event, self._after = event, after

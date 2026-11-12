@@ -12,6 +12,33 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  policy-review:
+    name: Policy review UI
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: grokbot/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: grokbot/pnpm-lock.yaml
+      - run: pnpm --dir grokbot install --frozen-lockfile
+      - run: pnpm --dir grokbot --filter @rakazo/web exec playwright install chromium
+      - run: pnpm --dir grokbot --filter @rakazo/web exec playwright test --config playwright.policy-review.config.ts
+      - name: Upload policy review screenshots
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: policy-review-screenshots
+          path: grokbot/apps/web/test-results/policy-review
+          if-no-files-found: ignore
+
   lint:
     name: Lint
     runs-on: ubuntu-latest

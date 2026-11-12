@@ -9,7 +9,9 @@ export const CAPABILITY_PREDICATES = schemas(catalog.capability.predicates);
 export const CAPABILITY_RULES = catalog.capability.rules as Rule[];
 export const PROVENANCE_PREDICATES = schemas(catalog.provenance.predicates);
 export const PROVENANCE_RULES = catalog.provenance.rules as Rule[];
+export const STATEMENT_PREDICATES = schemas(catalog.statements.predicates);
 export const FOUNDATIONS = {
+  statements: { predicates: STATEMENT_PREDICATES, rules: catalog.statements.rules as Rule[] },
   capability: { predicates: CAPABILITY_PREDICATES, rules: CAPABILITY_RULES },
   provenance: { predicates: PROVENANCE_PREDICATES, rules: PROVENANCE_RULES },
 };

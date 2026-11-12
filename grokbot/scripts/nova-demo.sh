@@ -12,11 +12,14 @@ mounts=(
   --volume "$nova_root/grokbot/packages/core/src:/app/grokbot/packages/core/src"
   --volume "$nova_root/grokbot/apps/web/src:/app/grokbot/apps/web/src"
   --volume "$nova_root/grokbot/apps/web/nova.html:/app/grokbot/apps/web/nova.html:ro"
+  --volume "$nova_root/grokbot/apps/web/policy-review.html:/app/grokbot/apps/web/policy-review.html:ro"
   --volume "$nova_root/grokbot/apps/web/vite.nova.config.ts:/app/grokbot/apps/web/vite.nova.config.ts:ro"
   --volume "$nova_root/apps/nova/src:/app/apps/nova/src"
   --volume "$nova_root/apps/nova/demo:/app/apps/nova/demo:ro"
   --volume "$nova_root/runtime/src:/app/runtime/src"
   --volume "$nova_root/translation/src:/app/translation/src"
+  --volume "$nova_root/translation/package.json:/app/translation/package.json:ro"
+  --volume "$nova_root/apps/labcluster-port:/app/apps/labcluster-port:ro"
 )
 # Optional shared model connection; mount read-only and never bake credentials into the image.
 model_mounts=()

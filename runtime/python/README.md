@@ -83,12 +83,48 @@ The trusted effect context also exposes `facts.put(name, *values)`,
 `facts.delete(name, *key)` and `facts.rows(name)`. Derived rows come from
 `context['derived']`; tools do not assert them. Handles expire when the transaction
 ends. Input schema, numeric types, keys and application invariants are validated
-before publication. No agent/MCP arbitrary-fact assertion tool is installed.
+before publication. No arbitrary-fact assertion tool is installed. An optional
+bounded declaration tool is available through `StatementTool`; see below.
 
 `policy.update(function)` is private host ingestion for real confirmations,
 observations or verified evidence. It uses the same atomic input validation;
 caller authentication belongs to that host boundary. A before-call adapter may
 submit an actual observation such as server time. It is optional.
+
+## Agent declarations through MCP
+
+The optional `statements` mechanism supplies
+`AgentStatement(Id, Speaker, Kind, Subject, Value)`, keyed by speaker/kind/subject.
+It records the agent's latest statement, including uncertainty; it never produces
+roles, grants, verified observations, task completion or lifecycle transitions.
+The host explicitly enables allowed kinds for each principal and the policy
+authorizes `declare_statement` like any other operation, including subject scope.
+
+```python
+from policy_runtime import Policy, StatementTool
+
+policy = Policy('rules.dl', mechanisms=('statements',))
+statements = StatementTool(policy, principal=authenticated_agent,
+                           kinds=('classification', 'assessment'))
+statements.register_mcp(server)
+agent_system_prompt += '\n' + statements.system_card
+```
+
+The MCP SDK is optional (`pip install 'policy-runtime[mcp]'`). The server exposes
+only `declare_statement(kind, subject, value)`; the host binds the speaker and
+the handler fixes the destination predicate. Configure a bound instance per
+authenticated session/endpoint. Client `_meta.caller` is not authentication.
+The system card explains how to use the tool; authorization and data validation
+remain runtime responsibilities. The SDK may ignore unknown JSON arguments;
+those arguments cannot override the bound speaker or destination predicate.
+Successful tool results confirm that a statement was recorded, not that its
+contents are true. Preserve that distinction in policy rules and back-translation.
+When policy gives an agent decision authority (for example, an Arbiter may
+approve a specific operation), expose a separate checked decision operation.
+Its handler records the authenticated decision-maker, exact operation/version
+and outcome. That is evidence that an authorized decision occurred; it is not
+an inferred truth claim and should not require an imaginary external oracle.
+Tests use real MCP JSON-RPC calls and no external model or server.
 
 ## Decisions and foundations
 
@@ -169,3 +205,25 @@ TS and Python independently validate reviewed bundles, including .key metadata.
 The private worker transport is optional; managed edit handles stay in-process.
 NL distillation, human assessment, coverage and rule translation remain separate
 artifacts. Successful compilation is not proof of semantic equivalence.
+# Authorized agent fact writes
+
+`Policy.put/delete/update` are trusted host APIs. Agent connections may instead
+expose `FactTool(policy, principal="arbiter", predicates=["Approval"])`, with
+`register_mcp(server)` and its `system_card` added to that agent's available
+interface. The host authenticates the principal; MCP arguments cannot replace it.
+Use managed EDB. This tool has no business effects.
+
+`put(predicate, values)` and `delete(predicate, values)` are separate gated actions.
+Rules receive the bound principal in `Request` and the selected `predicate` plus
+each declared field name in `Parameter`. Rules must grant the exact predicate,
+target, issuer and values permitted by the source policy. No implicit permission
+comes from exposing a predicate. Every write is checked against pre-write facts.
+
+`put` inserts; an identical tuple is idempotent, and a different tuple with the
+same declared key returns `key_conflict`. `delete` takes the complete current
+tuple, so a stale decision cannot delete its replacement by reusing the key.
+Deletion does not erase runtime event records. There is no agent-facing update
+or atomic multi-call replacement API yet. Host `Policy.put` retains its existing
+upsert semantics. Review IDs, operation content/version binding and actual review
+delivery must come from the application's real lifecycle; FactTool does not
+invent or distribute them. Missing integration remains a coverage gap.

@@ -362,5 +362,26 @@
         "explanation": "A resource can take an event edge only when its type and current state match the edge."
       }
     ]
+  },
+  "statements": {
+    "predicates": {
+      "AgentStatement": {
+        "kind": "input",
+        "args": [
+          "Id",
+          "Speaker",
+          "Kind",
+          "Subject",
+          "Value"
+        ],
+        "key": [
+          "Speaker",
+          "Kind",
+          "Subject"
+        ],
+        "meaning": "Latest bounded self-declaration by a host-bound speaker for a kind and subject; records what the agent said, not verified truth or authority."
+      }
+    },
+    "rules": []
   }
 }

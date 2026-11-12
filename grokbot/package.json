@@ -10,6 +10,7 @@
   },
   "scripts": {
     "policy:translate": "node scripts/repository-command.mjs tsx translation/src/cli.ts",
+    "policy:review": "pnpm --filter @rakazo/web exec vite --config vite.nova.config.ts",
     "dev": "pnpm --parallel --filter @rakazo/api --filter @rakazo/worker --filter @rakazo/web --filter @rakazo/sandbox-supervisor run dev",
     "build": "pnpm db:generate && pnpm --recursive --if-present run build",
     "check": "pnpm db:generate && pnpm --recursive --if-present run check",

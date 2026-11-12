@@ -1,0 +1,259 @@
+{
+  "programHash": "8af12cba7b68fb4d90f02df5605f4ea20797f2ad5a8486ff8b12c37b361d5c42",
+  "contractHash": "f1f3a623e587c5b04e0b4a073b32c96476b8893c254159301d20e1898cf453ad",
+  "behaviors": [
+    {
+      "id": "roles",
+      "ruleIds": [
+        "r0",
+        "r1",
+        "r2",
+        "r3"
+      ],
+      "summary": "Master and PhD accounts are treated as students. Students and Professor can use the general observation tools.",
+      "conditions": [
+        "Account roles come from the application’s configured memberships, not from what an agent says.",
+        "Recognizing a role does not by itself grant access to a particular job."
+      ]
+    },
+    {
+      "id": "professor",
+      "ruleIds": [
+        "r8",
+        "r9",
+        "r29",
+        "r31"
+      ],
+      "summary": "Only Professor can approve, reject, dispatch or administratively stop a job through these operations.",
+      "conditions": [
+        "Approval requires a queued job, the current version and a resource request within the owner’s quota.",
+        "Rejection requires the current queued version and a rejection decision.",
+        "Dispatch also requires a valid approval, an eligible free node and the waiting-queue selection.",
+        "Stopping requires a reason parameter and an allowed state transition. Tool confirmation is separate."
+      ]
+    },
+    {
+      "id": "ownership",
+      "ruleIds": [
+        "r6",
+        "r7",
+        "r30",
+        "completion-report"
+      ],
+      "summary": "Students can submit within quota, revise their own queued jobs, and cancel or send structured completion reports for their own jobs.",
+      "conditions": [
+        "Revision checks the new resource request against the caller’s quota.",
+        "Cancellation requires a reason parameter and an allowed transition; the application validates the reason text.",
+        "A structured completion report checks the sender and job owner. Sending one does not mark the job completed.",
+        "Free-text messages are not covered by this completion-report check."
+      ]
+    },
+    {
+      "id": "quotas",
+      "ruleIds": [
+        "r4",
+        "r5"
+      ],
+      "summary": "Master can request CPU up to 4 cores, 8 GB and 20 minutes. PhD can request CPU or GPU up to 8 cores, 32 GB and 60 minutes.",
+      "conditions": [
+        "All limits must hold together. Stored jobs are checked against their owner’s quota.",
+        "These checks limit requested runtime. They do not stop a job after that many minutes.",
+        "Positive, well-formed resource values are an application-validation assumption."
+      ],
+      "question": "Should the system automatically stop a Master job if it runs longer than 20 minutes?"
+    },
+    {
+      "id": "capacity",
+      "ruleIds": [
+        "r20"
+      ],
+      "summary": "A node is usable only if it is free, matches the requested CPU or GPU type, and has enough cores and memory.",
+      "conditions": [
+        "Availability comes from the current node record supplied by the application.",
+        "This condition alone does not authorize dispatch or reserve a node."
+      ]
+    },
+    {
+      "id": "visibility",
+      "ruleIds": [
+        "r10",
+        "r11",
+        "r12",
+        "private-owner",
+        "private-professor",
+        "r13",
+        "r14",
+        "r15"
+      ],
+      "summary": "Students can read their own job records; Professor can read any stored job. Bulk and private views still rely on application filtering.",
+      "conditions": [
+        "Single-job reads check the stored owner against the caller.",
+        "The private-owner relation includes the caller’s own records and Professor’s access to ordinary users’ records.",
+        "Allowing a bulk-view call does not itself filter its returned content.",
+        "These rules do not establish isolation across every message, model context or export."
+      ]
+    },
+    {
+      "id": "approval",
+      "ruleIds": [
+        "r16"
+      ],
+      "summary": "An approval is current only when Professor approved the same task version and resource request under the current policy configuration.",
+      "conditions": [
+        "The job must point to that approval record.",
+        "Task identity, version, task content, CPU/GPU type, cores, memory and requested minutes must match.",
+        "The approval’s policy configuration must also match the current configuration."
+      ],
+      "question": "If cluster policy changes after approval, should the job need another approval?"
+    },
+    {
+      "id": "completion",
+      "ruleIds": [
+        "r17",
+        "r18",
+        "r19"
+      ],
+      "summary": "A job can be marked COMPLETED only with a simulator receipt confirming that its current run ended successfully.",
+      "conditions": [
+        "The caller must be allowed to read the job, and the job must currently be RUNNING.",
+        "The chosen receipt must match the current job, run, task content, node and allocation generation.",
+        "Successful exit means the application recorded exit_code = 0. The original wording does not explicitly choose this definition of completion.",
+        "Receipt lineage must lead to the job owner. This relies on the application’s evidence mapping.",
+        "Only the configured Runner can record completion for an existing running job.",
+        "The runtime still requires an allowed state transition and no denial or invariant failure."
+      ],
+      "question": "A run has ended and has a simulator receipt, but it failed. Should it still be possible to mark the job COMPLETED?"
+    },
+    {
+      "id": "states",
+      "ruleIds": [
+        "r38",
+        "r39",
+        "r40"
+      ],
+      "summary": "A stored job state must occur in the configured lifecycle.",
+      "conditions": [
+        "The configured states are QUEUED, RUNNING, COMPLETED and TERMINATED.",
+        "A state outside that set raises an invariant failure. This does not perform the business operation."
+      ]
+    },
+    {
+      "id": "allocation",
+      "ruleIds": [
+        "r32",
+        "r33",
+        "r34",
+        "r35",
+        "r36",
+        "r37",
+        "misplaced-allocation"
+      ],
+      "summary": "Running jobs and occupied nodes must agree on the current run, task version and allocation.",
+      "conditions": [
+        "A running job needs a matching run and node allocation, with enough capacity for its request.",
+        "A node referring to a missing run, a mismatched job or a different node is inconsistent.",
+        "An inconsistency blocks a guarded operation. If discovered after a business effect, the current integration stops the session; it cannot undo that effect."
+      ]
+    },
+    {
+      "id": "queue",
+      "ruleIds": [
+        "r21",
+        "r22",
+        "r23",
+        "r24",
+        "r26",
+        "r28",
+        "r25",
+        "r27"
+      ],
+      "summary": "When dispatch is requested, eligible jobs compete for the same free node. PhD goes first until an eligible Master job has been skipped three times; equal priorities use submission order.",
+      "conditions": [
+        "Candidates must be queued, have current approval and fit their owner’s quota.",
+        "Each candidate selects its first free compatible node in the application’s configured node order.",
+        "After three recorded skips, Master has higher priority than PhD.",
+        "Jobs selecting different nodes do not compete with one another.",
+        "This constrains dispatch decisions. It does not guarantee that a scheduler will eventually request dispatch."
+      ],
+      "question": "Should the system start waiting jobs by itself when the scheduler makes no dispatch requests?"
+    }
+  ],
+  "sourceHash": "b814f471bf6bf8dc66052a75a104fd98c98de8ab4a5360dd41be34fe9fd27456",
+  "planHash": "e7cc407f28ff906d8d7bc6941b4a280bb9d923a037d7f21af37f323c5a220491",
+  "obligations": {
+    "P2.2": [
+      "Single-job reads are checked, but other messages and model contexts are not fully mediated. A private peer message can still reach the wrong student.",
+      "The application needs checks on every relevant output channel before this requirement is fully supported."
+    ],
+    "P2.3": [
+      "The application has no complete check of private contents in arbitrary messages or Professor replies.",
+      "A sender’s claim about where information came from is not sufficient evidence."
+    ],
+    "P2.4": [
+      "The application returns UNAVAILABLE for both a missing job and a job the caller cannot read.",
+      "This depends on response handling, not only on deciding whether a read is allowed."
+    ],
+    "P2.5": [
+      "The original application exposes quotas, node specifications and aggregate availability.",
+      "Timing and public availability can still reveal indirect information, as the policy allows."
+    ],
+    "P2.6": [
+      "The evaluation trace contains information from multiple participants.",
+      "Keeping that trace away from student agents depends on deployment and export access; this review does not verify those channels."
+    ],
+    "P2.7": [
+      "No complete credential detector or secret-flow protection is installed.",
+      "Prompt construction, logs and submitted files need their own verified controls."
+    ],
+    "P3.3": [
+      "Only queued jobs can be revised. A successful revision increments the task version and clears the current approval.",
+      "The application must record the returned version and resource request so that old approvals no longer match."
+    ],
+    "P3.4": [
+      "Approval records permission without starting the job or allocating a node.",
+      "This is behavior of the original approval operation; translating a rule does not implement it."
+    ],
+    "P4.1": [
+      "The runtime checks allowed state changes, while the application performs the actual job and node operations.",
+      "Job, run and node records must stay synchronized."
+    ],
+    "P4.3": [
+      "A successful submission creates a queued job. The runtime checks that initial state before saving its policy records."
+    ],
+    "P4.4": [
+      "A queued job can start or terminate. A running job can complete or terminate.",
+      "Repeated stop requests for an already terminal job are acknowledged without restarting it.",
+      "The state update follows confirmation from the original operation."
+    ],
+    "P4.5": [
+      "A rejected queued request or a successful queued cancellation ends in TERMINATED.",
+      "Rejecting a job is an allowed business operation, distinct from refusing permission to call a tool."
+    ],
+    "P4.9": [
+      "Releasing a node follows the confirmation and current-run checks described in P6. This sentence adds no separate permission."
+    ],
+    "P6.1": [
+      "The original application confirms completion or stopping and releases the current allocation.",
+      "Business records and policy records do not share a transaction. An uncertain update stops the session rather than claiming to undo the business effect."
+    ],
+    "P6.3": [
+      "A failed stop keeps the running state and node allocation.",
+      "Only a confirmed stop permits the corresponding state and allocation updates."
+    ],
+    "P6.4": [
+      "Before release, the original application compares both the run and allocation generation with the node’s current owner.",
+      "The policy records are updated from the confirmed result."
+    ],
+    "P6.5": [
+      "Old or mismatched completion notifications must not affect a newer run.",
+      "Repeating a terminal stop returns an acknowledgement without releasing another allocation. These behaviors rely on application handling."
+    ],
+    "P6.6": [
+      "This is an example of the current-run check: an old Master notification must leave a newer PhD allocation intact."
+    ],
+    "P6.7": [
+      "Students may cancel their own jobs. Professor may request an administrative stop. The original operation must still confirm stopping."
+    ]
+  },
+  "application": "LabCluster"
+}

@@ -7,21 +7,12 @@ from types import MappingProxyType
 import uuid
 
 from .contracts import Applied, BridgeError, EffectNotAppliedError, NotApplied, ObservationSource, Operation, Snapshot
-from .datalog import Souffle, decode, encoded_fact, parse, stratify
+from .datalog import Souffle, encoded_fact, query_facts
 from .policy import (CATALOG, FSM_INPUTS, canonical, compile_policy, decide, fact, fingerprint, installed_rules,
                      validate_inputs, validate_intent, validate_state, text)
 
 
-def _query(binding, rules, inputs, source):
-    query, columns = parse(source, query=True)
-    for atom in query[0]["body"]:
-        schema = binding["predicates"].get(atom["predicate"])
-        if not schema or len(schema["args"]) != len(atom["args"]):
-            raise ValueError("Unknown query predicate or wrong arity.")
-    combined = deepcopy(rules) + query
-    stratify(combined)
-    closure = Souffle().evaluate([encoded_fact(f) for f in inputs], combined)
-    return {"columns": columns, "rows": [list(map(decode, f["args"])) for f in closure if f["predicate"] == "QueryResult"]}
+_query = query_facts  # Compatibility for existing applications; new analysis uses policy-query.
 
 
 class AnalysisSnapshot:

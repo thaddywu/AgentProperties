@@ -1,0 +1,171 @@
+{
+  "version": 1,
+  "scope": "Selected aggregate measurements; raw private artifacts excluded.",
+  "preRestructureTests": {
+    "run": 84,
+    "failed": 0,
+    "skipped": 0,
+    "nativeEngine": "Souffle 2.5"
+  },
+  "experiments": [
+    {
+      "experiment": "student-app-batch-v1",
+      "totals": {
+        "apps": 4,
+        "generatedTests": 67,
+        "independentTests": 16
+      },
+      "coreVerification": {
+        "pythonTests": 60,
+        "typescriptFoundationTests": 4
+      },
+      "applications": [
+        {
+          "index": 1,
+          "metrics": {
+            "originalPolicyUnchanged": true,
+            "originalTestsUnchanged": true,
+            "generatedTests": {
+              "passed": true,
+              "tests": 13,
+              "errors": 0,
+              "skipped": 0
+            },
+            "independentTests": {
+              "passed": true,
+              "tests": 4,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "index": 2,
+          "metrics": {
+            "originalPolicyUnchanged": true,
+            "originalTestsUnchanged": true,
+            "generatedTests": {
+              "passed": true,
+              "tests": 17,
+              "errors": 0,
+              "skipped": 0
+            },
+            "independentTests": {
+              "passed": true,
+              "tests": 4,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "index": 3,
+          "metrics": {
+            "originalPolicyUnchanged": true,
+            "originalTestsUnchanged": true,
+            "generatedTests": {
+              "passed": true,
+              "tests": 13,
+              "errors": 0,
+              "skipped": 0
+            },
+            "independentTests": {
+              "passed": true,
+              "tests": 4,
+              "errors": 0
+            }
+          }
+        },
+        {
+          "index": 4,
+          "metrics": {
+            "originalPolicyUnchanged": true,
+            "originalTestsUnchanged": true,
+            "generatedTests": {
+              "passed": true,
+              "tests": 24,
+              "errors": 0,
+              "skipped": 0
+            },
+            "independentTests": {
+              "passed": true,
+              "tests": 4,
+              "errors": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "experiment": "recommended-apps-v2",
+      "totals": {
+        "tests": 98,
+        "skipped": 1,
+        "nativeEngineCalls": 706,
+        "ruleClauses": 150,
+        "procedures": 103
+      },
+      "coreVerification": {},
+      "applications": [
+        {
+          "index": 1,
+          "metrics": {
+            "adapterLines": 88,
+            "tests": 15,
+            "skipped": 0,
+            "nativeEngineCalls": 149,
+            "ruleClauses": 52,
+            "procedures": 20,
+            "evaluatorMocksInFinal": false
+          }
+        },
+        {
+          "index": 2,
+          "metrics": {
+            "adapterLines": 85,
+            "tests": 18,
+            "skipped": 0,
+            "nativeEngineCalls": 30,
+            "ruleClauses": 5,
+            "procedures": 10,
+            "evaluatorMocksInFinal": false
+          }
+        },
+        {
+          "index": 3,
+          "metrics": {
+            "adapterLines": 181,
+            "tests": 20,
+            "skipped": 0,
+            "nativeEngineCalls": 305,
+            "ruleClauses": 31,
+            "procedures": 18,
+            "evaluatorMocksInFinal": false
+          }
+        },
+        {
+          "index": 4,
+          "metrics": {
+            "adapterLines": 134,
+            "tests": 18,
+            "skipped": 0,
+            "nativeEngineCalls": 163,
+            "ruleClauses": 39,
+            "procedures": 18,
+            "evaluatorMocksInFinal": false
+          }
+        },
+        {
+          "index": 5,
+          "metrics": {
+            "adapterLines": 182,
+            "tests": 27,
+            "skipped": 1,
+            "nativeEngineCalls": 59,
+            "ruleClauses": 23,
+            "procedures": 37,
+            "evaluatorMocksInFinal": false
+          }
+        }
+      ]
+    }
+  ]
+}

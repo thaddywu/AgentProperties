@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "read-own-document",
+      "task": "Read my own document.",
+      "setup": {"actor": "alice", "document": "doc-a", "state": "active"},
+      "expected": "The document is returned."
+    },
+    {
+      "id": "read-other-document",
+      "task": "Attempt to read another person's document.",
+      "setup": {"actor": "alice", "document": "doc-b", "state": "active"},
+      "expected": "No private document content is returned."
+    }
+  ]
+}

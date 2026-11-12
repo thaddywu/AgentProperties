@@ -1,0 +1,2 @@
+# Browser testing only; the application and core packages use the standard library.
+playwright==1.58.0

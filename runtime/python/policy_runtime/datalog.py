@@ -6,6 +6,7 @@ Unicode, quotes and control characters. No model text becomes a command or path.
 """
 
 import csv
+from copy import deepcopy
 import json
 from pathlib import Path
 import re
@@ -14,6 +15,19 @@ from tempfile import TemporaryDirectory
 
 NAME = re.compile(r"[A-Za-z][A-Za-z_0-9]*\Z")
 TOKEN = re.compile(r'\s+|//[^\n]*|%[^\n]*|"(?:\\.|[^"\\])*"|:-|\?-|!=|<=|>=|[<>]|[A-Za-z_][A-Za-z_0-9]*|-?\d+(?:\.\d+)?|[(),.]')
+
+
+def query_facts(binding, rules, inputs, source):
+    """Low-level read-only evaluation shared by legacy runtime APIs and policy-query."""
+    query, columns = parse(source, query=True)
+    for atom in query[0]["body"]:
+        schema = binding["predicates"].get(atom["predicate"])
+        if not schema or len(schema["args"]) != len(atom["args"]):
+            raise ValueError("Unknown query predicate or wrong arity.")
+    combined = deepcopy(rules) + query
+    stratify(combined)
+    closure = Souffle().evaluate([encoded_fact(f) for f in inputs], combined)
+    return {"columns": columns, "rows": [list(map(decode, f["args"])) for f in closure if f["predicate"] == "QueryResult"]}
 
 
 def variable(value):

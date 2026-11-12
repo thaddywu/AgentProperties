@@ -1,6 +1,67 @@
 # Application policy translation
 
+For the course workflow, use [the English student instructions](STUDENT.md).
+`translate.py` accepts an original directory and a separate empty output directory;
+`review.py --back-translation ... --policy ...` opens the saved execution reading
+and writes student judgments directly to `review.json`. Git branches remain
+user-owned.
+
+The student entry reads `POLICY_API_KEY`, `POLICY_MODEL_ID` and
+`POLICY_REASONING_EFFORT` from the environment. The model and reasoning effort
+default to `gpt-6.1-sol` and `medium`. `POLICY_BASE_URL` selects a compatible API
+endpoint; an explicit `--connection` file remains available for debugging.
+
+The independent Python implementation lives in [`python/`](python/README.md).
+It supplies requirements → shared rules → back-translation without Grokbot, Nova,
+Node or a UI dependency. The [student workbench](../evaluation/README.md) composes
+it with the separate policy and query layers. The TypeScript commands below remain
+for the existing host and research experiments.
+
 Generic authoring separates original NL, a traceable NL requirement plan, developer assessment and Datalog translation. Unsupported clauses, builtin mechanisms and backend obligations remain visible. Model generation is optional; reviewed Datalog can be compiled offline with either the Python or TS runtime.
+
+## Interactive policy review
+
+Run `pnpm --dir grokbot policy:review` from the repository root, then open
+`http://127.0.0.1:5180/policy-review.html`. The Nova header also links to this page.
+It starts with LabCluster's existing rules and explicitly hand-authored reference
+readings; no model, native Datalog engine or application execution is needed.
+Select original text to inspect linked behaviors, review unmapped requirements,
+record differences and answer concrete intent questions. Conditions and application
+input meanings expand on demand. Feedback and the latest model draft stay in the
+browser; JSON export includes the exact source, rules, mappings and review identity.
+
+For new translations, use the existing server-side `MODEL_CONNECTION_FILE`
+connection described below and restart the server. Edit the numbered policy and
+select Translate. Three model stages distill traceable requirements,
+generate candidate rules, then explain the actual program. Back-translation receives
+the candidate rules, relevant input meanings, configuration and fixed runtime
+semantics, **not** the original policy or distilled statements. Shared rule references
+produce many-to-many links. Each stage permits one correction after structural
+validation fails; `generationAttempts` records both the failure and correction.
+Text omitted during distillation is retained verbatim as unmapped review items;
+`omittedRequirementIds` distinguishes these omissions from assessed unsupported
+requirements. This does not relax the executable CLI's complete-source check.
+Unsupported clauses remain review items. Provider
+failure never falls back to the reference. Credentials never enter the browser.
+
+This is a review draft using the fixed LabCluster vocabulary and configuration;
+it cannot generate new adapters, change quotas in application configuration, or
+establish runtime observation correctness. Structural checks reject invalid rules
+and missing mappings, but do not prove that the descriptions or policies preserve
+meaning. Original acceptance cases are not run against an edited policy. Integration
+requirements are explicitly distinguished from rule behavior and are not verified
+by this interface. Intent questions are prompts for human feedback, not executed
+test cases. Ratings are not developer approval; no candidate is installed or offered
+as an executable bundle. The existing reviewed CLI workflow remains separate.
+
+Reference readings in `apps/labcluster-port/review-readings.json` are pinned to the
+rule file, extracted shared rules and runtime contract. Changes require regenerating
+the existing application artifacts and reviewing the readings before updating their
+hashes. A stale reference is rejected rather than silently relabeled as current.
+
+Offline UI checks: `pnpm --dir grokbot --filter @rakazo/web exec playwright test --config playwright.policy-review.config.ts`.
+The CI Policy review UI job captures desktop, expanded-evidence, unmapped and mobile
+screenshots without launching Electron or making model calls.
 
 ## Original NL → reviewed NL plan → Datalog
 

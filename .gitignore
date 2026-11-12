@@ -37,6 +37,9 @@ backups
 test-report
 verify-report
 translation/output/
+evaluation/output/
+/phase-demo/
+.venv/
 /grokbot/.upstream/
 .astro
 .deploy.lock

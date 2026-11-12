@@ -104,6 +104,12 @@ export function NovaApp() {
           {state?.policyIdentity.mode === "translated" ? "Translated" : "Reference"} · Local runtime
         </span>
         <AppearanceToggle />
+        <a
+          href="/policy-review.html"
+          className="text-xs text-muted-foreground hover:text-foreground"
+        >
+          Review policies
+        </a>
         <Button size="sm" variant="ghost" onClick={() => setQuestionsOpen(true)}>
           Questions
         </Button>

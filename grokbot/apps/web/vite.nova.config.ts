@@ -10,6 +10,7 @@ import react from "@vitejs/plugin-react";
 import { tsImport } from "tsx/esm/api";
 import { defineConfig } from "vite";
 import type { questionHandler as QuestionHandler } from "./src/features/nova/server-question.ts";
+import type { policyReviewHandler as PolicyReviewHandler } from "./src/features/policy-review/server.ts";
 
 const service = new ServiceProcess(NOVA_WORKER_PATH, process.env.NOVA_STATE_FILE);
 process.once("exit", () => service.close());
@@ -20,6 +21,26 @@ const { questionHandler }: { questionHandler: typeof QuestionHandler } = await t
 const connection = process.env.MODEL_CONNECTION_FILE
   ? JSON.parse(readFileSync(process.env.MODEL_CONNECTION_FILE, "utf8"))
   : undefined;
+const { policyReviewHandler }: { policyReviewHandler: typeof PolicyReviewHandler } = await tsImport(
+  "./src/features/policy-review/server.ts",
+  import.meta.url,
+);
+const { loadReviewApplication, REVIEW_INSTRUCTIONS } = await tsImport(
+  "@rakazo/policy-translation/review",
+  import.meta.url,
+);
+const reviewPolicy = policyReviewHandler(
+  () => loadReviewApplication(resolve(import.meta.dirname, "../../../apps/labcluster-port")),
+  connection
+    ? async (prompt) => {
+        const { connectionGenerator } = await tsImport(
+          "@rakazo/policy-translation/model",
+          import.meta.url,
+        );
+        return connectionGenerator(connection, REVIEW_INSTRUCTIONS)(prompt);
+      }
+    : undefined,
+);
 const interpret = questionHandler(
   service,
   connection
@@ -44,7 +65,12 @@ async function api(req: IncomingMessage, res: ServerResponse, next: () => void) 
     res.end();
     return;
   }
-  if (pathname !== "/nova-api" && pathname !== "/nova-question") return next();
+  if (
+    pathname !== "/nova-api" &&
+    pathname !== "/nova-question" &&
+    pathname !== "/policy-review-api"
+  )
+    return next();
   res.setHeader("Content-Type", "application/json");
   res.setHeader("Cache-Control", "no-store");
   try {
@@ -59,9 +85,11 @@ async function api(req: IncomingMessage, res: ServerResponse, next: () => void) 
       if (Buffer.byteLength(body) > 256_000) throw new Error("Request too large.");
     }
     const result =
-      pathname === "/nova-question"
-        ? await interpret(JSON.parse(body))
-        : await service.run(JSON.parse(body) as Request);
+      pathname === "/policy-review-api"
+        ? await reviewPolicy(JSON.parse(body))
+        : pathname === "/nova-question"
+          ? await interpret(JSON.parse(body))
+          : await service.run(JSON.parse(body) as Request);
     res.end(JSON.stringify({ result }));
   } catch (error) {
     res.statusCode = 400;
@@ -93,6 +121,11 @@ export default defineConfig({
   preview: { host: "127.0.0.1", port: 5180, strictPort: true },
   build: {
     outDir: "dist-nova",
-    rollupOptions: { input: resolve(import.meta.dirname, "nova.html") },
+    rollupOptions: {
+      input: [
+        resolve(import.meta.dirname, "nova.html"),
+        resolve(import.meta.dirname, "policy-review.html"),
+      ],
+    },
   },
 });

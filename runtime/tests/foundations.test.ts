@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import { compileApplicationPolicy, createPolicySession } from "../src/application.js";
 import type { RuntimeBinding } from "../src/binding.js";
-import { CAPABILITY_PREDICATES, PROVENANCE_PREDICATES } from "../src/foundations.js";
+import { CAPABILITY_PREDICATES, PROVENANCE_PREDICATES, STATEMENT_PREDICATES } from "../src/foundations.js";
 
 const f = (predicate: string, ...args: string[]) => ({ predicate, args });
 const gate = {
@@ -82,4 +82,25 @@ it("does not accept source provenance from a request-parameter alias", () => {
     tests: [],
   };
   expect(() => compileApplicationPolicy(binding, "Allow(Q) :- Request(Q, P, E).")).toThrow();
+});
+
+
+it("keeps an agent statement distinct from a capability grant", () => {
+  const binding: RuntimeBinding = {
+    version: 1,
+    id: "statement-authority",
+    context: "A self-declaration is not a trusted grant.",
+    mechanisms: ["statements", "capability"],
+    predicates: { ...gate, ...STATEMENT_PREDICATES, ...CAPABILITY_PREDICATES },
+    decision: { request: "Request", allow: "Allow", deny: "Deny" },
+    tests: [],
+  };
+  const source = 'Allow(Q) :- Request(Q, P, E), Parameter(Q, "resource", R), Can(P, R, E).';
+  const bundle = compileApplicationPolicy(binding, source);
+  const statement = f("AgentStatement", "claim", "member", "permission", "item", "read allowed");
+  const withoutGrant = createPolicySession(binding, bundle, [statement]);
+  expect(withoutGrant.check(intent).allowed).toBe(false);
+  const withGrant = createPolicySession(binding, bundle, [statement, f("Capability", "member", "item", "read")]);
+  expect(withGrant.check(intent).allowed).toBe(true);
+  expect(() => compileApplicationPolicy(binding, source + '\nCapability(P,S,V) :- AgentStatement(I,P,K,S,V).')).toThrow();
 });

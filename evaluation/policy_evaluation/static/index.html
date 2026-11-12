@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Policy review</title>
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header><a class="button quiet" href="/api/export" download="policy-study.json">Export</a></header>
+  <div id="message" role="status" aria-live="polite"></div>
+  <main id="main" aria-busy="true"></main>
+  <dialog id="editor">
+    <form id="translate-form">
+      <div class="row"><label for="source">Policy document</label><button type="button" id="close-editor" class="quiet">Close</button></div>
+      <input id="document-file" type="file" accept=".txt,.md,text/plain,text/markdown" aria-label="Open policy document">
+      <textarea id="source" required maxlength="24000" rows="16"></textarea>
+      <div class="row"><span id="model-status" class="muted"></span><button id="translate-submit" type="submit">Translate</button></div>
+    </form>
+  </dialog>
+</body>
+</html>

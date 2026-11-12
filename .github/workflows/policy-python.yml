@@ -1,0 +1,67 @@
+name: Independent policy stack
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  python-stack:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned native engine
+        run: |
+          curl --fail --location --output "$RUNNER_TEMP/souffle.deb" https://github.com/souffle-lang/souffle/releases/download/2.5/x86_64-ubuntu-2204-souffle-2.5-Linux.deb
+          echo "c21e2f8153c140499f5b2aa30a148dddec7be5663e36071466cdc225a6682f9fe699b939241c7c28258ee96d1e2c2fe5585e9e8e6b74fb20172f06d2b40774da  $RUNNER_TEMP/souffle.deb" | sha512sum -c -
+          dpkg-deb -x "$RUNNER_TEMP/souffle.deb" "$RUNNER_TEMP/souffle"
+          echo "$RUNNER_TEMP/souffle/usr/bin" >> "$GITHUB_PATH"
+      - name: Install the independent packages
+        run: python -m pip install './runtime/python[mcp]' ./translation/python ./query/python ./evaluation
+      - name: Offline core and integration checks
+        run: |
+          souffle --version
+          python evaluation/check.py
+      - name: Porting sandbox engine self-check
+        run: |
+          docker build -f evaluation/porting/Dockerfile -t policy-portin:local .
+          printf '%s' '{"operation":"health"}' | docker run --rm -i --network none --read-only --cap-drop ALL --security-opt no-new-privileges --tmpfs /tmp policy-portin:local
+      - name: Run installed distributions outside the checkout
+        working-directory: ${{ runner.temp }}
+        run: |
+          policy-evaluate --help
+          policy-translate --help
+          policy-query --help
+          policy-port --help
+          python - <<'PY'
+          from policy_evaluation.example import Application
+          app = Application()
+          events = []
+          result = app.run({"setup": {"actor": "alice", "document": "doc-b", "state": "active"}}, "protected", 42, events.append)
+          assert events[0]["outcome"] == "blocked"
+          assert result["completed"] is False
+          PY
+      - name: Install browser test tools
+        run: |
+          python -m pip install -r evaluation/requirements-test.txt
+          python -m playwright install --with-deps chromium
+      - name: Student evaluation browser journey
+        run: |
+          python evaluation/tests/ui_smoke.py
+          python evaluation/tests/codex_ui_smoke.py
+          python evaluation/tests/student_ui_smoke.py
+      - name: Upload student evaluation screenshots
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: independent-policy-evaluation
+          path: evaluation/test-results
+          if-no-files-found: ignore

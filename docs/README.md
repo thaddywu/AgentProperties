@@ -2,22 +2,38 @@
 
 A workspace for multi-agent applications, policy enforcement, sensemaking queries and natural-language policy translation.
 
+The student workbench now runs independently of Grokbot:
+
+```bash
+python3 evaluation/run.py                 # http://127.0.0.1:5190
+```
+
+See [the independent stack](../evaluation/README.md) for installation, model connections
+and LabCluster review, and [RQ1–3](../evaluation/STUDY.md) for student tasks and study
+limits. Reviewing the reference needs only Python; actual enforcement and queries
+also need native Soufflé and `prlimit`.
+
 | Directory | Responsibility |
 | --- | --- |
 | [grokbot/](../grokbot/README.md) | Host implementation and web/Electron/mobile UI |
 | [apps/](repository-structure.md) | Nova plus the independent [Document Vault](../apps/document-vault/README.md) app and runtime binding |
-| [runtime/](../runtime/README.md) | Generic action gate, Datalog evaluation, queries, provenance and lifecycle relations |
-| [translation/](../translation/README.md) | NL distillation, reviewed translation and validated runtime bundles |
+| [runtime/](../runtime/README.md) | Policy layer: trusted action gate, facts and Datalog engine; standalone Python plus TS compatibility |
+| [translation/](../translation/README.md) | Translation layer: independent Python requirements/rules/back-translation; historical TS experiments |
+| [query/](../query/README.md) | Query layer: read-only snapshots, questions and hypothetical checks |
+| [evaluation/](../evaluation/README.md) | Independent student UI, study records and paired experiment orchestration |
 | [docs/](repository-structure.md) | Repository design and research documents |
 
 Application descriptions use `app.md`, `policy.md`, `tools.md` and `agents/`. LLM agents supply their actual system prompts; scripted agents describe their decision logic. Episodes are optional examples.
 
 ## Run
 
-Run commands from the repository root. Use the Node version and pnpm declared in `grokbot/package.json`, then install with `pnpm --dir grokbot install --frozen-lockfile`.
+Run commands from the repository root. The Python student stack needs no host installation.
+For the existing Nova/Grokbot host, use the Node version and pnpm declared in
+`grokbot/package.json`, then install with `pnpm --dir grokbot install --frozen-lockfile`.
 
 ```bash
 ./apps/nova/run.sh                         # Grokbot UI + Nova; Docker required
+pnpm --dir grokbot policy:review            # Policy review UI; no Docker or model required for the reference
 pnpm --dir grokbot --filter @rakazo/nova start        # Nova without UI; Soufflé + prlimit required
 pnpm --dir translation translate ../apps/nova --connection /path/to/private-connection.json
 ```

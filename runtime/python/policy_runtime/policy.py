@@ -25,9 +25,7 @@ def mechanism_predicates(name):
     """Declare a selected foundation without duplicating its schema in an adapter."""
     if name not in CATALOG:
         raise ValueError("Unknown policy mechanism.")
-    return {k: {"kind": v["kind"], "args": list(v["args"]),
-                "meaning": v.get("meaning", "Selected lifecycle foundation.")}
-            for k, v in CATALOG[name]["predicates"].items()}
+    return {k: deepcopy(v) for k, v in CATALOG[name]["predicates"].items()}
 
 
 def policy_predicates(source, *, mechanisms=()):

@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "policy-evaluation"
+version = "0.1.0"
+description = "Local student evaluation workbench for policy coverage, translation and enforcement"
+requires-python = ">=3.10"
+dependencies = ["policy-runtime>=0.1.0", "policy-translation>=0.1.0", "policy-query>=0.1.0"]
+
+[project.scripts]
+policy-evaluate = "policy_evaluation.__main__:main"
+policy-port = "policy_evaluation.porting.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["policy_evaluation*"]
+
+[tool.setuptools.package-data]
+policy_evaluation = ["static/*"]
