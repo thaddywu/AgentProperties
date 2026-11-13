@@ -5,8 +5,9 @@ supply policy intent and application knowledge, create scenarios, and judge resu
 They do not write Datalog, adapters or runtime facts. Researchers own integration
 validation and independent assessment of the enforcement boundary.
 
-The student UI combines the RQ1/RQ2 judgments in one review. RQ3 test-file execution
-is a separate command-line workflow, with evidence retained in the backend/export.
+The student UI combines the RQ1/RQ2 judgments in one review. Generic RQ3 test-file
+execution is a separate command-line workflow, with evidence retained in the
+backend/export. The LabCluster pilot additionally provides a paired execution UI.
 The review's literal sentence navigation is pinned
 separately from model requirements. Sentence-level ratings and category counts
 are exported under `sentenceReview`, without transferring older requirement-level

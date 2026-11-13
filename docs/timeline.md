@@ -113,7 +113,7 @@ For domain analysis, a trusted exporter can supply an optional JSON header:
   "analysis": {
     "binding": {"...": "PolicyScope binding with typed predicate meanings"},
     "source": "Researcher-reviewed historical analysis Datalog",
-    "inputs": {"Predicate": [["recorded", "values"]]},
+    "inputs": [{"predicate": "Predicate", "args": ["recorded", "values"]}],
     "scope": "Exactly which observations and checks this projection supports",
     "templates": [],
     "entities": {}
