@@ -108,7 +108,7 @@ The default document example is deterministic and runs the installed developer
 reference. Its task completion means a document was actually read. Its independent
 fixture oracle uses stored ownership/state, not Datalog. It demonstrates the workflow,
 not general agent performance. The legacy LabCluster `--review-app` imports review
-artifacts only. The new [agentic port profile](porting.md) generates and
+artifacts only. The new [agentic port profile](../porting.md) generates and
 validates a candidate, then `--ported-app` runs its actual installed mapper/rules
 against original deterministic LabCluster scenarios. Its six source sections are
 coarse review units, not atomic requirements; RQ1 denominators must state that.

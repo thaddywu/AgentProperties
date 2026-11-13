@@ -1,6 +1,6 @@
 # Payment tools: additive policy decorators
 
-Read the [enforcement guide](../../src/policyscope/enforcement/README.md) and this app’s P1.1-P6.4 rules.
+Read the [enforcement guide](../../../src/policyscope/enforcement/README.md) and this app’s P1.1-P6.4 rules.
 Original bank.json load/save, lookup/limit/transfer function bodies, logging and
 masked payee output remain intact. The policy EDB records explicit initial inputs,
 host evidence and confirmed transfer deltas; reads do not refresh it.

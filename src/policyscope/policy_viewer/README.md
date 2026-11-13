@@ -9,4 +9,4 @@ from policyscope.policy_viewer.alignment import align_execution
 
 Open the shared UI with `policyscope review`. It displays original policy, corresponding checks, categories and human judgments. Review records and local HTTP composition live in `workbench`. Ratings never approve or install a policy.
 
-Portable execution readings can be opened with `--back-translation` and an explicit `--policy`; see [the student workflow](../../../docs/student-workflow.md).
+Portable execution readings can be opened with `--back-translation` and an explicit `--policy`; see [the student workflow](../../../docs/study/student-workflow.md).

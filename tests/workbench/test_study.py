@@ -236,7 +236,7 @@ class StudyTests(unittest.TestCase):
 
     def test_reference_import_preserves_source_and_hashes(self):
         root = Path(__file__).resolve().parents[2]
-        app = ReviewApplication(root / "apps/labcluster-port")
+        app = ReviewApplication(root / "examples/applications/labcluster-port")
         review = app.reference()
         self.assertEqual(len(review["requirements"]), 41)
         for row in review["requirements"]:

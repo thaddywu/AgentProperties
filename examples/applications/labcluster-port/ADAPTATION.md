@@ -1,6 +1,6 @@
 # LabCluster: additive tool instrumentation
 
-Read the [enforcement guide](../../src/policyscope/enforcement/README.md), then rules.dl in
+Read the [enforcement guide](../../../src/policyscope/enforcement/README.md), then rules.dl in
 P1.1-P6.7 order. All app clauses have short English explanations.
 
 ## Original code retained
@@ -149,9 +149,9 @@ are the original demo convention, not implemented login authentication.
 ## Run
 
 ```bash
-PYTHONPATH=src python3 apps/labcluster-port/run.py --upstream /path/to/pinned-checkout
-PYTHONPATH=src python3 apps/labcluster-port/tests/verify.py --upstream /path/to/pinned-checkout
-PYTHONPATH=src python3 apps/labcluster-port/tools/build_artifacts.py
+PYTHONPATH=src python3 examples/applications/labcluster-port/run.py --upstream /path/to/pinned-checkout
+PYTHONPATH=src python3 examples/applications/labcluster-port/tests/verify.py --upstream /path/to/pinned-checkout
+PYTHONPATH=src python3 examples/applications/labcluster-port/tools/build_artifacts.py
 ```
 
 Adapter SHA-256: `f11db45bed5a687c8a830c0c3831205011902baf223fc063396eba5800a64660`

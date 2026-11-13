@@ -10,16 +10,18 @@ Before restructuring, the pending implementation was committed and preserved wit
 | `archive/enforcement` | Python and TS runtimes, application ports |
 | `archive/post-mortem` | Python query layer, Nova analysis, proof trees and action search |
 
-Each branch contains the complete runnable context and its own `ARCHIVE.md`. These are frozen backups, not five active development lines. Earlier branch tips are preserved as tags listed in [branches.json](archive/branches.json); deleting the old branch names does not delete those commits.
+Each branch contains the complete runnable context and its own `ARCHIVE.md`. These are frozen backups, not five active development lines. Earlier branch tips are preserved under `archive/branches-2026-11-12/*` tags. The first consolidated Python layout is retained as `archive/python-layout-2026-11-12`.
 
-The archives include the original public experiment artifacts under `docs/evaluation`. [experiment-summary.json](archive/experiment-summary.json) preserves selected aggregate metrics from ignored local reports. Raw private prompts, source copies, trajectories, endpoints and logs were excluded from publication. Local private originals and a Git bundle remain in ignored backup storage.
+Historical evidence belongs to these archives. They contain the original public results under `docs/evaluation`, aggregate measurements and the earlier branch inventory under `docs/archive`. Raw private prompts, source copies, trajectories, endpoints and logs were excluded from publication. Local private originals and Git bundles are retained outside the checkout.
 
 ```bash
 git fetch origin --tags
 git show archive/post-mortem:ARCHIVE.md
+git show origin/archive/policy-adder:docs/archive/experiment-summary.json
+git tag --list 'archive/branches-2026-11-12/*'
 git worktree add --detach /path/to/archive origin/archive/post-mortem
 ```
 
-Active Python imports now use `policyscope.*`; the previous `policy_runtime`, `policy_translation`, `policy_query` and `policy_evaluation` source roots are archived. Install the root distribution with `pip install -e .`. The UI entry is `policyscope review`, verification is `python scripts/check.py`, and adapter containers use `src/policyscope/adapters/Dockerfile`.
+Active Python imports use `policyscope.*`. The previous `policy_runtime`, `policy_translation`, `policy_query` and `policy_evaluation` source roots are archived. Current commands and verification are documented in [setup](setup.md) and the repository README; one-off restructure reports remain in the layout snapshot.
 
 This restructure preserves the Python snapshot/query behavior and the review UI. It does not claim Python parity with Nova's TS proof trees, distributed reconstruction, minimum-event prevention or completion-path search. Those implementations remain available in the post-mortem archive. A unified historical trajectory contract, deletion/revocation replay and five UI tabs are deferred.

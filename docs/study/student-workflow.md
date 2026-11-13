@@ -117,7 +117,7 @@ export BASE_APP_DIR="/path/to/original-app"
 export TRANSLATED_APP_DIR="/path/to/translated-app"
 ```
 
-Create the private connection file outside the repository. It uses the shared fields `baseUrl`, `modelId`, optional `apiKey`, and optional `reasoningEffort`. See [model setup](porting.md). The coding-agent adapter needs a Responses-compatible endpoint; credentials stay outside the application containers.
+Create the private connection file outside the repository. It uses the shared fields `baseUrl`, `modelId`, optional `apiKey`, and optional `reasoningEffort`. See [model setup](../porting.md). The coding-agent adapter needs a Responses-compatible endpoint; credentials stay outside the application containers.
 
 ## Appendix B. Editing review.json directly
 

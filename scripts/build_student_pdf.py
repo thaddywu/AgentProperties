@@ -100,10 +100,10 @@ a {color:#245272;text-decoration:none}
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--source", type=Path, default=ROOT / "docs/student-workflow.md"
+        "--source", type=Path, default=ROOT / "docs/study/student-workflow.md"
     )
     parser.add_argument(
-        "--output", type=Path, default=ROOT / "docs/student-workflow.pdf"
+        "--output", type=Path, default=ROOT / "output/docs/student-workflow.pdf"
     )
     parser.add_argument(
         "--font-dir",

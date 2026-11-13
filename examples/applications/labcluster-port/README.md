@@ -1,6 +1,6 @@
 # LabCluster policy adapter
 
-Read [ADAPTATION.md](ADAPTATION.md) and the [PolicyScope guide](../../src/policyscope/enforcement/README.md).
+Read [ADAPTATION.md](ADAPTATION.md) and the [PolicyScope guide](../../../src/policyscope/enforcement/README.md).
 The original Store, business methods, agents, tool names and trace remain intact.
 The upstream patch adds explicit guarded execution inside Tools.call and a
 completion-report decorator. Original Store business methods remain intact.
@@ -10,8 +10,8 @@ Store.snapshot. The original app may still use snapshots for its own logic/trace
 Initial policy configuration and English rule explanations live in rules.dl.
 
 ```bash
-PYTHONPATH=src python3 apps/labcluster-port/run.py --upstream /path/to/pinned-checkout
-PYTHONPATH=src python3 apps/labcluster-port/tests/verify.py --upstream /path/to/pinned-checkout
+PYTHONPATH=src python3 examples/applications/labcluster-port/run.py --upstream /path/to/pinned-checkout
+PYTHONPATH=src python3 examples/applications/labcluster-port/tests/verify.py --upstream /path/to/pinned-checkout
 ```
 
 This demonstration starts with a fresh original Store and policy scope. Store and

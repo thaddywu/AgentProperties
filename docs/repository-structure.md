@@ -11,11 +11,14 @@ src/policyscope/
   adapters/          Optional models, sandboxing and LabCluster profile
   workbench/         Shared HTTP/UI composition and study persistence
 tests/               Offline and headless browser tests
-apps/                Python application adapters and reviewed reference policies
-examples/            Small runnable integrations
-evaluation/          Data-only experiment cases
+examples/
+  quickstart/        Small runnable integration
+  applications/      App adapters and reviewed reference policies
+  cases/             Synthetic data-only comparison inputs
 scripts/             Verification and documentation tools
-docs/                Guides, archive index and optional manuscript submodule
+docs/                Framework guides and archive recovery
+  study/             Study protocol, student guides and illustrations
+  research/          Optional manuscript submodule
 pyproject.toml       One installable Python distribution and command catalog
 ```
 
@@ -29,4 +32,4 @@ Analysis has no business-execution authority. Its current input is an explicit s
 
 Model generation is injected. The compatible HTTP model transport and coding-agent/Docker integration are optional; their SDKs and credentials do not enter core semantics. New app adapters must establish identity, authoritative facts, actual effect boundaries and independent tests. Existing synchronous/local contracts do not claim distributed transactions or complete mediation of an arbitrary app.
 
-`output/`, `backups/`, test artifacts, environments and credentials are ignored and private. Archive branches retain the previous host, TypeScript code and public experiment artifacts. There is one active development branch, `master`; the five `archive/*` module branches are frozen references.
+`output/`, test artifacts, environments and credentials are ignored and private. Local historical backups live outside the checkout. Archive branches retain the previous host, TypeScript code and public experiment artifacts. There is one active development branch, `master`; the five `archive/*` module branches are frozen references.

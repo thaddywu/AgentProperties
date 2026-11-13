@@ -14,7 +14,7 @@ docker build -f src/policyscope/adapters/Dockerfile -t policy-portin:local .
 docker build -f src/policyscope/adapters/Dockerfile.batch -t policy-portin:batch-v1 .
 ```
 
-在仓库之外保存私人连接 JSON，使用共享字段 `baseUrl`、`modelId`、可选的 `apiKey` 和 `reasoningEffort`。该可选适配器需要支持 Responses 协议的端点；核心不依赖特定托管厂商。详见 [连接与接入](porting.md)。
+在仓库之外保存私人连接 JSON，使用共享字段 `baseUrl`、`modelId`、可选的 `apiKey` 和 `reasoningEffort`。该可选适配器需要支持 Responses 协议的端点；核心不依赖特定托管厂商。详见 [连接与接入](../porting.md)。
 
 设置两个应用目录和私人连接文件：
 

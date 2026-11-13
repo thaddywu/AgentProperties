@@ -14,7 +14,7 @@ class CaseFileTests(unittest.TestCase):
         self.value = json.loads(
             (
                 Path(__file__).resolve().parents[2]
-                / "evaluation/examples/document-tests.json"
+                / "examples/cases/document-tests.json"
             ).read_text()
         )
 

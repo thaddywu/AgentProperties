@@ -204,8 +204,8 @@ Python 3.10+, Souffle 2.5 and Linux prlimit are required; Node, models and hoste
 services are optional. Run workspace examples with PYTHONPATH=src or
 install the root distribution with `python3 -m pip install -e .`.
 
-[LabCluster](../../../apps/labcluster-port/ADAPTATION.md) and
-[Catch Me If You Scam](../../../apps/scam-port/ADAPTATION.md) document the actual
+[LabCluster](../../../examples/applications/labcluster-port/ADAPTATION.md) and
+[Catch Me If You Scam](../../../examples/applications/scam-port/ADAPTATION.md) document the actual
 additive tool hooks and exact upstream patches. Shared schemas/rules have one catalog;
 The Python core validates reviewed bundles, including .key metadata. The earlier
 TS implementation is retained in the enforcement archive.
