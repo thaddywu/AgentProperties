@@ -7,8 +7,8 @@ policyscope inspect
 ```
 
 The viewer reads a file and serves a local page. It does not start the application,
-connect to an agent, send messages, invoke tools, configure a model, or replay
-business effects. No LLM, native engine, Docker or Grokbot installation is required.
+connect to an agent, send messages, invoke tools or replay business effects.
+Viewing needs no LLM, native engine, Docker or Grokbot installation.
 Imported logs remain in memory; export returns the original data. Opening a log
 replaces the selection only after validation succeeds.
 
@@ -45,7 +45,8 @@ Use `format: "policyscope-timeline"`, `version: 1`. The executable validator is
 }
 ```
 
-Header fields are `format`, `version`, `roles`, `events`, and optional `title`.
+Header fields are `format`, `version`, `roles`, `events`, optional `title` and
+optional `analysis` (described below).
 Each participant has unique `id`, display `name`, and optional descriptive `role`.
 Role labels do not authenticate identity or grant permission.
 
@@ -90,8 +91,59 @@ committed facts. Display does not invoke the native evaluator. Actor labels are
 read from the recorded requests; absent conversation bodies and timestamps remain
 absent.
 
-The separate `policyscope analyze` command retains replay and optional NL QA APIs.
-The viewer does not call them and exposes no chat, model, tool-execution or
-application-mutation route. Its only POST operations import data and select a
-recorded event. The Python host and loopback browser session remain trusted; do
-not expose a private-log server publicly.
+## Read-only analysis
+
+Expand **Analyze** to query the recorded evidence. Direct Datalog requires the
+native engine. Add `--connection /path/to/private-connection.json` to enable
+natural-language questions using the shared compatible model adapter. The
+browser never configures credentials or contacts the model directly. The analysis
+model is independent of the agents whose conversations are recorded.
+
+Without a domain contract, conversation logs get a fixed observation vocabulary:
+`Participant`, `Event`, `Recipient`, `Content`, `Omitted`, `ToolCall`, `ToolResult`,
+`Timestamp`, `RecordedOutcome` and `Observed`. This supports questions about
+recorded activity; it cannot infer business policies or useful task completion.
+Content longer than 4,096 characters is marked omitted. The query projection is
+limited to 5,000 facts, independently of the larger browsing limits.
+
+For domain analysis, a trusted exporter can supply an optional JSON header:
+
+```json
+{
+  "analysis": {
+    "binding": {"...": "PolicyScope binding with typed predicate meanings"},
+    "source": "Researcher-reviewed historical analysis Datalog",
+    "inputs": {"Predicate": [["recorded", "values"]]},
+    "scope": "Exactly which observations and checks this projection supports",
+    "templates": [],
+    "entities": {}
+  }
+}
+```
+
+This is a shape illustration, not an executable binding. `binding`, `source`,
+`inputs` and `scope` are required; templates and entities are optional. See a
+complete generated contract in the [LabCluster pilot](study/labcluster-pilot.md).
+The domain contract replaces the default vocabulary; only its declared facts and
+derived relations are queryable. Other raw event fields remain browsable. Rules
+and facts are data, with no Python renderers or application imports.
+
+The translator sees the question, schema/meanings, Datalog, scope, examples and
+entity IDs. It sees neither app logic nor raw fact rows. It can propose queries
+beyond the examples, ask for clarification, or return unsupported. The backend
+admits one read-only `?-` query using declared predicates and the existing bounded
+Datalog grammar; host commands, arbitrary functions and native directives are not
+query capabilities. The local engine returns exact rows with relation-field
+labels and links to returned event IDs. Those links are observations, not proof
+trees. No matches means no matches in the supplied evidence, not universal safety.
+
+`policyscope analyze timeline.json --question 'Which tools were called?'
+--connection /path/to/private-connection.json` also supports this interface.
+Existing gate logs retain the separate replay/decision QA interface described in
+the [gate contract](trajectory.md).
+
+The viewer exposes import, event selection and read-only query routes; it exposes
+no recorded-agent chat, application execution or mutation route. Execution in the
+pilot belongs to a separate trusted sandbox service. Pinned document IDs keep
+original and translated logs independent across tabs. The Python host and loopback
+browser session remain trusted; do not expose a private-log server publicly.

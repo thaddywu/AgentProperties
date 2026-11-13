@@ -4,7 +4,16 @@
 conversation/tool logs with declared participants and existing gate trajectories;
 it requires no model, native engine or running app. See the
 [timeline contract](../../../docs/timeline.md). Messages, arguments and results
-remain data; the viewer has no send, execute or model-connection interface.
+remain data; the viewer has no recorded-agent send or execute interface.
+
+`LogQuerySession` adds a separate interface for data-only timelines: direct
+read-only Datalog or optional NL-to-Datalog over a declared analysis contract.
+Queries may extend beyond templates. The model sees schema meanings, rules,
+scope, examples and entities, without application code or raw fact rows. Native
+evaluation returns exact rows locally. Generic logs get a fixed observation
+projection; domain policy/completion questions require an explicit fact producer
+and analysis profile. Unsupported questions remain unsupported. Start the viewer
+with `--connection` to enable this optional analysis model.
 
 `QuerySession` performs read-only analysis over an explicitly captured binding, rule source, input facts and optional source versions. It depends on `core`, without execution callbacks or application imports.
 

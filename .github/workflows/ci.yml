@@ -44,6 +44,7 @@ jobs:
           policyscope enforce --help
           policyscope analyze --help
           policyscope inspect --help
+          policyscope labcluster-study --help
           policyscope run-cases --help
           policyscope port-profile --help
           python - <<'PY'
@@ -64,6 +65,7 @@ jobs:
           python tests/workbench/codex_ui_smoke.py
           python tests/workbench/student_ui_smoke.py
           python tests/workbench/analysis_ui_smoke.py
+          python tests/workbench/experiment_ui_smoke.py
       - name: Upload review screenshots
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

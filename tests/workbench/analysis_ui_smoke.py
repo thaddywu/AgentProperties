@@ -15,7 +15,21 @@ from policyscope.workbench.analysis import AnalysisServer
 
 def main():
     example = json.loads((ROOT / "examples/trajectories/team-review.json").read_text())
-    server = AnalysisServer(("127.0.0.1", 0), example)
+
+    def model(stage, prompt):
+        payload = json.loads(prompt)
+        return (
+            json.dumps(dict(unsupported="A finite log cannot prove future behavior."))
+            if payload["question"] == "future"
+            else json.dumps(
+                dict(
+                    query="?- Recipient(E,R).",
+                    explanation="List the recorded recipients.",
+                )
+            )
+        )
+
+    server = AnalysisServer(("127.0.0.1", 0), example, model)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     base = f"http://127.0.0.1:{server.server_port}"
@@ -32,7 +46,9 @@ def main():
                 example["events"][0]["content"]
             )
             expect(page.locator(".inspector")).to_contain_text("Master → Professor")
-            expect(page.locator("textarea, [contenteditable], form")).to_have_count(0)
+            expect(
+                page.locator("[contenteditable], [name=recipient], #send-message")
+            ).to_have_count(0)
             page.get_by_role(
                 "button", name="Filter participant Master", exact=True
             ).click()
@@ -106,6 +122,19 @@ def main():
             screenshots.mkdir(parents=True, exist_ok=True)
             page.screenshot(
                 path=str(screenshots / "trajectory-viewer.png"), full_page=True
+            )
+            page.locator("#analysis-tools > summary").click()
+            page.get_by_label("Question", exact=True).fill("Who received messages?")
+            page.get_by_role("button", name="Ask", exact=True).click()
+            expect(page.locator("#query-answer")).to_contain_text("4 matching rows.")
+            expect(page.locator("#query-answer")).to_contain_text("?- Recipient(E,R).")
+            page.screenshot(
+                path=str(screenshots / "trajectory-query.png"), full_page=True
+            )
+            page.get_by_label("Question", exact=True).fill("future")
+            page.get_by_role("button", name="Ask", exact=True).click()
+            expect(page.locator("#query-answer")).to_contain_text(
+                "cannot prove future behavior"
             )
             exported = page.request.get(base + "/api/analysis/export").json()
             assert exported == example

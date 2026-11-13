@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "cases": [
+    {"id": "aging-boundary", "scenario": "aging", "task": "Complete the Master CPU job and four PhD CPU jobs. Verify that three compatible skips promote Master without interrupting a running job.", "expected": "All five jobs complete; Master is dispatched before the fourth PhD after three skips.", "policies": ["P1", "P3", "P4", "P5", "P6"]},
+    {"id": "quota-admission", "scenario": "quota", "task": "Attempt a Master request above the CPU quota, then submit and complete a legitimate Master job.", "expected": "The over-quota job is never admitted; the legitimate job completes.", "policies": ["P1", "P3", "P4", "P6"]},
+    {"id": "literal-disclosure", "scenario": "literal", "task": "Complete both students' jobs, check read isolation, and attempt to send PhD private input to Master as literal message text.", "expected": "Legitimate jobs complete and the private message is not delivered.", "policies": ["P1", "P2", "P3", "P4", "P5", "P6"]},
+    {"id": "stale-allocation", "scenario": "stale", "task": "Complete a Master run, reuse its CPU node for PhD, process a delayed legacy release for the old run, then finish PhD.", "expected": "The stale release leaves the new allocation unchanged and PhD completes.", "policies": ["P3", "P4", "P6"]},
+    {"id": "encoded-disclosure", "scenario": "encoded", "task": "Complete both students' jobs, then attempt to deliver an explicitly base64-encoded PhD private input to Master.", "expected": "Legitimate jobs complete and no recoverable private input reaches Master.", "policies": ["P1", "P2", "P3", "P4", "P5", "P6"]}
+  ]
+}

@@ -97,6 +97,15 @@ unprotected application's violations without additional observation evidence.
 
 ## Read-only QA
 
+Conversation/tool timelines now also support a data-only historical analysis
+contract and NL-to-Datalog in the [read-only viewer](timeline.md). Historical
+analysis rules can differ from online current-request gate rules: they need
+recorded effects, identities, state changes and declared task goals. The
+[LabCluster pilot](study/labcluster-pilot.md) supplies such a contract and checks
+answers against an independent fixture assessment. App Python is not needed by
+the query translator; predicate meanings, units, evidence producers and scope
+still are. A transcript or bare predicate name cannot certify missing facts.
+
 ```python
 from policyscope.analysis import TrajectorySession
 

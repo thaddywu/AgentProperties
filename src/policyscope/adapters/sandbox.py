@@ -9,7 +9,16 @@ from pathlib import Path
 
 
 class Sandbox:
-    def __init__(self, source, candidate, *, image="policy-portin:local", timeout=120):
+    def __init__(
+        self,
+        source,
+        candidate,
+        *,
+        image="policy-portin:local",
+        timeout=120,
+        worker=None,
+        framework=None,
+    ):
         self.source, self.candidate = Path(source).resolve(), Path(candidate).resolve()
         # Resolve a tag once so later tag changes cannot silently change the experiment.
         result = subprocess.run(
@@ -35,6 +44,10 @@ class Sandbox:
             check=True,
         )
         self.timeout = timeout
+        if (worker is None) != (framework is None):
+            raise ValueError("A trusted Python worker requires its framework snapshot.")
+        self.worker = Path(worker).resolve() if worker else None
+        self.framework = Path(framework).resolve() if framework else None
 
     def run(self, task):
         name = "policy-port-" + uuid.uuid4().hex
@@ -67,9 +80,23 @@ class Sandbox:
             f"type=bind,source={self.source},target=/application,readonly",
             "--mount",
             f"type=bind,source={self.candidate},target=/candidate,readonly",
-            "-i",
-            self.image,
         ]
+        if self.worker:
+            command += [
+                "--mount",
+                f"type=bind,source={self.worker},target=/opt/study_worker.py,readonly",
+                "--mount",
+                f"type=bind,source={self.framework},target=/framework/policyscope,readonly",
+                "--env",
+                "PYTHONPATH=/framework",
+                "--env",
+                "PYTHONDONTWRITEBYTECODE=1",
+                "--entrypoint",
+                "python",
+            ]
+        command += ["-i", self.image]
+        if self.worker:
+            command += ["/opt/study_worker.py"]
         # No caller environment credentials are forwarded into the container.
         with tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:
             try:

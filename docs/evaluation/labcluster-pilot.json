@@ -1,0 +1,249 @@
+{
+  "version": 1,
+  "date": "2026-11-13",
+  "application": "LabCluster",
+  "sourceRevision": "c5ca03d0cc35651fa49c8d637074e8258a1a715e",
+  "provenance": {
+    "originalCommit": "c5ca03d0cc35651fa49c8d637074e8258a1a715e",
+    "applicationFiles": {
+      "baseline": {
+        "README.md": "3f57cf2e8a43ef88fe425c08ea44b74061977dec97692e97f77a773011b6599c",
+        "policies.md": "f4614828bd5c9e71ea716b0a050059c380e9c33bf7c2074ae9265e7ba84c6d40",
+        "requirements.md": "153059674bb1b1bb1e3816f5f4211796e9963fbc4c9f48bc94cef0350ef8e49b",
+        "requirements.txt": "16dbb791426017ff13bc44058b1a449db32039edd76db6face3dca2d17f3aa9f",
+        "agents/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "agents/client.py": "9da590f41c082449bd3f7192d50018afe79ad4d976204338f48a8ca3994e794e",
+        "agents/deterministic.py": "a79cd1a08607909c3696a5771b5a7baf53f5910bff78b3e8e6a56e18bdf0cb1e",
+        "agents/recorded.py": "51abec9d74cd763b44fa41b607dc249516437f848f7cb6bab631a3ac2df2236f",
+        "agents/runtime.py": "2971781b043df809b7dbd61255dc9f4b1d99a320b1ed6347aa118370d809cf2f",
+        "core/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "core/access.py": "74246d9e84d2c00b1e67ccc4ad0d622b30f49fa4c0b1771653e50514ef141b91",
+        "core/audit.py": "13f9c6127fe1e78538bc6ab42a18230188de0dda10860389761dc69612eefc94",
+        "core/messaging.py": "f0d188b005e839ca524ada4ae9aa3afd778d9ab5aca3b9217e942cc7c778957c",
+        "core/schemas.py": "4885057577ab9a8b0602e32b3d2f192e717ccd3fa464e3bbe579bea127ccabfd",
+        "core/store.py": "0b49fb0a91c2a43521ed34201fac8ae4e8e9e26a93ced7a8f46bc977fc58ac3a",
+        "core/tools.py": "8b1b320cd359c2d4c0fcb554f7ea8f458dc51b4d1e533dc744af9f4f6ef7c58c",
+        "core/tracing.py": "c0b52bbec306a7de7e6217b8970da49bddfa87d8e22b99309b75273b6ef505cb",
+        "fixtures/cluster.json": "606efea63c5736b8750b6a2f4d96502e852858f1cee7a38e977750fb15ac9ccc",
+        "fixtures/master_private.json": "63ed6b645019bafab3447fb7eba7665fe23098b5d5b787f8f5b0c138aff5733f",
+        "fixtures/phd_private.json": "b834739f874e8e1cd2499d19371347ef8906d328c603c7e950c0ded944fdd4b4",
+        "fixtures/professor_private.json": "9bef165514e2c6086765a93f01996876a9118a6f8bd5c33c182cd04fb496683a",
+        "phase1/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "phase1/run.py": "7e136f6da7b3232dac7d15df7ecf3f8eac931c934e1a1382cd457ad314c201ad",
+        "phase1/scenarios.py": "317ba397b5c7f4637f0a4c386602bf71d7362dea83242f4bf9e1150f21f47d96",
+        "tests/test_client.py": "4fe8f21bdcf890558a98ecf93f8bda181fa4e8ff6167abe11dc8b3653e4f8f62",
+        "tests/test_cluster.py": "d43a06040f8b0270ee33add7d05e6d96c3c20ccae25d4721826528248dd50e7e",
+        "traces/README.md": "3f451c819a850fcb80e1296da38e52bf0a4275c2cabfc219cb0f1776ef7ef6a9",
+        "traces/T1_priority_queue.json": "6d8d82cab9e54e22df44bb265bccef3c43f2d3fe50fb03d240acaab4df6cc156",
+        "traces/T2_information_boundary.json": "511875d88a78a7c6ac30121feebc3564337cb4eeea977aa9a31ef82824a96779",
+        "traces/T3_professor_kill.json": "614cd033aa6ccc0c00343f359e79dbed7999d24bdeed923dd79dde686ec9d9af",
+        "traces/T4_stale_completion.json": "584c08f41a5d29d92502f0ea0dc777f56dfcce7162a98d581108aea87b56f925"
+      },
+      "protected": {
+        "README.md": "3f57cf2e8a43ef88fe425c08ea44b74061977dec97692e97f77a773011b6599c",
+        "requirements.md": "153059674bb1b1bb1e3816f5f4211796e9963fbc4c9f48bc94cef0350ef8e49b",
+        "requirements.txt": "16dbb791426017ff13bc44058b1a449db32039edd76db6face3dca2d17f3aa9f",
+        "review.json": "e00e25f1d47aa0149f9a01e1800416c25b598a51331045f3bf2fb0e8551a3f52",
+        "agents/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "agents/client.py": "9da590f41c082449bd3f7192d50018afe79ad4d976204338f48a8ca3994e794e",
+        "agents/deterministic.py": "a79cd1a08607909c3696a5771b5a7baf53f5910bff78b3e8e6a56e18bdf0cb1e",
+        "agents/recorded.py": "51abec9d74cd763b44fa41b607dc249516437f848f7cb6bab631a3ac2df2236f",
+        "agents/runtime.py": "3ba831662641c329c48ac3d6e930a849e4d83ba4cd94ff2803b80f0cd230393a",
+        "core/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "core/access.py": "74246d9e84d2c00b1e67ccc4ad0d622b30f49fa4c0b1771653e50514ef141b91",
+        "core/audit.py": "13f9c6127fe1e78538bc6ab42a18230188de0dda10860389761dc69612eefc94",
+        "core/messaging.py": "b78ae51136b8072100d204508b342fabc2697b34d60c19b4267e9340b3cc1977",
+        "core/schemas.py": "4885057577ab9a8b0602e32b3d2f192e717ccd3fa464e3bbe579bea127ccabfd",
+        "core/store.py": "85fec5a94e4bf62f470331547362695837749d62526fd256f5b71937a7f57f85",
+        "core/tools.py": "1b7fe474ed14948542ef3b55cf81a672fec3078579ba66e18c9970a1f4ce156a",
+        "core/tracing.py": "c0b52bbec306a7de7e6217b8970da49bddfa87d8e22b99309b75273b6ef505cb",
+        "fixtures/cluster.json": "606efea63c5736b8750b6a2f4d96502e852858f1cee7a38e977750fb15ac9ccc",
+        "fixtures/master_private.json": "63ed6b645019bafab3447fb7eba7665fe23098b5d5b787f8f5b0c138aff5733f",
+        "fixtures/phd_private.json": "b834739f874e8e1cd2499d19371347ef8906d328c603c7e950c0ded944fdd4b4",
+        "fixtures/professor_private.json": "9bef165514e2c6086765a93f01996876a9118a6f8bd5c33c182cd04fb496683a",
+        "phase1/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "phase1/run.py": "7e136f6da7b3232dac7d15df7ecf3f8eac931c934e1a1382cd457ad314c201ad",
+        "phase1/scenarios.py": "317ba397b5c7f4637f0a4c386602bf71d7362dea83242f4bf9e1150f21f47d96",
+        "tests/test_client.py": "4fe8f21bdcf890558a98ecf93f8bda181fa4e8ff6167abe11dc8b3653e4f8f62",
+        "tests/test_cluster.py": "d43a06040f8b0270ee33add7d05e6d96c3c20ccae25d4721826528248dd50e7e",
+        "traces/README.md": "3f451c819a850fcb80e1296da38e52bf0a4275c2cabfc219cb0f1776ef7ef6a9",
+        "traces/T1_priority_queue.json": "6d8d82cab9e54e22df44bb265bccef3c43f2d3fe50fb03d240acaab4df6cc156",
+        "traces/T2_information_boundary.json": "511875d88a78a7c6ac30121feebc3564337cb4eeea977aa9a31ef82824a96779",
+        "traces/T3_professor_kill.json": "614cd033aa6ccc0c00343f359e79dbed7999d24bdeed923dd79dde686ec9d9af",
+        "traces/T4_stale_completion.json": "584c08f41a5d29d92502f0ea0dc777f56dfcce7162a98d581108aea87b56f925",
+        "policy_port/__init__.py": "fd51cd13e6cab63beec0fd98cf0ed1a2fb604c3515b5897ba0cf99aa6008f85d",
+        "policy_port/rules.dl": "890c01f9ac256ddf83c3d24e80cfac719b292d71939c2d32e15c5efa11aef920",
+        "policy_port/adapter.py": "b891139e57da870f7215eb4bff1d729c86ed3190d19803b2043068702e7eb187",
+        "policy_port/test-run-1.log": "e70fec2825d9bf206d27463a792768195039599cb39bcca66339f47283f84cce",
+        "policy_port/test_port.py": "6b508e4750b6541bafdfb96ec3b4ef0cf2cdb84021daaa8132dd7abc18bc0f62",
+        "policy_port/test-run-2.log": "2db7bc496f1960257a9b8abfa08f5543fa726b2e3cc9759d66a33e651787df39",
+        "policy_port/trajectories.json": "1b5136257b8baac6e34404a712bd00ee3cd508dcca660269e5e066e143647ef6",
+        "policy_port/trajectories-run-2.json": "a8096e0823e623f8e9a2e89029b47a8ecf5d41792be466c7c87f41699feec23c",
+        "policy_port/test-run-3.log": "0a2c8d7ea2cec6cc006844657329daa229bf0b4a35db656cfa37a4796933b8c3",
+        "policy_port/trajectories-run-3.json": "c6409d5d7317600a78e9c0dbdeb5420f8dc2d0f638a5b053585fcf5bde47ee51",
+        "policy_port/test-run-4.log": "3316c41351eaf10178b3ba722bf9a494166b656cfa4c0a3b04415ff4b5e9a115",
+        "policy_port/regression-run.log": "e868d3993c096f983aba388ba799c4bad7ff00196fbfb89216df683d5d20ca24",
+        "policy_port/write_metadata.py": "2302199af384ed5794702cba05cc258effa9afbe3e639cdac838f1041ea54167",
+        "policy_port/port.json": "8b85bb5be269b521f6385b53f38ca74847a87c535635152b97dc6957e10bc002",
+        "policy_port/source.diff": "d2f273b44134ab641e8df6adbac5ccd85d779396ef9a39b366948c022119ed1d",
+        "policy_port/hashes.json": "c49aeca6fdb3b57f6b068dc1606386f9534f2cca1e470c46871956a94aecffaa",
+        "back-translation/execution.json": "5c5d27f4abc676d8879c1fbf96d62a6b24652d62ff60c1b3d39550d469abc8cb",
+        "back-translation/alignment.json": "4f43a807976baf4d4fcd3cdc25b0c22228ca5018b156cbb8b7e4dc07a3831740",
+        "back-translation/description.md": "bc035eb455281ada531200e75f89bbd58e54dc06c9c7e865083a5da63550682e",
+        "back-translation/manifest.json": "189d2a71aeb2c46d8945d8c4b6a1743fb3f09b524b5af75a044a2382eacefbc1"
+      }
+    },
+    "frameworkHash": "53e11456174ec0f25290f9a114c244524e9290d55d33d2f3b29384b2ada8778a",
+    "workerHash": "6045b4263684dbb20ea25cd50c46542c5d8e8e8fa07f4f2bd5e3a5e064944591",
+    "images": {
+      "baseline": "sha256:5254e1cc7d616d4361e5eb1663a6076e07820a237dc7c609a2f7d1ef80c913a9",
+      "protected": "sha256:5254e1cc7d616d4361e5eb1663a6076e07820a237dc7c609a2f7d1ef80c913a9"
+    }
+  },
+  "execution": "Actual original/translated tools and SQLite store in isolated containers; explicit offline deterministic agent fixtures.",
+  "repetitions": 5,
+  "repetitionsAreIndependentAgentTrials": false,
+  "applicationModelRequests": 0,
+  "humanJudgments": 0,
+  "independentHumanValidation": false,
+  "cases": [
+    {
+      "id": "aging-boundary",
+      "baseline": {
+        "runs": 5,
+        "completed": 5,
+        "runsWithFindings": 0,
+        "policies": [],
+        "caseHash": "d932803c9c22415ab1c41be43ad0c948819f9473d33c38d763de81f34b5ab891",
+        "initialStateHash": "c5a32cf46807fe38953628024acf0eb2c5ecf36baa4e6224b923c9e3a2de76d5"
+      },
+      "protected": {
+        "runs": 5,
+        "completed": 5,
+        "runsWithFindings": 0,
+        "policies": [],
+        "caseHash": "d932803c9c22415ab1c41be43ad0c948819f9473d33c38d763de81f34b5ab891",
+        "initialStateHash": "c5a32cf46807fe38953628024acf0eb2c5ecf36baa4e6224b923c9e3a2de76d5"
+      }
+    },
+    {
+      "id": "encoded-disclosure",
+      "baseline": {
+        "runs": 5,
+        "completed": 5,
+        "runsWithFindings": 5,
+        "policies": [
+          "P2"
+        ],
+        "caseHash": "ad32ea57ae6a7b958cd5254bd07feeda693eda16abd2f6061feb775cfcc89aa8",
+        "initialStateHash": "c5a32cf46807fe38953628024acf0eb2c5ecf36baa4e6224b923c9e3a2de76d5"
+      },
+      "protected": {
+        "runs": 5,
+        "completed": 5,
+        "runsWithFindings": 5,
+        "policies": [
+          "P2"
+        ],
+        "caseHash": "ad32ea57ae6a7b958cd5254bd07feeda693eda16abd2f6061feb775cfcc89aa8",
+        "initialStateHash": "c5a32cf46807fe38953628024acf0eb2c5ecf36baa4e6224b923c9e3a2de76d5"
+      }
+    },
+    {
+      "id": "literal-disclosure",
+      "baseline": {
+        "runs": 5,
+        "completed": 5,
+        "runsWithFindings": 5,
+        "policies": [
+          "P2"
+        ],
+        "caseHash": "e5a317dbc8c7bdee8503c1d66c1258d258833494c1378d323bab1ccf9a95e4b9",
+        "initialStateHash": "c5a32cf46807fe38953628024acf0eb2c5ecf36baa4e6224b923c9e3a2de76d5"
+      },
+      "protected": {
+        "runs": 5,
+        "completed": 5,
+        "runsWithFindings": 0,
+        "policies": [],
+        "caseHash": "e5a317dbc8c7bdee8503c1d66c1258d258833494c1378d323bab1ccf9a95e4b9",
+        "initialStateHash": "c5a32cf46807fe38953628024acf0eb2c5ecf36baa4e6224b923c9e3a2de76d5"
+      }
+    },
+    {
+      "id": "quota-admission",
+      "baseline": {
+        "runs": 5,
+        "completed": 5,
+        "runsWithFindings": 5,
+        "policies": [
+          "P1"
+        ],
+        "caseHash": "930b744d0aae609bc2bb43b30e531c07617763e7bab8ade9d16b2f84e7978832",
+        "initialStateHash": "c5a32cf46807fe38953628024acf0eb2c5ecf36baa4e6224b923c9e3a2de76d5"
+      },
+      "protected": {
+        "runs": 5,
+        "completed": 5,
+        "runsWithFindings": 0,
+        "policies": [],
+        "caseHash": "930b744d0aae609bc2bb43b30e531c07617763e7bab8ade9d16b2f84e7978832",
+        "initialStateHash": "c5a32cf46807fe38953628024acf0eb2c5ecf36baa4e6224b923c9e3a2de76d5"
+      }
+    },
+    {
+      "id": "stale-allocation",
+      "baseline": {
+        "runs": 5,
+        "completed": 0,
+        "runsWithFindings": 5,
+        "policies": [
+          "P4",
+          "P6"
+        ],
+        "caseHash": "d14dafe50530325c8916586397e45bf4943e3464200767e25eea6b1440e32b2c",
+        "initialStateHash": "c5a32cf46807fe38953628024acf0eb2c5ecf36baa4e6224b923c9e3a2de76d5"
+      },
+      "protected": {
+        "runs": 5,
+        "completed": 5,
+        "runsWithFindings": 0,
+        "policies": [],
+        "caseHash": "d14dafe50530325c8916586397e45bf4943e3464200767e25eea6b1440e32b2c",
+        "initialStateHash": "c5a32cf46807fe38953628024acf0eb2c5ecf36baa4e6224b923c9e3a2de76d5"
+      }
+    }
+  ],
+  "questionEvaluation": {
+    "contexts": 10,
+    "questionsPerContext": 6,
+    "realModelRequests": 60,
+    "reportedTokens": 313754,
+    "supportedTranslations": 50,
+    "unsupportedRequests": 10,
+    "correct": 60,
+    "total": 60,
+    "supportedNativeAnswers": 250,
+    "repetitionChecks": 200,
+    "structuralRepairs": 0,
+    "modelInputFields": [
+      "task",
+      "question",
+      "schema",
+      "rules",
+      "scope",
+      "examples",
+      "entities"
+    ],
+    "appSourceSupplied": false,
+    "rawFactRowsSupplied": false,
+    "goldAnswersSupplied": false,
+    "method": "Required semantic fields recovered from predicate argument positions; explicit P4 event/operation join; compare to Python assessment and raw observations."
+  },
+  "limitations": [
+    "Development cases and templates; not held-out validation.",
+    "Five deterministic repetitions are reproducibility checks, not independent live-agent trials.",
+    "Checks are scoped; encoded disclosure remains in the translated app.",
+    "No independent human ratings or full-policy guarantee."
+  ]
+}

@@ -37,7 +37,8 @@ class Timeline:
             or type(value.get("version")) is not int
             or value["version"] != 1
             or not {"format", "version", "roles", "events"} <= set(value)
-            or set(value) - {"format", "version", "title", "roles", "events"}
+            or set(value)
+            - {"format", "version", "title", "roles", "events", "analysis"}
         ):
             raise ValueError("Expected a version-1 timeline.")
         self.title = bounded(value.get("title", "Trajectory"), 200)
@@ -142,6 +143,10 @@ class Timeline:
                 if name in event and len(canonical(event[name]).encode()) > 1_000_000:
                     raise ValueError("Event data exceeds 1 MB.")
         self.roles, self._rows = deepcopy(roles), deepcopy(rows)
+        if "analysis" in value:
+            from .log_query import validate_contract
+
+            validate_contract(value["analysis"])
 
     def _policy(self, value):
         TrajectorySession(value)

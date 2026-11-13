@@ -30,7 +30,12 @@ The workbench owns the HTTP server, static UI and study records. Browser code ex
 `analysis/timeline.py` validates data-only participant/message/tool logs and adapts
 existing gate logs for viewing. `workbench/analysis.py` and `static/analysis.*`
 provide the independent read-only UI through `policyscope inspect`. It has no
-application runner, message sender or model connection.
+application runner or message sender. `analysis/log_query.py` validates optional
+data-only analysis contracts and bounded NL-to-Datalog queries. The optional
+analysis model receives schema, meanings, rules and scope, without app code or
+raw event bodies. `workbench/experiment.py` composes a separate execution UI with
+a trusted runner; the LabCluster runner, evidence exporter and independent fixture
+oracle live in `adapters/labcluster/study*.py`.
 
 Analysis has no business-execution authority. It accepts explicit snapshots and
 versioned gate trajectories containing exact rules, per-decision input facts and

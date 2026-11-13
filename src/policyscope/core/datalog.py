@@ -19,13 +19,20 @@ TOKEN = re.compile(
 )
 
 
-def query_facts(binding, rules, inputs, source):
-    """Low-level read-only evaluation shared by legacy runtime APIs and policy-query."""
+def read_query(binding, source):
+    """Admit exactly one data-only query without invoking the native engine."""
     query, columns = parse(source, query=True)
     for atom in query[0]["body"]:
         schema = binding["predicates"].get(atom["predicate"])
         if not schema or len(schema["args"]) != len(atom["args"]):
             raise ValueError("Unknown query predicate or wrong arity.")
+    stratify(query)
+    return query, columns
+
+
+def query_facts(binding, rules, inputs, source):
+    """Low-level read-only evaluation shared by legacy runtime APIs and policy-query."""
+    query, columns = read_query(binding, source)
     combined = deepcopy(rules) + query
     stratify(combined)
     closure = Souffle().evaluate([encoded_fact(f) for f in inputs], combined)

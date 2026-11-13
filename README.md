@@ -31,7 +31,10 @@ python -B -m tests
 Application adaptation uses an optional coding-agent/Docker adapter. See [setup](docs/setup.md), [porting](docs/porting.md) and the [student workflow](docs/study/student-workflow.md). `policyscope pipeline` connects all five modules, including actual gate capture and read-only QA; see the [trajectory contract](docs/trajectory.md). The shared UI currently provides translation controls and sentence review; it does not yet expose five separate tabs.
 
 The [trajectory viewer](docs/timeline.md) independently reads conversation/tool logs
-with declared participants, plus existing gate trajectories. It has no model or
-application connection and preserves directed recipients in one observer timeline.
+with declared participants, plus existing gate trajectories. It preserves directed
+recipients in one observer timeline. Viewing needs no model; optional NL analysis
+translates questions into bounded read-only Datalog. It cannot interact with the
+recorded agents. The [LabCluster pilot](docs/study/labcluster-pilot.md) adds a
+separate sandbox execution UI for five paired original/translated cases.
 
 [Repository map](docs/repository-structure.md) · [Documentation](docs/README.md) · [Archives and migration limits](docs/archives.md) · [Contributing](.github/CONTRIBUTING.md) · [License](LICENSE)

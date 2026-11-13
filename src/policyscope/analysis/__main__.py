@@ -33,7 +33,31 @@ def main():
     if args.snapshot.stat().st_size > 64 * 1024 * 1024:
         parser.error("Evidence file exceeds 64 MiB; select a shorter episode.")
     value = json.loads(args.snapshot.read_text())
-    if value.get("format") == "policyscope-trajectory":
+    if value.get("format") == "policyscope-timeline":
+        from .timeline import Timeline
+        from .log_query import LogQuerySession
+
+        session = LogQuerySession(Timeline(value))
+        if (
+            args.verify
+            or args.plan
+            or args.event
+            or bool(args.query) == bool(args.question)
+        ):
+            parser.error("Choose a read-only query or --question for a timeline.")
+        if args.question:
+            if not args.connection:
+                parser.error(
+                    "Natural-language analysis requires an optional model connection."
+                )
+            from policyscope.adapters.compatible import Connection
+
+            result = session.ask(
+                args.question, Connection(json.loads(args.connection.read_text()))
+            )
+        else:
+            result = session.query(args.query)
+    elif value.get("format") == "policyscope-trajectory":
         session = TrajectorySession(value)
         if (
             sum(bool(x) for x in [args.verify, args.plan, args.question, args.query])

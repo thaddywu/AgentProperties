@@ -34,6 +34,7 @@ where = ["src"]
 "policyscope.enforcement" = ["*.md"]
 "policyscope.policy_adder" = ["*.md"]
 "policyscope.adapters" = ["Dockerfile", "Dockerfile.batch"]
+"policyscope.adapters.labcluster" = ["*.dl"]
 "policyscope.workbench" = ["static/*"]
 
 [tool.ruff]

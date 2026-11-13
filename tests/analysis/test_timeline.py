@@ -106,10 +106,13 @@ class TimelineTests(unittest.TestCase):
         try:
             catalog = json.load(urlopen(base + "/api/analysis", timeout=5))
             identity = catalog["trajectory"]["id"]
-            for route in ["ask", "run", "verify", "send", "execute"]:
+            for route in ["run", "verify", "send", "execute"]:
                 with self.subTest(route=route), self.assertRaises(HTTPError) as error:
                     post(route, {})
                 self.assertEqual(error.exception.code, 404)
+            with self.assertRaises(HTTPError) as error:
+                post("ask", dict(trajectoryId=identity, question="Who sent a message?"))
+            self.assertEqual(error.exception.code, 409)
             for headers in [
                 dict(token="wrong"),
                 dict(origin="https://example.invalid"),

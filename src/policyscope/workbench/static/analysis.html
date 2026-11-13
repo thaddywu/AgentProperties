@@ -22,7 +22,14 @@
       <div id="events"></div>
       <p id="no-events" hidden>No matching events.</p>
     </section>
-    <section class="inspector" aria-label="Event details"><div id="detail"></div></section>
+    <section class="inspector" aria-label="Event details"><div id="detail"></div>
+      <details id="analysis-tools" hidden><summary>Analyze</summary>
+        <label id="example-label" hidden>Example<select id="query-example" aria-label="Query example"><option value="">Choose a question</option></select></label>
+        <form id="ask-form" hidden><label for="question">Question</label><input id="question" maxlength="4000" required autocomplete="off"><button type="submit">Ask</button></form>
+        <details id="query-editor"><summary>Datalog</summary><form id="query-form"><label for="query">Read-only query</label><textarea id="query" rows="3" maxlength="20000" required spellcheck="false"></textarea><button type="submit">Run query</button></form></details>
+        <div id="query-answer" role="status" aria-live="polite"></div>
+      </details>
+    </section>
   </main>
 </body>
 </html>

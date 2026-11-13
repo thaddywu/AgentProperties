@@ -10,6 +10,8 @@ Start with the [repository README](../README.md) for installation and module ent
 | [Trajectory contract](trajectory.md) | App boundaries, captured evidence, read-only QA and five-module pipeline |
 | [Trajectory viewer](timeline.md) | Read-only conversation/tool timeline, participant schema and import limits |
 | [Three-app experiment](evaluation/three-app-pipeline.md) | Complete module runs, measured results and remaining policy gaps |
+| [LabCluster Tasks 3–5 pilot](study/labcluster-pilot.md) | Five paired cases, raw logs, completion/violation checks and UI analysis |
+| [LabCluster pilot results](evaluation/labcluster-pilot.md) | Paired execution measurements, query evaluation and retained counterexample |
 | [Student workflow](study/student-workflow.md) · [中文](study/student-workflow.zh.md) | Translate, review and record application tests |
 | [Evaluation protocol](study/protocol.md) | Research judgments, evidence and study limits |
 | [Archives](archives.md) | Previous implementations, experiment evidence and branch recovery |

@@ -1,6 +1,7 @@
 const $ = (selector) => document.querySelector(selector);
 const names = {message: 'Message', tool_call: 'Tool call', tool_result: 'Tool result', state: 'State', decision: 'Decision'};
 let log = null, token = '', activeRole = '', selected = '', ticket = 0;
+let capabilities = {};
 
 function el(tag, text, cls) {
   const node = document.createElement(tag);
@@ -90,7 +91,7 @@ async function select(id) {
 }
 function section(title, value, open = false) {
   const details = el('details', undefined, 'detail-section'); details.open = open;
-  details.append(el('summary', title), el('pre', JSON.stringify(value, null, 2))); return details;
+  details.append(el('summary', title), el('pre', typeof value === 'string' ? value : JSON.stringify(value, null, 2))); return details;
 }
 function jump(id) {
   activeRole = ''; $('#kind').value = ''; clearTime(); renderRoles(); renderEvents(id);
@@ -132,6 +133,13 @@ function setLog(value) {
   $('#empty').hidden = Boolean(log); $('#workspace').hidden = !log; $('#export').hidden = !log;
   $('#title').textContent = log?.title || 'Trajectory';
   if (!log) return;
+  $('#query-answer').replaceChildren();
+  $('#analysis-tools').hidden = !capabilities.queryAvailable;
+  $('#ask-form').hidden = !capabilities.modelAvailable;
+  $('#query-example').replaceChildren(new Option('Choose a question', ''));
+  for (const item of capabilities.queryExamples || []) $('#query-example').append(new Option(item.question, item.id));
+  $('#example-label').hidden = !(capabilities.queryExamples || []).length;
+  $('#query').value = capabilities.queryExamples?.[0]?.query || '?- Observed(E).';
   $('#scope').textContent = log.scope; $('#format').textContent = log.format;
   $('#kind').replaceChildren(new Option('All events', ''));
   for (const kind of [...new Set(log.events.map((e) => e.kind))]) $('#kind').append(new Option(names[kind], kind));
@@ -144,7 +152,7 @@ $('#file').addEventListener('change', async () => {
     if (file.size > 64 * 1024 * 1024) throw Error('Trajectory exceeds 64 MiB.');
     const value = JSON.parse(await file.text());
     const response = await post('import', {trajectory: value});
-    $('#status').textContent = ''; setLog(response.result);
+    $('#status').textContent = ''; capabilities = response.capabilities || {}; history.replaceState({}, '', '/'); $('#export').href = '/api/analysis/export'; setLog(response.result);
   } catch (error) {fail(error);}
   finally {$('#file').value = '';}
 });
@@ -152,6 +160,43 @@ for (const id of ['kind', 'from', 'until']) $('#' + id).addEventListener('change
 for (const id of ['from', 'until']) $('#' + id).addEventListener('input', () => renderEvents());
 $('#position').addEventListener('input', () => {const event = visible()[Number($('#position').value)]; if (event) {select(event.id); for (const button of $('#events').children) if (button.dataset.eventId === event.id) button.scrollIntoView({block: 'nearest'});}});
 try {
-  const response = await fetch('/api/analysis'); if (!response.ok) throw Error('Could not open the viewer.');
-  const value = await response.json(); token = value.token; setLog(value.trajectory);
+  const trace = new URLSearchParams(location.search).get('trace');
+  const suffix = trace ? '?trace=' + encodeURIComponent(trace) : '';
+  $('#export').href = '/api/analysis/export' + suffix;
+  const response = await fetch('/api/analysis' + suffix); if (!response.ok) throw Error('Could not open the viewer.');
+  const value = await response.json(); token = value.token; capabilities = value; setLog(value.trajectory);
 } catch (error) {fail(error);}
+
+$('#query-example').addEventListener('change', () => {
+  const item = capabilities.queryExamples?.find((x) => x.id === $('#query-example').value);
+  if (item) {$('#question').value = item.question; $('#query').value = item.query;}
+});
+async function analyze(operation, value) {
+  const identity = log.id, output = $('#query-answer'); output.replaceChildren(el('p', 'Analyzing…', 'subtle'));
+  for (const button of document.querySelectorAll('#analysis-tools button')) button.disabled = true;
+  try {
+    const response = await post(operation, {trajectoryId: identity, ...value});
+    if (log.id !== response.trajectoryId) return;
+    const result = response.result; output.replaceChildren();
+    if (result.status !== 'answered') {output.append(el('p', result.unsupported || result.clarification, 'content')); return;}
+    $('#query').value = result.query;
+    output.append(el('p', result.rowCount ? result.rowCount + ' matching rows.' : 'No rows matched.', 'content'));
+    output.append(section('Executed query', result.query, true));
+    if (result.interpretation) output.append(section('Query interpretation', result.interpretation));
+    const wrapper = el('div', undefined, 'query-table'), table = el('table'), header = el('tr');
+    for (const column of result.columnLabels || result.columns) header.append(el('th', column));
+    table.append(header);
+    const ids = new Set(log.events.map((e) => e.id));
+    for (const values of result.rows.slice(0, 200)) {
+      const row = el('tr');
+      for (const value of values) {const cell = el('td'); if (ids.has(value)) {const button = el('button', value, 'link'); button.addEventListener('click', () => jump(value)); cell.append(button);} else cell.textContent = value; row.append(cell);}
+      table.append(row);
+    }
+    wrapper.append(table); output.append(wrapper);
+    if (result.rowCount > 200) output.append(el('p', 'Showing the first 200 rows.', 'subtle'));
+    output.append(section('Analysis scope', result.scope));
+  } catch (error) {if (log.id === identity) {output.replaceChildren(el('p', error.message, 'content'));}}
+  finally {for (const button of document.querySelectorAll('#analysis-tools button')) button.disabled = false;}
+}
+$('#ask-form').addEventListener('submit', (event) => {event.preventDefault(); analyze('ask', {question: $('#question').value});});
+$('#query-form').addEventListener('submit', (event) => {event.preventDefault(); analyze('query', {query: $('#query').value});});

@@ -114,8 +114,11 @@ against original deterministic LabCluster scenarios. Its six source sections are
 coarse review units, not atomic requirements; RQ1 denominators must state that.
 Successful scenario assertions are integration evidence, not useful-task completion
 or human violation labels. A seed does not randomize this deterministic runner.
-Free-form student-authored action trajectories and live-model RQ3 runners remain
-integration work.
+The [LabCluster Tasks 3–5 pilot](labcluster-pilot.md) adds five explicit paired
+workflows, completion and effect-based policy checks, and separate execution and
+read-only NL-analysis UIs. Its offline agent fixtures and repeated deterministic
+executions are development integration evidence. Free-form student-authored
+execution and live-model RQ3 runners remain integration work.
 
 ## What remains to freeze before the study
 
