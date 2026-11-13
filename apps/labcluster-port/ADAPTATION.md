@@ -1,6 +1,6 @@
 # LabCluster: additive tool instrumentation
 
-Read Section 2 of the [PolicyScope guide](../../docs/policyscope-guide.pdf), then rules.dl in
+Read the [enforcement guide](../../src/policyscope/enforcement/README.md), then rules.dl in
 P1.1-P6.7 order. All app clauses have short English explanations.
 
 ## Original code retained
@@ -85,7 +85,7 @@ Snapshots used by original business/trace code are not Datalog input producers.
 | message_adapter.py | Gate structured completion-report ownership before original delivery; preserve return/error shapes |
 | run.py | Compose original Store/agents/scenario with the optional policy attachment |
 | upstream.patch | Tool annotations, caller-name hook, explicit fact writes and message decorator; Store retained |
-| runtime/python/policy_runtime/ | Caller contexts, tool annotations, shared staging, keys, FSM commit and validation |
+| src/policyscope/enforcement/ | Caller contexts, tool annotations, shared staging, keys, FSM commit and validation |
 
 The previous operations.py business reimplementation has been removed. EDB is
 policy evidence; original Store remains the business authority.
@@ -97,7 +97,7 @@ policy evidence; original Store remains the business authority.
 | 1 | `"""Adaptation code: load one policy scope and interpret original tool events/results."""` | State the application adapter responsibility. |
 | 3 | `from pathlib import Path` | Locate the reviewed policy file. |
 | 4 | `from functools import wraps` | Preserve original function metadata. |
-| 5 | `from policy_runtime import Policy, caller_context` | Import the runtime and its internal caller-name carrier. |
+| 5 | `from policyscope.enforcement import Policy, caller_context` | Import the runtime and its internal caller-name carrier. |
 | 8 | `def caller_from_tools(function):` | Adapt the original Tools dispatcher. |
 | 9 | `"""Adapt the caller name already held by the original Tools instance."""` | Document the existing role as the name source. |
 | 10 | `@wraps(function)` | Keep the original call signature and metadata. |
@@ -149,9 +149,9 @@ are the original demo convention, not implemented login authentication.
 ## Run
 
 ```bash
-PYTHONPATH=runtime/python python3 apps/labcluster-port/run.py --upstream /path/to/pinned-checkout
-PYTHONPATH=runtime/python python3 apps/labcluster-port/tests/verify.py --upstream /path/to/pinned-checkout
-PYTHONPATH=runtime/python python3 apps/labcluster-port/tools/build_artifacts.py
+PYTHONPATH=src python3 apps/labcluster-port/run.py --upstream /path/to/pinned-checkout
+PYTHONPATH=src python3 apps/labcluster-port/tests/verify.py --upstream /path/to/pinned-checkout
+PYTHONPATH=src python3 apps/labcluster-port/tools/build_artifacts.py
 ```
 
 Adapter SHA-256: `f11db45bed5a687c8a830c0c3831205011902baf223fc063396eba5800a64660`

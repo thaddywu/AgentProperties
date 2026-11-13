@@ -1,1 +1,0 @@
-read_document(documentId: string) -> document content on allowed read; otherwise a denial with no content. Authentication supplies the actor. The scripted service wraps this function with the runtime's execute interface before accessing the document body.

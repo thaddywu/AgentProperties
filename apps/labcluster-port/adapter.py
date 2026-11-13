@@ -2,7 +2,7 @@
 
 from pathlib import Path
 from functools import wraps
-from policy_runtime import Policy, caller_context
+from policyscope.enforcement import Policy, caller_context
 
 
 def caller_from_tools(function):

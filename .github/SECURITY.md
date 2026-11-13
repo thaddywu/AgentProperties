@@ -1,34 +1,5 @@
 # Security
 
-## Reporting vulnerabilities
+Report sensitive findings through this repository's private vulnerability-reporting channel when available. Do not include credentials, private trajectories or production data in public issues.
 
-Email **security@rakazo.com** only. Do not open public GitHub issues for security bugs.
-
-Please include:
-
-- Steps to reproduce
-- Impact (what an attacker could do)
-- Whether the issue is already public
-
-We will acknowledge your report and work on a fix. Please do not file a public issue for unfixed vulnerabilities.
-
-## Other contact
-
-- General support: **support@rakazo.com**
-- Maintainer: **elie@rakazo.com**
-
-## Scope
-
-This policy covers the Rakazo self-hosted product in **this repository**.
-
-Out of scope:
-
-- Third-party AI models and their APIs
-- Composio, E2B, and other external services
-- Operator misconfiguration (exposed secrets, open databases, weak passwords)
-
-## Supported versions
-
-We support security fixes on the current `main` branch and the latest release (beta).
-
-There is no bug bounty program at this time.
+The active scope is the Python framework on `master`. Archived host implementations are frozen reference material. Applications own authentication, authoritative observations, complete mediation and external transaction boundaries. The optional local coding-agent workflow uses Docker isolation; it is not a hosted sandbox service for hostile public uploads.

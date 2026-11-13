@@ -1,4 +1,0 @@
-{
-  "extends": ["../../grokbot/biome.json"],
-  "vcs": { "root": "../.." }
-}

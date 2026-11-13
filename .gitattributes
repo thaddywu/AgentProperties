@@ -1,8 +1,7 @@
 * text=auto eol=lf
 
 *.sh text eol=lf
-grokbot/infra/sandboxes/computer/rakazo-browser text eol=lf
-grokbot/infra/sandboxes/computer/fluxbox.* text eol=lf
 *.png binary
 *.jpg binary
 *.ico binary
+*.pdf binary

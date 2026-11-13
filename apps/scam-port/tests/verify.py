@@ -14,7 +14,7 @@ APP=Path(__file__).resolve().parents[1];sys.path.insert(0,str(APP))
 from adapter import adapt
 from tool_adapter import invoke
 from money import minor_units
-from policy_runtime import caller_context,current_caller
+from policyscope.enforcement import caller_context,current_caller
 
 parser=argparse.ArgumentParser();parser.add_argument('--upstream',type=Path,required=True)
 args,remaining=parser.parse_known_args();sys.argv[1:]=remaining

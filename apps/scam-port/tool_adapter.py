@@ -2,7 +2,7 @@
 from functools import wraps
 import inspect
 from money import minor_units
-from policy_runtime import caller_context, current_caller
+from policyscope.enforcement import caller_context, current_caller
 
 
 def invoke(policy, name, arguments, function):

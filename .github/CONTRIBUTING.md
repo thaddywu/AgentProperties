@@ -1,89 +1,16 @@
-# Contributing to Rakazo
+# Contributing
 
-Thanks for helping improve Rakazo. Keep changes focused and testable.
-
-## Run locally
-
-Follow the [source checkout setup](../grokbot/docs/self-host.md#local-source-checkout) for prerequisites,
-required secrets, and startup commands.
-
-## Checks before you open a PR
-
-| Command | When to run |
-| --- | --- |
-| `pnpm --dir grokbot test` | Default. Units, properties, and in-process contracts. Scripted runtime, fake sandbox, in-memory wakeup — no live connector or model-provider calls. |
-| `pnpm --dir grokbot test:integration` | Postgres via Testcontainers: product journeys, authorization, executor lifecycle, Graphile / LISTEN/NOTIFY. Needs Docker. |
-| `pnpm --dir grokbot test:e2e` | Playwright against the emulated API. Needs Docker. |
-| `pnpm --dir grokbot test:topology` | Local product-path smoke: Docker computer + Graphile worker recovery. Needs Docker. Not PR CI. |
-| `pnpm --dir grokbot test:canary` | Live provider canaries. Needs keys. Not PR CI. |
-| `pnpm --dir grokbot test:pi` | Real Pi against a local HTTP model fixture: streaming, tool round trips, failures and cancellation. No keys. |
-| `pnpm --dir grokbot test:computer-replay` | Real Pi and Docker Chromium against a local model fixture. Needs the computer image; no keys or Electron windows. |
-| `pnpm --dir grokbot test:evals --list` | List agent-quality cases. Add `--live` and a model connection to measure repeated real-model task success. |
-| `pnpm --dir grokbot test:computer` | Real vision model + E2B desktop. Needs keys; see [computer verification](../grokbot/docs/computer-runtime.md#verification). Not PR CI. |
-| `pnpm --dir grokbot check` | TypeScript (`tsc`) across the monorepo. |
-| `pnpm --dir grokbot lint` | Biome lint and format check. |
-
-CI runs `pnpm --dir grokbot lint`, `pnpm --dir grokbot check`, production builds (including Electron preload smoke), `pnpm --dir grokbot test`, `pnpm --dir grokbot test:integration`, and `pnpm --dir grokbot test:e2e` on every PR.
-
-## Adding a UI language
-
-The web and Electron-hosted UI use Lingui catalogs. To add a locale, register it in
-`grokbot/apps/web/lingui.config.ts`, `grokbot/apps/web/src/lib/ui-locale.ts`, and
-`grokbot/apps/web/src/lib/i18n.ts`, then run `pnpm --dir grokbot --filter @rakazo/web intl:extract`, fill the new
-`grokbot/apps/web/src/locales/<locale>/messages.po` catalog, and validate it with
-`pnpm --dir grokbot --filter @rakazo/web intl:compile`. Keep message IDs, placeholders, JSX markers, and
-ICU plural branches intact; do not commit generated `*.js`/`*.mjs` catalog files.
-
-Expo mobile has its own catalog and locale registry. Add the locale to
-`grokbot/apps/mobile/lib/ui-locale.ts`, add `grokbot/apps/mobile/lib/locales/<locale>.ts`, and register the
-catalog in `grokbot/apps/mobile/lib/i18n.ts`. Web PO entries do not translate mobile automatically.
-Update the locale unit tests and a UI E2E scenario for each supported surface. The marketing
-homepage in `apps/www` and the native Electron setup window have separate localization paths;
-scope and test those changes explicitly instead of assuming the web catalog covers them.
-
-See [agent verification](../grokbot/docs/agent-verification.md) for the distinction between
-deterministic execution tests, computer replay, and real-model quality evals.
-
-## Optional live-provider checks
-
-The default Playwright suite uses the fake sandbox. To run the same scripted-agent suite against
-real computers, set the matching `E2B_API_KEY`, `DAYTONA_API_KEY`, or `BOX_API_KEY` and choose a provider:
+Install the root Python distribution and read [the module boundaries](../docs/repository-structure.md).
 
 ```bash
-pnpm --dir grokbot test:e2e -- --sandbox=e2b
-pnpm --dir grokbot test:e2e -- --sandbox=daytona
-pnpm --dir grokbot test:e2e -- --sandbox=box
+python -m pip install -e '.[mcp,test]'
+python scripts/check.py
+python -m playwright install chromium
+python tests/workbench/ui_smoke.py
+python tests/workbench/codex_ui_smoke.py
+python tests/workbench/student_ui_smoke.py
 ```
 
-The Playwright workflow also accepts these providers through its manual **Sandbox provider** input.
-These runs provision real machines and destroy them after the suite. Automatic runs use `fake`.
-For the separate real-model desktop acceptance test, see
-[computer verification](../grokbot/docs/computer-runtime.md#verification).
+Native checks need Soufflé and `prlimit`; [setup](../docs/setup.md) provides the pinned engine helper. Tests are deterministic and offline. Browser checks are headless. Keep model/vendor code in adapters, application facts/effects in app adapters and shared rule semantics in `core`.
 
-## Secrets and configuration
-
-- **Never** commit `.env` files or secrets.
-- **Never** paste API keys, tokens, or passwords in issues or PRs.
-- Use placeholders in examples (`your-openrouter-key`, etc.).
-
-The product path is **Pi + Docker + Graphile**. Emulator settings (`AGENT_RUNTIME=scripted`, `SANDBOX_PROVIDER=fake`, `WAKEUP_DRIVER=memory`) are for tests only.
-
-**Integrations** can use [Composio](https://composio.dev/) or Pipedream Connect as optional managed
-app catalogs. Users can also install HTTPS MCP servers (including Treg) and bounded OpenAPI tool
-sources. Connector tests must stay deterministic and offline. Never put connector credentials in
-capability config, fixtures, logs, or snapshots; use the encrypted secret store and fake placeholders.
-
-## Pull requests
-
-- Keep PRs small and easy to review.
-- Target the `main` branch.
-- Describe why the change is needed, what changed, and **how you tested** (e.g. `pnpm --dir grokbot test`, manual steps).
-- Link related issues when applicable.
-
-## Contact
-
-| Address | Use for |
-| --- | --- |
-| [security@rakazo.com](mailto:security@rakazo.com) | Vulnerabilities only — see [SECURITY.md](SECURITY.md) |
-| [support@rakazo.com](mailto:support@rakazo.com) | User and support questions |
-| [elie@rakazo.com](mailto:elie@rakazo.com) | Maintainer |
+Never commit credentials, private endpoints, production data or raw private experiment outputs. Use fictional fixtures. Keep `master` focused on active Python modules; the five `archive/*` branches are frozen references. Explain product behavior and validation in public-safe words. UI changes must include a CI screenshot showing the changed screen.

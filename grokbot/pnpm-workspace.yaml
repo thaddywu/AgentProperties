@@ -1,8 +1,0 @@
-packages:
-  - "apps/*"
-  - "packages/*"
-  - "infra/sandboxes/supervisor"
-  - "infra/updater"
-  - "../apps/*"
-  - "../runtime"
-  - "../translation"

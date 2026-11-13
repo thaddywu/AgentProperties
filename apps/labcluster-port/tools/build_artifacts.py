@@ -1,10 +1,6 @@
-"""Rebuild this app's reviewed reference metadata; no model is called."""
+"""Rebuild reviewed reference artifacts without model calls."""
 from pathlib import Path
-import sys
+from policyscope.adapters.reference import build
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT.parents[1] / 'translation/tools'))
-from build_reference import build
-
-if __name__ == '__main__':
-    build(ROOT)
+if __name__ == "__main__":
+    build(Path(__file__).resolve().parents[1])

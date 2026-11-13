@@ -1,6 +1,0 @@
-# Run pip install -r requirements.txt from this directory.
-# Docker and the Codex CLI are separate prerequisites.
--e ../runtime/python
--e ./python
--e ../query/python
--e ../evaluation

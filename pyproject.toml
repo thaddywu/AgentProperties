@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "policyscope"
+version = "0.2.0"
+description = "Application policy translation, review, enforcement and analysis"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+dependencies = []
+
+[project.optional-dependencies]
+mcp = ["mcp==1.30.0"]
+test = ["playwright==1.58.0"]
+
+[project.scripts]
+policyscope = "policyscope.__main__:main"
+policy-add = "policyscope.policy_adder.student:main"
+policy-translate = "policyscope.policy_adder.__main__:main"
+policy-backtranslate = "policyscope.back_translation.__main__:main"
+policy-review = "policyscope.workbench.__main__:main"
+policy-enforce = "policyscope.enforcement.__main__:main"
+policy-analyze = "policyscope.analysis.__main__:main"
+policy-run-cases = "policyscope.workbench.cases:main"
+policy-port = "policyscope.adapters.labcluster.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"policyscope.core" = ["*.json"]
+"policyscope.enforcement" = ["*.md"]
+"policyscope.policy_adder" = ["*.md"]
+"policyscope.adapters" = ["Dockerfile", "Dockerfile.batch"]
+"policyscope.workbench" = ["static/*"]
