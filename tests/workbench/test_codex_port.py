@@ -74,6 +74,31 @@ class CodexPortTests(unittest.TestCase):
                 self.root / "nested-port", self.port.settings, codex="true"
             ).prepare(nested)
 
+    def test_explicit_application_description_survives_excluded_submission_folder(self):
+        submission = self.source / "submission"
+        submission.mkdir()
+        (submission / "app.md").write_text(
+            "Canonical synthetic application description."
+        )
+        subprocess.run(
+            ["git", "-C", str(self.source), "add", "submission/app.md"], check=True
+        )
+        port = CodexPort(
+            self.root / "nested-doc-port", self.port.settings, codex="true"
+        )
+        port.prepare(self.source, app_doc="submission/app.md")
+        self.assertEqual(
+            (port.output / "candidate/submission/app.md").read_text(),
+            (submission / "app.md").read_text(),
+        )
+        self.assertEqual(
+            json.loads((port.output / "source.json").read_text())["appDoc"],
+            "submission/app.md",
+        )
+        self.assertIn(
+            "candidate/submission/app.md", (port.output / "prompt.txt").read_text()
+        )
+
     def test_boundary_change_and_stale_review_are_rejected(self):
         app = RepositoryApplication(self.port.output)
         study = Study(self.root / "study", app)

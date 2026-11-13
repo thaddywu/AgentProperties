@@ -6,6 +6,10 @@ from typing import Any, Callable, Sequence
 Context = dict[str, Any]
 Fact = dict[str, Any]
 
+TRAJECTORY_FORMAT = "policyscope-trajectory"
+TRAJECTORY_VERSION = 1
+TRAJECTORY_MAX_EVENTS = 1000
+
 
 @dataclass(frozen=True)
 class Applied:

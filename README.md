@@ -8,7 +8,7 @@ Add natural-language policies to applications, independently read the implementa
 | Back-translation | [back_translation](src/policyscope/back_translation/README.md) | Independent descriptions from implementation evidence |
 | Policy viewer | [policy_viewer](src/policyscope/policy_viewer/README.md) | Source alignment and human review |
 | Enforcement | [enforcement](src/policyscope/enforcement/README.md) | Trusted action gate and staged fact updates |
-| Analysis | [analysis](src/policyscope/analysis/README.md) | Read-only snapshot queries and hypothetical checks |
+| Analysis | [analysis](src/policyscope/analysis/README.md) | Trajectory QA, decision replay, snapshot queries and hypotheticals |
 
 The Python core requires no hosted model, Grokbot, Node or Docker. Native execution needs Soufflé 2.5 and Linux `prlimit`. Model and sandbox connections are optional adapters.
 
@@ -27,6 +27,6 @@ policyscope run-cases --cases examples/cases/document-tests.json --data ../polic
 python -B -m tests
 ```
 
-Application adaptation uses an optional coding-agent/Docker adapter. See [setup](docs/setup.md), [porting](docs/porting.md) and the [student workflow](docs/study/student-workflow.md). The shared UI currently provides translation controls and sentence review; the modules also have independent Python APIs and commands. It does not yet expose five separate tabs.
+Application adaptation uses an optional coding-agent/Docker adapter. See [setup](docs/setup.md), [porting](docs/porting.md) and the [student workflow](docs/study/student-workflow.md). `policyscope pipeline` connects all five modules, including actual gate capture and read-only QA; see the [trajectory contract](docs/trajectory.md). The shared UI currently provides translation controls and sentence review; it does not yet expose five separate tabs.
 
 [Repository map](docs/repository-structure.md) · [Documentation](docs/README.md) · [Archives and migration limits](docs/archives.md) · [Contributing](.github/CONTRIBUTING.md) · [License](LICENSE)

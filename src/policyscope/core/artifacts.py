@@ -16,7 +16,7 @@ def save(path, value):
     os.replace(temporary, path)
 
 
-def artifact_text(root, relative):
+def artifact_text(root, relative, *, max_bytes=4_000_000):
     if Path(root).is_symlink():
         raise ValueError("Artifact workspace must not be a symbolic link.")
     root, path = Path(root).resolve(), Path(root) / relative
@@ -24,7 +24,7 @@ def artifact_text(root, relative):
         path.is_symlink()
         or not path.resolve().is_relative_to(root)
         or not path.is_file()
-        or path.stat().st_size > 4_000_000
+        or path.stat().st_size > max_bytes
     ):
         raise ValueError(
             "Generated artifact must be a bounded regular file inside its workspace."

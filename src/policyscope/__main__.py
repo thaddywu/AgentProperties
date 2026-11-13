@@ -13,6 +13,7 @@ COMMANDS = {
     "enforce": "policyscope.enforcement.__main__",
     "analyze": "policyscope.analysis.__main__",
     "run-cases": "policyscope.workbench.cases",
+    "pipeline": "policyscope.workbench.pipeline",
     "port-profile": "policyscope.adapters.labcluster.__main__",
 }
 

@@ -208,7 +208,12 @@ def run(
     image="policy-portin:batch-v1",
     codex="codex",
     repairs=2,
+    progress=None,
 ):
+    def stage(name):
+        if progress:
+            progress(name)
+
     base, target = check_base(
         base, target, policy, strict=reuse is None, app_doc=app_doc
     )
@@ -237,7 +242,8 @@ def run(
                 "Reused port does not match the selected original commit/policy."
             )
     else:
-        port.prepare(base, policy)
+        stage("policy-adder")
+        port.prepare(base, policy, app_doc)
         with (work / "prompt.txt").open("a") as prompt:
             prompt.write(
                 "\nThe published application omits policy.md/policies.md. Preserve actual runtime behavior without depending on these authoring documents. Existing operational prompts may be retained separately. Do not name the underlying enforcement language in student-facing execution descriptions.\n"
@@ -248,11 +254,23 @@ def run(
                 "Translation failed development checks. Private attempts were retained."
             )
     clean = work / ("publish-" + uuid.uuid4().hex[:12])
+    stage("published-enforcement")
     policy_relative = json.loads(artifact_text(work, "source.json"))["policy"]
+    check_start = (
+        max(
+            (
+                int(p.stem.rsplit("-", 1)[1])
+                for p in work.glob("publication-check-*.json")
+                if p.stem.rsplit("-", 1)[1].isdigit()
+            ),
+            default=-1,
+        )
+        + 1
+    )
     for attempt in range(repairs + 1):
         clean_candidate(work / "candidate", clean, policy_relative)
         validation = port.check(
-            "publication-check-" + str(attempt) + ".json", source=clean
+            "publication-check-" + str(check_start + attempt) + ".json", source=clean
         )
         if validation.get("passed"):
             break
@@ -271,11 +289,13 @@ def run(
             raise ValueError("Publication repair failed; private results retained.")
         clean = work / ("publish-" + uuid.uuid4().hex[:12])
     if not reuse:
+        stage("independent-back-translation")
         result = port.backtranslate()
         if not result.get("passed"):
             raise ValueError(
                 "Independent execution reading failed checks; private attempts retained."
             )
+        stage("policy-viewer-alignment")
         port.review()
     publish(port, target, clean, (base / policy).read_text())
     return target

@@ -58,5 +58,7 @@ from .statements import StatementTool
 __all__ += ["StatementTool"]
 
 from .fact_tools import FactTool
+from .recording import capture_trajectories
 
 __all__ += ["FactTool"]
+__all__ += ["capture_trajectories"]

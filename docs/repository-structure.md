@@ -27,7 +27,16 @@ Back-translation consumes actual rules, input meanings, configuration and implem
 
 The workbench owns the HTTP server, static UI and study records. Browser code expresses intent and renders state. Trusted backend code chooses application runners, files, model connections and sandbox adapters. Public HTTP requests cannot choose executable connector paths or credentials.
 
-Analysis has no business-execution authority. Its current input is an explicit snapshot (`binding`, `source`, `inputs`, optional `versions`), not an arbitrary chat transcript. Historical trajectory reconstruction, fact revocation semantics, proof-tree parity and application action search remain future work. The archived Nova implementation documents the richer TS experiment.
+Analysis has no business-execution authority. It accepts explicit snapshots and
+versioned gate trajectories containing exact rules, per-decision input facts and
+confirmed outcomes. Full snapshots preserve captured deletions and replacements;
+arbitrary transcripts cannot supply missing facts automatically. The
+[trajectory contract](trajectory.md) describes the interface and trust limits.
+Proof-tree parity and application action search remain future work.
+
+`workbench/pipeline.py` composes the five modules through `policyscope pipeline`.
+It owns orchestration and private evidence; application predicates and adapters
+remain outside this generic composition.
 
 Model generation is injected. The compatible HTTP model transport and coding-agent/Docker integration are optional; their SDKs and credentials do not enter core semantics. New app adapters must establish identity, authoritative facts, actual effect boundaries and independent tests. Existing synchronous/local contracts do not claim distributed transactions or complete mediation of an arbitrary app.
 

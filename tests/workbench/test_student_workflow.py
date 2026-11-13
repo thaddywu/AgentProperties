@@ -342,9 +342,12 @@ class StudentWorkflowTests(unittest.TestCase):
 
     def test_entry_orchestrates_forward_publication_check_reverse_and_alignment(self):
         stages = []
+        prior = self.port.output / "publication-check-0.json"
+        save(prior, dict(prior=True))
 
         def check(name, *, source):
             stages.append("check")
+            self.assertEqual(name, "publication-check-1.json")
             self.assertFalse((source / "policy.md").exists())
             return dict(passed=True)
 
@@ -373,6 +376,7 @@ class StudentWorkflowTests(unittest.TestCase):
             )
         self.assertEqual(target, self.target)
         self.assertEqual(stages, ["translate", "check", "reverse", "align"])
+        self.assertEqual(json.loads(prior.read_text()), dict(prior=True))
         self.assertTrue((target / "back-translation/manifest.json").exists())
 
     def test_failed_publication_check_never_publishes_a_successful_app(self):

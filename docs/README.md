@@ -7,6 +7,8 @@ Start with the [repository README](../README.md) for installation and module ent
 | [Setup](setup.md) | Installation, native engine and offline checks |
 | [Repository structure](repository-structure.md) | Five modules and dependency boundaries |
 | [Porting](porting.md) | Optional isolated application adaptation and model connection |
+| [Trajectory contract](trajectory.md) | App boundaries, captured evidence, read-only QA and five-module pipeline |
+| [Three-app experiment](evaluation/three-app-pipeline.md) | Complete module runs, measured results and remaining policy gaps |
 | [Student workflow](study/student-workflow.md) · [中文](study/student-workflow.zh.md) | Translate, review and record application tests |
 | [Evaluation protocol](study/protocol.md) | Research judgments, evidence and study limits |
 | [Archives](archives.md) | Previous implementations, experiment evidence and branch recovery |

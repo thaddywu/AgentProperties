@@ -68,7 +68,13 @@ def main():
 
     os.chdir(project)
     log = io.StringIO()
-    with contextlib.redirect_stdout(log), contextlib.redirect_stderr(log):
+    from policyscope.enforcement import capture_trajectories
+
+    with (
+        contextlib.redirect_stdout(log),
+        contextlib.redirect_stderr(log),
+        capture_trajectories() as recordings,
+    ):
         try:
             counts = native_engine_guard()
             if os.environ.get("CHECK_SET") == "independent":
@@ -114,6 +120,32 @@ def main():
             except (ValueError, UnicodeError):
                 pass
     report["artifacts"] = artifacts
+    trajectories = []
+    complete = True
+    for recording in recordings:
+        try:
+            value = recording.export()
+        except ValueError:
+            complete = False
+            continue
+        if value["events"]:
+            trajectories.append(value)
+    report["trajectoryCoverage"] = dict(
+        captured=len(trajectories),
+        complete=complete,
+        scope="Recorders created in this capture context; not proof of complete application mediation.",
+    )
+    if not complete:
+        report["trajectoryCoverage"]["reason"] = (
+            "A recorder failed; evidence is incomplete."
+        )
+    if len(json.dumps(trajectories, ensure_ascii=False).encode()) > 4_000_000:
+        report["trajectoryCoverage"].update(
+            complete=False,
+            reason="Evidence export exceeds 4 MB; run shorter independent case groups.",
+        )
+        trajectories = []
+    report["policyTrajectories"] = trajectories
     print(json.dumps(report, ensure_ascii=False))
 
 

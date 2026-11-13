@@ -112,7 +112,10 @@ class PolicyRuntime:
         persist=None,
         prepare=None,
         local_effects=False,
+        trace=False,
     ):
+        if type(trace) is not bool:
+            raise ValueError("Trace capture must be explicitly enabled or disabled.")
         if bundle.get("version") != 2:
             raise ValueError(
                 "Unsupported policy bundle; recompile with the trusted binding."
@@ -226,6 +229,11 @@ class PolicyRuntime:
                 "Register input producers or provide an explicit complete startup configuration: "
                 + ", ".join(sorted(unbound))
             )
+        from .recording import create_recording
+
+        self._recording = create_recording(
+            trace, self.binding, bundle["source"], self.policy_hash, self._inputs
+        )
 
     def _validate_fixed(self, rows):
         if not self._managed:
@@ -255,6 +263,9 @@ class PolicyRuntime:
         try:
             if self._failed:
                 raise BridgeError("session_failed", "This session is stopped.")
+            if self._recording:
+                self._recording.ensure_capacity()
+            before = deepcopy(self._inputs) if self._recording else None
             updates = FactUpdates(self.binding, self._inputs)
             try:
                 function(updates)
@@ -272,6 +283,27 @@ class PolicyRuntime:
                         "Fact persistence was not confirmed; this session is stopped.",
                     ) from None
             self._inputs = rows
+            if self._recording:
+                try:
+                    self._recording.append(
+                        dict(
+                            kind="update",
+                            id=str(uuid.uuid4()),
+                            inputs=before,
+                            inputHash=fingerprint(before),
+                            committedInputs=deepcopy(rows),
+                            committedInputHash=fingerprint(rows),
+                            outcome="applied",
+                            source="trusted-host-update; identity not independently authenticated",
+                        )
+                    )
+                except Exception:
+                    self._failed = True
+                    self._recording.mark_failed()
+                    raise BridgeError(
+                        "execution_uncertain",
+                        "Updated fact evidence was not confirmed; this session is stopped.",
+                    ) from None
         finally:
             self._leave()
 
@@ -537,11 +569,29 @@ class PolicyRuntime:
             [],
             None,
         )
+        audit = None
         try:
             if self._failed:
                 raise BridgeError(
                     "session_failed",
                     "An earlier execution was not confirmed; this session is stopped.",
+                )
+            if self._recording:
+                self._recording.ensure_capacity()
+                # Reject non-JSON intent metadata before any callback.
+                canonical(request)
+                audit = dict(
+                    kind="call",
+                    id=request["id"],
+                    request=deepcopy(request),
+                    inputs=None,
+                    inputHash=None,
+                    observationVersions={},
+                    decision=None,
+                    effectCalled=False,
+                    outcome="failed",
+                    committedInputs=None,
+                    committedInputHash=None,
                 )
 
             def run():
@@ -554,6 +604,12 @@ class PolicyRuntime:
                     if self._prepare:
                         self._prepare(MappingProxyType({**context, "facts": edits}))
                     current = self._checked(edits._rows)
+                if audit is not None:
+                    audit.update(
+                        inputs=deepcopy(current),
+                        inputHash=fingerprint(current),
+                        observationVersions=deepcopy(versions),
+                    )
                 decision = decide(
                     self.binding,
                     self.policy_hash,
@@ -565,6 +621,8 @@ class PolicyRuntime:
                 )
                 if versions:
                     decision["observationVersions"] = versions
+                if audit is not None:
+                    audit["decision"] = deepcopy(decision)
                 if not decision["allowed"]:
                     return {"allowed": False, "decision": decision}, current
                 transition = decision.get("transition")
@@ -596,6 +654,8 @@ class PolicyRuntime:
                     }
                 )
                 self.effect_calls += 1
+                if audit is not None:
+                    audit["effectCalled"] = True
                 outcome = callback(effect_context)
                 if isinstance(outcome, NotApplied):
                     raise EffectNotAppliedError(outcome.reason)
@@ -713,18 +773,34 @@ class PolicyRuntime:
                 persist_started = True
                 save_facts(self._persist, self.policy_hash, staged)
             self._inputs = staged  # Publish only after successful backend commit.
+            if audit is not None:
+                audit.update(
+                    outcome="applied" if result["allowed"] else "blocked",
+                    committedInputs=deepcopy(staged),
+                    committedInputHash=fingerprint(staged),
+                    resultHash=fingerprint(result.get("value"))
+                    if result["allowed"]
+                    else None,
+                    result=deepcopy(result.get("value")) if result["allowed"] else None,
+                )
             return result
         except EffectNotAppliedError:
+            if audit is not None:
+                audit["outcome"] = "not_applied"
             raise BridgeError(
                 "not_applied", "Operation was confirmed not applied.", request["id"]
             ) from None
         except BaseException as error:
             if effect_started and self._local_effects and not persist_started:
+                if audit is not None:
+                    audit["outcome"] = "not_applied"
                 raise BridgeError(
                     "not_applied", "Local fact edits were discarded.", request["id"]
                 ) from None
             if effect_started or persist_started:
                 self._failed = True
+                if audit is not None:
+                    audit["outcome"] = "unknown"
                 raise BridgeError(
                     "execution_uncertain",
                     "Execution was not confirmed; this session is stopped.",
@@ -732,8 +808,31 @@ class PolicyRuntime:
                 ) from None
             raise error
         finally:
-            if edits and not edits._closed:
-                edits._finish()
+            try:
+                if edits and not edits._closed:
+                    edits._finish()
+                if audit is not None:
+                    try:
+                        self._recording.append(audit)
+                    except Exception:
+                        self._failed = True
+                        self._recording.mark_failed()
+                        raise BridgeError(
+                            "execution_uncertain",
+                            "Execution evidence was not confirmed; this session is stopped.",
+                            request["id"],
+                        ) from None
+            finally:
+                self._leave()
+
+    def trajectory(self):
+        """Export private recorded gate evidence, without invoking an application."""
+        self._enter()
+        try:
+            if self._recording is None:
+                raise ValueError("Enable trace capture before executing this session.")
+            return self._recording.export()
+        finally:
             self._leave()
 
     def snapshot(self):

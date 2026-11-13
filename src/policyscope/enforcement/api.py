@@ -103,6 +103,7 @@ class Policy:
         before=None,
         local_effects=False,
         mechanisms=(),
+        trace=False,
     ):
         if facts is not None and (data is not None or before is not None or inputs):
             raise ValueError(
@@ -194,7 +195,12 @@ class Policy:
             persist=data,
             local_effects=local_effects,
             prepare=(lambda context: before(_context(context))) if before else None,
+            trace=trace,
         )
+
+    def trajectory(self):
+        """Private operator export of recorded policy inputs and outcomes."""
+        return self.runtime.trajectory()
 
     def update(self, function):
         """Trusted host writes input facts atomically; never export this as an agent tool."""

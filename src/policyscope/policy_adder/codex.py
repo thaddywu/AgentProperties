@@ -160,7 +160,7 @@ class CodexPort:
         )
         self.image = identity
 
-    def prepare(self, source, policy=None):
+    def prepare(self, source, policy=None, app_doc=None):
         source = Path(source).resolve()
         if (
             self.output == source
@@ -183,6 +183,26 @@ class CodexPort:
         policy_target = self.output / "original" / policy
         policy_target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source / policy, policy_target)
+        if app_doc is not None:
+            document = (source / app_doc).resolve()
+            if (
+                not document.is_relative_to(source)
+                or not document.is_file()
+                or document.stat().st_size > 2_000_000
+            ):
+                raise ValueError(
+                    "Application description must be a bounded document inside the source checkout."
+                )
+            relative = str(document.relative_to(source))
+            app_doc = relative
+            subprocess.run(
+                ["git", "-C", str(source), "ls-files", "--error-unmatch", relative],
+                check=True,
+                capture_output=True,
+            )
+            target = self.output / "original" / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(document, target)
         if not (self.output / "original" / policy).exists():
             raise ValueError("Policy must be included in the tracked source snapshot.")
         shutil.copytree(self.output / "original", self.output / "candidate")
@@ -208,6 +228,7 @@ class CodexPort:
             dict(
                 revision=revision,
                 policy=policy,
+                appDoc=app_doc,
                 files=files(self.output / "original"),
                 snapshot="tracked working-tree files; ignored files, archives and credential filenames excluded",
             ),
@@ -220,7 +241,7 @@ class CodexPort:
         )
         (
             self.output / "prompt.txt"
-        ).write_text(f"""Read framework/porting-contract.md and runtime-guide.md. Inspect candidate/{policy} and original implementation. Build a NEW executable port, not a one-shot draft: inspect, edit, execute, repair.
+        ).write_text(f"""Read framework/porting-contract.md and runtime-guide.md. Inspect candidate/{policy}, the application description {("candidate/" + app_doc) if app_doc else "(discover in the original source)"}, and original implementation. Build a NEW executable port, not a one-shot draft: inspect, edit, execute, repair.
 Create candidate/policy_port/__init__.py, adapter.py, rules.dl, port.json, test_port.py. Minimally instrument original entrypoints. Keep business logic and original guards intact. Runtime is importable from /framework. Native Souffle is installed at /opt/souffle/usr/bin/souffle; if a login shell resets PATH, prefix PATH=/opt/souffle/usr/bin:$PATH. Never substitute an evaluator. You may run deterministic unittest in this isolated container; no network or credentials are available.
 Adapters may only project/update facts and normalize/compute policy-independent values. Put actual authorization conditions in .dl. New business tools, altered tool semantics, hidden Python policy decisions and deny-all substitutes violate the contract. Framework FactTool put/delete and StatementTool may be wired to authorized agents with explicit system-card changes; never expose raw host put/update. Missing producer/lifecycle/confirmation is a reported gap, not a fabricated fact. Do not modify original policy, documentation or existing tests.
 Write at least 6 meaningful deterministic tests with original callbacks, legitimate workflows, attempted violations and boundary cases. Compare original and protected effects; save actual evidence to policy_port/trajectories.json. Mock external dependencies explicitly; never claim a live model execution. Command: PYTHONPATH=/framework:$PWD python -m unittest discover -s policy_port -p test_port.py -t . -v

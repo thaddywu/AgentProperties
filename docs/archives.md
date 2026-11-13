@@ -24,4 +24,9 @@ git worktree add --detach /path/to/archive origin/archive/post-mortem
 
 Active Python imports use `policyscope.*`. The previous `policy_runtime`, `policy_translation`, `policy_query` and `policy_evaluation` source roots are archived. Current commands and verification are documented in [setup](setup.md) and the repository README; one-off restructure reports remain in the layout snapshot.
 
-This restructure preserves the Python snapshot/query behavior and the review UI. It does not claim Python parity with Nova's TS proof trees, distributed reconstruction, minimum-event prevention or completion-path search. Those implementations remain available in the post-mortem archive. A unified historical trajectory contract, deletion/revocation replay and five UI tabs are deferred.
+The Python implementation now supports captured gate trajectories, decision replay
+and bounded QA through a [shared contract](trajectory.md), including snapshots
+after recorded fact deletion/replacement. It does not claim parity with Nova's TS
+proof trees, distributed reconstruction, minimum-event prevention or completion-path
+search. Those implementations remain in the post-mortem archive. Five UI tabs are
+still deferred.

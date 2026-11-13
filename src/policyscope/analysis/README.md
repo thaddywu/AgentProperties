@@ -16,4 +16,13 @@ result = session.query("?- Owner(Document, Actor).")
 
 `policyscope analyze snapshot.json '?- Owner(D, A).'` reads JSON containing `binding`, `source`, `inputs` and optional `versions`. Actual evaluation needs native Soufflé and `prlimit`.
 
-This is the current Python foundation of post-mortem analysis. Arbitrary trajectory ingestion, historical fact deletion/revocation reconstruction and full proof trees are not implemented. Nova's richer TS analyses remain in `archive/post-mortem`; see [migration limits](../../../docs/archives.md).
+`TrajectorySession` accepts versioned captured gate trajectories, replays their
+decisions, queries exact per-event fact snapshots and supports generic bounded NL
+QA. It does not need to import the app or know its predicates in advance. Use
+`policyscope analyze trajectory.json --verify` for deterministic replay, or
+`--question 'Why was the first call blocked?' --connection connection.json` for QA.
+
+See the [trajectory contract](../../../docs/trajectory.md) for capture, required
+facts, outcomes, trust limits and the composed five-module command. Raw transcripts
+need a trusted evidence adapter. Archived proof trees and action search are not
+claimed as Python capabilities.

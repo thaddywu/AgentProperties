@@ -1,0 +1,89 @@
+{
+  "completed": "2026-11-13",
+  "evidence": "Fresh live-model generation and independent reading; unified CLI validation of these fixed artifacts; explicit offline external-service fixtures.",
+  "trajectoryFormat": "policyscope-trajectory",
+  "trajectoryVersion": 1,
+  "frameworkOfflineTests": 96,
+  "frameworkBrowserJourneys": 3,
+  "qaValidation": "Admitted operations, deterministic results and exact event references; model prose is not a semantic proof.",
+  "applications": [
+    {
+      "application": "labcluster",
+      "modules": {
+        "policyAdder": true,
+        "backTranslation": true,
+        "policyViewer": true,
+        "enforcement": true,
+        "trajectoryQA": true
+      },
+      "applicationTests": 16,
+      "skipped": 0,
+      "nativeEngineCalls": 241,
+      "trajectories": 16,
+      "replayedDecisions": 241,
+      "matchedDecisions": 241,
+      "outcomes": {
+        "applied": 202,
+        "not_applied": 5,
+        "blocked": 34
+      },
+      "qaQuestions": 4,
+      "viewerSentences": 44,
+      "viewerPageErrors": 0,
+      "executionProcedures": 31,
+      "fullOriginalPolicyCoverageEstablished": false
+    },
+    {
+      "application": "payments",
+      "modules": {
+        "policyAdder": true,
+        "backTranslation": true,
+        "policyViewer": true,
+        "enforcement": true,
+        "trajectoryQA": true
+      },
+      "applicationTests": 17,
+      "skipped": 0,
+      "nativeEngineCalls": 31,
+      "trajectories": 17,
+      "replayedDecisions": 31,
+      "matchedDecisions": 31,
+      "outcomes": {
+        "blocked": 9,
+        "applied": 18,
+        "unknown": 1,
+        "not_applied": 3
+      },
+      "qaQuestions": 5,
+      "viewerSentences": 33,
+      "viewerPageErrors": 0,
+      "executionProcedures": 10,
+      "fullOriginalPolicyCoverageEstablished": false
+    },
+    {
+      "application": "multi-agent",
+      "modules": {
+        "policyAdder": true,
+        "backTranslation": true,
+        "policyViewer": true,
+        "enforcement": true,
+        "trajectoryQA": true
+      },
+      "applicationTests": 16,
+      "skipped": 0,
+      "nativeEngineCalls": 172,
+      "trajectories": 16,
+      "replayedDecisions": 172,
+      "matchedDecisions": 172,
+      "outcomes": {
+        "blocked": 22,
+        "applied": 150
+      },
+      "qaQuestions": 4,
+      "viewerSentences": 24,
+      "viewerPageErrors": 0,
+      "executionProcedures": 17,
+      "fullOriginalPolicyCoverageEstablished": false
+    }
+  ]
+}

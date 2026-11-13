@@ -212,6 +212,12 @@ TS implementation is retained in the enforcement archive.
 The private worker transport is optional; managed edit handles stay in-process.
 NL distillation, human assessment, coverage and rule translation remain separate
 artifacts. Successful compilation is not proof of semantic equivalence.
+Trusted operators may opt into private gate evidence with `Policy(..., trace=True)`
+and export `policy.trajectory()`. The isolated batch runner captures the same
+actual gates through `capture_trajectories()`. See the [trajectory contract](../../../docs/trajectory.md)
+for required facts, effect confirmation and read-only QA. Capture does not prove
+authentic identity, full mediation or business success.
+
 # Authorized agent fact writes
 
 `Policy.put/delete/update` are trusted host APIs. Agent connections may instead
