@@ -10,6 +10,8 @@ ROOT = Path(__file__).resolve().parents[2]
 for directory in (ROOT / "src",):
     sys.path.insert(0, str(directory))
 
+from policyscope._paths import cache_directory
+
 from playwright.sync_api import sync_playwright, expect
 from policyscope.workbench.example import Application
 from policyscope.workbench.server import Server
@@ -57,7 +59,7 @@ def synthetic_model(stage, prompt):
 
 
 def main():
-    screenshots = ROOT / "test-results"
+    screenshots = cache_directory() / "test-results"
     screenshots.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as directory:
         server = Server(

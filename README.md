@@ -23,8 +23,8 @@ The review opens a synthetic document example without a model or native engine. 
 
 ```bash
 python examples/quickstart/quickstart.py
-policyscope run-cases --cases examples/cases/document-tests.json --data output/example
-python scripts/check.py
+policyscope run-cases --cases examples/cases/document-tests.json --data ../policyscope-runs/example
+python -B -m tests
 ```
 
 Application adaptation uses an optional coding-agent/Docker adapter. See [setup](docs/setup.md), [porting](docs/porting.md) and the [student workflow](docs/study/student-workflow.md). The shared UI currently provides translation controls and sentence review; the modules also have independent Python APIs and commands. It does not yet expose five separate tabs.

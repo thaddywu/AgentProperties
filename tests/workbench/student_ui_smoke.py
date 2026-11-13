@@ -9,6 +9,8 @@ ROOT = Path(__file__).resolve().parents[2]
 for directory in ("src",):
     sys.path.insert(0, str(ROOT / directory))
 
+from policyscope._paths import cache_directory
+
 from playwright.sync_api import expect, sync_playwright
 from test_student_workflow import StudentWorkflowTests
 from policyscope.workbench.server import Server
@@ -176,7 +178,9 @@ def main():
                 )
                 expect(tooltip).to_be_visible()
                 page.screenshot(
-                    path=str(ROOT / "test-results/student-category-help.png"),
+                    path=str(
+                        cache_directory() / "test-results/student-category-help.png"
+                    ),
                     full_page=True,
                 )
                 information_flow.press("Escape")
@@ -212,7 +216,7 @@ def main():
                     f"http://127.0.0.1:{server.server_port}/api/review"
                 ).json()
                 assert exported == json.loads(path.read_text())
-                screenshots = ROOT / "test-results"
+                screenshots = cache_directory() / "test-results"
                 screenshots.mkdir(exist_ok=True)
                 page.get_by_label("Policy sentence").select_option("0")
                 page.screenshot(
@@ -232,7 +236,7 @@ def main():
                 expect(page.get_by_label("Fully matches", exact=True)).to_be_checked()
                 page.get_by_label("Policy sentence").select_option("1")
                 expect(page.get_by_label("Not a policy", exact=True)).to_be_checked()
-                screenshots = ROOT / "test-results"
+                screenshots = cache_directory() / "test-results"
                 screenshots.mkdir(exist_ok=True)
                 page.screenshot(
                     path=str(screenshots / "student-review-save.png"), full_page=True

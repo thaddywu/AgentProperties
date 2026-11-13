@@ -13,5 +13,5 @@ Run from the repository root after installing the package:
 
 ```bash
 python examples/quickstart/quickstart.py
-policyscope run-cases --cases examples/cases/document-tests.json --data output/example
+policyscope run-cases --cases examples/cases/document-tests.json --data ../policyscope-runs/example
 ```

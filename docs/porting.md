@@ -4,7 +4,7 @@ The generic rule translator accepts an existing trusted binding. The optional ap
 
 ```bash
 policy-translate /path/to/policy.md --binding /path/to/runtime.json \
-  --connection /path/to/private-connection.json --output output/draft
+  --connection /path/to/private-connection.json --output ../policyscope-runs/draft
 ```
 
 The optional application-port workflow requires Docker, Linux x86_64 and a standalone Codex CLI. Build its isolated execution images:

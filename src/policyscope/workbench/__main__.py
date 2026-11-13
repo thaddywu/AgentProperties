@@ -3,6 +3,8 @@ import importlib
 import json
 from pathlib import Path
 
+from policyscope._paths import state_directory
+
 from .example import Application
 from .importer import ReviewApplication
 from .server import Server
@@ -14,7 +16,7 @@ def main():
         description="Independent local policy evaluation workbench."
     )
     parser.add_argument("--port", type=int, default=5190)
-    parser.add_argument("--data", type=Path, default=Path("output/default"))
+    parser.add_argument("--data", type=Path, default=state_directory() / "default")
     parser.add_argument(
         "--connection", type=Path, help="Private standard model connection JSON"
     )

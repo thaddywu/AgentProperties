@@ -35,3 +35,6 @@ where = ["src"]
 "policyscope.policy_adder" = ["*.md"]
 "policyscope.adapters" = ["Dockerfile", "Dockerfile.batch"]
 "policyscope.workbench" = ["static/*"]
+
+[tool.ruff]
+cache-dir = "~/.cache/policyscope/ruff"

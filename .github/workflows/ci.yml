@@ -11,6 +11,10 @@ jobs:
   python:
     runs-on: ubuntu-22.04
     timeout-minutes: 20
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      XDG_CACHE_HOME: ${{ runner.temp }}/policyscope-cache
+      XDG_STATE_HOME: ${{ runner.temp }}/policyscope-state
     steps:
       - uses: actions/checkout@v5
         with:
@@ -20,13 +24,13 @@ jobs:
           python-version: '3.12'
       - name: Install native engine and Python distribution
         run: |
-          python scripts/install_souffle.py --directory "$RUNNER_TEMP/souffle"
-          echo "$RUNNER_TEMP/souffle/usr/bin" >> "$GITHUB_PATH"
           python -m pip install '.[mcp,test]' build
+          python -B -m policyscope.adapters.install_souffle --directory "$RUNNER_TEMP/souffle"
+          echo "$RUNNER_TEMP/souffle/usr/bin" >> "$GITHUB_PATH"
       - name: Offline verification
         run: |
           souffle --version
-          python scripts/check.py
+          python -B -m tests
           python examples/quickstart/quickstart.py
           python -m build --outdir "$RUNNER_TEMP/distributions"
       - name: Verify installed commands outside the checkout
@@ -63,5 +67,5 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: policy-review
-          path: test-results/
+          path: ${{ runner.temp }}/policyscope-cache/policyscope/test-results/
           if-no-files-found: ignore

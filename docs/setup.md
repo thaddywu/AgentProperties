@@ -14,10 +14,11 @@ The `mcp` extra is needed only for MCP registration and its conformance tests. T
 On Linux x86_64, the following helper downloads the pinned Ubuntu 22.04 Soufflé 2.5 package, verifies its SHA-512 and extracts it without root:
 
 ```bash
-python scripts/install_souffle.py --directory .tools/souffle
-export PATH="$PWD/.tools/souffle/usr/bin:$PATH"
+POLICY_ENGINE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/policyscope/souffle"
+python -B -m policyscope.adapters.install_souffle --directory "$POLICY_ENGINE_DIR"
+export PATH="$POLICY_ENGINE_DIR/usr/bin:$PATH"
 souffle --version
-python scripts/check.py
+python -B -m tests
 ```
 
 Native tests explicitly skip when the engine or `prlimit` is absent; a skipped test is not execution validation. CI supplies both and tests the installed distribution outside the checkout.
@@ -28,6 +29,12 @@ python tests/workbench/codex_ui_smoke.py
 python tests/workbench/student_ui_smoke.py
 ```
 
-Browser checks use synthetic model output, launch headless Chromium and save ignored artifacts under `test-results/`. They require no model account, desktop windows or host workspace.
+Browser checks use synthetic model output, launch headless Chromium and save artifacts under `~/.cache/policyscope/test-results/`, respecting `XDG_CACHE_HOME`. They require no model account, desktop windows or host workspace.
+
+The review server stores private state under `~/.local/state/policyscope/default`, respecting `XDG_STATE_HOME`; `--data` can select an explicit location. Generated documents and Ruff caches also live outside the checkout. Python's own bytecode cache can be redirected during development:
+
+```bash
+export PYTHONPYCACHEPREFIX="${XDG_CACHE_HOME:-$HOME/.cache}/policyscope/pycache"
+```
 
 Install once to use `policyscope --help` and each module's `--help`. Individual entry points include `policy-add`, `policy-translate`, `policy-backtranslate`, `policy-review`, `policy-enforce` and `policy-analyze`.

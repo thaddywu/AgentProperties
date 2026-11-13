@@ -14,6 +14,8 @@ ROOT = Path(__file__).resolve().parents[2]
 for directory in ("src",):
     sys.path.insert(0, str(ROOT / directory))
 
+from policyscope._paths import cache_directory
+
 from playwright.sync_api import expect, sync_playwright
 from policyscope.workbench.cases import run_cases
 from policyscope.adapters.labcluster.application import PortedApplication
@@ -26,7 +28,7 @@ def main():
     parser.add_argument("--ported-app", required=True, type=Path)
     args = parser.parse_args()
     app = PortedApplication(args.ported_app)
-    screenshots = ROOT / "test-results"
+    screenshots = cache_directory() / "test-results"
     screenshots.mkdir(exist_ok=True, parents=True)
     with tempfile.TemporaryDirectory() as directory:
         study = Study(directory, app)

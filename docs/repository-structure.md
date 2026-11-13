@@ -15,7 +15,6 @@ examples/
   quickstart/        Small runnable integration
   applications/      App adapters and reviewed reference policies
   cases/             Synthetic data-only comparison inputs
-scripts/             Verification and documentation tools
 docs/                Framework guides and archive recovery
   study/             Study protocol, student guides and illustrations
   research/          Optional manuscript submodule
@@ -32,4 +31,6 @@ Analysis has no business-execution authority. Its current input is an explicit s
 
 Model generation is injected. The compatible HTTP model transport and coding-agent/Docker integration are optional; their SDKs and credentials do not enter core semantics. New app adapters must establish identity, authoritative facts, actual effect boundaries and independent tests. Existing synchronous/local contracts do not claim distributed transactions or complete mediation of an arbitrary app.
 
-`output/`, test artifacts, environments and credentials are ignored and private. Local historical backups live outside the checkout. Archive branches retain the previous host, TypeScript code and public experiment artifacts. There is one active development branch, `master`; the five `archive/*` module branches are frozen references.
+Maintenance tools live with their owner: `python -B -m tests` runs verification, `policyscope.adapters.install_souffle` installs the optional native engine, and `docs/study/build_pdf.py` builds the student guide. There is no separate scripts directory.
+
+Default private runtime state lives under `~/.local/state/policyscope`; disposable outputs live under `~/.cache/policyscope`. `XDG_STATE_HOME` and `XDG_CACHE_HOME` can select other roots. Local historical backups are outside the checkout. Archive branches retain the previous host, TypeScript code and public experiment artifacts. There is one active development branch, `master`; the five `archive/*` module branches are frozen references.

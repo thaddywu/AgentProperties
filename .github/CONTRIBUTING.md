@@ -4,7 +4,7 @@ Install the root Python distribution and read [the module boundaries](../docs/re
 
 ```bash
 python -m pip install -e '.[mcp,test]'
-python scripts/check.py
+python -B -m tests
 python -m playwright install chromium
 python tests/workbench/ui_smoke.py
 python tests/workbench/codex_ui_smoke.py

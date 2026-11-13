@@ -1,6 +1,6 @@
 # Repository instructions
 
-Read `README.md` for commands and `docs/repository-structure.md` for module boundaries. The five Python modules live under `src/policyscope/`; use `python scripts/check.py` for offline verification. Install with `python -m pip install -e '.[mcp,test]'`. Browser checks are headless.
+Read `README.md` for commands and `docs/repository-structure.md` for module boundaries. The five Python modules live under `src/policyscope/`; use `python -B -m tests` for offline verification. Install with `python -m pip install -e '.[mcp,test]'`. Browser checks are headless.
 
 - This is a public repository: assume all tracked content and diffs are public. Never commit secrets, `.env` files, private URLs, personal/customer data, or real production data; use fake placeholders. Review `git status` and the staged diff before committing, and never force-add ignored files. If private data appears, stop and alert the maintainer.
 - No hosted vendor is required to run the core product. Keep LLMs, sandboxes, memory, voice, integrations, and future external services optional and behind provider-neutral interfaces. Vendor SDKs, configuration, and translation belong only in adapters and composition roots. New providers must reuse shared contracts and deterministic offline conformance tests.

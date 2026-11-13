@@ -11,6 +11,8 @@ ROOT = Path(__file__).resolve().parents[2]
 for directory in ("src",):
     sys.path.insert(0, str(ROOT / directory))
 
+from policyscope._paths import cache_directory
+
 from playwright.sync_api import sync_playwright, expect
 from policyscope.core.policy import fingerprint
 from policyscope.workbench.example import Application
@@ -75,7 +77,7 @@ def main():
                     page.get_by_role("button", name="Results", exact=True)
                 ).to_have_count(0)
                 expect(page.get_by_label("Review version")).to_contain_text("Version 2")
-                screenshots = ROOT / "test-results"
+                screenshots = cache_directory() / "test-results"
                 screenshots.mkdir(exist_ok=True)
                 page.screenshot(
                     path=str(screenshots / "codex-buttons.png"), full_page=True

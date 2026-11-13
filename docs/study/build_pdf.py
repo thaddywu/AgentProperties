@@ -12,7 +12,9 @@ import re
 from tempfile import TemporaryDirectory
 from urllib.request import urlopen
 
-ROOT = Path(__file__).resolve().parents[1]
+from policyscope._paths import cache_directory
+
+ROOT = Path(__file__).resolve().parents[2]
 FONT_URL = "https://raw.githubusercontent.com/notofonts/noto-cjk/main/Sans/OTF/SimplifiedChinese/"
 
 
@@ -103,12 +105,12 @@ def main():
         "--source", type=Path, default=ROOT / "docs/study/student-workflow.md"
     )
     parser.add_argument(
-        "--output", type=Path, default=ROOT / "output/docs/student-workflow.pdf"
+        "--output", type=Path, default=cache_directory() / "docs/student-workflow.pdf"
     )
     parser.add_argument(
         "--font-dir",
         type=Path,
-        default=Path.home() / ".cache/policyscope/document-fonts",
+        default=cache_directory() / "document-fonts",
     )
     args = parser.parse_args()
     source = args.source.read_text()
