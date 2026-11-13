@@ -13,8 +13,6 @@ jobs:
     timeout-minutes: 20
     env:
       PYTHONDONTWRITEBYTECODE: '1'
-      XDG_CACHE_HOME: ${{ runner.temp }}/policyscope-cache
-      XDG_STATE_HOME: ${{ runner.temp }}/policyscope-state
     steps:
       - uses: actions/checkout@v5
         with:
@@ -24,6 +22,8 @@ jobs:
           python-version: '3.12'
       - name: Install native engine and Python distribution
         run: |
+          echo "XDG_CACHE_HOME=$RUNNER_TEMP/policyscope-cache" >> "$GITHUB_ENV"
+          echo "XDG_STATE_HOME=$RUNNER_TEMP/policyscope-state" >> "$GITHUB_ENV"
           python -m pip install '.[mcp,test]' build
           python -B -m policyscope.adapters.install_souffle --directory "$RUNNER_TEMP/souffle"
           echo "$RUNNER_TEMP/souffle/usr/bin" >> "$GITHUB_PATH"
