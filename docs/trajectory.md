@@ -1,5 +1,12 @@
 # Trajectory evidence and application boundaries
 
+For the **read-only frontend**, use the [timeline contract](timeline.md): one JSON
+file declares participants, directed messages, tool calls/results and optional
+state. It requires no rules, binding, model connection or running application.
+`policyscope inspect` also opens the richer gate logs defined below. This page's
+rules-and-facts requirements apply to decision replay and policy QA, rather than
+to browsing an ordinary conversation/tool trajectory.
+
 The five modules share interfaces, rather than a fixed application vocabulary. An
 application may declare its own actors, actions, predicates and fact keys. A port
 must connect those declarations to real identity, authoritative observations and
