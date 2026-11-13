@@ -1,0 +1,19 @@
+{
+  "format": "policyscope-timeline",
+  "version": 1,
+  "title": "Team review · synthetic example",
+  "roles": [
+    {"id": "master", "name": "Master", "role": "Student agent"},
+    {"id": "professor", "name": "Professor", "role": "Scheduling agent"},
+    {"id": "gate", "name": "Policy gate", "role": "Runtime"},
+    {"id": "runner", "name": "Runner", "role": "Tool"}
+  ],
+  "events": [
+    {"id": "m1", "sequence": 0, "kind": "message", "actor": "master", "recipients": ["professor"], "timestamp": "2026-11-13T09:00:00Z", "content": "Please review JOB-001: CPU, 2 cores, 4 GB, 10 minutes."},
+    {"id": "m2", "sequence": 1, "kind": "message", "actor": "professor", "recipients": ["master"], "timestamp": "2026-11-13T09:00:05Z", "content": "The request is within your resource limits. I will try to dispatch it."},
+    {"id": "c1", "sequence": 2, "kind": "tool_call", "actor": "professor", "timestamp": "2026-11-13T09:00:06Z", "tool": "dispatch_job", "callId": "dispatch-1", "arguments": {"job_id": "JOB-001"}},
+    {"id": "d1", "sequence": 3, "kind": "decision", "actor": "gate", "timestamp": "2026-11-13T09:00:06.100Z", "content": "Dispatch refused", "data": {"allowed": false, "reasons": ["PRIORITY_CONFLICT"], "effectCalled": false, "inputs": [{"predicate": "Waiting", "args": ["JOB-001", "0", "1"]}]}},
+    {"id": "r1", "sequence": 4, "kind": "tool_result", "actor": "runner", "recipients": ["professor"], "timestamp": "2026-11-13T09:00:06.200Z", "callId": "dispatch-1", "result": {"ok": false, "code": "PRIORITY_CONFLICT"}},
+    {"id": "m3", "sequence": 5, "kind": "message", "actor": "professor", "recipients": ["master"], "timestamp": "2026-11-13T09:00:08Z", "content": "An eligible PhD job has priority for this node. Your job remains queued."}
+  ]
+}

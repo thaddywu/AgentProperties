@@ -27,6 +27,11 @@ Back-translation consumes actual rules, input meanings, configuration and implem
 
 The workbench owns the HTTP server, static UI and study records. Browser code expresses intent and renders state. Trusted backend code chooses application runners, files, model connections and sandbox adapters. Public HTTP requests cannot choose executable connector paths or credentials.
 
+`analysis/timeline.py` validates data-only participant/message/tool logs and adapts
+existing gate logs for viewing. `workbench/analysis.py` and `static/analysis.*`
+provide the independent read-only UI through `policyscope inspect`. It has no
+application runner, message sender or model connection.
+
 Analysis has no business-execution authority. It accepts explicit snapshots and
 versioned gate trajectories containing exact rules, per-decision input facts and
 confirmed outcomes. Full snapshots preserve captured deletions and replacements;

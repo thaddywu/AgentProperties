@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Trajectory</title>
+  <link rel="stylesheet" href="/analysis.css">
+  <script type="module" src="/analysis.js"></script>
+</head>
+<body>
+  <header>
+    <div><span class="eyebrow">OBSERVATIONS</span><h1 id="title">Trajectory</h1></div>
+    <div class="actions"><label class="button" for="file">Open trajectory</label><input id="file" type="file" accept=".json,application/json"><a id="export" class="button quiet" href="/api/analysis/export" download="trajectory.json" hidden>Export</a></div>
+  </header>
+  <p id="status" role="status" aria-live="polite"></p>
+  <div id="empty" hidden>Open a trajectory JSON file.</div>
+  <main id="workspace" hidden>
+    <aside class="participants"><h2>Participants</h2><div id="roles"></div><details class="scope"><summary>About this log</summary><p id="scope"></p><p id="format"></p></details></aside>
+    <section class="stream" aria-label="Timeline">
+      <div class="filters"><label>Kind<select id="kind" aria-label="Kind"><option value="">All events</option></select></label><span id="count"></span><details id="time-filter" hidden><summary>Time range</summary><div class="time-inputs"><label>From (UTC)<input id="from" type="datetime-local" step="1"></label><label>Until (UTC)<input id="until" type="datetime-local" step="1"></label></div></details></div>
+      <div class="scrubber"><label for="position">Event <output id="position-value">—</output></label><input id="position" type="range" min="0" max="0" value="0" step="1"></div>
+      <div id="events"></div>
+      <p id="no-events" hidden>No matching events.</p>
+    </section>
+    <section class="inspector" aria-label="Event details"><div id="detail"></div></section>
+  </main>
+</body>
+</html>

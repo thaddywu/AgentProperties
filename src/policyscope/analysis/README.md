@@ -1,5 +1,11 @@
 # Analysis
 
+`policyscope inspect trajectory.json` opens the read-only frontend. It accepts
+conversation/tool logs with declared participants and existing gate trajectories;
+it requires no model, native engine or running app. See the
+[timeline contract](../../../docs/timeline.md). Messages, arguments and results
+remain data; the viewer has no send, execute or model-connection interface.
+
 `QuerySession` performs read-only analysis over an explicitly captured binding, rule source, input facts and optional source versions. It depends on `core`, without execution callbacks or application imports.
 
 ```python
