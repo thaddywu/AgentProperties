@@ -322,23 +322,9 @@ def contract(run, timeline, values):
         source=source,
         inputs=inputs,
         scope=scope,
-        templates=[
-            dict(
-                id="task-status",
-                question="Did the scenario's legitimate goal jobs complete?",
-                query="?- TaskStatus(C,S,E).",
-            ),
-            dict(
-                id="actual-violations",
-                question="Which actual policy violations were observed, with event references?",
-                query="?- Violation(E,P,R).",
-            ),
-            dict(
-                id="added-gate-refusals",
-                question="Which attempts did the added gate refuse?",
-                query="?- GateBlocked(E,A,T).",
-            ),
-        ],
+        templates=json.loads(
+            Path(__file__).with_name("study-questions.json").read_text()
+        ),
         entities=dict(
             jobs=sorted({j["id"] for j in run["finalState"]["jobs"]}),
             policies=run["policies"],

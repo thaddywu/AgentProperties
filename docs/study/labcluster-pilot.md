@@ -113,10 +113,12 @@ documents, so both can be compared in separate tabs. Execution belongs to the
 trusted sandbox runner; the analysis server only reads files and queries facts.
 New UI runs are retained separately from the frozen benchmark.
 
-In the analysis page, expand **Analyze**. Ask a natural-language question, or
-expand **Datalog** and enter a read-only query directly. Without `--connection`,
-viewing and direct queries still work; only natural-language interpretation is
-disabled. Neither interface sends messages to the recorded agents.
+In the analysis page, expand **Analyze**. Choose a question and any entity
+parameters, then **Use template**, or type a question and click **Translate**.
+Inspect the translation and click **Run analysis**. Answers use fixed text filled
+from exact rows; query details are expandable. Without `--connection`, template
+selection and direct Datalog still work; only NL interpretation is disabled.
+Neither interface sends messages to the recorded agents.
 
 Useful queries include:
 
@@ -135,9 +137,11 @@ are distinct. Empty query rows are not an automatic "all policies satisfied".
 
 ## Evaluate NL translation and answers
 
-The [question suite](../../examples/cases/labcluster-questions.json) contains three
-catalog-style questions, two untemplated queries including an event/operation
-join, and an unsupported request for a proof of all future safety.
+The [question suite](../../examples/cases/labcluster-questions.json) covers
+completion, observed violations, gate refusals, disclosures, an event/operation
+join, and an unsupported request for a proof of all future safety. Its template
+labels describe the frozen original benchmark. The current catalog also provides
+the disclosure/join questions and a parameterized policy filter.
 
 ```bash
 python -B -m policyscope.adapters.labcluster.study_questions \

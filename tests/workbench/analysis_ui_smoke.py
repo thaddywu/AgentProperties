@@ -11,22 +11,28 @@ sys.path.insert(0, str(ROOT / "src"))
 from playwright.sync_api import sync_playwright, expect
 from policyscope._paths import cache_directory
 from policyscope.workbench.analysis import AnalysisServer
+from policyscope.analysis.log_query import project
+from policyscope.analysis.timeline import Timeline
 
 
 def main():
     example = json.loads((ROOT / "examples/trajectories/team-review.json").read_text())
+
+    example["analysis"] = project(Timeline(example))
+    example["analysis"]["templates"][1]["answer"] = dict(
+        en=dict(
+            summary="Recorded {count} message recipients.",
+            row="Event {E}: recipient {A}.",
+            empty="No recipients were recorded; broadcast is not inferred.",
+        )
+    )
 
     def model(stage, prompt):
         payload = json.loads(prompt)
         return (
             json.dumps(dict(unsupported="A finite log cannot prove future behavior."))
             if payload["question"] == "future"
-            else json.dumps(
-                dict(
-                    query="?- Recipient(E,R).",
-                    explanation="List the recorded recipients.",
-                )
-            )
+            else json.dumps(dict(templateId="recipients", parameters={}))
         )
 
     server = AnalysisServer(("127.0.0.1", 0), example, model)
@@ -125,17 +131,47 @@ def main():
             )
             page.locator("#analysis-tools > summary").click()
             page.get_by_label("Question", exact=True).fill("Who received messages?")
-            page.get_by_role("button", name="Ask", exact=True).click()
+            page.get_by_role("button", name="Translate", exact=True).click()
+            expect(page.locator("#translation")).to_be_visible()
+            expect(page.locator("#translation")).to_contain_text("?- Recipient(E,A).")
+            expect(page.locator("#query-answer")).to_be_empty()
+            page.screenshot(
+                path=str(screenshots / "trajectory-translation.png"), full_page=True
+            )
+            page.get_by_role("button", name="Run analysis", exact=True).click()
+            expect(page.locator("#query-answer")).to_contain_text(
+                "Recorded 4 message recipients."
+            )
+            page.get_by_text("Query and rows", exact=True).click()
             expect(page.locator("#query-answer")).to_contain_text("4 matching rows.")
-            expect(page.locator("#query-answer")).to_contain_text("?- Recipient(E,R).")
+            expect(page.locator("#query-answer")).to_contain_text("?- Recipient(E,A).")
+            page.get_by_text("Query and rows", exact=True).click()
             page.screenshot(
                 path=str(screenshots / "trajectory-query.png"), full_page=True
             )
             page.get_by_label("Question", exact=True).fill("future")
-            page.get_by_role("button", name="Ask", exact=True).click()
+            page.get_by_role("button", name="Translate", exact=True).click()
             expect(page.locator("#query-answer")).to_contain_text(
                 "cannot prove future behavior"
             )
+            page.get_by_role(
+                "combobox", name="Question template", exact=True
+            ).select_option("recipient-events")
+            page.get_by_role("combobox", name="recipient", exact=True).select_option(
+                "master"
+            )
+            page.get_by_role("button", name="Use template", exact=True).click()
+            expect(page.locator("#translation")).to_contain_text(
+                '?- Recipient(E,"master").'
+            )
+            page.get_by_role("button", name="Run analysis", exact=True).click()
+            expect(page.locator("#query-answer")).to_contain_text(
+                "Query matched 2 records."
+            )
+            page.get_by_role("combobox", name="recipient", exact=True).select_option(
+                "professor"
+            )
+            expect(page.locator("#translation")).to_be_hidden()
             exported = page.request.get(base + "/api/analysis/export").json()
             assert exported == example
             assert not errors, errors

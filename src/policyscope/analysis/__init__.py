@@ -2,5 +2,6 @@
 
 from .session import QuerySession
 from .trajectory import TrajectorySession
+from .translation import QuestionTranslator
 
-__all__ = ["QuerySession", "TrajectorySession"]
+__all__ = ["QuerySession", "TrajectorySession", "QuestionTranslator"]

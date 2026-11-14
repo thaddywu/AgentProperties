@@ -5,6 +5,7 @@ import threading
 import tempfile
 from copy import deepcopy
 import unittest
+from unittest.mock import patch
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 
@@ -68,6 +69,30 @@ class AnalysisHttpTests(unittest.TestCase):
             self.assertEqual(result["rowCount"], 4)
             self.assertNotIn("inputs", requests[0])
             self.assertNotIn("events", requests[0])
+            with patch(
+                "policyscope.analysis.session.QuerySession.query",
+                side_effect=AssertionError("Preview executed a query."),
+            ):
+                plan = json.load(
+                    post(
+                        "translate",
+                        dict(
+                            trajectoryId=identifier,
+                            templateId="recipient-events",
+                            parameters=dict(recipient="master"),
+                        ),
+                    )
+                )["result"]
+            self.assertEqual(plan["status"], "ready")
+            self.assertNotIn("rows", plan)
+            answered = json.load(
+                post("answer", dict(trajectoryId=identifier, planId=plan["planId"]))
+            )["result"]
+            self.assertEqual(answered["rowCount"], 2)
+            self.assertEqual(answered["answer"]["source"], "deterministic-template")
+            self.assertEqual(len(requests), 1)
+            with self.assertRaises(HTTPError):
+                post("answer", dict(trajectoryId=identifier, planId="unknown"))
             response = json.load(
                 post("ask", dict(trajectoryId=identifier, question="future"))
             )["result"]
@@ -92,6 +117,10 @@ class AnalysisHttpTests(unittest.TestCase):
                 one, two = Timeline(example), Timeline(other)
                 server.register_file(first, one)
                 server.register_file(second, two)
+                with self.assertRaises(HTTPError):
+                    post(
+                        "answer", dict(trajectoryId=two.identity, planId=plan["planId"])
+                    )
                 selected = json.load(
                     urlopen(base + "/api/analysis?trace=" + one.identity)
                 )

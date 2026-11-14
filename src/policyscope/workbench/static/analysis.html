@@ -22,13 +22,15 @@
       <div id="events"></div>
       <p id="no-events" hidden>No matching events.</p>
     </section>
-    <section class="inspector" aria-label="Event details"><div id="detail"></div>
+    <section class="inspector" aria-label="Event details">
       <details id="analysis-tools" hidden><summary>Analyze</summary>
-        <label id="example-label" hidden>Example<select id="query-example" aria-label="Query example"><option value="">Choose a question</option></select></label>
-        <form id="ask-form" hidden><label for="question">Question</label><input id="question" maxlength="4000" required autocomplete="off"><button type="submit">Ask</button></form>
+        <form id="template-form" hidden><label id="example-label">Question template<select id="query-example" aria-label="Question template" required><option value="">Choose a question</option></select></label><div id="template-parameters"></div><button type="submit">Use template</button></form>
+        <form id="ask-form" hidden><label for="question">Question</label><input id="question" maxlength="4000" required autocomplete="off"><button type="submit">Translate</button></form>
+        <div id="translation" hidden><div id="translation-detail"></div><button id="run-analysis" type="button">Run analysis</button></div>
         <details id="query-editor"><summary>Datalog</summary><form id="query-form"><label for="query">Read-only query</label><textarea id="query" rows="3" maxlength="20000" required spellcheck="false"></textarea><button type="submit">Run query</button></form></details>
         <div id="query-answer" role="status" aria-live="polite"></div>
       </details>
+      <div id="detail"></div>
     </section>
   </main>
 </body>

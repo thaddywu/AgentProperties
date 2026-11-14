@@ -1,7 +1,7 @@
 const $ = (selector) => document.querySelector(selector);
 const names = {message: 'Message', tool_call: 'Tool call', tool_result: 'Tool result', state: 'State', decision: 'Decision'};
 let log = null, token = '', activeRole = '', selected = '', ticket = 0;
-let capabilities = {};
+let capabilities = {}, prepared = null;
 
 function el(tag, text, cls) {
   const node = document.createElement(tag);
@@ -133,12 +133,13 @@ function setLog(value) {
   $('#empty').hidden = Boolean(log); $('#workspace').hidden = !log; $('#export').hidden = !log;
   $('#title').textContent = log?.title || 'Trajectory';
   if (!log) return;
-  $('#query-answer').replaceChildren();
+  resetPlan();
   $('#analysis-tools').hidden = !capabilities.queryAvailable;
   $('#ask-form').hidden = !capabilities.modelAvailable;
   $('#query-example').replaceChildren(new Option('Choose a question', ''));
   for (const item of capabilities.queryExamples || []) $('#query-example').append(new Option(item.question, item.id));
-  $('#example-label').hidden = !(capabilities.queryExamples || []).length;
+  $('#template-form').hidden = !(capabilities.queryExamples || []).length;
+  $('#template-parameters').replaceChildren();
   $('#query').value = capabilities.queryExamples?.[0]?.query || '?- Observed(E).';
   $('#scope').textContent = log.scope; $('#format').textContent = log.format;
   $('#kind').replaceChildren(new Option('All events', ''));
@@ -167,36 +168,84 @@ try {
   const value = await response.json(); token = value.token; capabilities = value; setLog(value.trajectory);
 } catch (error) {fail(error);}
 
+function resetPlan() {
+  prepared = null; $('#translation').hidden = true;
+  $('#translation-detail').replaceChildren(); $('#query-answer').replaceChildren();
+}
+function templateParameters() {
+  const values = {};
+  for (const input of document.querySelectorAll('#template-parameters select')) values[input.dataset.parameter] = input.value;
+  return values;
+}
 $('#query-example').addEventListener('change', () => {
+  resetPlan();
   const item = capabilities.queryExamples?.find((x) => x.id === $('#query-example').value);
-  if (item) {$('#question').value = item.question; $('#query').value = item.query;}
+  const fields = $('#template-parameters'); fields.replaceChildren();
+  if (!item) return;
+  $('#question').value = item.question;
+  for (const [parameter, kind] of Object.entries(item.parameters || {})) {
+    const label = el('label', parameter), choice = el('select'); choice.dataset.parameter = parameter;
+    choice.setAttribute('aria-label', parameter);
+    for (const value of capabilities.queryEntities?.[kind] || []) choice.append(new Option(value, value));
+    choice.addEventListener('change', resetPlan); label.append(choice); fields.append(label);
+  }
 });
+$('#question').addEventListener('input', resetPlan);
+function renderAnswer(result) {
+  const output = $('#query-answer'); output.replaceChildren();
+  if (result.status !== 'answered') {
+    output.append(el('p', result.status === 'clarification' ? 'Clarification needed' : 'Unsupported', 'answer-summary'), el('p', result.unsupported || result.clarification, 'content')); return;
+  }
+  $('#query').value = result.query;
+  output.append(el('p', result.answer.summary, 'answer-summary'));
+  const items = el('ul', undefined, 'answer-items');
+  for (const text of result.answer.items) items.append(el('li', text));
+  output.append(items);
+  if (result.answer.truncated) output.append(el('p', 'Showing the first 20 records.', 'subtle'));
+  const evidence = el('div', undefined, 'answer-evidence');
+  for (const id of result.answer.eventIds.slice(0, 20)) {
+    const button = el('button', id, 'link'); button.addEventListener('click', () => jump(id)); evidence.append(button);
+  }
+  output.append(evidence);
+  const raw = el('details', undefined, 'detail-section'); raw.append(el('summary', 'Query and rows'));
+  raw.append(el('p', result.rowCount + ' matching rows.', 'subtle'), el('pre', result.query));
+  if (result.interpretation) raw.append(section('Query interpretation', result.interpretation));
+  const wrapper = el('div', undefined, 'query-table'), table = el('table'), header = el('tr');
+  for (const column of result.columnLabels || result.columns) header.append(el('th', column));
+  table.append(header);
+  const ids = new Set(log.events.map((e) => e.id));
+  for (const values of result.rows.slice(0, 200)) {
+    const row = el('tr');
+    for (const value of values) {const cell = el('td'); if (ids.has(value)) {const button = el('button', value, 'link'); button.addEventListener('click', () => jump(value)); cell.append(button);} else cell.textContent = value; row.append(cell);}
+    table.append(row);
+  }
+  wrapper.append(table); raw.append(wrapper);
+  if (result.rowCount > 200) raw.append(el('p', 'Showing the first 200 rows.', 'subtle'));
+  output.append(raw, section('Analysis scope', result.scope));
+}
 async function analyze(operation, value) {
-  const identity = log.id, output = $('#query-answer'); output.replaceChildren(el('p', 'Analyzing…', 'subtle'));
-  for (const button of document.querySelectorAll('#analysis-tools button')) button.disabled = true;
+  const identity = log.id, output = $('#query-answer');
+  if (operation === 'translate') resetPlan();
+  output.replaceChildren(el('p', operation === 'translate' ? 'Translating…' : 'Analyzing…', 'subtle'));
+  for (const control of document.querySelectorAll('#analysis-tools button, #analysis-tools input, #analysis-tools select, #analysis-tools textarea')) control.disabled = true;
   try {
     const response = await post(operation, {trajectoryId: identity, ...value});
     if (log.id !== response.trajectoryId) return;
-    const result = response.result; output.replaceChildren();
-    if (result.status !== 'answered') {output.append(el('p', result.unsupported || result.clarification, 'content')); return;}
-    $('#query').value = result.query;
-    output.append(el('p', result.rowCount ? result.rowCount + ' matching rows.' : 'No rows matched.', 'content'));
-    output.append(section('Executed query', result.query, true));
-    if (result.interpretation) output.append(section('Query interpretation', result.interpretation));
-    const wrapper = el('div', undefined, 'query-table'), table = el('table'), header = el('tr');
-    for (const column of result.columnLabels || result.columns) header.append(el('th', column));
-    table.append(header);
-    const ids = new Set(log.events.map((e) => e.id));
-    for (const values of result.rows.slice(0, 200)) {
-      const row = el('tr');
-      for (const value of values) {const cell = el('td'); if (ids.has(value)) {const button = el('button', value, 'link'); button.addEventListener('click', () => jump(value)); cell.append(button);} else cell.textContent = value; row.append(cell);}
-      table.append(row);
-    }
-    wrapper.append(table); output.append(wrapper);
-    if (result.rowCount > 200) output.append(el('p', 'Showing the first 200 rows.', 'subtle'));
-    output.append(section('Analysis scope', result.scope));
-  } catch (error) {if (log.id === identity) {output.replaceChildren(el('p', error.message, 'content'));}}
-  finally {for (const button of document.querySelectorAll('#analysis-tools button')) button.disabled = false;}
+    const result = response.result;
+    if (result.status === 'ready') {
+      prepared = result; output.replaceChildren();
+      const preview = $('#translation-detail'); preview.replaceChildren(el('p', result.interpretation, 'content'));
+      if (result.templateId) preview.append(el('p', result.templateId, 'subtle'));
+      if (Object.keys(result.parameters || {}).length) preview.append(section('Parameters', result.parameters, true));
+      preview.append(section('Datalog translation', result.query, true));
+      $('#translation').hidden = false;
+    } else renderAnswer(result);
+  } catch (error) {if (log.id === identity) output.replaceChildren(el('p', error.message, 'content'));}
+  finally {for (const control of document.querySelectorAll('#analysis-tools button, #analysis-tools input, #analysis-tools select, #analysis-tools textarea')) control.disabled = false;}
 }
-$('#ask-form').addEventListener('submit', (event) => {event.preventDefault(); analyze('ask', {question: $('#question').value});});
+$('#ask-form').addEventListener('submit', (event) => {event.preventDefault(); analyze('translate', {question: $('#question').value});});
+$('#template-form').addEventListener('submit', (event) => {
+  event.preventDefault(); if ($('#query-example').value) analyze('translate', {templateId: $('#query-example').value, parameters: templateParameters()});
+});
+$('#run-analysis').addEventListener('click', () => {if (prepared) analyze('answer', {planId: prepared.planId});});
 $('#query-form').addEventListener('submit', (event) => {event.preventDefault(); analyze('query', {query: $('#query').value});});

@@ -10,7 +10,7 @@ import uuid
 from urllib.parse import urlsplit, parse_qs
 
 from policyscope.analysis.timeline import Timeline
-from policyscope.analysis.log_query import LogQuerySession
+from policyscope.analysis.log_query import LogQuerySession, project
 from policyscope.core.artifacts import save, artifact_text
 from policyscope._paths import state_directory
 from .server import Handler, Server
@@ -25,6 +25,7 @@ class AnalysisServer(Server):
         self.RequestHandlerClass = AnalysisHandler
         self.timeline = timeline
         self.documents = {}
+        self.plans = {}
         self.data_lock = threading.Lock()
         self.query_directory = Path(query_directory) if query_directory else None
 
@@ -50,12 +51,14 @@ class AnalysisServer(Server):
 
     def capabilities(self, timeline=None):
         timeline = timeline or self.timeline
+        contract = (
+            (timeline.export().get("analysis") or project(timeline)) if timeline else {}
+        )
         return dict(
             queryAvailable=bool(shutil.which("souffle") and shutil.which("prlimit")),
             modelAvailable=self.generate is not None,
-            queryExamples=timeline.export().get("analysis", {}).get("templates", [])
-            if timeline
-            else [],
+            queryExamples=contract.get("templates", []),
+            queryEntities=contract.get("entities", {}),
         )
 
 
@@ -109,6 +112,8 @@ class AnalysisHandler(Handler):
             "event",
             "query",
             "ask",
+            "translate",
+            "answer",
         }:
             return self.reply(404, {"error": "Not found."})
         try:
@@ -121,7 +126,7 @@ class AnalysisHandler(Handler):
                 raise ValueError("Expected object.")
         except (ValueError, UnicodeError, RecursionError):
             return self.reply(400, {"error": "Invalid JSON request."})
-        if operation in {"query", "ask"}:
+        if operation in {"query", "ask", "translate", "answer"}:
             return self.analysis(operation, value)
         if not self.server.data_lock.acquire(blocking=False):
             return self.reply(409, {"error": "Another import is running."})
@@ -168,7 +173,10 @@ class AnalysisHandler(Handler):
             self.server.data_lock.release()
 
     def analysis(self, operation, value):
-        if not self.server.capabilities()["queryAvailable"]:
+        if (
+            operation != "translate"
+            and not self.server.capabilities()["queryAvailable"]
+        ):
             return self.reply(
                 409, {"error": "Read-only queries require the native engine."}
             )
@@ -183,11 +191,17 @@ class AnalysisHandler(Handler):
                 return self.reply(
                     409, {"error": "Trajectory changed; reload the view."}
                 )
-            field = "question" if operation == "ask" else "query"
-            if set(value) != {"trajectoryId", field}:
-                raise ValueError("Unknown query fields.")
             session = LogQuerySession(timeline)
-            if operation == "ask":
+            if operation == "translate" and set(value) == {
+                "trajectoryId",
+                "templateId",
+                "parameters",
+            }:
+                result = session.prepare(value["templateId"], value["parameters"])
+            elif operation in {"ask", "translate"} and set(value) == {
+                "trajectoryId",
+                "question",
+            }:
                 if self.server.generate is None:
                     return self.reply(
                         409,
@@ -195,11 +209,25 @@ class AnalysisHandler(Handler):
                             "error": "Natural-language analysis needs an optional model connection."
                         },
                     )
-                result = session.ask(
-                    value[field], self.server.generate, record=attempts.append
+                interpret = session.ask if operation == "ask" else session.translate
+                result = interpret(
+                    value["question"], self.server.generate, record=attempts.append
                 )
+            elif operation == "answer" and set(value) == {"trajectoryId", "planId"}:
+                plan = self.server.plans.get(value["planId"])
+                if plan is None:
+                    raise ValueError("Translate this question again.")
+                result = session.answer(plan)
+            elif operation == "query" and set(value) == {"trajectoryId", "query"}:
+                result = session.query(value["query"])
             else:
-                result = session.query(value[field])
+                raise ValueError("Unknown query fields.")
+            if operation == "translate" and result["status"] == "ready":
+                identifier = uuid.uuid4().hex
+                self.server.plans[identifier] = result
+                if len(self.server.plans) > 100:
+                    del self.server.plans[next(iter(self.server.plans))]
+                result = dict(result, planId=identifier)
             saved = dict(result=result)
             self.reply(200, dict(trajectoryId=timeline.identity, result=result))
         except (ValueError, TypeError, KeyError, OverflowError):

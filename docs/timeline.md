@@ -93,7 +93,10 @@ absent.
 
 ## Read-only analysis
 
-Expand **Analyze** to query the recorded evidence. Direct Datalog requires the
+Expand **Analyze** to query the recorded evidence. Choose a question template and
+its parameters, then **Use template**, or enter a question and click **Translate**.
+Inspect the compiled Datalog before clicking **Run analysis**. Choosing a template
+requires no model. Translation does not evaluate facts. Direct Datalog requires the
 native engine. Add `--connection /path/to/private-connection.json` to enable
 natural-language questions using the shared compatible model adapter. The
 browser never configures credentials or contacts the model directly. The analysis
@@ -128,21 +131,55 @@ The domain contract replaces the default vocabulary; only its declared facts and
 derived relations are queryable. Other raw event fields remain browsable. Rules
 and facts are data, with no Python renderers or application imports.
 
-The translator sees the question, schema/meanings, Datalog, scope, examples and
-entity IDs. It sees neither app logic nor raw fact rows. It can propose queries
-beyond the examples, ask for clarification, or return unsupported. The backend
+Question templates retain the existing `{id, question, query}` fields and may add
+`parameters` and `answer`. A parameter names an entity catalog; its placeholder is
+unquoted in the query. The backend checks membership and JSON-quotes the value.
+Answer wording is data-only, with plain placeholders and no functions or code:
+
+```json
+{
+  "id": "recipient-events",
+  "question": "Which events name this recipient?",
+  "query": "?- Recipient(E,{recipient}).",
+  "parameters": {"recipient": "participants"},
+  "answer": {
+    "en": {
+      "summary": "Found {count} recorded events.",
+      "row": "Event {E}.",
+      "empty": "No matching recorded recipients; delivery is not inferred."
+    }
+  }
+}
+```
+
+`entities.participants` supplies allowed values. Answer variants support `en` and
+`zh`; a Chinese question selects `zh` when supplied. `summary` can reference only
+`count`; `row` can reference only returned query variables; `empty` is literal.
+The trusted exporter owns domain wording and its limitations. Templates without
+answer wording and custom queries use a generic, evidence-scoped renderer.
+
+The translator sees the question, schema/meanings, Datalog, scope, templates and
+entity IDs. It sees neither app logic, raw fact rows nor answer wording. It selects
+a template ID and parameters when possible. It can also propose a query beyond
+the catalog, ask for clarification, or return unsupported. The backend
 admits one read-only `?-` query using declared predicates and the existing bounded
 Datalog grammar; host commands, arbitrary functions and native directives are not
-query capabilities. The local engine returns exact rows with relation-field
-labels and links to returned event IDs. Those links are observations, not proof
-trees. No matches means no matches in the supplied evidence, not universal safety.
+query capabilities. Comparisons use `!=`, `<`, `<=`, `>` and `>=`; equality uses
+shared variables or literal predicate arguments, with no `=`/`==` operator.
+A prepared plan is pinned to its trajectory. The local engine
+returns exact rows; a deterministic answer renderer fills the fixed summary/row
+templates. There is no second model call to generate the answer. Raw rows and
+relation-field labels remain under **Query and rows**, with event links. Those
+links are observations, not proof trees. No matches means no matches in the
+supplied evidence, not universal safety.
 
 `policyscope analyze timeline.json --question 'Which tools were called?'
 --connection /path/to/private-connection.json` also supports this interface.
 Existing gate logs retain the separate replay/decision QA interface described in
 the [gate contract](trajectory.md).
 
-The viewer exposes import, event selection and read-only query routes; it exposes
+The viewer exposes import, event selection, question translation, prepared-answer
+and read-only query routes; it exposes
 no recorded-agent chat, application execution or mutation route. Execution in the
 pilot belongs to a separate trusted sandbox service. Pinned document IDs keep
 original and translated logs independent across tabs. The Python host and loopback
