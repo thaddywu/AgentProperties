@@ -15,6 +15,7 @@ from policyscope._paths import cache_directory
 
 from playwright.sync_api import sync_playwright, expect
 from policyscope.core.policy import fingerprint
+from policyscope.core.artifacts import save
 from policyscope.workbench.example import Application
 from policyscope.policy_adder.repository import PortJobs
 from policyscope.workbench.server import Server
@@ -34,7 +35,7 @@ def main():
                 self.output.mkdir(exist_ok=True)
                 (self.output / "candidate/policy_port").mkdir(parents=True)
                 (self.output / "candidate/policy_port/rules.dl").write_text("fixture")
-                (self.output / "translation.json").write_text('{"status":"fixture"}')
+                save(self.output / "translation.json", dict(status="fixture"))
                 return dict(
                     passed=True, tests=6, artifacts={"trajectories": ["fixture only"]}
                 )
