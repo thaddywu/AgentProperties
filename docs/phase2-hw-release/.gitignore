@@ -1,0 +1,6 @@
+# Rebuildable LaTeX bookkeeping; retain sources and release PDFs.
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out

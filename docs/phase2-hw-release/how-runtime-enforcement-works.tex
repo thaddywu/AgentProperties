@@ -1,0 +1,238 @@
+\documentclass[11pt,letter]{article}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=18mm]{geometry}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{tcolorbox}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{pdftitle={How Runtime Enforcement Works},pdfauthor={}}
+\definecolor{policygray}{gray}{0.93}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\setlist{nosep,leftmargin=1.5em}
+\lstset{basicstyle=\ttfamily\footnotesize,columns=fullflexible,
+  keepspaces=true,breaklines=true,showstringspaces=false,
+  aboveskip=5pt,belowskip=5pt,xleftmargin=4pt}
+\newtcolorbox{originalpolicy}{colback=policygray,colframe=policygray,
+  boxrule=0pt,arc=0pt,left=7pt,right=7pt,top=5pt,bottom=5pt,
+  before skip=6pt,after skip=4pt}
+\newcommand{\pred}[2]{\texttt{#1}: #2\par}
+\newcommand{\added}[1]{\colorbox{policygray}{%
+  \makebox[\dimexpr\linewidth-2\fboxsep\relax][l]{\strut\ttfamily\small #1}}}
+\begin{document}
+\begin{center}
+  {\LARGE\bfseries How Agent Safety Runtime Enforcement\\[2pt]
+   and Inspection Work Underneath}
+\end{center}
+\vspace{-5pt}
+
+We assume that the policy violations we aim to prevent occur at tool-call
+boundaries, including message sends. Our tool instruments these entry points
+to inspect each call, recording policy-relevant information as facts, and
+enforces policy by checking each new request against rules and current
+facts---for example, whether the caller may execute a transfer. Calls that
+fail the checks are blocked before the tool body runs. Rules and facts are
+evaluated by a Datalog engine. Datalog is a logic programming language in
+which a policy is a set of rules that derive conclusions, such as whether a
+request is allowed, from recorded facts.
+
+\section{Built-in Predicate Catalog for Safety Control}
+
+
+A \textbf{fact} is a recorded piece of information. For example,
+\texttt{Parameter("q1", "recipient", "Bob")} records that request
+\texttt{q1} has a parameter named \texttt{recipient} whose value is \texttt{Bob}.
+In the general form \texttt{Parameter(Q, Name, Value)}, \texttt{Q} identifies
+the request, \texttt{Name} names a parameter, and \texttt{Value} gives its value.
+Our tool stores facts in a fact database (EDB).
+
+A \textbf{predicate} names a kind of fact, such as \texttt{Parameter}.
+A \textbf{rule} tells us what follows from facts we already have.
+Read \texttt{:-} as ``if'' and commas on its right as ``and'': the conclusion
+on the left holds when all conditions on the right hold. Letters such as
+\texttt{P} and \texttt{R} stand for values; the same letter within a rule
+refers to the same value.
+
+\subsection*{Runtime control for actions}
+Every action an agent takes, such as a tool call or a message send, passes
+through a gate that decides whether it may run; because the check happens at
+the moment of action, it applies no matter how the agent was prompted or what
+content it has seen.
+
+\pred{Request(Q, Principal, EventKind)}{Request \texttt{Q} is made by
+\texttt{Principal} to perform \texttt{EventKind}.}
+\pred{Parameter(Q, Name, Value)}{Request \texttt{Q} has this parameter and value.}
+\pred{Allow(Q)}{The rules permit request \texttt{Q}.}
+\pred{Deny(Q, Reason)}{The rules reject request \texttt{Q} for this reason.}
+\begin{center}
+\begin{tabular}{lll}
+\textbf{Allow(Q)} & \textbf{Any Deny(Q, Reason)} & \textbf{Tool body} \\
+\hline
+Absent & Absent & Blocked \\
+Present & Absent & Allowed to run \\
+Absent & Present & Blocked \\
+Present & Present & Blocked
+\end{tabular}
+\end{center}
+Our tool checks each request using the current facts. A request needs
+\texttt{Allow}; any \texttt{Deny} blocks it.
+
+
+\subsection*{Category 1: Capability and access control}
+Access control dates back to early operating-system protection. The
+group-based rules below follow later work on role-based access control and
+Datalog authorization languages such as Binder (2002); here they decide which
+agent may invoke which tool on which resource.
+
+\pred{Capability(Principal, Scope, EventKind)}{This principal has permission
+to perform this operation on this resource or group of resources.}
+\pred{PrincipalGroup(Principal, Group)}{This principal belongs to this group.}
+\pred{ResourceGroup(Parent, Child)}{This resource belongs to a larger resource group.}
+\pred{Can(Principal, Resource, EventKind)}{This principal has the permission,
+directly or through a group.}
+
+\begin{lstlisting}
+Can(P, R, E) :- Capability(P, R, E).
+Can(P, R, E) :- PrincipalGroup(P, G), Can(G, R, E).
+Can(P, Child, E) :- ResourceGroup(Parent, Child), Can(P, Parent, E).
+\end{lstlisting}
+Read each rule as an if-then sentence:
+\begin{enumerate}
+\item If \texttt{P} has the capability, \texttt{P} can perform \texttt{E} on \texttt{R}.
+\item If \texttt{P} is in group \texttt{G} and \texttt{G} can, so can \texttt{P}.
+\item If \texttt{P} can act on \texttt{Parent}, it can act on each \texttt{Child} in it.
+\end{enumerate}
+Rules 2 and 3 are \emph{recursive}: \texttt{Can} appears on both sides, so
+permissions pass through groups nested to any depth. The engine reapplies the
+rules until no new facts appear, which always terminates. The app's
+\texttt{Allow} rules use \texttt{Can} to check the caller's permission.
+
+\subsection*{Category 2: Information flow control}
+Information flow control dates back to Denning's lattice model (1976) and
+later taint tracking. For agents, it tracks whether untrusted content, such
+as an external message, influenced a later action.
+
+\pred{Source(Principal, Data)}{This data came directly from this principal.}
+\pred{DependsOn(Output, Input)}{This output was produced using this input.}
+\pred{Provenance(Data, Principal)}{This data came from this principal,
+directly or through other data.}
+
+\begin{lstlisting}
+Provenance(D, P) :- Source(P, D).
+Provenance(Out, P) :- DependsOn(Out, In), Provenance(In, P).
+\end{lstlisting}
+Read each rule as an if-then sentence:
+\begin{enumerate}
+\item If \texttt{D} came directly from \texttt{P}, its provenance includes \texttt{P}.
+\item If \texttt{Out} was produced from \texttt{In}, it inherits every origin of \texttt{In}.
+\end{enumerate}
+Rule 2 is recursive, so origins carry forward through any chain of copying,
+combining or rewriting. The app records \texttt{Source} and \texttt{DependsOn};
+the engine derives the rest.
+
+\begin{originalpolicy}
+\textbf{Example 1. Policy:} Only Payments may execute transfers. Payment details from
+external messages require additional verification.
+\end{originalpolicy}
+The transfer rule checks the caller's \texttt{Can} permission and uses
+\texttt{Provenance} to require verification for external-message details.
+As long as the app records \texttt{DependsOn} for derived data, rewriting
+those details keeps their origin and cannot bypass the check.
+
+
+\subsection*{Category 3: Ordering and lifecycle constraints with stateful effects}
+Ordering constraints build on state machines and typestate (Strom and Yemini,
+1986). For agents, they ensure that steps happen in the required order, such
+as approval before publication, even when different agents perform them.
+
+\pred{ResourceType(Resource, Type)}{What kind of resource this is.}
+\pred{ResourceState(Resource, State)}{What state the resource is in now.}
+\pred{InitialState(Type, State)}{The starting state for a new resource of this type.}
+\pred{AllowedTransition(Type, EventKind, From, To)}{This operation may move
+this type of resource from one state to another.}
+\pred{ReachableState(Type, From, To)}{One or more allowed steps connect these states.}
+\pred{CanTransition(Resource, EventKind, From, To)}{This resource can take
+this step from its current state.}
+
+\begin{lstlisting}
+ReachableState(T, From, To) :- AllowedTransition(T, _, From, To).
+ReachableState(T, From, To) :- ReachableState(T, From, Mid),
+                             AllowedTransition(T, _, Mid, To).
+CanTransition(R, E, From, To) :- ResourceType(R, T),
+    ResourceState(R, From), AllowedTransition(T, E, From, To).
+\end{lstlisting}
+Read each rule as an if-then sentence:
+\begin{enumerate}
+\item If one allowed step leads from \texttt{From} to \texttt{To}, \texttt{To} is reachable.
+\item If \texttt{Mid} is reachable and one step leads from \texttt{Mid} to \texttt{To}, so is \texttt{To}.
+\item If \texttt{R} is now in \texttt{From} and its type allows \texttt{E} from
+\texttt{From} to \texttt{To}, \texttt{R} can take that step.
+\end{enumerate}
+Rule 2 is recursive, so \texttt{ReachableState} connects states through any
+number of steps. The app's \texttt{Allow} rules use \texttt{CanTransition} to
+check the next step. This is the stateful effect: a new resource starts in
+its \texttt{InitialState}, and when an operation succeeds, our tool
+\emph{replaces} its \texttt{ResourceState} with the new state rather than
+adding a second one.
+
+\begin{originalpolicy}
+\textbf{Example 2. Policy:} A document may be published only after approval.
+\end{originalpolicy}
+Configure \texttt{DRAFT} $\rightarrow$ \texttt{APPROVED} $\rightarrow$
+\texttt{PUBLISHED}. A publish rule requires the
+\texttt{APPROVED} $\rightarrow$ \texttt{PUBLISHED} transition, so publishing a
+draft is blocked, and a successful publication moves the document to
+\texttt{PUBLISHED}.
+
+\section{Translation: Injecting Enforcement into Your App}
+
+Enforcement is added to an existing app through two mechanisms: code
+injection and call interception. Injection inserts small additions into the
+app's source, namely a \texttt{@policy} annotation on each tool function and
+fact-writing statements inside it, while the policy itself stays in a separate
+\texttt{.dl} file. At run time, the annotation intercepts every call before the
+function body executes. It records the call as \texttt{Request} and
+\texttt{Parameter} facts, asks the Datalog engine whether \texttt{Allow} holds
+and no \texttt{Deny} holds for that request, and then either lets the body run
+or blocks the call. When the body completes, the injected fact writes add its
+results to the EDB, so the engine can evaluate later requests against what has
+already happened. Because the rules live in Datalog rather than in the tool
+code, you can change a policy without editing the functions it governs.
+
+More specifically, our tool adds three pieces:
+\begin{enumerate}
+\item \textbf{A \texttt{.dl} file} containing application rules and base facts,
+such as who has permission and which state changes are allowed.
+\item \textbf{\texttt{@policy} on tool functions.} Before an annotated function
+runs, our tool records \texttt{Request} and \texttt{Parameter}, checks the
+rules, and blocks calls that are not permitted.
+\item \textbf{Fact writes inside tool functions.} Added statements record known
+application information and results in the EDB for later checks.
+\end{enumerate}
+
+Grey lines show the additions to a message-send function:
+
+\begingroup
+\setlength{\tabcolsep}{0pt}
+\begin{tabularx}{\linewidth}{@{}X@{}}
+\added{@policy} \\
+\texttt{\small def send\_message(recipient, body):} \\
+\texttt{\small\hspace*{1.5em}result = transport.send(recipient, body)} \\
+\added{\hspace*{1.5em}policy.put("Sent", result.id, recipient)} \\
+\texttt{\small\hspace*{1.5em}return result}
+\end{tabularx}
+\endgroup
+
+\texttt{@policy} checks the caller and recipient before sending.
+After a successful send, \texttt{policy.put} records which message was sent to
+which recipient. Later requests can be checked against that fact.
+
+As an end user of this framework, you do not need to understand these
+internals to use it; we include the technical details so that you can see
+what is happening underneath when a call is checked, allowed or blocked.
+
+\end{document}
