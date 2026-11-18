@@ -206,10 +206,11 @@ def validate_plan(value, inventory, original, framework, policy):
     boundary_ids = {r["id"] for r in inventory["boundaries"]}
     actions = set()
     for call in plan["calls"]:
-        if not isinstance(call, dict) or set(call) != {
-            "action", "boundary", "parameters", "principal", "before", "after", "success", "failure"
-        }:
+        required = {"action", "boundary", "parameters", "principal", "before", "after", "success", "failure"}
+        if not isinstance(call, dict) or set(call) - {"role"} != required:
             raise ValueError("Calls require complete parameter, producer and result contracts.")
+        if call.get("role", "gate") not in {"gate", "producer"}:
+            raise BindingError("Call role must be gate or producer.", ["calls"])
         action = identifier(call["action"])
         if action in actions or call["boundary"] not in boundary_ids:
             raise ValueError("Call " + action + " needs a unique action and a discovered boundary ID; got "
@@ -323,6 +324,13 @@ def validate_program(source, plan):
             or {fingerprint(r) for r in configuration} != {fingerprint(r) for r in configured}):
         raise ValueError("Rules must retain exactly the frozen role/group/grant/FSM configuration.")
     rules, _ = parse(rule_source)
+    producers = {call["action"] for call in plan["calls"] if call.get("role", "gate") == "producer"}
+    for rule in rules:
+        for atom in rule["body"]:
+            if atom["predicate"] == "Request":
+                action = atom["args"][2]
+                if not variable(action) and action.removeprefix("c:") in producers:
+                    raise ValueError("A producer-only call cannot be a requested policy action: " + action.removeprefix("c:"))
     from policyweave.core.policy import compile_policy, installed_rules, policy_predicates
 
     binding = dict(

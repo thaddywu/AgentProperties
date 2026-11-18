@@ -18,6 +18,8 @@ Read [step_by_step.sh](step_by_step.sh) for the full course flow, from Appendix 
 installation through sections 3.1–3.7 and the final report. Short comments mark
 UI actions and file checks. Running the shell file only prints the walkthrough. It reserves `demo/workflow/` for fresh outputs and leaves the copied
 snapshots intact; those workflow outputs are not prepopulated.
+Use a fresh workflow directory. The walkthrough copies the one-case test file
+before translating the harness; extend it to ten scenarios for the assignment.
 
 The review UI automatically saves to `ported_app/review.json` on **Save**;
 **Export** downloads another copy. The included [review.json](ported_app/review.json)

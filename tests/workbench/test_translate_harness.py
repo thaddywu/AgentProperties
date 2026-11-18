@@ -12,6 +12,8 @@ from policyweave.workbench.translate_harness import translate, validate_translat
 
 
 SOURCE = '''def start_app():
+    from application_startup import ROOT
+    assert ROOT == APP_DIR
     return (APP_DIR / "complete.txt").read_text() == "yes"
 
 def check_result(result):
@@ -33,6 +35,10 @@ class HarnessTranslationTests(unittest.TestCase):
             original, ported = root / "original", root / "ported"
             original.mkdir()
             ported.mkdir()
+            for application in (original, ported):
+                (application / "application_startup.py").write_text(
+                    "from pathlib import Path\nROOT = Path(__file__).resolve().parent\n"
+                )
             (original / "complete.txt").write_text("yes")
             (ported / "complete.txt").write_text("no")
             source, output = root / "run.py", root / "translated_harness.py"

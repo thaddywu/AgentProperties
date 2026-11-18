@@ -10,7 +10,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from policyweave.policy_adder.codex import CodexPort, choose_policy
+from policyweave.policy_adder.codex import CodexPort, choose_policy, copy_source
 from policyweave.policy_adder.repository import PortJobs, RepositoryApplication
 from policyweave.workbench.study import Study
 
@@ -102,6 +102,25 @@ class CodexPortTests(unittest.TestCase):
         self.assertIn(
             "candidate/submission/app.md", (port.output / "prompt.txt").read_text()
         )
+
+    def test_snapshot_keeps_large_runtime_data_and_image_bytes(self):
+        data = self.source / "data"
+        data.mkdir()
+        (data / "stop_times.txt").write_bytes(b"departure,arrival\n" * 150_000)
+        (data / "schedule.png").write_bytes(b"\x89PNG\r\n\x1a\n\x00\xff")
+        subprocess.run(["git", "-C", str(self.source), "add", "data"], check=True)
+        destination = self.root / "asset-snapshot"
+        copy_source(self.source, destination)
+        for name in ("stop_times.txt", "schedule.png"):
+            self.assertEqual((destination / "data" / name).read_bytes(), (data / name).read_bytes())
+
+    def test_snapshot_rejects_total_size_overflow_instead_of_omitting_data(self):
+        path = self.source / "large.txt"
+        with path.open("wb") as stream:
+            stream.truncate(40_000_001)
+        subprocess.run(["git", "-C", str(self.source), "add", "large.txt"], check=True)
+        with self.assertRaisesRegex(ValueError, "snapshot exceeds"):
+            copy_source(self.source, self.root / "oversized-snapshot")
 
     def test_boundary_change_and_stale_review_are_rejected(self):
         app = RepositoryApplication(self.port.output)
@@ -205,12 +224,19 @@ from policyweave.adapters.batch_worker import native_engine_guard
 from policyweave.enforcement import Policy, caller_context
 with tempfile.TemporaryDirectory() as d:
     tool = Path(d) / 'tool.py'
-    source = 'def plain(policy): return policy.execute("reader", "read", {}, lambda _: True)\\ndef decorated(): return True\\n'
+    source = ('def plain(policy): return policy.execute("reader", "read", {}, lambda _: True)\\n'
+              'def decorated(): return True\\n'
+              'def factory():\\n    def nested(policy): return policy.execute("reader", "read", {}, lambda _: True)\\n    return nested\\n'
+              'def decorated_factory():\\n    def nested(): return True\\n    return nested\\n'
+              'def produce(): return "actual observation"\\n')
     scope = {}
     exec(compile(source, str(tool), 'exec'), scope)
     counts = native_engine_guard([
         dict(id='plain', file='tool.py', symbol='plain'),
         dict(id='decorated', file='tool.py', symbol='decorated'),
+        dict(id='nested', file='tool.py', symbol='factory.nested'),
+        dict(id='nested_decorated', file='tool.py', symbol='decorated_factory.nested'),
+        dict(id='producer', file='tool.py', symbol='produce'),
     ], Path(d))
     try:
         with patch('policyweave.core.datalog.Souffle.evaluate', lambda *a: []):
@@ -220,12 +246,17 @@ with tempfile.TemporaryDirectory() as d:
     p = Path(d) / 'rules.dl'
     p.write_text('Allow(Q) :- Request(Q,P,"read").')
     policy = Policy(p)
+    assert counts['calls'] > 0, 'Initialization must use the guarded native engine too'
     assert policy.runtime.check(dict(actor='reader',action='read',parameters={}))['allowed']
     assert not counts['boundaryCalls'], 'Standalone gates must not count as application integration'
     assert scope['plain'](policy)
     with caller_context('reader'):
         assert policy(name='read')(scope['decorated'])()
-    assert set(counts['boundaryCalls']) == {'plain', 'decorated'}
+        assert policy(name='read')(scope['decorated_factory']())()
+    assert scope['factory']()(policy)
+    assert scope['produce']() == 'actual observation'
+    assert set(counts['boundaryCalls']) == {'plain', 'decorated', 'nested', 'nested_decorated'}
+    assert counts['boundaryExecutions']['producer'] == 1
 assert counts['calls'] > 0
 """
         environment = dict(

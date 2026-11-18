@@ -47,6 +47,12 @@ policyweave view-translation \
 
 The original app is a clean Git checkout with `app.md` and `policy.md`. The target must be absent or empty. Debug flags can select existing document names without rewriting them. Git branches remain user-owned. The adapter preserves original documents, tests and business behavior; it adds rules, mediation and explicit fact producers. Passing development tests does not prove full policy fidelity or complete mediation.
 
+The execution image supplies framework dependencies. If an application needs
+additional or incompatible dependencies, prepare its test image before porting
+and select it with `--image IMAGE`. The coding container has no package-install
+or general network access. Use the same application dependencies when running
+the original and generated harnesses.
+
 Installation registers the `policyweave` command; no account registration is
 required. Missing `app.md` or `policy.md` fails before model calls. A nonempty
 output fails without replacing its contents; missing output parents are created.
@@ -98,9 +104,11 @@ the target app's effects.
 
 Accepted `inventory.json` and `binding-plan.json` lead to a hashed
 `binding-freeze.json` and host-generated `policy_port/binding.py` factory. The
-factory pins shared EDB and observation/call contracts. Planned IDB signatures
-remain fixed; rule generation may add pure derived helpers within the bounded
-IDB limit. All final declarations freeze with accepted rules before
+factory pins shared EDB and observation/call contracts. Each planned call has
+`role: gate` or `role: producer`: gates require native decision evidence,
+while observation producers require actual source execution and recording.
+Older plans without a role retain the gate requirement. Rules use the existing
+schemas and must pass bounded native initialization before freezing for
 instrumentation. `workflow.json` records stage progression and failures; later changes to
 frozen artifacts are rejected. Source quotations and Python signatures establish
 provenance and structural consistency, not semantic correctness of every mapping

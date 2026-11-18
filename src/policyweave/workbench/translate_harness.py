@@ -155,6 +155,8 @@ def translate(input_file, output_file, *, original_app, ported_app, generate):
     suffix = ("\n\ndef _policyweave_dispatch(side, case, sample, output_dir):\n"
               "    global APP_DIR\n"
               "    APP_DIR = ORIGINAL_APPLICATION if side == 'original' else PORTED_APPLICATION\n"
+              "    import sys as _policyweave_sys\n"
+              "    _policyweave_sys.path.insert(0, str(APP_DIR))\n"
               "    return _policyweave_execute(side, case, sample, output_dir)\n"
               "\n\nif __name__ == '__main__':\n"
               "    from policyweave.workbench.runner import main as _policyweave_main\n"

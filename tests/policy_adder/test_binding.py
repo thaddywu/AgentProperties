@@ -11,7 +11,7 @@ from unittest.mock import patch
 from policyweave.core.artifacts import files, save
 from policyweave.core.policy import fingerprint, read_binding, validate_inputs, validate_state
 from policyweave.policy_adder.binding import validate_inventory, validate_plan, validate_program
-from policyweave.policy_adder.harness import _freeze, _json_stage, assert_frozen, candidate_errors, check_recordings, planning_format
+from policyweave.policy_adder.harness import _freeze, _json_stage, _rule_stage, assert_frozen, candidate_errors, check_recordings, planning_format
 
 
 class BindingTests(unittest.TestCase):
@@ -62,6 +62,69 @@ class BindingTests(unittest.TestCase):
         self.assertEqual(plan["callContract"], {"read": {"resource": "symbol"}})
         bundle = validate_program(self.rules, plan)
         self.assertEqual(set(bundle["binding"]["predicates"]), {"Request", "Parameter", "Allow", "Deny", "Field", "Event"})
+
+    def test_call_roles_are_explicit_and_legacy_calls_still_require_gates(self):
+        self.assertEqual(self.validate()["calls"][0].get("role", "gate"), "gate")
+        raw = deepcopy(self.plan)
+        raw["calls"][0]["role"] = "producer"
+        self.assertEqual(self.validate(raw)["calls"][0]["role"], "producer")
+        with self.assertRaisesRegex(ValueError,"producer-only"):
+            validate_program(self.rules,self.validate(raw))
+        raw["calls"][0]["role"] = "ignored"
+        with self.assertRaisesRegex(ValueError, "role"):
+            self.validate(raw)
+
+    def test_producers_require_actual_execution_without_an_authorization_gate(self):
+        self.inventory["boundaries"].append(dict(
+            id="owner", kind="tool", file="tool.py", symbol="owner", parameters=["record"],
+            identity="Host observation", effect="Read the original stored owner", outcome="Observed owner",
+            evidence=self.proof('return record["owner"]'),
+        ))
+        raw = deepcopy(self.plan)
+        raw["calls"].append(dict(action="observe_owner", boundary="owner", role="producer", parameters=[],
+            principal="Host", before="Read record", after="Publish actual owner", success="Original returned owner", failure="Preserve errors"))
+        raw["requirements"][0]["calls"].append("observe_owner")
+        plan = self.validate(raw)
+        for source in self.original.iterdir():
+            (self.root/"candidate"/source.name).write_bytes(source.read_bytes())
+        for name,value in [("source.json",{"files":files(self.original)}),
+                           ("inventory.json",self.inventory),("binding-plan.json",plan)]:
+            save(self.root/name,value)
+        port = SimpleNamespace(output=self.root,runtime=self.framework)
+        _freeze(port,plan)
+        (self.root/"candidate/policy_port/rules.dl").write_text(self.rules)
+        save(self.root/"workflow.json",dict(stages=dict(rules=dict(hash=fingerprint(self.rules)))))
+        report = dict(policyTrajectories=[],trajectoryCoverage=dict(complete=True),
+                      nativeBoundaryCalls={"tools":1},boundaryExecutions={"owner":1})
+        errors = check_recordings(port,report)
+        self.assertFalse(any("never exercised" in error or "producer" in error for error in errors),errors)
+        report["boundaryExecutions"] = {}
+        self.assertIn("Checks never executed the planned observation producer: owner",check_recordings(port,report))
+        report["nativeBoundaryCalls"] = {}
+        self.assertIn("Native gate checks never exercised the candidate boundary: tools",check_recordings(port,report))
+
+    def test_native_initialization_failure_is_repaired_before_rules_freeze(self):
+        plan = self.validate()
+        for name,value in [("source.json",{"files":files(self.original)}),
+                           ("inventory.json",self.inventory),("binding-plan.json",plan)]:
+            save(self.root/name,value)
+        port = SimpleNamespace(output=self.root,runtime=self.framework)
+        _freeze(port,plan)
+        calls = []
+        save(self.root/"workflow.json",dict(stages={}))
+        def session(workspace,prompt,name,*args,**kwargs):
+            calls.append(prompt)
+            self.assertFalse(json.loads((self.root/"workflow.json").read_text())["stages"].get("rules",{}).get("passed"))
+            (self.root/"candidate/policy_port/rules.dl").write_text(self.rules)
+            return 0
+        port.session = session
+        # Simulate an external native-process failure to verify stage recovery;
+        # application conformance checks continue to require the real engine.
+        with patch("policyweave.core.datalog.Souffle.evaluate",side_effect=[RuntimeError("native resource limit"),[]]):
+            _rule_stage(port,1)
+        self.assertEqual(len(calls),2)
+        self.assertIn("native resource limit",calls[1])
+        self.assertTrue(json.loads((self.root/"workflow.json").read_text())["stages"]["rules"]["passed"])
 
     def test_new_derived_schemas_are_rejected_even_with_a_justification(self):
         raw = deepcopy(self.plan)

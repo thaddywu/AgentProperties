@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Prints the demo steps without executing them. Paths start at the repo root.
 cat <<'WALKTHROUGH'
+set -euo pipefail
+
 # step 0. installation (Appendix A)
 ./install.sh
 source .venv/bin/activate
@@ -8,7 +10,7 @@ export CONNECTION_FILE="$HOME/.config/policyweave/connection.yaml"
 # Configure this file using examples/connection.yaml.
 
 # Prepare a fresh workspace from the existing demo snapshot.
-mkdir -p demo/workflow
+mkdir demo/workflow
 cp -R demo/orig_app demo/workflow/orig_app
 cp demo/workflow/orig_app/requirements.md demo/workflow/orig_app/app.md
 cp demo/workflow/orig_app/policies.md demo/workflow/orig_app/policy.md
@@ -26,7 +28,8 @@ policyweave view-translation --back-translation "$PORTED_APP_DIR/back-translatio
 # Check demo/workflow/ported_app/review.json (saved automatically).
 
 # step 2. test scenarios (sec 3.2)
-# Write demo/workflow/test_cases.json with 10 test scenarios.
+# Copy the one-case smoke scenario; extend to 10 scenarios for the assignment.
+cp demo/test_cases.json demo/workflow/test_cases.json
 # Describe each task, initial state and expected outcome; this is the test specification.
 # See demo/test_cases.json for one example. Step 3 implements executable tests.
 

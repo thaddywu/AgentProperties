@@ -17,12 +17,26 @@ def native_engine_guard(boundaries=(), project=None):
     Docker remains the isolation boundary.
     """
     import types
+    import threading
     import policyweave.core.datalog as datalog
     import policyweave.core.policy as policy
+    import policyweave.enforcement.runtime as runtime
 
     original = datalog.Souffle
-    counts = {"calls": 0, "boundaryCalls": {}}
+    counts = {"calls": 0, "boundaryCalls": {}, "boundaryExecutions": {}}
     targets = {(str((project / row["file"]).resolve()), row["symbol"]): row["id"] for row in boundaries} if project else {}
+    previous_profile, previous_thread_profile = sys.getprofile(), threading.getprofile()
+
+    def profiler(previous):
+        def profile(frame, event, arg):
+            if event == "call":
+                code = frame.f_code
+                name = targets.get((code.co_filename, code.co_qualname.replace(".<locals>.", ".")))
+                if name:
+                    counts["boundaryExecutions"][name] = counts["boundaryExecutions"].get(name, 0) + 1
+            if previous:
+                previous(frame, event, arg)
+        return profile
 
     class EngineMeta(type):
         def __setattr__(cls, name, value):
@@ -55,7 +69,10 @@ def native_engine_guard(boundaries=(), project=None):
                         if isinstance(body, types.FunctionType):
                             codes.append(body.__code__)
                 for code in codes:
-                    name = targets.get((str(Path(code.co_filename).resolve()), code.co_qualname))
+                    # Inventory paths follow the source AST; Python inserts
+                    # <locals> between enclosing functions at runtime.
+                    symbol = code.co_qualname.replace(".<locals>.", ".")
+                    name = targets.get((str(Path(code.co_filename).resolve()), symbol))
                     if name:
                         reached.add(name)
                 frame = frame.f_back
@@ -69,8 +86,11 @@ def native_engine_guard(boundaries=(), project=None):
                 raise RuntimeError("Port tests must not replace the policy engine.")
             super().__setattr__(name, value)
 
-    datalog.Souffle = policy.Souffle = NativeEngine
-    datalog.__class__ = policy.__class__ = EngineModule
+    datalog.Souffle = policy.Souffle = runtime.Souffle = NativeEngine
+    datalog.__class__ = policy.__class__ = runtime.__class__ = EngineModule
+    if targets:
+        sys.setprofile(profiler(previous_profile))
+        threading.setprofile(profiler(previous_thread_profile))
     return counts
 
 
@@ -128,6 +148,7 @@ def main():
             )
             report["nativeEngineCalls"] = counts["calls"]
             report["nativeBoundaryCalls"] = counts["boundaryCalls"]
+            report["boundaryExecutions"] = counts["boundaryExecutions"]
             if not counts["calls"]:
                 report["passed"] = False
                 report["verificationError"] = (

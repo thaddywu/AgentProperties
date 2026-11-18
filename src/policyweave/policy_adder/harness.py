@@ -26,7 +26,7 @@ PLAN_SHAPE = {
         "evidence": {"origin": "policy", "file": "policy.md", "quote": "exact authority for this configuration"},
     }],
     "calls": [{
-        "action": "read", "boundary": "tools",
+        "action": "read", "boundary": "tools", "role": "gate",
         "parameters": [{"name": "document", "path": ["document"], "type": "symbol",
                         "evidence": {"origin": "application", "file": "tools.py", "quote": "exact unique argument evidence"}}],
         "principal": "actual binding", "before": "actual prerequisite observations",
@@ -54,6 +54,8 @@ def planning_format(stage):
             properties = {k: schema(v) for k, v in example.items()}
             for key in {"id", "action", "boundary", "name"} & properties.keys():
                 properties[key]["pattern"] = "^[A-Za-z][A-Za-z_0-9]{0,63}$"
+            if "role" in properties:
+                properties["role"]["enum"] = ["gate", "producer"]
             return dict(type="object", properties=properties, required=list(example), additionalProperties=False)
         if isinstance(example, list):
             return dict(type="array", items=schema(example[0]) if example else dict(type="string"))
@@ -237,10 +239,13 @@ def _rule_stage(port, repairs):
             "Use finite function-free stratified Datalog with repeated variables for equality, not, != and integer comparisons. "
             "No = assignments, arithmetic, aggregates, nested terms, OR or schema directives. "
             "At most 99 clauses and 20000 rule characters. Explicit Allow and no Deny required; Deny wins. "
+            "The host executes native initialization before freezing rules, under the normal five-second CPU "
+            "and seven-second wall limits. Simplify redundant or expensive joins without weakening conditions; "
+            "never change the engine or its limits. Producer-role actions feed observations and need no dummy Allow. "
             "Do not weaken missing/invalid behavior or claim unsupported/ambiguous requirements are implemented. "
             "Rules must preserve legal normal paths and original no-effect errors; avoid denying harmless stale reads "
             "solely because a lifecycle transition is not happening. Return no fake success. "
-            + ("\nRepair these static validation errors: " + json.dumps(errors) if errors else "")
+            + ("\nRepair these validation errors: " + json.dumps(errors) if errors else "")
         )
         code = port.session(port.output, prompt, f"rules-attempt-{attempt}",
                             ("original", "framework", "candidate"), writable=("candidate/policy_port/rules.dl",))
@@ -250,23 +255,30 @@ def _rule_stage(port, repairs):
             if code or {k: v for k, v in before.items() if k != "policy_port/rules.dl"} != {k: v for k, v in after.items() if k != "policy_port/rules.dl"}:
                 raise ValueError("Rule stage failed or edited another application file.")
             source = artifact_text(port.output, "candidate/policy_port/rules.dl")
-            validate_program(source, plan)
+            compiled = validate_program(source, plan)
+            from policyweave.core.datalog import Souffle
+            from policyweave.core.policy import installed_rules
+
+            # Reject programs that cannot initialize before their rules freeze.
+            # This executes only bounded declarative policy, never app code.
+            Souffle().evaluate([], installed_rules(compiled["binding"], source))
             state["stages"]["rules"] = dict(passed=True, attempt=attempt, hash=fingerprint(source))
             _publish_state(port, state)
             return
-        except (ValueError, KeyError, TypeError, OSError) as error:
+        except (ValueError, KeyError, TypeError, OSError, RuntimeError) as error:
             errors.append(str(error)[:1800])
             save(port.output / f"rules-validation-{attempt}.json", dict(passed=False, error=errors[-1], exitCode=code))
     raise ValueError("Rule stage failed: " + errors[-1])
 
 
-def _implemented_boundaries(plan):
+def _implemented_boundaries(plan, role=None):
     actions = {
         action for requirement in plan["requirements"]
         if requirement["disposition"] in {"supported", "partial"}
         for action in requirement["calls"]
     }
-    return {call["boundary"] for call in plan["calls"] if call["action"] in actions}
+    return {call["boundary"] for call in plan["calls"] if call["action"] in actions
+            and (role is None or call.get("role", "gate") == role)}
 
 
 def candidate_errors(port, candidate=None):
@@ -318,9 +330,12 @@ def check_recordings(port, report):
     outcomes = set()
     allowed_inputs = set(CORE) | {n for m in plan["mechanisms"] for n in CATALOG[m]["predicates"]}
     actions = {c["action"] for c in plan["calls"]}
-    for boundary in _implemented_boundaries(plan):
+    for boundary in _implemented_boundaries(plan, "gate"):
         if not report.get("nativeBoundaryCalls", {}).get(boundary):
             errors.append("Native gate checks never exercised the candidate boundary: " + boundary)
+    for boundary in _implemented_boundaries(plan, "producer"):
+        if not report.get("boundaryExecutions", {}).get(boundary):
+            errors.append("Checks never executed the planned observation producer: " + boundary)
     for recording in recordings:
         binding = recording["policy"]["binding"]
         if binding.get("observationContract") != plan["observationContract"]:
@@ -406,6 +421,12 @@ def translate(port, repairs=2, feedback=None):
             "must identify exactly what will be implemented and what remains unsupported, including affected exceptions. "
             "For supported/partial requirements, calls must reference the actions implementing the supported portion; "
             "describe affected unsupported paths in reason. Unsupported-only call inventory entries do not require gates. "
+            "Set each call's role to gate for a boundary that consumes a policy decision, or producer for an actual "
+            "observation/result producer that feeds another boundary's check. Producers need execution and recording "
+            "evidence, not a dummy authorization gate. Do not label an authorization boundary producer to bypass checks. "
+            "For partial requirements, preserve legitimate original workflows outside the newly enforced portion. "
+            "Report those remaining gaps; a prerequisite specific to the supported portion must not deny every "
+            "otherwise legitimate call outside it. Preserve existing application guards and real error paths. "
             "For unsupported, state the concrete blocker and do not plan a fabricated replacement. For ambiguous, "
             "state the unresolved interpretation instead of choosing whichever is easiest. Preserve every requirement. "
             "A dispatcher such as Tools.call(name,args) represents many actual actions: expand every original tool name "
@@ -478,6 +499,7 @@ def translate(port, repairs=2, feedback=None):
                 "Put new adapters/helpers only in policy_port. Preserve original business statements, signatures, guards, "
                 "prompts, documentation, fixtures and tests. Add imports/decorators/caller contexts/callback wrappers/EDB writes only. "
                 "Snapshot observer adapters may read the unchanged backend; managed hooks must publish only confirmed observations. "
+                "Calls with role=producer require actual source execution and recorded observations, not a dummy gate. "
                 "Implement the frozen producer semantics from Semantic boundaries for port-in in runtime-guide.md. "
                 "Record Source/DependsOn through host adapters at actual context/operation boundaries with versioned IDs. "
                 "Runtime agents cannot choose or erase these edges. Capture actual direct inputs; preserve the distinction "

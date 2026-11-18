@@ -55,6 +55,12 @@ policy conflicting with existing code is an implementation mismatch, not policy
 ambiguity. Additive corrective gates may block the original violating behavior.
 Retained positive allowed paths need regression evidence, not dummy native gates;
 use `calls=[]` for a requirement implemented solely by retained behavior.
+Each planned call declares `role: gate` when it consumes an authorization
+decision, or `role: producer` when it observes an actual result for another
+boundary's decision. Producers require real source execution and recording;
+do not add dummy permissions or gates just to demonstrate their execution.
+Preserve legitimate original paths outside the newly enforced part of a partial
+requirement, retaining existing guards and documenting the remaining gap.
 Observing an existing ledger/accounting result is permitted with its delegated
 role disclosed; it is not a claim to implement that aggregation in Datalog.
 Use a consistent evaluation scope across requirements. Omitting an in-scope path
@@ -293,8 +299,10 @@ instrumentation. Native gate evidence must use the accepted rules, observation
 and call contracts and approved input/action vocabulary, with complete capture
 and both applied and blocked outcomes. The check mounts immutable inventory into
 the native worker, whose nativeBoundaryCalls are collected from actual evaluation
-stacks and the trusted @policy checked wrapper's bound body. Each planned
-boundary must have a nonzero count. A blocked decorated call may count before
+stacks and the trusted @policy checked wrapper's bound body. Each planned gate
+boundary must have a nonzero count. Producer boundaries instead need nonzero
+boundaryExecutions from actual source function calls; observing a result does
+not itself require an authorization gate. A blocked decorated call may count before
 its body executes; these counts do not certify business effects. Placement and
 execution evidence is scoped to the plan, not proof of semantic fidelity or
 complete mediation. The aggregate applied/blocked check does not prove every

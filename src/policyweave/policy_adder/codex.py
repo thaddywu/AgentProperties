@@ -62,6 +62,7 @@ EXTENSIONS = {
     ".css",
     ".ini",
     ".sql",
+    ".png",
 }
 
 
@@ -98,7 +99,7 @@ def copy_source(source, destination):
         ):
             continue
         path = source / relative
-        if path.is_symlink() or not path.is_file() or path.stat().st_size > 2_000_000:
+        if path.is_symlink() or not path.is_file():
             continue
         total += path.stat().st_size
         if total > 40_000_000:
