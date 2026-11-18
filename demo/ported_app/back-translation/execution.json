@@ -1,0 +1,2626 @@
+{
+  "version": 1,
+  "procedures": [
+    {
+      "id": "view-permission",
+      "title": "Role permission to view",
+      "summary": "Records: Before Trace.tool invokes view, the gate reads the host-bound caller and configured role membership. Professor, PhD and Master are the configured permitted callers.",
+      "ruleIds": [
+        "rule1",
+        "rule2"
+      ],
+      "reads": [
+        {
+          "text": "Caller is the host context set from Tools.role by Tools.call or from Trace.tool actor; direct store entry uses current_caller or Unbound. Fixed PrincipalGroup/Capability facts derive InGroup/Can through the capability foundation. Model claims do not produce identity.",
+          "sources": [
+            "runtime identity",
+            "static configuration"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: ProfessorRole or StudentRole permits the view callback. Runner and Unbound have no Allow. Permission does not validate returned contents."
+        },
+        {
+          "indent": 0,
+          "text": "The app's existing read filtering and Professor-only eligible queue remain necessary. Direct view access has no added gate."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,view),InGroup(B,\"ProfessorRole\")."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,view),InGroup(B,\"StudentRole\")."
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "with cm as outcome, caller_context(self.role):"
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "with observe_operation(actor, name, args) as outcome, caller_context(actor):"
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "except RuntimeError:\n        return 'Unbound'"
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "PrincipalGroup(\"Professor\",\"ProfessorRole\").\nPrincipalGroup(\"PhD\",\"StudentRole\").\nPrincipalGroup(\"Master\",\"StudentRole\")."
+        },
+        {
+          "file": "source/core/tools.py",
+          "quote": "if name=='view':fn=lambda _:s.view(r)"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "jobs=[j for j in s['jobs'] if can_read(role,j)]"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "'eligible_queue':self.candidates(s) if role=='Professor' else None}"
+        },
+        {
+          "file": "framework/policyweave/core/policy.py",
+          "quote": "allowed = not reasons and any(f[\"predicate\"] == gate[\"allow\"] for f in evidence)"
+        },
+        {
+          "file": "source/policy_port/binding.py",
+          "quote": "MECHANISMS = ('capability', 'observations')\nINVARIANTS = ()"
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "if invocation is None:\n        return fn"
+        },
+        {
+          "file": "framework/policyweave/enforcement/api.py",
+          "quote": "if error.code == \"not_applied\" and declined:"
+        },
+        {
+          "file": "source/core/audit.py",
+          "quote": "'intercepted':False"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "private-read-permission",
+      "title": "Role permission to read private fixtures",
+      "summary": "Records: Before Trace.tool invokes read_private, the gate reads the host-bound caller and configured role membership. It does not read a resource or content selector.",
+      "ruleIds": [
+        "rule3",
+        "rule4"
+      ],
+      "reads": [
+        {
+          "text": "Caller is the host context set from Tools.role by Tools.call or from Trace.tool actor; direct store entry uses current_caller or Unbound. Fixed PrincipalGroup/Capability facts derive InGroup/Can through the capability foundation. Model claims do not produce identity.",
+          "sources": [
+            "runtime identity",
+            "static configuration"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: ProfessorRole or StudentRole permits read_private; other callers have no Allow. The original tool selects all three fixtures for Professor or only the bound-role fixture for PhD and Master."
+        },
+        {
+          "indent": 0,
+          "text": "Returned data from an arbitrary callback is unchecked. Direct fixture access, message bodies and model contexts have no added private-content gate."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,read_private),InGroup(B,\"ProfessorRole\")."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,read_private),InGroup(B,\"StudentRole\")."
+        },
+        {
+          "file": "source/core/tools.py",
+          "quote": "fn=lambda _:{x:fixture(x.lower()+'_private') for x in ('Professor','PhD','Master')} if r=='Professor' else fixture(r.lower()+'_private')"
+        },
+        {
+          "file": "source/core/messaging.py",
+          "quote": "self.inboxes[recipient].append({'message':payload,'received_event_id':received})"
+        },
+        {
+          "file": "source/agents/runtime.py",
+          "quote": "context={'view':view,'private_resources':private,'messages':self.bus.context(self.role),**(extra or {})}"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "professor-read-permission",
+      "title": "Professor read of an existing job",
+      "summary": "Records: Before Trace.tool invokes read_job, the gate reads the host-bound caller, requested job ID and a fresh saved-job snapshot.",
+      "ruleIds": [
+        "rule5",
+        "rule7"
+      ],
+      "reads": [
+        {
+          "text": "Caller is the host context set from Tools.role by Tools.call or from Trace.tool actor; direct store entry uses current_caller or Unbound. Fixed PrincipalGroup/Capability facts derive InGroup/Can through the capability foundation. Model claims do not produce identity.",
+          "sources": [
+            "runtime identity",
+            "static configuration"
+          ]
+        },
+        {
+          "text": "Interface observations use store.snapshot() immediately before the callback gate. Mutation observations deep-copy the actual state loaded inside BEGIN IMMEDIATE and actual invocation/closure values. Session.facts emits fresh snapshot/record identities, collection links, saved fields and canonical spec/approval limits; job spec fields are flattened.",
+          "sources": [
+            "application state",
+            "tool call"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: ProfessorRole and a saved job matching the requested job ID permit the read callback, regardless of owner. A missing job ID or job supplies no Professor Allow."
+        },
+        {
+          "indent": 0,
+          "text": "If neither Professor nor student read Allow holds, an explicit Deny returns only status UNAVAILABLE. Direct job reads still depend on the app's existing read check."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,read_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),InGroup(B,\"ProfessorRole\")."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"UNAVAILABLE\"):-Request(A,B,read_job),not Allow(A)."
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "{'state':store.snapshot()}, actor)"
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "if tool_name == 'read_job':\n        # Exact original indistinguishable read protocol, no identifying metadata.\n        return {'status':'UNAVAILABLE'}"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "return {'status':'AVAILABLE','job':j} if j and can_read(role,j) else {'status':'UNAVAILABLE'}"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "student-read-permission",
+      "title": "Student read permission",
+      "summary": "Records: Before Trace.tool invokes read_job, the gate reads the host-bound caller, requested job ID and a fresh saved-job snapshot.",
+      "ruleIds": [
+        "rule6",
+        "rule7"
+      ],
+      "reads": [
+        {
+          "text": "Caller is the host context set from Tools.role by Tools.call or from Trace.tool actor; direct store entry uses current_caller or Unbound. Fixed PrincipalGroup/Capability facts derive InGroup/Can through the capability foundation. Model claims do not produce identity.",
+          "sources": [
+            "runtime identity",
+            "static configuration"
+          ]
+        },
+        {
+          "text": "Interface observations use store.snapshot() immediately before the callback gate. Mutation observations deep-copy the actual state loaded inside BEGIN IMMEDIATE and actual invocation/closure values. Session.facts emits fresh snapshot/record identities, collection links, saved fields and canonical spec/approval limits; job spec fields are flattened.",
+          "sources": [
+            "application state",
+            "tool call"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: StudentRole, an existing requested job and the existing-job ownership check permit the callback. The Professor read branch is separate."
+        },
+        {
+          "indent": 0,
+          "text": "If neither read branch supplies Allow, an explicit Deny returns only status UNAVAILABLE. Arbitrary callback results are unchecked; direct reads depend on the app's existing access check."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,read_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),InGroup(B,\"StudentRole\"),Field(E,owner,B)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"UNAVAILABLE\"):-Request(A,B,read_job),not Allow(A)."
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "{'state':store.snapshot()}, actor)"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "submit-permission",
+      "title": "Student permission to submit",
+      "summary": "Records: Before Trace.tool invokes submit_job, the gate reads the host-bound caller's capability. Before the registered submission mutation, it reads that capability again inside the transaction.",
+      "ruleIds": [
+        "rule8",
+        "rule50"
+      ],
+      "reads": [
+        {
+          "text": "Caller is the host context set from Tools.role by Tools.call or from Trace.tool actor; direct store entry uses current_caller or Unbound. Fixed PrincipalGroup/Capability facts derive InGroup/Can through the capability foundation. Model claims do not produce identity.",
+          "sources": [
+            "runtime identity",
+            "static configuration"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: StudentRole grants submit permission to PhD and Master at both gates. Other callers lack Allow. Submission ownership, requested node type and the applicable role resource limits must separately pass at mutation."
+        },
+        {
+          "indent": 0,
+          "text": "An explicit Deny overrides mutation Allow. The app's existing specification and owner validation can refuse before the mutation gate; permission does not override those results."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_submit_effect),Can(B,cluster,submit_job),Field(A,owner,B),Field(A,node_type,C),Field(A,snapshot,D),Field(D,nodes,E),Field(E,node_type,C),Field(A,cpu_cores,F),Field(A,memory_gb,G),Field(A,runtime_minutes,H),F>=1,F<=8,G>=1,G<=32,H>=1,H<=60."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,submit_job),Can(B,cluster,submit_job)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Capability(\"StudentRole\",\"cluster\",\"submit_job\")."
+        },
+        {
+          "file": "source/core/tools.py",
+          "quote": "elif name=='submit_job':fn=lambda e:s.submit(r,a['spec'],e)"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "spec=validate_spec(spec)\n        if owner not in ('PhD','Master'):return deny('NOT_A_STUDENT')"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "submission-ownership",
+      "title": "Submission owner equals caller",
+      "summary": "Records: During submit_job, immediately before the registered mutation, the gate reads the actual owner argument and host-bound caller. Normal Tools.call supplies its bound role as owner.",
+      "ruleIds": [
+        "rule8"
+      ],
+      "reads": [
+        {
+          "text": "Caller is the host context set from Tools.role by Tools.call or from Trace.tool actor; direct store entry uses current_caller or Unbound. Fixed PrincipalGroup/Capability facts derive InGroup/Can through the capability foundation. Model claims do not produce identity.",
+          "sources": [
+            "runtime identity",
+            "static configuration"
+          ]
+        },
+        {
+          "text": "Observed owner is the actual submit invocation/closure value; normal Tools.call supplies its bound role.",
+          "sources": [
+            "tool call",
+            "runtime identity"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: The observed owner must equal the caller. A different or missing owner prevents submission Allow. Submit permission and the other submission checks remain separate."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_submit_effect),Can(B,cluster,submit_job),Field(A,owner,B),Field(A,node_type,C),Field(A,snapshot,D),Field(D,nodes,E),Field(E,node_type,C),Field(A,cpu_cores,F),Field(A,memory_gb,G),Field(A,runtime_minutes,H),F>=1,F<=8,G>=1,G<=32,H>=1,H<=60."
+        },
+        {
+          "file": "source/core/tools.py",
+          "quote": "elif name=='submit_job':fn=lambda e:s.submit(r,a['spec'],e)"
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "invocation_fields = {'owner','job_id','run_id','node_id','receipt_id','reason'}"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "job={'id':f\"JOB-{len(s['jobs'])+1:03d}\",'owner':owner,'version':1,'spec':spec,"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "revise-permission",
+      "title": "Student permission to revise",
+      "summary": "Records: Before Trace.tool invokes revise_job, the gate reads caller capability, requested job ID and saved ownership. It rereads actual invocation values and transaction state before the registered revision mutation.",
+      "ruleIds": [
+        "rule9",
+        "rule51"
+      ],
+      "reads": [
+        {
+          "text": "Caller is the host context set from Tools.role by Tools.call or from Trace.tool actor; direct store entry uses current_caller or Unbound. Fixed PrincipalGroup/Capability facts derive InGroup/Can through the capability foundation. Model claims do not produce identity.",
+          "sources": [
+            "runtime identity",
+            "static configuration"
+          ]
+        },
+        {
+          "text": "Interface observations use store.snapshot() immediately before the callback gate. Mutation observations deep-copy the actual state loaded inside BEGIN IMMEDIATE and actual invocation/closure values. Session.facts emits fresh snapshot/record identities, collection links, saved fields and canonical spec/approval limits; job spec fields are flattened.",
+          "sources": [
+            "application state",
+            "tool call"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: StudentRole revision capability and the existing-job ownership check are required at both gates. Missing permission or a matching owned job prevents Allow."
+        },
+        {
+          "indent": 0,
+          "text": "The queued-state, requested-node-type and applicable role resource checks separately govern mutation; any Deny overrides Allow. The app's existing specification validation can still refuse."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_revise_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,revise_job),Field(E,owner,B),Field(E,state,\"QUEUED\"),Field(A,node_type,F),Field(C,nodes,G),Field(G,node_type,F),Field(A,cpu_cores,H),Field(A,memory_gb,I),Field(A,runtime_minutes,J),H>=1,H<=8,I>=1,I<=32,J>=1,J<=60."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,revise_job),Can(B,cluster,revise_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Field(E,owner,B)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Capability(\"StudentRole\",\"cluster\",\"revise_job\")."
+        },
+        {
+          "file": "source/core/tools.py",
+          "quote": "elif name=='revise_job':fn=lambda e:s.revise(r,a['job_id'],a['spec'],e)"
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "values = {**invocation['values'], **{k:v for k,v in inspect.getclosurevars(fn).nonlocals.items()"
+        },
+        {
+          "file": "framework/policyweave/core/policy.py",
+          "quote": "raise ValueError(\"Conflicting single-valued frozen field: \" + name)"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "existing-job-ownership",
+      "title": "Saved ownership for student actions",
+      "summary": "Records: For read_job, revise_job, finish_job and cancel_job, the gate reads caller identity and the saved owner of the requested job. Interface checks use request job IDs; mutation checks use actual invocation job IDs and transaction state.",
+      "ruleIds": [
+        "rule6",
+        "rule9",
+        "rule30",
+        "rule32",
+        "rule34",
+        "rule36",
+        "rule51"
+      ],
+      "reads": [
+        {
+          "text": "Caller is the host context set from Tools.role by Tools.call or from Trace.tool actor; direct store entry uses current_caller or Unbound. Fixed PrincipalGroup/Capability facts derive InGroup/Can through the capability foundation. Model claims do not produce identity.",
+          "sources": [
+            "runtime identity",
+            "static configuration"
+          ]
+        },
+        {
+          "text": "Interface observations use store.snapshot() immediately before the callback gate. Mutation observations deep-copy the actual state loaded inside BEGIN IMMEDIATE and actual invocation/closure values. Session.facts emits fresh snapshot/record identities, collection links, saved fields and canonical spec/approval limits; job spec fields are flattened.",
+          "sources": [
+            "application state",
+            "tool call"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: Each student branch requires a saved job with that job ID and owner equal to the caller. Missing ownership evidence prevents student Allow; it does not grant capability or satisfy other action checks."
+        },
+        {
+          "indent": 0,
+          "text": "Professor read, finish and kill branches do not require this equality. Failed student reads share UNAVAILABLE with missing jobs; other policy refusals generally also project UNAVAILABLE."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,read_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),InGroup(B,\"StudentRole\"),Field(E,owner,B)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_revise_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,revise_job),Field(E,owner,B),Field(E,state,\"QUEUED\"),Field(A,node_type,F),Field(C,nodes,G),Field(G,node_type,F),Field(A,cpu_cores,H),Field(A,memory_gb,I),Field(A,runtime_minutes,J),H>=1,H<=8,I>=1,I<=32,J>=1,J<=60."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,finish_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,finish_job),Field(E,owner,B)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_finish_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,finish_job),Field(E,owner,B),Field(E,state,\"RUNNING\"),Field(E,run_id,F),Field(E,task_hash,G)"
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": ",Field(I,node_id,J),Field(I,generation,K),Field(C,nodes,L),Field(L,id,J),Field(L,run_id,F),Field(L,generation,K),Field(A,receipt_id,M),Field(C,receipts,N),Field(N,id,M),Field(N,kind,completion),Field(N,source,\"SimulatedRunner\"),Field(N,job_id,D),Field(N,run_id,F),Field(N,node_id,J),Field(N,generation,K),Field(N,task_hash,G),Field(N,exit_code,0),Event(O,\"Runner\",record_completion),Field(O,outcome,applied),Field(O,receipt_id,M)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,cancel_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,cancel_job),Field(E,owner,B),Parameter(A,reason,F)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_kill_cancel_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,cancel_job),Field(E,owner,B),Field(A,reason,F)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,revise_job),Can(B,cluster,revise_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Field(E,owner,B)."
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "for collection in ('jobs','nodes','approvals','runs','receipts'):"
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "for key, value in observation.get('fields', {}).items():\n            field(rows, request, key, value)"
+        },
+        {
+          "file": "source/core/access.py",
+          "quote": "def can_read(role,job):return role=='Professor' or job['owner']==role"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "revise-queued",
+      "title": "Revision requires queued state",
+      "summary": "Records: During revise_job, immediately before the registered mutation, the gate reads the owned job's saved state from the transaction. The interface permission does not test state.",
+      "ruleIds": [
+        "rule9",
+        "rule10"
+      ],
+      "reads": [
+        {
+          "text": "Interface observations use store.snapshot() immediately before the callback gate. Mutation observations deep-copy the actual state loaded inside BEGIN IMMEDIATE and actual invocation/closure values. Session.facts emits fresh snapshot/record identities, collection links, saved fields and canonical spec/approval limits; job spec fields are flattened.",
+          "sources": [
+            "application state",
+            "tool call"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: The owned job must be QUEUED for revision Allow. A present different state explicitly denies NOT_QUEUED. Missing state prevents Allow. Ownership and other revision checks remain separate."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_revise_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,revise_job),Field(E,owner,B),Field(E,state,\"QUEUED\"),Field(A,node_type,F),Field(C,nodes,G),Field(G,node_type,F),Field(A,cpu_cores,H),Field(A,memory_gb,I),Field(A,runtime_minutes,J),H>=1,H<=8,I>=1,I<=32,J>=1,J<=60."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"NOT_QUEUED\"):-Request(A,B,store_revise_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Field(E,owner,B),Field(E,state,F),F!=\"QUEUED\"."
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "observation = {'state':deepcopy(state), 'fields':fields}"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "self.db.execute('BEGIN IMMEDIATE')\n        try:\n            state=self.snapshot()\n            result=fn(state)"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "requested-node-type",
+      "title": "Requested node type must exist",
+      "summary": "Records: During submit_job or revise_job, before the registered mutation, the gate reads the actual validated proposed node type and saved nodes from the transaction.",
+      "ruleIds": [
+        "rule8",
+        "rule9"
+      ],
+      "reads": [
+        {
+          "text": "Interface observations use store.snapshot() immediately before the callback gate. Mutation observations deep-copy the actual state loaded inside BEGIN IMMEDIATE and actual invocation/closure values. Session.facts emits fresh snapshot/record identities, collection links, saved fields and canonical spec/approval limits; job spec fields are flattened.",
+          "sources": [
+            "application state",
+            "tool call"
+          ]
+        },
+        {
+          "text": "Node_type is flattened from the actual validate_spec copied closure spec; nodes start from fixture initialization.",
+          "sources": [
+            "tool call",
+            "application state",
+            "static configuration"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: At least one saved node must have exactly the proposed node type. No match or missing type prevents mutation Allow, even when other checks pass."
+        },
+        {
+          "indent": 0,
+          "text": "Busy nodes can satisfy this check; cores and memory are not compared here. The app's existing specification validation additionally restricts types to CPU or GPU."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_submit_effect),Can(B,cluster,submit_job),Field(A,owner,B),Field(A,node_type,C),Field(A,snapshot,D),Field(D,nodes,E),Field(E,node_type,C),Field(A,cpu_cores,F),Field(A,memory_gb,G),Field(A,runtime_minutes,H),F>=1,F<=8,G>=1,G<=32,H>=1,H<=60."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_revise_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,revise_job),Field(E,owner,B),Field(E,state,\"QUEUED\"),Field(A,node_type,F),Field(C,nodes,G),Field(G,node_type,F),Field(A,cpu_cores,H),Field(A,memory_gb,I),Field(A,runtime_minutes,J),H>=1,H<=8,I>=1,I<=32,J>=1,J<=60."
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "fields.update({k:v for k,v in values['spec'].items() if k in CONTRACT['fields']})"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "s={'policy':policy,'jobs':[],'nodes':[{**n,'generation':0,'run_id':None} for n in policy['nodes']],"
+        },
+        {
+          "file": "source/core/schemas.py",
+          "quote": "if spec['node_type'] not in ('CPU','GPU'):raise ApplicationError('Unknown node type.')"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "phd-resource-limits",
+      "title": "PhD resource limits",
+      "summary": "Records: submit_job and revise_job supply the actual proposed resource request at mutation. Positive approve_job reads the saved owner and request before its callback; dispatch_job reads them at mutation. Bounds are fixed rule constants.",
+      "ruleIds": [
+        "rule8",
+        "rule9",
+        "rule13",
+        "rule14",
+        "rule21"
+      ],
+      "reads": [
+        {
+          "text": "Submit/revise use actual proposed copied spec; positive approval/dispatch use saved owner/job spec. Bounds are static rule constants rather than saved quota configuration. Numeric Field emission accepts only exact Python int within signed int64.",
+          "sources": [
+            "tool call",
+            "application state",
+            "rule constant"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: PhD requests must meet all limits: 1–8 CPU cores, 1–32 GB memory and 1–60 minutes runtime, inclusive. Missing or invalid numeric values and excess values prevent Allow rather than deriving QUOTA_EXCEEDED."
+        },
+        {
+          "indent": 0,
+          "text": "Positive approval accepts CPU or GPU within these limits. Submission and revision also need requested-node-type; dispatch needs physical-capacity. The broad numeric condition also supports Master effects, subject to Master limits."
+        },
+        {
+          "indent": 0,
+          "text": "Rejection is exempt. Direct approval mutation has no added resource check; the app's existing approval and candidate resource checks remain necessary and may additionally refuse."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_submit_effect),Can(B,cluster,submit_job),Field(A,owner,B),Field(A,node_type,C),Field(A,snapshot,D),Field(D,nodes,E),Field(E,node_type,C),Field(A,cpu_cores,F),Field(A,memory_gb,G),Field(A,runtime_minutes,H),F>=1,F<=8,G>=1,G<=32,H>=1,H<=60."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_revise_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,revise_job),Field(E,owner,B),Field(E,state,\"QUEUED\"),Field(A,node_type,F),Field(C,nodes,G),Field(G,node_type,F),Field(A,cpu_cores,H),Field(A,memory_gb,I),Field(A,runtime_minutes,J),H>=1,H<=8,I>=1,I<=32,J>=1,J<=60."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,approve_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,approve_job),Field(E,state,\"QUEUED\"),Parameter(A,expected_version,F),Field(E,version,F),Parameter(A,approve,true),Field(E,owner,\"PhD\"),Field(E,node_type,\"CPU\"),Field(E,cpu_cores,G),Field(E,memory_gb,H),Field(E,runtime_minutes,I),G>=1,G<=8,H>=1,H<=32,I>=1,I<=60."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,approve_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,approve_job),Field(E,state,\"QUEUED\"),Parameter(A,expected_version,F),Field(E,version,F),Parameter(A,approve,true),Field(E,owner,\"PhD\"),Field(E,node_type,\"GPU\"),Field(E,cpu_cores,G),Field(E,memory_gb,H),Field(E,runtime_minutes,I),G>=1,G<=8,H>=1,H<=32,I>=1,I<=60."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_dispatch_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,dispatch_job),Field(E,state,\"QUEUED\"),Field(E,owner,F),InGroup(F,\"StudentRole\")"
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "ld(E,spec,L),Field(E,approval_id,M),Field(C,approvals,N),Field(N,id,M),Field(N,job_id,D),Field(N,job_version,J),Field(N,task_hash,K),Field(N,spec,L),Field(N,issuer,\"Professor\"),Event(O,\"Professor\",approve_job),Field(O,outcome,applied),Field(O,approval_id,M),Field(C,nodes,P),Field(P,run_id,null),Field(E,node_type,Q),Field(P,node_type,Q),Field(P,cpu_cores,R),Field(P,memory_gb,S),M!=null,G>=1,G<=8,H>=1,H<=32,I>=1,I<=60,G<=R,H<=S."
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "if type(value) is not int or not -(2**63) <= value < 2**63:\n            return"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "q=s['policy']['quotas'][job['owner']];spec=job['spec']"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "master-resource-limits",
+      "title": "Master resource limits",
+      "summary": "Records: submit_job and revise_job use the actual caller and proposed request at mutation. Positive approve_job and dispatch_job use the saved owner and request. Limits are fixed rule constants.",
+      "ruleIds": [
+        "rule8",
+        "rule9",
+        "rule12",
+        "rule21",
+        "rule52",
+        "rule53",
+        "rule54",
+        "rule55",
+        "rule56",
+        "rule57",
+        "rule58",
+        "rule59",
+        "rule60",
+        "rule61",
+        "rule62",
+        "rule63"
+      ],
+      "reads": [
+        {
+          "text": "Submit/revise select Master by actual caller and inspect proposed copied spec. Positive approval/dispatch select saved owner Master and saved job spec. Limits are static rule constants.",
+          "sources": [
+            "runtime identity",
+            "tool call",
+            "application state",
+            "rule constant"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: Master requests require CPU and all limits: 1–4 CPU cores, 1–8 GB memory and 1–20 minutes runtime, inclusive. Positive approval uses this exact branch; rejection is exempt."
+        },
+        {
+          "indent": 0,
+          "text": "At submission, revision and dispatch, any cores >4, memory >8, runtime >20 or non-CPU type explicitly denies QUOTA_EXCEEDED, overriding broad numeric Allow. These denies select the caller for submission/revision and saved owner for dispatch."
+        },
+        {
+          "indent": 0,
+          "text": "The broad numeric check supplies lower bounds; missing or invalid numbers prevent Allow, not zero-fill. Ownership checks remain necessary. Direct approval mutation has no added resource bound."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_submit_effect),Can(B,cluster,submit_job),Field(A,owner,B),Field(A,node_type,C),Field(A,snapshot,D),Field(D,nodes,E),Field(E,node_type,C),Field(A,cpu_cores,F),Field(A,memory_gb,G),Field(A,runtime_minutes,H),F>=1,F<=8,G>=1,G<=32,H>=1,H<=60."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_revise_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,revise_job),Field(E,owner,B),Field(E,state,\"QUEUED\"),Field(A,node_type,F),Field(C,nodes,G),Field(G,node_type,F),Field(A,cpu_cores,H),Field(A,memory_gb,I),Field(A,runtime_minutes,J),H>=1,H<=8,I>=1,I<=32,J>=1,J<=60."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,approve_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,approve_job),Field(E,state,\"QUEUED\"),Parameter(A,expected_version,F),Field(E,version,F),Parameter(A,approve,true),Field(E,owner,\"Master\"),Field(E,node_type,\"CPU\"),Field(E,cpu_cores,G),Field(E,memory_gb,H),Field(E,runtime_minutes,I),G>=1,G<=4,H>=1,H<=8,I>=1,I<=20."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_dispatch_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,dispatch_job),Field(E,state,\"QUEUED\"),Field(E,owner,F),InGroup(F,\"StudentRole\")"
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "ld(E,spec,L),Field(E,approval_id,M),Field(C,approvals,N),Field(N,id,M),Field(N,job_id,D),Field(N,job_version,J),Field(N,task_hash,K),Field(N,spec,L),Field(N,issuer,\"Professor\"),Event(O,\"Professor\",approve_job),Field(O,outcome,applied),Field(O,approval_id,M),Field(C,nodes,P),Field(P,run_id,null),Field(E,node_type,Q),Field(P,node_type,Q),Field(P,cpu_cores,R),Field(P,memory_gb,S),M!=null,G>=1,G<=8,H>=1,H<=32,I>=1,I<=60,G<=R,H<=S."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"QUOTA_EXCEEDED\"):-Request(A,\"Master\",store_submit_effect),Field(A,cpu_cores,B),B>4."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"QUOTA_EXCEEDED\"):-Request(A,\"Master\",store_submit_effect),Field(A,memory_gb,B),B>8."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"QUOTA_EXCEEDED\"):-Request(A,\"Master\",store_submit_effect),Field(A,runtime_minutes,B),B>20."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"QUOTA_EXCEEDED\"):-Request(A,\"Master\",store_submit_effect),Field(A,node_type,B),B!=\"CPU\"."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"QUOTA_EXCEEDED\"):-Request(A,\"Master\",store_revise_effect),Field(A,cpu_cores,B),B>4."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"QUOTA_EXCEEDED\"):-Request(A,\"Master\",store_revise_effect),Field(A,memory_gb,B),B>8."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"QUOTA_EXCEEDED\"):-Request(A,\"Master\",store_revise_effect),Field(A,runtime_minutes,B),B>20."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"QUOTA_EXCEEDED\"):-Request(A,\"Master\",store_revise_effect),Field(A,node_type,B),B!=\"CPU\"."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"QUOTA_EXCEEDED\"):-Request(A,B,store_dispatch_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Field(E,owner,\"Master\"),Field(E,cpu_cores,F),F>4."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"QUOTA_EXCEEDED\"):-Request(A,B,store_dispatch_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Field(E,owner,\"Master\"),Field(E,memory_gb,F),F>8."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"QUOTA_EXCEEDED\"):-Request(A,B,store_dispatch_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Field(E,owner,\"Master\"),Field(E,runtime_minutes,F),F>20."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"QUOTA_EXCEEDED\"):-Request(A,B,store_dispatch_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Field(E,owner,\"Master\"),Field(E,node_type,F),F!=\"CPU\"."
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "spec = record.get('spec', record.get('limits'))"
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "if collection == 'jobs':\n                            for key, value in spec.items():\n                                field(rows, oid, key, value)"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "if not approved:\n                self._transition(s,j,'TERMINATED',actor,event_id,'REQUEST_REJECTED')\n                return {'ok':True,'job':j,'approved':False}"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "approval-permission",
+      "title": "Professor permission to approve",
+      "summary": "Records: Before Trace.tool invokes approve_job, the gate reads caller capability, the approve input and saved job. Before the registered approval mutation, it rereads capability and job state in the transaction.",
+      "ruleIds": [
+        "rule12",
+        "rule13",
+        "rule14",
+        "rule15"
+      ],
+      "reads": [
+        {
+          "text": "Caller is the host context set from Tools.role by Tools.call or from Trace.tool actor; direct store entry uses current_caller or Unbound. Fixed PrincipalGroup/Capability facts derive InGroup/Can through the capability foundation. Model claims do not produce identity.",
+          "sources": [
+            "runtime identity",
+            "static configuration"
+          ]
+        },
+        {
+          "text": "Interface observations use store.snapshot() immediately before the callback gate. Mutation observations deep-copy the actual state loaded inside BEGIN IMMEDIATE and actual invocation/closure values. Session.facts emits fresh snapshot/record identities, collection links, saved fields and canonical spec/approval limits; job spec fields are flattened.",
+          "sources": [
+            "application state",
+            "tool call"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: Positive interface approval requires ProfessorRole approval capability, approve=true, the applicable role resource branch, review-queued and review-version. Missing requirements prevent Allow."
+        },
+        {
+          "indent": 0,
+          "text": "The mutation gate requires approval capability and an existing queued job, without inspecting the decision or resource request. It does not bind the method's actor argument to the gate caller."
+        },
+        {
+          "indent": 0,
+          "text": "Direct approval therefore still needs the app's existing actor, decision-type, version and acceptance-only resource checks. No added rule requires the Professor to approve."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,approve_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,approve_job),Field(E,state,\"QUEUED\"),Parameter(A,expected_version,F),Field(E,version,F),Parameter(A,approve,true),Field(E,owner,\"Master\"),Field(E,node_type,\"CPU\"),Field(E,cpu_cores,G),Field(E,memory_gb,H),Field(E,runtime_minutes,I),G>=1,G<=4,H>=1,H<=8,I>=1,I<=20."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,approve_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,approve_job),Field(E,state,\"QUEUED\"),Parameter(A,expected_version,F),Field(E,version,F),Parameter(A,approve,true),Field(E,owner,\"PhD\"),Field(E,node_type,\"CPU\"),Field(E,cpu_cores,G),Field(E,memory_gb,H),Field(E,runtime_minutes,I),G>=1,G<=8,H>=1,H<=32,I>=1,I<=60."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,approve_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,approve_job),Field(E,state,\"QUEUED\"),Parameter(A,expected_version,F),Field(E,version,F),Parameter(A,approve,true),Field(E,owner,\"PhD\"),Field(E,node_type,\"GPU\"),Field(E,cpu_cores,G),Field(E,memory_gb,H),Field(E,runtime_minutes,I),G>=1,G<=8,H>=1,H<=32,I>=1,I<=60."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_approve_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,approve_job),Field(E,state,\"QUEUED\")."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Capability(\"ProfessorRole\",\"cluster\",\"approve_job\")."
+        },
+        {
+          "file": "source/core/tools.py",
+          "quote": "elif name=='approve_job':fn=lambda e:s.approve(r,a['job_id'],a['expected_version'],a['approve'],e)"
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "invocation_fields = {'owner','job_id','run_id','node_id','receipt_id','reason'}"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "if actor!='Professor':return deny('NOT_AUTHORIZED')"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "if not self.quota_ok(s,j):return deny('QUOTA_EXCEEDED')"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "rejection-permission",
+      "title": "Professor permission to reject",
+      "summary": "Records: Before Trace.tool invokes approve_job, the gate reads caller capability, approve=false, the requested job and saved review facts. The mutation gate rereads capability and queued state, but not the decision or version.",
+      "ruleIds": [
+        "rule11",
+        "rule15"
+      ],
+      "reads": [
+        {
+          "text": "Caller is the host context set from Tools.role by Tools.call or from Trace.tool actor; direct store entry uses current_caller or Unbound. Fixed PrincipalGroup/Capability facts derive InGroup/Can through the capability foundation. Model claims do not produce identity.",
+          "sources": [
+            "runtime identity",
+            "static configuration"
+          ]
+        },
+        {
+          "text": "Interface observations use store.snapshot() immediately before the callback gate. Mutation observations deep-copy the actual state loaded inside BEGIN IMMEDIATE and actual invocation/closure values. Session.facts emits fresh snapshot/record identities, collection links, saved fields and canonical spec/approval limits; job spec fields are flattened.",
+          "sources": [
+            "application state",
+            "tool call"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: Rejection requires ProfessorRole approval capability, an existing job, review-queued and review-version. No resource limit applies, so an over-limit request can be rejected. Missing requirements prevent Allow."
+        },
+        {
+          "indent": 0,
+          "text": "There is no separate reject capability. The common approval mutation branch delegates the decision and version handling to the app's existing approval checks, which remain necessary for direct calls."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,approve_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,approve_job),Field(E,state,\"QUEUED\"),Parameter(A,expected_version,F),Field(E,version,F),Parameter(A,approve,false)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_approve_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,approve_job),Field(E,state,\"QUEUED\")."
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "if not approved:\n                self._transition(s,j,'TERMINATED',actor,event_id,'REQUEST_REJECTED')\n                return {'ok':True,'job':j,'approved':False}"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "review-queued",
+      "title": "Review requires queued state",
+      "summary": "Records: For approve_job, the gate reads saved job state immediately before the interface callback and again inside the transaction before the registered approval mutation.",
+      "ruleIds": [
+        "rule11",
+        "rule12",
+        "rule13",
+        "rule14",
+        "rule15",
+        "rule16",
+        "rule17"
+      ],
+      "reads": [
+        {
+          "text": "Interface observations use store.snapshot() immediately before the callback gate. Mutation observations deep-copy the actual state loaded inside BEGIN IMMEDIATE and actual invocation/closure values. Session.facts emits fresh snapshot/record identities, collection links, saved fields and canonical spec/approval limits; job spec fields are flattened.",
+          "sources": [
+            "application state",
+            "tool call"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: Approval and rejection both require QUEUED at each gate. For an approval-capable caller targeting an existing job, a present different state explicitly denies NOT_QUEUED. Missing state prevents Allow."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,approve_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,approve_job),Field(E,state,\"QUEUED\"),Parameter(A,expected_version,F),Field(E,version,F),Parameter(A,approve,false)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,approve_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,approve_job),Field(E,state,\"QUEUED\"),Parameter(A,expected_version,F),Field(E,version,F),Parameter(A,approve,true),Field(E,owner,\"Master\"),Field(E,node_type,\"CPU\"),Field(E,cpu_cores,G),Field(E,memory_gb,H),Field(E,runtime_minutes,I),G>=1,G<=4,H>=1,H<=8,I>=1,I<=20."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,approve_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,approve_job),Field(E,state,\"QUEUED\"),Parameter(A,expected_version,F),Field(E,version,F),Parameter(A,approve,true),Field(E,owner,\"PhD\"),Field(E,node_type,\"CPU\"),Field(E,cpu_cores,G),Field(E,memory_gb,H),Field(E,runtime_minutes,I),G>=1,G<=8,H>=1,H<=32,I>=1,I<=60."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,approve_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,approve_job),Field(E,state,\"QUEUED\"),Parameter(A,expected_version,F),Field(E,version,F),Parameter(A,approve,true),Field(E,owner,\"PhD\"),Field(E,node_type,\"GPU\"),Field(E,cpu_cores,G),Field(E,memory_gb,H),Field(E,runtime_minutes,I),G>=1,G<=8,H>=1,H<=32,I>=1,I<=60."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_approve_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,approve_job),Field(E,state,\"QUEUED\")."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"NOT_QUEUED\"):-Request(A,B,approve_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,approve_job),Field(E,state,F),F!=\"QUEUED\"."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"NOT_QUEUED\"):-Request(A,B,store_approve_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,approve_job),Field(E,state,F),F!=\"QUEUED\"."
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "{'state':store.snapshot()}, actor)"
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "observation = {'state':deepcopy(state), 'fields':fields}"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "self.db.execute('BEGIN IMMEDIATE')\n        try:\n            state=self.snapshot()\n            result=fn(state)"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "review-version",
+      "title": "Review names the current task version",
+      "summary": "Records: Before Trace.tool invokes approve_job, the gate compares the actual expected_version input with the saved current task version for the requested job.",
+      "ruleIds": [
+        "rule11",
+        "rule12",
+        "rule13",
+        "rule14",
+        "rule19"
+      ],
+      "reads": [
+        {
+          "text": "Actual approve_job expected_version Parameter is compared with saved job version from fresh interface snapshot. Numeric parameters use canonical int64 encoding.",
+          "sources": [
+            "tool call",
+            "application state"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: Either decision must name the same queued job's current task version. Missing expected_version prevents Allow. With approval capability, queued state and both versions present, inequality explicitly denies STALE_TASK_VERSION."
+        },
+        {
+          "indent": 0,
+          "text": "The approval mutation gate does not bind the version or decision. Direct approval calls still need the app's existing version check."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,approve_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,approve_job),Field(E,state,\"QUEUED\"),Parameter(A,expected_version,F),Field(E,version,F),Parameter(A,approve,false)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,approve_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,approve_job),Field(E,state,\"QUEUED\"),Parameter(A,expected_version,F),Field(E,version,F),Parameter(A,approve,true),Field(E,owner,\"Master\"),Field(E,node_type,\"CPU\"),Field(E,cpu_cores,G),Field(E,memory_gb,H),Field(E,runtime_minutes,I),G>=1,G<=4,H>=1,H<=8,I>=1,I<=20."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,approve_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,approve_job),Field(E,state,\"QUEUED\"),Parameter(A,expected_version,F),Field(E,version,F),Parameter(A,approve,true),Field(E,owner,\"PhD\"),Field(E,node_type,\"CPU\"),Field(E,cpu_cores,G),Field(E,memory_gb,H),Field(E,runtime_minutes,I),G>=1,G<=8,H>=1,H<=32,I>=1,I<=60."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,approve_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,approve_job),Field(E,state,\"QUEUED\"),Parameter(A,expected_version,F),Field(E,version,F),Parameter(A,approve,true),Field(E,owner,\"PhD\"),Field(E,node_type,\"GPU\"),Field(E,cpu_cores,G),Field(E,memory_gb,H),Field(E,runtime_minutes,I),G>=1,G<=8,H>=1,H<=32,I>=1,I<=60."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"STALE_TASK_VERSION\"):-Request(A,B,approve_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,approve_job),Field(E,state,\"QUEUED\"),Parameter(A,expected_version,F),Field(E,version,G),G!=F."
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "if j['version']!=version:return deny('STALE_TASK_VERSION')"
+        },
+        {
+          "file": "framework/policyweave/core/policy.py",
+          "quote": "for name, value in parameters.items():"
+        },
+        {
+          "file": "framework/policyweave/enforcement/api.py",
+          "quote": "nested = _parameters(value, key + \"_\")"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "dispatch-permission",
+      "title": "Professor permission to start",
+      "summary": "Records: Before Trace.tool invokes dispatch_job, the gate reads caller capability, requested job ID and saved job existence. Before the registered start mutation, it uses the actual invocation job ID and transaction state.",
+      "ruleIds": [
+        "rule20",
+        "rule21"
+      ],
+      "reads": [
+        {
+          "text": "Caller is the host context set from Tools.role by Tools.call or from Trace.tool actor; direct store entry uses current_caller or Unbound. Fixed PrincipalGroup/Capability facts derive InGroup/Can through the capability foundation. Model claims do not produce identity.",
+          "sources": [
+            "runtime identity",
+            "static configuration"
+          ]
+        },
+        {
+          "text": "Interface observations use store.snapshot() immediately before the callback gate. Mutation observations deep-copy the actual state loaded inside BEGIN IMMEDIATE and actual invocation/closure values. Session.facts emits fresh snapshot/record identities, collection links, saved fields and canonical spec/approval limits; job spec fields are flattened.",
+          "sources": [
+            "application state",
+            "tool call"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: ProfessorRole dispatch capability and an existing matching job permit the interface callback. This permission alone does not require queued state, approval or free resources."
+        },
+        {
+          "indent": 0,
+          "text": "Mutation repeats dispatch capability and requires every separate dispatch effect check, with no matching Deny. The app's existing Professor actor guard remains necessary because the gate does not bind the method actor argument."
+        },
+        {
+          "indent": 0,
+          "text": "No automatic dispatch or preemption of running jobs is added."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,dispatch_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,dispatch_job)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_dispatch_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,dispatch_job),Field(E,state,\"QUEUED\"),Field(E,owner,F),InGroup(F,\"StudentRole\")"
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "ld(E,spec,L),Field(E,approval_id,M),Field(C,approvals,N),Field(N,id,M),Field(N,job_id,D),Field(N,job_version,J),Field(N,task_hash,K),Field(N,spec,L),Field(N,issuer,\"Professor\"),Event(O,\"Professor\",approve_job),Field(O,outcome,applied),Field(O,approval_id,M),Field(C,nodes,P),Field(P,run_id,null),Field(E,node_type,Q),Field(P,node_type,Q),Field(P,cpu_cores,R),Field(P,memory_gb,S),M!=null,G>=1,G<=8,H>=1,H<=32,I>=1,I<=60,G<=R,H<=S."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Capability(\"ProfessorRole\",\"cluster\",\"dispatch_job\")."
+        },
+        {
+          "file": "source/core/tools.py",
+          "quote": "elif name=='dispatch_job':fn=lambda e:s.dispatch(r,a['job_id'],e)"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "if actor!='Professor':return deny('NOT_AUTHORIZED')"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "dispatch-queued",
+      "title": "Start requires a queued student job",
+      "summary": "Records: During dispatch_job, immediately before the registered start mutation, the gate reads the target's saved state and owner's configured role from the transaction.",
+      "ruleIds": [
+        "rule18",
+        "rule21"
+      ],
+      "reads": [
+        {
+          "text": "Interface observations use store.snapshot() immediately before the callback gate. Mutation observations deep-copy the actual state loaded inside BEGIN IMMEDIATE and actual invocation/closure values. Session.facts emits fresh snapshot/record identities, collection links, saved fields and canonical spec/approval limits; job spec fields are flattened.",
+          "sources": [
+            "application state",
+            "tool call"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: The target must be QUEUED and owned by a StudentRole member for mutation Allow. Missing state or student ownership prevents Allow."
+        },
+        {
+          "indent": 0,
+          "text": "For a dispatch-capable caller, any present non-QUEUED target state explicitly denies NOT_QUEUED, independently of approval. Starting permission is checked separately."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"NOT_QUEUED\"):-Request(A,B,store_dispatch_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,dispatch_job),Field(E,state,F),F!=\"QUEUED\"."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_dispatch_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,dispatch_job),Field(E,state,\"QUEUED\"),Field(E,owner,F),InGroup(F,\"StudentRole\")"
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "ld(E,spec,L),Field(E,approval_id,M),Field(C,approvals,N),Field(N,id,M),Field(N,job_id,D),Field(N,job_version,J),Field(N,task_hash,K),Field(N,spec,L),Field(N,issuer,\"Professor\"),Event(O,\"Professor\",approve_job),Field(O,outcome,applied),Field(O,approval_id,M),Field(C,nodes,P),Field(P,run_id,null),Field(E,node_type,Q),Field(P,node_type,Q),Field(P,cpu_cores,R),Field(P,memory_gb,S),M!=null,G>=1,G<=8,H>=1,H<=32,I>=1,I<=60,G<=R,H<=S."
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "observation = {'state':deepcopy(state), 'fields':fields}"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "self.db.execute('BEGIN IMMEDIATE')\n        try:\n            state=self.snapshot()\n            result=fn(state)"
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "for observation in invocation['observations']:\n                session(self).committed(invocation['action'], invocation['actor'], observation, result)"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "current-approval",
+      "title": "Current approval before start",
+      "summary": "Records: dispatch_job reads the target and saved approval before mutation. Only after approval commits and returns ok exactly True with an approval result does the per-Store record capture approve_job, the actual caller, applied outcome and approval ID.",
+      "ruleIds": [
+        "rule21",
+        "rule69"
+      ],
+      "reads": [
+        {
+          "text": "Interface observations use store.snapshot() immediately before the callback gate. Mutation observations deep-copy the actual state loaded inside BEGIN IMMEDIATE and actual invocation/closure values. Session.facts emits fresh snapshot/record identities, collection links, saved fields and canonical spec/approval limits; job spec fields are flattened.",
+          "sources": [
+            "application state",
+            "tool call"
+          ]
+        },
+        {
+          "text": "Store.approve creates a saved approval with copied spec as limits, job id/version/hash and issuer Professor. After Store returns from the original commit with ok exactly True and an approval result, the shared per-Store Session journals Event(request id, actual caller, approve_job), outcome applied and approval_id.",
+          "sources": [
+            "application state",
+            "tool result",
+            "runtime identity"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: The target's non-null approval ID must select one Professor-issued approval for the same job ID, current task version, unchanged task details and exact resource request. That approval also needs an applied approve_job event whose actor is Professor and whose approval ID matches."
+        },
+        {
+          "indent": 0,
+          "text": "For a dispatch-capable caller and queued target, explicitly null approval ID denies APPROVAL_REQUIRED_FOR_CURRENT_VERSION. Other missing or mismatched approval evidence prevents Allow."
+        },
+        {
+          "indent": 0,
+          "text": "The app's existing approval check must additionally enforce the current policy digest. Saved issuer text alone cannot replace the required successful Professor event."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_dispatch_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,dispatch_job),Field(E,state,\"QUEUED\"),Field(E,owner,F),InGroup(F,\"StudentRole\")"
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "ld(E,spec,L),Field(E,approval_id,M),Field(C,approvals,N),Field(N,id,M),Field(N,job_id,D),Field(N,job_version,J),Field(N,task_hash,K),Field(N,spec,L),Field(N,issuer,\"Professor\"),Event(O,\"Professor\",approve_job),Field(O,outcome,applied),Field(O,approval_id,M),Field(C,nodes,P),Field(P,run_id,null),Field(E,node_type,Q),Field(P,node_type,Q),Field(P,cpu_cores,R),Field(P,memory_gb,S),M!=null,G>=1,G<=8,H>=1,H<=32,I>=1,I<=60,G<=R,H<=S."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"APPROVAL_REQUIRED_FOR_CURRENT_VERSION\"):-Request(A,B,store_dispatch_effect),Can(B,cluster,dispatch_job),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Field(E,state,\"QUEUED\"),Field(E,approval_id,null)."
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "'job_version':version,'task_hash':j['task_hash'],'limits':deepcopy(j['spec']),"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "'issuer':'Professor','policy_digest':digest(s['policy']),'created_event_id':event_id}"
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "if action == 'store_approve_effect' and 'approval' in result:\n            record, kind, association = result['approval'], 'approve_job', 'approval_id'"
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "self.journal.append({'predicate':'Event','args':[eid,actor,kind]})"
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "field(self.journal, eid, 'outcome', 'applied')\n            field(self.journal, eid, association, record['id'])"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "a['policy_digest']==digest(s['policy']) else None"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "j['spec']=spec;j['version']+=1;j['task_hash']=self._hash(j);j['approval_id']=None"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "physical-capacity",
+      "title": "Free node capacity before start",
+      "summary": "Records: During dispatch_job, immediately before the registered start mutation, the gate reads the saved request and current node allocation, type, CPU cores and memory from the transaction.",
+      "ruleIds": [
+        "rule21"
+      ],
+      "reads": [
+        {
+          "text": "Interface observations use store.snapshot() immediately before the callback gate. Mutation observations deep-copy the actual state loaded inside BEGIN IMMEDIATE and actual invocation/closure values. Session.facts emits fresh snapshot/record identities, collection links, saved fields and canonical spec/approval limits; job spec fields are flattened.",
+          "sources": [
+            "application state",
+            "tool call"
+          ]
+        },
+        {
+          "text": "Saved nodes originate in cluster initialization: default CPU/GPU nodes each have 8 cores and 32 GB. Rule uses saved capacities at effect time, not constants. Original dispatch assigns run_id and increments generation.",
+          "sources": [
+            "static configuration",
+            "application state"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: One saved node must have no run, exactly the requested type, at least the requested CPU cores and at least the requested GB of memory. All conditions must hold on that same node. No such node or missing required values prevents Allow."
+        },
+        {
+          "indent": 0,
+          "text": "Runtime is not a physical-capacity comparison. The witness node is not bound to the node the app selects, so the app's existing allocation logic remains necessary. This check adds no NO_FREE_MATCHING_NODE Deny."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_dispatch_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,dispatch_job),Field(E,state,\"QUEUED\"),Field(E,owner,F),InGroup(F,\"StudentRole\")"
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "ld(E,spec,L),Field(E,approval_id,M),Field(C,approvals,N),Field(N,id,M),Field(N,job_id,D),Field(N,job_version,J),Field(N,task_hash,K),Field(N,spec,L),Field(N,issuer,\"Professor\"),Event(O,\"Professor\",approve_job),Field(O,outcome,applied),Field(O,approval_id,M),Field(C,nodes,P),Field(P,run_id,null),Field(E,node_type,Q),Field(P,node_type,Q),Field(P,cpu_cores,R),Field(P,memory_gb,S),M!=null,G>=1,G<=8,H>=1,H<=32,I>=1,I<=60,G<=R,H<=S."
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "nodes=[n for n in s['nodes'] if n['run_id'] is None and n['node_type']==j['spec']['node_type']\n                   and n['cpu_cores']>=j['spec']['cpu_cores'] and n['memory_gb']>=j['spec']['memory_gb']]"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "node=self._find(s,'nodes',c['node_id']);node['generation']+=1"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "s['runs'].append(run);node['run_id']=run['id'];j['run_id']=run['id']"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "phd-over-young-master",
+      "title": "PhD before an unaged Master",
+      "summary": "Records: Before dispatch_job mutates, the gate reads target and contender state, approval evidence, resources, node type and waiting_dispatches. The counter starts at 0; only successful original dispatches increment other eligible same-type candidates.",
+      "ruleIds": [
+        "rule22"
+      ],
+      "reads": [
+        {
+          "text": "Priority deny requires broad Allow(target), a distinct queued competitor, and the approval joins/applied Professor witness in current-approval. Competitor uses same node type as target and must fit a free same-type node under physical-capacity, except rule64’s explicitly weaker branch. Its node witness can differ from target’s witness. Role-specific contender resource bounds are referenced per branch.",
+          "sources": [
+            "application state",
+            "rule constant"
+          ]
+        },
+        {
+          "text": "waiting_dispatches starts at 0 and submission_seq=len(jobs)+1. Only a successful original dispatch increments other currently eligible candidates of the selected node type; failed/blocked attempts or wall-clock time do not increment. Original candidates already apply saved quotas, approval policy digest and free-node checks.",
+          "sources": [
+            "application state",
+            "tool result"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: Given broad target Allow, a Master target with waiting_dispatches <3 is denied PRIORITY_CONFLICT if any distinct queued same-type PhD contender passes current-approval, PhD resource limits and physical-capacity. Its free-node witness may differ from the target's."
+        },
+        {
+          "indent": 0,
+          "text": "Missing contender or counter evidence prevents this Deny, not necessarily dispatch Allow. The threshold is fixed at 3 dispatch opportunities, not elapsed time or saved aging configuration; blocked attempts do not age jobs."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"PRIORITY_CONFLICT\"):-Request(A,B,store_dispatch_effect),Allow(A),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Field(C,jobs,F),Field(F,id,G),Field(F,state,\"QUEUED\"),Field(F,version,H)"
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "\"),Event(M,\"Professor\",approve_job),Field(M,outcome,applied),Field(M,approval_id,K),Field(C,nodes,N),Field(N,run_id,null),Field(E,node_type,O),Field(N,node_type,O),Field(N,cpu_cores,P),Field(N,memory_gb,Q),Field(F,node_type,O),Field(F,cpu_cores,R),Field(F,memory_gb,S),Field(E,owner,\"Master\"),Field(E,waiting_dispatches,T),Field(F,owner,\"PhD\"),Field(F,runtime_minutes,U),G!=D,K!=null,R<=P,S<=Q,T<3,R>=1,R<=8,S>=1,S<=32,U>=1,U<=60."
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "'approval_id':None,'run_id':None,'waiting_dispatches':0,'submission_seq':len(s['jobs'])+1,"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "for candidate in candidates:\n                other=self._find(s,'jobs',candidate['job_id'])\n                if other['id']!=job_id and other['spec']['node_type']==node['node_type']:\n                    other['waiting_dispatches']+=1"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "aged-master-over-phd",
+      "title": "Aged Master before PhD",
+      "summary": "Records: Before dispatch_job mutates, the gate reads target and contender state, approval evidence, resource requests, node type and waiting_dispatches. Successful original dispatches age other eligible same-type candidates; failed attempts and elapsed time do not.",
+      "ruleIds": [
+        "rule23"
+      ],
+      "reads": [
+        {
+          "text": "Priority deny requires broad Allow(target), a distinct queued competitor, and the approval joins/applied Professor witness in current-approval. Competitor uses same node type as target and must fit a free same-type node under physical-capacity, except rule64’s explicitly weaker branch. Its node witness can differ from target’s witness. Role-specific contender resource bounds are referenced per branch.",
+          "sources": [
+            "application state",
+            "rule constant"
+          ]
+        },
+        {
+          "text": "waiting_dispatches starts at 0 and submission_seq=len(jobs)+1. Only a successful original dispatch increments other currently eligible candidates of the selected node type; failed/blocked attempts or wall-clock time do not increment. Original candidates already apply saved quotas, approval policy digest and free-node checks.",
+          "sources": [
+            "application state",
+            "tool result"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: Given broad target Allow, a PhD target is denied PRIORITY_CONFLICT if any distinct queued same-type CPU Master contender has waiting_dispatches >=3 and passes current-approval, Master resource limits and physical-capacity."
+        },
+        {
+          "indent": 0,
+          "text": "Submission order does not affect this Deny. The contender may fit a different free node from the target. Missing required contender or counter evidence prevents this Deny, not necessarily dispatch Allow."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"PRIORITY_CONFLICT\"):-Request(A,B,store_dispatch_effect),Allow(A),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Field(C,jobs,F),Field(F,id,G),Field(F,state,\"QUEUED\"),Field(F,version,H)"
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "prove_job),Field(M,outcome,applied),Field(M,approval_id,K),Field(C,nodes,N),Field(N,run_id,null),Field(E,node_type,O),Field(N,node_type,O),Field(N,cpu_cores,P),Field(N,memory_gb,Q),Field(F,node_type,O),Field(F,cpu_cores,R),Field(F,memory_gb,S),Field(E,owner,\"PhD\"),Field(F,owner,\"Master\"),Field(F,node_type,\"CPU\"),Field(F,runtime_minutes,T),Field(F,waiting_dispatches,U),G!=D,K!=null,R<=P,S<=Q,R>=1,R<=4,S>=1,S<=8,T>=1,T<=20,U>=3."
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "'approval_id':None,'run_id':None,'waiting_dispatches':0,'submission_seq':len(s['jobs'])+1,"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "for candidate in candidates:\n                other=self._find(s,'jobs',candidate['job_id'])\n                if other['id']!=job_id and other['spec']['node_type']==node['node_type']:\n                    other['waiting_dispatches']+=1"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "phd-fifo",
+      "title": "PhD submission order",
+      "summary": "Records: Before dispatch_job mutates, the gate reads target and contender submission sequences, state, approval evidence, resource requests and nodes. Submission records submission_seq as the number of saved jobs plus 1.",
+      "ruleIds": [
+        "rule24"
+      ],
+      "reads": [
+        {
+          "text": "Priority deny requires broad Allow(target), a distinct queued competitor, and the approval joins/applied Professor witness in current-approval. Competitor uses same node type as target and must fit a free same-type node under physical-capacity, except rule64’s explicitly weaker branch. Its node witness can differ from target’s witness. Role-specific contender resource bounds are referenced per branch.",
+          "sources": [
+            "application state",
+            "rule constant"
+          ]
+        },
+        {
+          "text": "waiting_dispatches starts at 0 and submission_seq=len(jobs)+1. Only a successful original dispatch increments other currently eligible candidates of the selected node type; failed/blocked attempts or wall-clock time do not increment. Original candidates already apply saved quotas, approval policy digest and free-node checks.",
+          "sources": [
+            "application state",
+            "tool result"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: Given broad target Allow, deny a PhD target PRIORITY_CONFLICT if any distinct queued same-type PhD contender has a strictly smaller submission sequence and passes current-approval, PhD resource limits and physical-capacity."
+        },
+        {
+          "indent": 0,
+          "text": "The contender may fit a different free node. Equal sequences do not trigger this Deny. Missing contender, sequence or approval evidence prevents this Deny, not necessarily dispatch Allow."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"PRIORITY_CONFLICT\"):-Request(A,B,store_dispatch_effect),Allow(A),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Field(C,jobs,F),Field(F,id,G),Field(F,state,\"QUEUED\"),Field(F,version,H)"
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "or\",approve_job),Field(M,outcome,applied),Field(M,approval_id,K),Field(C,nodes,N),Field(N,run_id,null),Field(E,node_type,O),Field(N,node_type,O),Field(N,cpu_cores,P),Field(N,memory_gb,Q),Field(F,node_type,O),Field(F,cpu_cores,R),Field(F,memory_gb,S),Field(E,owner,\"PhD\"),Field(F,owner,\"PhD\"),Field(F,runtime_minutes,T),Field(E,submission_seq,U),Field(F,submission_seq,V),G!=D,K!=null,R<=P,S<=Q,R>=1,R<=8,S>=1,S<=32,T>=1,T<=60,V<U."
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "'approval_id':None,'run_id':None,'waiting_dispatches':0,'submission_seq':len(s['jobs'])+1,"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "for candidate in candidates:\n                other=self._find(s,'jobs',candidate['job_id'])\n                if other['id']!=job_id and other['spec']['node_type']==node['node_type']:\n                    other['waiting_dispatches']+=1"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "master-fifo",
+      "title": "Master submission order within aging tiers",
+      "summary": "Records: Before dispatch_job mutates, the gate reads Master target and contender submission sequences, waiting_dispatches, approval evidence, resource requests and nodes. Counters age only through successful original dispatches of eligible same-type candidates.",
+      "ruleIds": [
+        "rule25",
+        "rule26"
+      ],
+      "reads": [
+        {
+          "text": "Priority deny requires broad Allow(target), a distinct queued competitor, and the approval joins/applied Professor witness in current-approval. Competitor uses same node type as target and must fit a free same-type node under physical-capacity, except rule64’s explicitly weaker branch. Its node witness can differ from target’s witness. Role-specific contender resource bounds are referenced per branch.",
+          "sources": [
+            "application state",
+            "rule constant"
+          ]
+        },
+        {
+          "text": "waiting_dispatches starts at 0 and submission_seq=len(jobs)+1. Only a successful original dispatch increments other currently eligible candidates of the selected node type; failed/blocked attempts or wall-clock time do not increment. Original candidates already apply saved quotas, approval policy digest and free-node checks.",
+          "sources": [
+            "application state",
+            "tool result"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: Given broad target Allow, deny PRIORITY_CONFLICT for a distinct queued same-type CPU Master contender with a smaller submission sequence when both counters are <3 or both are >=3. The contender must pass current-approval, Master resource limits and physical-capacity."
+        },
+        {
+          "indent": 0,
+          "text": "Its free-node witness may differ from the target's. Equal sequences and an aged target facing an unaged contender do not trigger this Deny. Missing required counter, sequence or contender evidence prevents this Deny, not necessarily dispatch Allow."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"PRIORITY_CONFLICT\"):-Request(A,B,store_dispatch_effect),Allow(A),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Field(C,jobs,F),Field(F,id,G),Field(F,state,\"QUEUED\"),Field(F,version,H)"
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "ull),Field(E,node_type,O),Field(N,node_type,O),Field(N,cpu_cores,P),Field(N,memory_gb,Q),Field(F,node_type,O),Field(F,cpu_cores,R),Field(F,memory_gb,S),Field(E,owner,\"Master\"),Field(F,owner,\"Master\"),Field(F,node_type,\"CPU\"),Field(F,runtime_minutes,T),Field(E,waiting_dispatches,U),Field(F,waiting_dispatches,V),Field(E,submission_seq,W),Field(F,submission_seq,X),G!=D,K!=null,R<=P,S<=Q,R>=1,R<=4,S>=1,S<=8,T>=1,T<=20,U<3,V<3,X<W."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"PRIORITY_CONFLICT\"):-Request(A,B,store_dispatch_effect),Allow(A),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Field(C,jobs,F),Field(F,id,G),Field(F,state,\"QUEUED\"),Field(F,version,H)"
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "l),Field(E,node_type,O),Field(N,node_type,O),Field(N,cpu_cores,P),Field(N,memory_gb,Q),Field(F,node_type,O),Field(F,cpu_cores,R),Field(F,memory_gb,S),Field(E,owner,\"Master\"),Field(F,owner,\"Master\"),Field(F,node_type,\"CPU\"),Field(F,runtime_minutes,T),Field(E,waiting_dispatches,U),Field(F,waiting_dispatches,V),Field(E,submission_seq,W),Field(F,submission_seq,X),G!=D,K!=null,R<=P,S<=Q,R>=1,R<=4,S>=1,S<=8,T>=1,T<=20,U>=3,V>=3,X<W."
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "'approval_id':None,'run_id':None,'waiting_dispatches':0,'submission_seq':len(s['jobs'])+1,"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "for candidate in candidates:\n                other=self._find(s,'jobs',candidate['job_id'])\n                if other['id']!=job_id and other['spec']['node_type']==node['node_type']:\n                    other['waiting_dispatches']+=1"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "aged-master-over-young-master",
+      "title": "Aged Master blocks an unaged Master",
+      "summary": "Records: Before dispatch_job mutates, the gate reads Master target and contender state, waiting_dispatches, approval evidence, numeric requests and free-node fields. Counters age only through successful original dispatches of eligible same-type candidates.",
+      "ruleIds": [
+        "rule64"
+      ],
+      "reads": [
+        {
+          "text": "Interface observations use store.snapshot() immediately before the callback gate. Mutation observations deep-copy the actual state loaded inside BEGIN IMMEDIATE and actual invocation/closure values. Session.facts emits fresh snapshot/record identities, collection links, saved fields and canonical spec/approval limits; job spec fields are flattened.",
+          "sources": [
+            "application state",
+            "tool call"
+          ]
+        },
+        {
+          "text": "waiting_dispatches starts at 0 and submission_seq=len(jobs)+1. Only a successful original dispatch increments other currently eligible candidates of the selected node type; failed/blocked attempts or wall-clock time do not increment. Original candidates already apply saved quotas, approval policy digest and free-node checks.",
+          "sources": [
+            "application state",
+            "tool result"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: Given broad target Allow and target waiting_dispatches <3, deny PRIORITY_CONFLICT if a distinct queued Master contender has waiting_dispatches >=3, passes current-approval and Master numeric limits, and shares the target's type with a free node."
+        },
+        {
+          "indent": 0,
+          "text": "Node capacity fields must exist, but this branch does not compare them with contender demand or explicitly require contender CPU type. It can therefore block for a contender that cannot fit. Submission order is irrelevant."
+        },
+        {
+          "indent": 0,
+          "text": "Missing required contender, counter, approval or node evidence prevents this Deny, not necessarily dispatch Allow. The original scheduler cannot undo this Deny and may additionally refuse calls the added layer permits."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"PRIORITY_CONFLICT\"):-Request(A,B,store_dispatch_effect),Allow(A),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Field(C,jobs,F),Field(F,id,G),Field(F,state,\"QUEUED\"),Field(F,version,H)"
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "ed),Field(M,approval_id,K),Field(C,nodes,N),Field(N,run_id,null),Field(E,node_type,O),Field(N,node_type,O),Field(N,cpu_cores,P),Field(N,memory_gb,Q),Field(F,node_type,O),Field(F,cpu_cores,R),Field(F,memory_gb,S),Field(E,owner,\"Master\"),Field(E,waiting_dispatches,T),Field(F,owner,\"Master\"),Field(F,runtime_minutes,U),Field(F,waiting_dispatches,Z),G!=D,K!=null,R<=\"4\",S<=\"8\",T<\"3\",R>=\"1\",R<=\"4\",S>=\"1\",S<=\"8\",U>=\"1\",U<=\"20\",Z>=\"3\"."
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "'approval_id':None,'run_id':None,'waiting_dispatches':0,'submission_seq':len(s['jobs'])+1,"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "for candidate in candidates:\n                other=self._find(s,'jobs',candidate['job_id'])\n                if other['id']!=job_id and other['spec']['node_type']==node['node_type']:\n                    other['waiting_dispatches']+=1"
+        },
+        {
+          "file": "framework/policyweave/core/datalog.py",
+          "quote": "return json.dumps(\"n\" + raw)"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "runner-permission",
+      "title": "Runner permission to record completion",
+      "summary": "Records: Before Trace.tool invokes record_completion, the gate reads caller capability, the run_id input and saved run existence. Before the registered receipt mutation, it rereads capability and the actual invocation run ID against transaction state.",
+      "ruleIds": [
+        "rule27",
+        "rule28"
+      ],
+      "reads": [
+        {
+          "text": "Caller is the host context set from Tools.role by Tools.call or from Trace.tool actor; direct store entry uses current_caller or Unbound. Fixed PrincipalGroup/Capability facts derive InGroup/Can through the capability foundation. Model claims do not produce identity.",
+          "sources": [
+            "runtime identity",
+            "static configuration"
+          ]
+        },
+        {
+          "text": "Interface observations use store.snapshot() immediately before the callback gate. Mutation observations deep-copy the actual state loaded inside BEGIN IMMEDIATE and actual invocation/closure values. Session.facts emits fresh snapshot/record identities, collection links, saved fields and canonical spec/approval limits; job spec fields are flattened.",
+          "sources": [
+            "application state",
+            "tool call"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: SimulatorRole, whose configured member is Runner, must grant record_completion capability, and the run ID must match a saved run. Missing capability or run prevents Allow at either gate."
+        },
+        {
+          "indent": 0,
+          "text": "Historical runs and duplicate results can pass this permission. Receipt creation does not require a currently running allocation, elapsed duration or real execution evidence."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,record_completion),Can(B,cluster,record_completion),Field(A,snapshot,C),Parameter(A,run_id,D),Field(C,runs,E),Field(E,id,D)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_runner_completion),Can(B,cluster,record_completion),Field(A,snapshot,C),Field(A,run_id,D),Field(C,runs,E),Field(E,id,D)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "PrincipalGroup(\"Runner\",\"SimulatorRole\")."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Capability(\"SimulatorRole\",\"cluster\",\"record_completion\")."
+        },
+        {
+          "file": "source/core/tools.py",
+          "quote": "elif name=='record_completion':fn=lambda e:s.record_completion(a['run_id'],e)"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "if old:return {'ok':True,'receipt':old,'duplicate':True}"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "professor-finish-permission",
+      "title": "Professor permission to finish",
+      "summary": "Records: Before Trace.tool invokes finish_job, the gate reads caller role, requested job ID and saved job existence. Before the registered finish mutation, it rereads the actual invocation and transaction state.",
+      "ruleIds": [
+        "rule29",
+        "rule31"
+      ],
+      "reads": [
+        {
+          "text": "Caller is the host context set from Tools.role by Tools.call or from Trace.tool actor; direct store entry uses current_caller or Unbound. Fixed PrincipalGroup/Capability facts derive InGroup/Can through the capability foundation. Model claims do not produce identity.",
+          "sources": [
+            "runtime identity",
+            "static configuration"
+          ]
+        },
+        {
+          "text": "Interface observations use store.snapshot() immediately before the callback gate. Mutation observations deep-copy the actual state loaded inside BEGIN IMMEDIATE and actual invocation/closure values. Session.facts emits fresh snapshot/record identities, collection links, saved fields and canonical spec/approval limits; job spec fields are flattened.",
+          "sources": [
+            "application state",
+            "tool call"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: ProfessorRole and an existing target permit the interface callback without owner equality. Mutation requires the same role alternative plus finish-running, finish-allocation and finish-receipt. Missing requirements prevent Allow."
+        },
+        {
+          "indent": 0,
+          "text": "The gate does not bind the method actor argument to its caller; the app's existing read-access check remains necessary."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,finish_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),InGroup(B,\"ProfessorRole\")."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_finish_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),InGroup(B,\"ProfessorRole\"),Field(E,state,\"RUNNING\"),Field(E,run_id,F),Field(E,task_hash,G)"
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": ",Field(I,node_id,J),Field(I,generation,K),Field(C,nodes,L),Field(L,id,J),Field(L,run_id,F),Field(L,generation,K),Field(A,receipt_id,M),Field(C,receipts,N),Field(N,id,M),Field(N,kind,completion),Field(N,source,\"SimulatedRunner\"),Field(N,job_id,D),Field(N,run_id,F),Field(N,node_id,J),Field(N,generation,K),Field(N,task_hash,G),Field(N,exit_code,0),Event(O,\"Runner\",record_completion),Field(O,outcome,applied),Field(O,receipt_id,M)."
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "if not j or not can_read(actor,j):return deny('UNAVAILABLE')"
+        },
+        {
+          "file": "source/core/tools.py",
+          "quote": "elif name=='finish_job':fn=lambda e:s.finish(r,a['job_id'],a['receipt_id'],e)"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "student-finish-permission",
+      "title": "Student permission to finish",
+      "summary": "Records: Before Trace.tool invokes finish_job, the gate reads caller capability, requested job ID and saved ownership. It rereads actual invocation values and saved transaction state before the registered finish mutation.",
+      "ruleIds": [
+        "rule30",
+        "rule32"
+      ],
+      "reads": [
+        {
+          "text": "Caller is the host context set from Tools.role by Tools.call or from Trace.tool actor; direct store entry uses current_caller or Unbound. Fixed PrincipalGroup/Capability facts derive InGroup/Can through the capability foundation. Model claims do not produce identity.",
+          "sources": [
+            "runtime identity",
+            "static configuration"
+          ]
+        },
+        {
+          "text": "Interface observations use store.snapshot() immediately before the callback gate. Mutation observations deep-copy the actual state loaded inside BEGIN IMMEDIATE and actual invocation/closure values. Session.facts emits fresh snapshot/record identities, collection links, saved fields and canonical spec/approval limits; job spec fields are flattened.",
+          "sources": [
+            "application state",
+            "tool call"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: StudentRole finish capability and existing-job-ownership permit the interface callback. Mutation repeats both and separately requires finish-running, finish-allocation and finish-receipt. Missing requirements prevent Allow."
+        },
+        {
+          "indent": 0,
+          "text": "Interface permission does not establish running state or valid completion evidence. Student statements and model reports do not replace the required receipt."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,finish_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,finish_job),Field(E,owner,B)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_finish_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,finish_job),Field(E,owner,B),Field(E,state,\"RUNNING\"),Field(E,run_id,F),Field(E,task_hash,G)"
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": ",Field(I,node_id,J),Field(I,generation,K),Field(C,nodes,L),Field(L,id,J),Field(L,run_id,F),Field(L,generation,K),Field(A,receipt_id,M),Field(C,receipts,N),Field(N,id,M),Field(N,kind,completion),Field(N,source,\"SimulatedRunner\"),Field(N,job_id,D),Field(N,run_id,F),Field(N,node_id,J),Field(N,generation,K),Field(N,task_hash,G),Field(N,exit_code,0),Event(O,\"Runner\",record_completion),Field(O,outcome,applied),Field(O,receipt_id,M)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Capability(\"StudentRole\",\"cluster\",\"finish_job\")."
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "finish-running",
+      "title": "Finish requires running state",
+      "summary": "Records: During finish_job, immediately before the registered mutation, the gate reads saved target state, saved ownership and caller role from transaction state.",
+      "ruleIds": [
+        "rule31",
+        "rule32",
+        "rule65",
+        "rule66",
+        "rule67",
+        "rule68"
+      ],
+      "reads": [
+        {
+          "text": "Caller is the host context set from Tools.role by Tools.call or from Trace.tool actor; direct store entry uses current_caller or Unbound. Fixed PrincipalGroup/Capability facts derive InGroup/Can through the capability foundation. Model claims do not produce identity.",
+          "sources": [
+            "runtime identity",
+            "static configuration"
+          ]
+        },
+        {
+          "text": "Interface observations use store.snapshot() immediately before the callback gate. Mutation observations deep-copy the actual state loaded inside BEGIN IMMEDIATE and actual invocation/closure values. Session.facts emits fresh snapshot/record identities, collection links, saved fields and canonical spec/approval limits; job spec fields are flattened.",
+          "sources": [
+            "application state",
+            "tool call"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: Successful finish branches require RUNNING; missing state prevents Allow. For the saved owner or ProfessorRole, QUEUED explicitly denies NOT_RUNNING."
+        },
+        {
+          "indent": 0,
+          "text": "For those callers, any present state other than QUEUED or RUNNING, including an unknown state, explicitly denies STALE_REPORT_IGNORED. Owner-based denies need no finish capability, but cannot grant it."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_finish_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),InGroup(B,\"ProfessorRole\"),Field(E,state,\"RUNNING\"),Field(E,run_id,F),Field(E,task_hash,G)"
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": ",Field(I,node_id,J),Field(I,generation,K),Field(C,nodes,L),Field(L,id,J),Field(L,run_id,F),Field(L,generation,K),Field(A,receipt_id,M),Field(C,receipts,N),Field(N,id,M),Field(N,kind,completion),Field(N,source,\"SimulatedRunner\"),Field(N,job_id,D),Field(N,run_id,F),Field(N,node_id,J),Field(N,generation,K),Field(N,task_hash,G),Field(N,exit_code,0),Event(O,\"Runner\",record_completion),Field(O,outcome,applied),Field(O,receipt_id,M)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_finish_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,finish_job),Field(E,owner,B),Field(E,state,\"RUNNING\"),Field(E,run_id,F),Field(E,task_hash,G)"
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": ",Field(I,node_id,J),Field(I,generation,K),Field(C,nodes,L),Field(L,id,J),Field(L,run_id,F),Field(L,generation,K),Field(A,receipt_id,M),Field(C,receipts,N),Field(N,id,M),Field(N,kind,completion),Field(N,source,\"SimulatedRunner\"),Field(N,job_id,D),Field(N,run_id,F),Field(N,node_id,J),Field(N,generation,K),Field(N,task_hash,G),Field(N,exit_code,0),Event(O,\"Runner\",record_completion),Field(O,outcome,applied),Field(O,receipt_id,M)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"STALE_REPORT_IGNORED\"):-Request(A,B,store_finish_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Field(E,state,Z),Field(E,owner,B),Z!=\"QUEUED\",Z!=\"RUNNING\"."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"STALE_REPORT_IGNORED\"):-Request(A,B,store_finish_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Field(E,state,Z),InGroup(B,\"ProfessorRole\"),Z!=\"QUEUED\",Z!=\"RUNNING\"."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"NOT_RUNNING\"):-Request(A,B,store_finish_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Field(E,state,\"QUEUED\"),Field(E,owner,B)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"NOT_RUNNING\"):-Request(A,B,store_finish_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Field(E,state,\"QUEUED\"),InGroup(B,\"ProfessorRole\")."
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "observation = {'state':deepcopy(state), 'fields':fields}"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "self.db.execute('BEGIN IMMEDIATE')\n        try:\n            state=self.snapshot()\n            result=fn(state)"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "finish-allocation",
+      "title": "Finish matches the live allocation",
+      "summary": "Records: During finish_job, immediately before the registered mutation, the gate reads the target's current task version and details, current run, saved run identity and saved node allocation and generation.",
+      "ruleIds": [
+        "rule31",
+        "rule32"
+      ],
+      "reads": [
+        {
+          "text": "Interface observations use store.snapshot() immediately before the callback gate. Mutation observations deep-copy the actual state loaded inside BEGIN IMMEDIATE and actual invocation/closure values. Session.facts emits fresh snapshot/record identities, collection links, saved fields and canonical spec/approval limits; job spec fields are flattened.",
+          "sources": [
+            "application state",
+            "tool call"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: The RUNNING job's current run must belong to that job ID and match its current task version and unchanged task details. The run's node must still hold that run ID at the same generation. All matches must hold together."
+        },
+        {
+          "indent": 0,
+          "text": "Missing or mismatched allocation evidence prevents Allow. finish-receipt is separate: a receipt alone cannot release a changed allocation."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_finish_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),InGroup(B,\"ProfessorRole\"),Field(E,state,\"RUNNING\"),Field(E,run_id,F),Field(E,task_hash,G)"
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": ",Field(I,node_id,J),Field(I,generation,K),Field(C,nodes,L),Field(L,id,J),Field(L,run_id,F),Field(L,generation,K),Field(A,receipt_id,M),Field(C,receipts,N),Field(N,id,M),Field(N,kind,completion),Field(N,source,\"SimulatedRunner\"),Field(N,job_id,D),Field(N,run_id,F),Field(N,node_id,J),Field(N,generation,K),Field(N,task_hash,G),Field(N,exit_code,0),Event(O,\"Runner\",record_completion),Field(O,outcome,applied),Field(O,receipt_id,M)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_finish_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,finish_job),Field(E,owner,B),Field(E,state,\"RUNNING\"),Field(E,run_id,F),Field(E,task_hash,G)"
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": ",Field(I,node_id,J),Field(I,generation,K),Field(C,nodes,L),Field(L,id,J),Field(L,run_id,F),Field(L,generation,K),Field(A,receipt_id,M),Field(C,receipts,N),Field(N,id,M),Field(N,kind,completion),Field(N,source,\"SimulatedRunner\"),Field(N,job_id,D),Field(N,run_id,F),Field(N,node_id,J),Field(N,generation,K),Field(N,task_hash,G),Field(N,exit_code,0),Event(O,\"Runner\",record_completion),Field(O,outcome,applied),Field(O,receipt_id,M)."
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "'generation':node['generation'],'task_hash':j['task_hash'],'job_version':j['version'],"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "if node['run_id']!=run['id'] or node['generation']!=run['generation']:return deny('ALLOCATION_CHANGED')"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "self._release(s,node,run,event_id,'COMPLETED')\n            self._transition(s,j,'COMPLETED',actor,event_id,'RUNNER_COMPLETED')"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "finish-receipt",
+      "title": "Finish requires a witnessed completion receipt",
+      "summary": "Records: finish_job reads its actual receipt_id and saved receipts before mutation. record_completion builds a successful simulator receipt from a saved run; only after commit and ok exactly True with a nonduplicate receipt does the per-Store record capture the actual caller, applied event and receipt ID.",
+      "ruleIds": [
+        "rule31",
+        "rule32"
+      ],
+      "reads": [
+        {
+          "text": "Interface observations use store.snapshot() immediately before the callback gate. Mutation observations deep-copy the actual state loaded inside BEGIN IMMEDIATE and actual invocation/closure values. Session.facts emits fresh snapshot/record identities, collection links, saved fields and canonical spec/approval limits; job spec fields are flattened.",
+          "sources": [
+            "application state",
+            "tool call"
+          ]
+        },
+        {
+          "text": "Original record_completion builds receipt fields from saved run and sets completion/SimulatedRunner/exit_code=0. After original commit, Session records Runner-kind event only for ok exactly True, nonduplicate receipt results, retaining actual caller identity.",
+          "sources": [
+            "application state",
+            "tool result",
+            "runtime identity"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: The requested receipt must be kind completion, source SimulatedRunner and exit_code=0, matching finish-allocation's job ID, run ID, node ID, generation and unchanged task details."
+        },
+        {
+          "indent": 0,
+          "text": "An applied record_completion event with actor Runner and that same receipt ID is also required. Missing or mismatched evidence prevents Allow; duplicate results do not create missing event evidence."
+        },
+        {
+          "indent": 0,
+          "text": "Simulator success needs no elapsed runtime or external execution proof. Saved source text or model reports are insufficient. Nested release must separately pass release-allocation and release-evidence."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_finish_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),InGroup(B,\"ProfessorRole\"),Field(E,state,\"RUNNING\"),Field(E,run_id,F),Field(E,task_hash,G)"
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": ",Field(I,node_id,J),Field(I,generation,K),Field(C,nodes,L),Field(L,id,J),Field(L,run_id,F),Field(L,generation,K),Field(A,receipt_id,M),Field(C,receipts,N),Field(N,id,M),Field(N,kind,completion),Field(N,source,\"SimulatedRunner\"),Field(N,job_id,D),Field(N,run_id,F),Field(N,node_id,J),Field(N,generation,K),Field(N,task_hash,G),Field(N,exit_code,0),Event(O,\"Runner\",record_completion),Field(O,outcome,applied),Field(O,receipt_id,M)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_finish_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,finish_job),Field(E,owner,B),Field(E,state,\"RUNNING\"),Field(E,run_id,F),Field(E,task_hash,G)"
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": ",Field(I,node_id,J),Field(I,generation,K),Field(C,nodes,L),Field(L,id,J),Field(L,run_id,F),Field(L,generation,K),Field(A,receipt_id,M),Field(C,receipts,N),Field(N,id,M),Field(N,kind,completion),Field(N,source,\"SimulatedRunner\"),Field(N,job_id,D),Field(N,run_id,F),Field(N,node_id,J),Field(N,generation,K),Field(N,task_hash,G),Field(N,exit_code,0),Event(O,\"Runner\",record_completion),Field(O,outcome,applied),Field(O,receipt_id,M)."
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "'job_id':run['job_id'],'node_id':run['node_id'],'generation':run['generation'],\n               'task_hash':run['task_hash'],'source':'SimulatedRunner','exit_code':0,"
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "if action == 'store_runner_completion' and not result.get('duplicate'):\n            record, kind, association = result.get('receipt'), 'record_completion', 'receipt_id'"
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "if not isinstance(result, dict) or result.get('ok') is not True:\n            return"
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "self.journal.append({'predicate':'Event','args':[eid,actor,kind]})"
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "field(self.journal, eid, 'outcome', 'applied')\n            field(self.journal, eid, association, record['id'])"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "kill-permission",
+      "title": "Professor permission to kill",
+      "summary": "Records: Before Trace.tool invokes kill_job, the gate reads caller capability, requested job ID, saved target and supplied reason. Before the registered stop mutation, it reads the actual invocation reason and transaction state.",
+      "ruleIds": [
+        "rule33",
+        "rule35"
+      ],
+      "reads": [
+        {
+          "text": "Caller is the host context set from Tools.role by Tools.call or from Trace.tool actor; direct store entry uses current_caller or Unbound. Fixed PrincipalGroup/Capability facts derive InGroup/Can through the capability foundation. Model claims do not produce identity.",
+          "sources": [
+            "runtime identity",
+            "static configuration"
+          ]
+        },
+        {
+          "text": "Interface observations use store.snapshot() immediately before the callback gate. Mutation observations deep-copy the actual state loaded inside BEGIN IMMEDIATE and actual invocation/closure values. Session.facts emits fresh snapshot/record identities, collection links, saved fields and canonical spec/approval limits; job spec fields are flattened.",
+          "sources": [
+            "application state",
+            "tool call"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: ProfessorRole kill capability, an existing target and a supplied reason are required at both gates, without owner equality. Missing requirements prevent Allow. kill-cancel-reason and kill-cancel-state apply separately."
+        },
+        {
+          "indent": 0,
+          "text": "Running-job release also needs release-allocation and release-evidence. No urgency, managerial decision or semantic justification is required. The app's existing actor check remains necessary because the method actor is not bound to the gate caller."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,kill_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,kill_job),Parameter(A,reason,F)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_kill_cancel_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,kill_job),Field(A,reason,F)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Capability(\"ProfessorRole\",\"cluster\",\"kill_job\")."
+        },
+        {
+          "file": "source/core/tools.py",
+          "quote": "else:fn=lambda e:s.kill(r,a['job_id'],a['reason'],e)"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "cancel-permission",
+      "title": "Student permission to cancel",
+      "summary": "Records: Before Trace.tool invokes cancel_job, the gate reads caller capability, requested job ID, saved ownership and supplied reason. The shared stop mutation reads actual invocation values and transaction state.",
+      "ruleIds": [
+        "rule34",
+        "rule36"
+      ],
+      "reads": [
+        {
+          "text": "Caller is the host context set from Tools.role by Tools.call or from Trace.tool actor; direct store entry uses current_caller or Unbound. Fixed PrincipalGroup/Capability facts derive InGroup/Can through the capability foundation. Model claims do not produce identity.",
+          "sources": [
+            "runtime identity",
+            "static configuration"
+          ]
+        },
+        {
+          "text": "Interface observations use store.snapshot() immediately before the callback gate. Mutation observations deep-copy the actual state loaded inside BEGIN IMMEDIATE and actual invocation/closure values. Session.facts emits fresh snapshot/record identities, collection links, saved fields and canonical spec/approval limits; job spec fields are flattened.",
+          "sources": [
+            "application state",
+            "tool call"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: StudentRole cancel capability, existing-job-ownership and a supplied reason are required at interface and mutation gates. Missing requirements prevent Allow. kill-cancel-reason and kill-cancel-state apply separately."
+        },
+        {
+          "indent": 0,
+          "text": "Running-job release also needs release-allocation and release-evidence. These rules add neither student kill_job permission nor a Professor cancel_job branch."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,cancel_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,cancel_job),Field(E,owner,B),Parameter(A,reason,F)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_kill_cancel_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,cancel_job),Field(E,owner,B),Field(A,reason,F)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Capability(\"StudentRole\",\"cluster\",\"cancel_job\")."
+        },
+        {
+          "file": "source/core/tools.py",
+          "quote": "else:fn=lambda e:s.kill(r,a['job_id'],a['reason'],e)"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "kill-cancel-reason",
+      "title": "Supplied reason for kill or cancellation",
+      "summary": "Records: kill_job and cancel_job expose the actual reason input before the interface callback and the actual invocation reason before mutation. The app validates reason text before reaching the mutation gate.",
+      "ruleIds": [
+        "rule33",
+        "rule34",
+        "rule35",
+        "rule36"
+      ],
+      "reads": [
+        {
+          "text": "Reason is actual interface Parameter or observed Store.kill invocation/closure Field. Original bounded_text(reason) executes before _mutate.",
+          "sources": [
+            "tool call"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: Added permission branches require reason presence; a missing reason prevents Allow. They do not require nonempty or meaningful content. The app's existing text check requires a nonblank valid UTF-8 string of at most 1200 characters."
+        },
+        {
+          "indent": 0,
+          "text": "Reason bodies otherwise remain unchecked for justification or private content. Only the separate exact-key persistence scan may block registered credential strings when the reason is persisted."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,kill_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,kill_job),Parameter(A,reason,F)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,cancel_job),Field(A,snapshot,C),Parameter(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,cancel_job),Field(E,owner,B),Parameter(A,reason,F)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_kill_cancel_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,kill_job),Field(A,reason,F)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_kill_cancel_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,cancel_job),Field(E,owner,B),Field(A,reason,F)."
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "def kill(self,actor,job_id,reason,event_id):\n        bounded_text(reason)"
+        },
+        {
+          "file": "source/core/schemas.py",
+          "quote": "def bounded_text(value,limit=1200):\n    if not isinstance(value,str) or not value.strip() or len(value)>limit:"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "kill-cancel-state",
+      "title": "Kill and cancellation state check",
+      "summary": "Records: During kill_job or cancel_job, immediately before the registered mutation, the gate reads the saved target state from the transaction.",
+      "ruleIds": [
+        "rule35",
+        "rule36",
+        "rule37"
+      ],
+      "reads": [
+        {
+          "text": "Interface observations use store.snapshot() immediately before the callback gate. Mutation observations deep-copy the actual state loaded inside BEGIN IMMEDIATE and actual invocation/closure values. Session.facts emits fresh snapshot/record identities, collection links, saved fields and canonical spec/approval limits; job spec fields are flattened.",
+          "sources": [
+            "application state",
+            "tool call"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: Positive permission has no state restriction. A present state differing from all of QUEUED, RUNNING, COMPLETED and TERMINATED explicitly denies UNAVAILABLE. Missing state does not trigger this Deny and can reach an original state-access error."
+        },
+        {
+          "indent": 0,
+          "text": "QUEUED permits original termination without release. RUNNING permits a stop attempt subject to confirmation and nested release. COMPLETED or TERMINATED permits original ALREADY_TERMINAL no-op success, not an added refusal."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_kill_cancel_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,kill_job),Field(A,reason,F)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,store_kill_cancel_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Can(B,cluster,cancel_job),Field(E,owner,B),Field(A,reason,F)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"UNAVAILABLE\"):-Request(A,B,store_kill_cancel_effect),Field(A,snapshot,C),Field(A,job_id,D),Field(C,jobs,E),Field(E,id,D),Field(E,state,F),F!=\"QUEUED\",F!=\"RUNNING\",F!=\"COMPLETED\",F!=\"TERMINATED\"."
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "if j['state'] in ('COMPLETED','TERMINATED'):return {'ok':True,'code':'ALREADY_TERMINAL'}"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "if not self.runner_stop_succeeds:return deny('RUNNER_STOP_NOT_CONFIRMED')"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "release-allocation",
+      "title": "Release matches the exact live allocation",
+      "summary": "Records: Before nested release clears a node, the gate reads current transaction state and actual node/run IDs. unsafe_release_by_node also checks its node_id and old_run_id inputs before its interface and mutation callbacks.",
+      "ruleIds": [
+        "rule38",
+        "rule39",
+        "rule40",
+        "rule41",
+        "rule42",
+        "rule43"
+      ],
+      "reads": [
+        {
+          "text": "Interface observations use store.snapshot() immediately before the callback gate. Mutation observations deep-copy the actual state loaded inside BEGIN IMMEDIATE and actual invocation/closure values. Session.facts emits fresh snapshot/record identities, collection links, saved fields and canonical spec/approval limits; job spec fields are flattened.",
+          "sources": [
+            "application state",
+            "tool call"
+          ]
+        },
+        {
+          "text": "Nested _release observes deep-copied current in-transaction state and actual node/run object ids. unsafe_release_by_node uses node_id/old_run_id Parameters at interface/effect and later calls _release. Neither rule set has a role/capability condition.",
+          "sources": [
+            "application state",
+            "tool call"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: The requested node must hold the requested run. That saved run must name the same node and generation, and its job must still be RUNNING with that run ID, unchanged task details and current task version equal to the run's job version."
+        },
+        {
+          "indent": 0,
+          "text": "The same allocation must pass release-evidence. If neither full release alternative holds, including missing fields or changed generation, an explicit Deny returns ALLOCATION_CHANGED before clearing the node."
+        },
+        {
+          "indent": 0,
+          "text": "No caller capability is required; even LegacyCallback or Unbound can pass these matches. Nested refusal raises ApplicationError and rolls back the original mutation; unsafe_release_by_node returns a policy refusal."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,release_allocation),Field(A,snapshot,C),Field(A,node_id,D),Field(A,run_id,E),Field(C,nodes,F),Field(F,id,D),Field(F,run_id,E),Field(F,generation,G),Field(C,runs,H),Field(H,id,E),Field(H,node_id,D)"
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "ield(C,jobs,K),Field(K,id,I),Field(K,run_id,E),Field(K,task_hash,J),Field(K,state,\"RUNNING\"),Field(K,version,L),Field(H,job_version,L),Field(C,receipts,M),Field(M,run_id,E),Field(M,node_id,D),Field(M,generation,G),Field(M,job_id,I),Field(M,task_hash,J),Field(M,source,\"SimulatedRunner\"),Field(M,kind,completion),Field(M,exit_code,0),Field(M,id,N),Event(O,\"Runner\",record_completion),Field(O,outcome,applied),Field(O,receipt_id,N)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,release_allocation),Field(A,snapshot,C),Field(A,node_id,D),Field(A,run_id,E),Field(C,nodes,F),Field(F,id,D),Field(F,run_id,E),Field(F,generation,G),Field(C,runs,H),Field(H,id,E),Field(H,node_id,D),Field(H,generation,G),Field(H,job_id,I),Field(H,task_hash,J),Field(C,jobs,K),Field(K,id,I),Field(K,run_id,E),Field(K,task_hash,J),Field(K,state,\"RUNNING\"),Field(K,version,L),Field(H,job_version,L),Field(C,receipts,M),Field(M,run_id,E),Field(M,node_id,D),Field(M,generation,G),Field(M,job_id,I),Field(M,task_hash,J),Field(M,source,\"SimulatedRunner\"),Field(M,kind,stop),Field(M,confirmed_stopped,true)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"ALLOCATION_CHANGED\"):-Request(A,B,release_allocation),not Allow(A)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,unsafe_release_by_node),Field(A,snapshot,C),Parameter(A,node_id,D),Parameter(A,old_run_id,E),Field(C,nodes,F),Field(F,id,D),Field(F,run_id,E),Field(F,generation,G),Field(C,runs,H)"
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "ield(C,jobs,K),Field(K,id,I),Field(K,run_id,E),Field(K,task_hash,J),Field(K,state,\"RUNNING\"),Field(K,version,L),Field(H,job_version,L),Field(C,receipts,M),Field(M,run_id,E),Field(M,node_id,D),Field(M,generation,G),Field(M,job_id,I),Field(M,task_hash,J),Field(M,source,\"SimulatedRunner\"),Field(M,kind,completion),Field(M,exit_code,0),Field(M,id,N),Event(O,\"Runner\",record_completion),Field(O,outcome,applied),Field(O,receipt_id,N)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,unsafe_release_by_node),Field(A,snapshot,C),Parameter(A,node_id,D),Parameter(A,old_run_id,E),Field(C,nodes,F),Field(F,id,D),Field(F,run_id,E),Field(F,generation,G),Field(C,runs,H),Field(H,id,E),Field(H,node_id,D),Field(H,generation,G),Field(H,job_id,I),Field(H,task_hash,J),Field(C,jobs,K),Field(K,id,I),Field(K,run_id,E),Field(K,task_hash,J),Field(K,state,\"RUNNING\"),Field(K,version,L),Field(H,job_version,L),Field(C,receipts,M),Field(M,run_id,E),Field(M,node_id,D),Field(M,generation,G),Field(M,job_id,I),Field(M,task_hash,J),Field(M,source,\"SimulatedRunner\"),Field(M,kind,stop),Field(M,confirmed_stopped,true)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"ALLOCATION_CHANGED\"):-Request(A,B,unsafe_release_by_node),not Allow(A)."
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "observation = {'state':deepcopy(s), 'fields':{'node_id':node['id'], 'run_id':run['id']}}"
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "arguments = ({k:values[k] for k in ('node_id','old_run_id')} if action == 'unsafe_release_by_node' else {})"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "node['run_id']=None"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "except BaseException:\n            self.db.rollback();raise"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "release-evidence",
+      "title": "Completion or confirmed stop before release",
+      "summary": "Records: Before release, the gate reads saved receipts and prior applied completion events. record_completion supplies committed completion evidence; kill_job appends a stop receipt only after simulated stop succeeds, immediately before nested release in the same transaction.",
+      "ruleIds": [
+        "rule38",
+        "rule39",
+        "rule41",
+        "rule42"
+      ],
+      "reads": [
+        {
+          "text": "Interface observations use store.snapshot() immediately before the callback gate. Mutation observations deep-copy the actual state loaded inside BEGIN IMMEDIATE and actual invocation/closure values. Session.facts emits fresh snapshot/record identities, collection links, saved fields and canonical spec/approval limits; job spec fields are flattened.",
+          "sources": [
+            "application state",
+            "tool call"
+          ]
+        },
+        {
+          "text": "Completion receipt/event producers are described in finish-receipt. Store.kill appends a stop receipt only after runner_stop_succeeds is true, immediately before nested release within the same transaction. Stop has no journal event.",
+          "sources": [
+            "application state",
+            "tool result"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: Some SimulatedRunner receipt must match release-allocation's job ID, run ID, node ID, generation and unchanged task details. Completion requires kind completion, exit_code=0 and an applied Runner record_completion event for that receipt ID."
+        },
+        {
+          "indent": 0,
+          "text": "Alternatively, kind stop with confirmed_stopped=true suffices, without an event, exit code or supplied receipt-ID match. Evidence is existential, not bound to finish_job's receipt_id. Missing both alternatives yields release-allocation's explicit ALLOCATION_CHANGED Deny."
+        },
+        {
+          "indent": 0,
+          "text": "Stop evidence relies on saved simulator confirmation, not external attestation; forged matching stop records can satisfy it. Original stop failure returns before receipt append or release."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,release_allocation),Field(A,snapshot,C),Field(A,node_id,D),Field(A,run_id,E),Field(C,nodes,F),Field(F,id,D),Field(F,run_id,E),Field(F,generation,G),Field(C,runs,H),Field(H,id,E),Field(H,node_id,D)"
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "ield(C,jobs,K),Field(K,id,I),Field(K,run_id,E),Field(K,task_hash,J),Field(K,state,\"RUNNING\"),Field(K,version,L),Field(H,job_version,L),Field(C,receipts,M),Field(M,run_id,E),Field(M,node_id,D),Field(M,generation,G),Field(M,job_id,I),Field(M,task_hash,J),Field(M,source,\"SimulatedRunner\"),Field(M,kind,completion),Field(M,exit_code,0),Field(M,id,N),Event(O,\"Runner\",record_completion),Field(O,outcome,applied),Field(O,receipt_id,N)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,release_allocation),Field(A,snapshot,C),Field(A,node_id,D),Field(A,run_id,E),Field(C,nodes,F),Field(F,id,D),Field(F,run_id,E),Field(F,generation,G),Field(C,runs,H),Field(H,id,E),Field(H,node_id,D),Field(H,generation,G),Field(H,job_id,I),Field(H,task_hash,J),Field(C,jobs,K),Field(K,id,I),Field(K,run_id,E),Field(K,task_hash,J),Field(K,state,\"RUNNING\"),Field(K,version,L),Field(H,job_version,L),Field(C,receipts,M),Field(M,run_id,E),Field(M,node_id,D),Field(M,generation,G),Field(M,job_id,I),Field(M,task_hash,J),Field(M,source,\"SimulatedRunner\"),Field(M,kind,stop),Field(M,confirmed_stopped,true)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,unsafe_release_by_node),Field(A,snapshot,C),Parameter(A,node_id,D),Parameter(A,old_run_id,E),Field(C,nodes,F),Field(F,id,D),Field(F,run_id,E),Field(F,generation,G),Field(C,runs,H)"
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "ield(C,jobs,K),Field(K,id,I),Field(K,run_id,E),Field(K,task_hash,J),Field(K,state,\"RUNNING\"),Field(K,version,L),Field(H,job_version,L),Field(C,receipts,M),Field(M,run_id,E),Field(M,node_id,D),Field(M,generation,G),Field(M,job_id,I),Field(M,task_hash,J),Field(M,source,\"SimulatedRunner\"),Field(M,kind,completion),Field(M,exit_code,0),Field(M,id,N),Event(O,\"Runner\",record_completion),Field(O,outcome,applied),Field(O,receipt_id,N)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,unsafe_release_by_node),Field(A,snapshot,C),Parameter(A,node_id,D),Parameter(A,old_run_id,E),Field(C,nodes,F),Field(F,id,D),Field(F,run_id,E),Field(F,generation,G),Field(C,runs,H),Field(H,id,E),Field(H,node_id,D),Field(H,generation,G),Field(H,job_id,I),Field(H,task_hash,J),Field(C,jobs,K),Field(K,id,I),Field(K,run_id,E),Field(K,task_hash,J),Field(K,state,\"RUNNING\"),Field(K,version,L),Field(H,job_version,L),Field(C,receipts,M),Field(M,run_id,E),Field(M,node_id,D),Field(M,generation,G),Field(M,job_id,I),Field(M,task_hash,J),Field(M,source,\"SimulatedRunner\"),Field(M,kind,stop),Field(M,confirmed_stopped,true)."
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "if not self.runner_stop_succeeds:return deny('RUNNER_STOP_NOT_CONFIRMED')"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "'task_hash':run['task_hash'],'confirmed_stopped':True,'source':'SimulatedRunner',"
+        },
+        {
+          "file": "source/core/store.py",
+          "quote": "s['receipts'].append(stop);self._release(s,node,run,event_id,'STOP_CONFIRMED')"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "trace-credential-exclusion",
+      "title": "Exclude configured keys from persisted events",
+      "summary": "Records: Before Trace.add appends or persists an event, the gate counts registered key occurrences in all actual bound/default arguments except self, including actor, kind, payloads, references and visibility. Keys enter the registry after successful DeepSeekBackend construction with a nonempty API key.",
+      "ruleIds": [
+        "rule44",
+        "rule45"
+      ],
+      "reads": [
+        {
+          "text": "credential_occurrences recursively visits string values and dictionary keys, including list/tuple contents, and sums exact case-sensitive str.count for every key in process-global _ACTIVE_KEYS. Keys are registered only after successful DeepSeekBackend construction from nonempty settings.api_key, deduplicated and never removed. An empty registry yields zero.",
+          "sources": [
+            "static configuration",
+            "application state",
+            "tool call"
+          ]
+        },
+        {
+          "text": "persist_event scans all actual Trace.add bound/default arguments except self: actor/kind, inputs/outputs, parents/source refs, visibility/origin. Fixed gate actor is TracePersistence.",
+          "sources": [
+            "tool call",
+            "runtime identity"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: Allow requires a zero count; nonzero or missing measurement explicitly denies UNAVAILABLE and raises ApplicationError before append or insert. Counting is exact and case-sensitive across string values and dictionary keys, recursively through lists and tuples; an empty registry counts zero."
+        },
+        {
+          "indent": 0,
+          "text": "Unknown, transformed or split keys, bytes and other sensitive content are not protected. Framework telemetry, direct writes and alternative transports are outside this gate. Monitoring redacts configured keys only on its model_output path, not the original event data."
+        },
+        {
+          "indent": 0,
+          "text": "Tool or model effects can precede observation persistence; refusal does not undo them. Framework tracing can observe arguments before this gate, and separate run observation can expose state."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,persist_trace_event),Field(A,credential_occurrences,0)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"UNAVAILABLE\"):-Request(A,B,persist_trace_event),not Allow(A)."
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "if self.settings.api_key:\n            _ACTIVE_KEYS.add(self.settings.api_key)"
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "return sum(text.count(key) for text in strings(value) for key in _ACTIVE_KEYS)"
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "payload = {k:v for k,v in bound.arguments.items() if k != 'self'}"
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "observation = {'fields':{'credential_occurrences':occurrences(payload)}}"
+        },
+        {
+          "file": "source/core/tracing.py",
+          "quote": "self.events.append(event)\n        with self.store.db:"
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "trace.model_output(payload['actor'], visible_observation(payload['outputs']['decision']),"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "provider-credential-exclusion",
+      "title": "Exclude configured keys from provider bodies",
+      "summary": "Records: Before DeepSeekBackend.request and each original 429 retry, the gate counts registered key occurrences in the actual body. Successful backend construction registers a nonempty API key. Authentication headers are not part of the measurement.",
+      "ruleIds": [
+        "rule46",
+        "rule47"
+      ],
+      "reads": [
+        {
+          "text": "credential_occurrences recursively visits string values and dictionary keys, including list/tuple contents, and sums exact case-sensitive str.count for every key in process-global _ACTIVE_KEYS. Keys are registered only after successful DeepSeekBackend construction from nonempty settings.api_key, deduplicated and never removed. An empty registry yields zero.",
+          "sources": [
+            "static configuration",
+            "application state",
+            "tool call"
+          ]
+        },
+        {
+          "text": "provider_request scans actual bound body before original DeepSeekBackend.request. Actor is ProviderTransport; request-depth policy layers allow separate retry gates.",
+          "sources": [
+            "tool call",
+            "runtime identity"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: Allow requires zero exact case-sensitive occurrences in recursive string values and dictionary keys, including lists and tuples. An empty registry or body=None counts zero. Nonzero or missing measurement explicitly denies UNAVAILABLE and raises BackendError before request construction or send."
+        },
+        {
+          "indent": 0,
+          "text": "Unknown, transformed or split keys and bytes evade scanning; other private message or model-context content is unchecked. Endpoint, headers, wire encoding and responses are outside the scan; the Authorization header still carries the key."
+        },
+        {
+          "indent": 0,
+          "text": "Framework telemetry and alternative transports are outside this gate. It adds no external-access allowlist; the app's existing endpoint validation, TLS, budgets and retry logic remain responsible for those constraints."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,send_provider_request),Field(A,credential_occurrences,0)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"UNAVAILABLE\"):-Request(A,B,send_provider_request),not Allow(A)."
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "if self.settings.api_key:\n            _ACTIVE_KEYS.add(self.settings.api_key)"
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "return sum(text.count(key) for text in strings(value) for key in _ACTIVE_KEYS)"
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "observation = {'fields':{'credential_occurrences':occurrences(bound.arguments['body'])}}"
+        },
+        {
+          "file": "source/agents/client.py",
+          "quote": "headers={\"Authorization\": \"Bearer \" + self.settings.api_key,"
+        },
+        {
+          "file": "source/agents/client.py",
+          "quote": "return self.request(endpoint, body, retry_bound, retried=True)"
+        }
+      ],
+      "examples": []
+    },
+    {
+      "id": "export-credential-exclusion",
+      "title": "Exclude configured keys from evaluator exports",
+      "summary": "Records: Before phase1.run.export creates directories or writes files, the gate counts registered key occurrences across actual data and its rendered Markdown. Successful backend construction registers a nonempty API key. Markdown rendering occurs before the gate and can itself fail.",
+      "ruleIds": [
+        "rule48",
+        "rule49"
+      ],
+      "reads": [
+        {
+          "text": "credential_occurrences recursively visits string values and dictionary keys, including list/tuple contents, and sums exact case-sensitive str.count for every key in process-global _ACTIVE_KEYS. Keys are registered only after successful DeepSeekBackend construction from nonempty settings.api_key, deduplicated and never removed. An empty registry yields zero.",
+          "sources": [
+            "static configuration",
+            "application state",
+            "tool call"
+          ]
+        },
+        {
+          "text": "export_files scans [actual data, markdown(data)] before original export; lazy process-global Session uses actor Evaluator.",
+          "sources": [
+            "tool call",
+            "application state",
+            "runtime identity"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "indent": 0,
+          "text": "Rules: Allow requires a combined zero count; nonzero or missing measurement explicitly denies UNAVAILABLE and raises ApplicationError before export writes. Counting is exact and case-sensitive through string values, dictionary keys, lists and tuples; an empty registry counts zero."
+        },
+        {
+          "indent": 0,
+          "text": "The scan includes scenario_id in data but excludes the output path. Unknown, transformed or split keys, bytes and other private content are not protected. Framework exports, direct writes and alternative transports remain outside this gate."
+        },
+        {
+          "indent": 0,
+          "text": "The exporter renders Markdown again rather than writing frozen scanned bytes. This gate does not make the JSON and Markdown writes atomic."
+        }
+      ],
+      "evidence": [
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Allow(A):-Request(A,B,export_evaluator_files),Field(A,credential_occurrences,0)."
+        },
+        {
+          "file": "source/policy_port/rules.dl",
+          "quote": "Deny(A,\"UNAVAILABLE\"):-Request(A,B,export_evaluator_files),not Allow(A)."
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "if self.settings.api_key:\n            _ACTIVE_KEYS.add(self.settings.api_key)"
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "return sum(text.count(key) for text in strings(value) for key in _ACTIVE_KEYS)"
+        },
+        {
+          "file": "source/policy_port/adapter.py",
+          "quote": "observation = {'fields':{'credential_occurrences':occurrences([data,markdown(data)])}}"
+        },
+        {
+          "file": "source/phase1/run.py",
+          "quote": "p.with_suffix('.json').write_text(json.dumps(data,indent=2,ensure_ascii=False)+'\\n')\n    p.with_suffix('.md').write_text(markdown(data))"
+        }
+      ],
+      "examples": []
+    }
+  ],
+  "limitations": [
+    "Static reconstruction of supplied installed enforcement only; no source policy, forward plan, actual trajectory or tests were supplied or executed. This does not establish intended-policy completeness or observed runtime success.",
+    "Composition is explicit Allow AND no matching Deny. Missing Allow is a refusal even without a named Deny. Local quota/state/priority denies can override positive branches. Adapter refusal projection masks private/unrecognized codes to UNAVAILABLE; read returns only status. Other refusal dictionaries include policy feedback. release_allocation/persistence/export raise ApplicationError; provider raises BackendError. Allowed original ok=False results remain delegated not-applied outcomes; original exceptions remain distinct from rule denials.",
+    "Installed binding has MECHANISMS=('capability','observations') and INVARIANTS=(). There is no added global FSM, lifecycle-state, task-hash, policy-digest, immutable-owner, allocation uniqueness or private-content invariant. The original offline audit runs after effects with intercepted=False; it is not added enforcement and cannot cancel an effect.",
+    "Framework integrity checks still enforce frozen call names/allowed supplied parameter keys/types, exact int64 numeric encodings, conflicting single-valued Field rejection, Event identity keys and append-only Event retention. These support business checks, not a separate workflow. Call contracts do not require absent declared keys; consuming rule joins do. All contract observedAt fields are None, so no observation TTL/freshness clock is installed.",
+    "Mutation gate state read/check/callback/SQLite commit is enclosed by original BEGIN IMMEDIATE. Interface snapshots are separate and not atomic with later callback reads. Layers have separate Policy instances for nesting. Framework successful bookkeeping may finish before outer SQLite commit; adapter approval/completion journal entries are appended only after original Store commit returns. An exception after a real effect can stop a policy session as execution_uncertain; framework failure is not general rollback of external effects.",
+    "Each gate rebuilds request-scoped snapshot fields plus the per-Store in-memory journal. Journal entries have no deliberate expiry but disappear with a fresh Store/Session. Invalid numeric Fields are omitted unless exact Python int within signed int64. Saved top-level/nested job spec conflicts can fail single-field validation; absent collections or malformed producers can raise rather than produce a business refusal. Snapshot is fingerprinted as complete by the adapter, not independently authenticated.",
+    "Trusted-process bypasses remain: unknown Trace.tool names return the original callback, generic unregistered Store._mutate is unwrapped, direct Store.view/read_job and fixture reads are not policy decorated, and SQL/state/wrapped-body/caller_context access is outside process isolation. Python can construct Tools/Trace actors; the host must protect identity binding. These bypasses affect the corresponding permission, ownership, quota, approval, completion and allocation checks.",
+    "No added free-text/private-context/influence guard exists. Bus.send wrapper observes original delivery and appends no content facts for authorization. Agent.decide wrapper sets _MODEL without a consuming content gate. Original audit may detect peer private strings after receipt/context exposure. Comments/prompts asserting isolation are not enforcement.",
+    "Credential scans cover only registered exact key strings at three named application boundaries. Framework telemetry may separately record arguments/results/state. visible_observation redacts configured keys only for the monitored model_output path, not all traces, payloads or files. Unknown credentials and all other sensitive content remain outside those rules."
+  ],
+  "candidateHash": "32ced126fe160030cc80adb5e8afab94731439643e21ef2e3b84f72a87dc2513",
+  "validation": "structure-and-source-quotes-only"
+}

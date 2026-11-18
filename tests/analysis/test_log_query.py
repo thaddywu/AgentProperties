@@ -4,8 +4,8 @@ from pathlib import Path
 import shutil
 import unittest
 
-from policyscope.analysis.log_query import LogQuerySession, project
-from policyscope.analysis.timeline import Timeline
+from policyweave.analysis.log_query import LogQuerySession, project
+from policyweave.analysis.timeline import Timeline
 
 
 @unittest.skipUnless(

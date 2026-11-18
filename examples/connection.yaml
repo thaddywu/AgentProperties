@@ -1,0 +1,21 @@
+# For hosted models, fill either key. If both are filled, auto selects openai.
+# For self-hosted models, select codex-compatible-local-endpoint explicitly
+# and fill its baseUrl and modelId. apiKey may be empty.
+# See docs/porting.md#local-model-endpoints for protocol requirements.
+provider: auto
+
+openai:
+  apiKey: ""
+  modelId: gpt-6.1-sol
+  reasoningEffort: medium
+
+anthropic:
+  apiKey: ""
+  modelId: claude-opus-5-5
+  reasoningEffort: medium
+
+codex-compatible-local-endpoint:
+  baseUrl: ""
+  modelId: ""
+  apiKey: ""
+  reasoningEffort: null

@@ -2,13 +2,14 @@
 
 For the **read-only frontend**, use the [timeline contract](timeline.md): one JSON
 file declares participants, directed messages, tool calls/results and optional
-state. It requires no rules, binding, model connection or running application.
-`policyscope inspect` also opens the richer gate logs defined below. This page's
+state. Start Inspector with the shared connection YAML for QA; the original app
+does not need to be running.
+`policyweave inspect` also opens the richer gate logs defined below. This page's
 rules-and-facts requirements apply to decision replay and policy QA, rather than
 to browsing an ordinary conversation/tool trajectory.
 
-The five modules share interfaces, rather than a fixed application vocabulary. An
-application may declare its own actors, actions, predicates and fact keys. A port
+The five modules share interfaces, rather than a fixed application vocabulary. The low-level API permits application-owned actors, actions, predicates and fact keys;
+the default port-in profile generates no new EDB or IDB schema. A port
 must connect those declarations to real identity, authoritative observations and
 the original business callbacks. Passing one application's tests does not prove
 that another application's boundaries are complete.
@@ -28,6 +29,49 @@ supported. External services may use explicit offline fixtures during experiment
 these do not establish production integration or policy fidelity.
 
 ## Capture
+
+The [student runner](porting.md#student-runner) uses the same scenarios and
+completion checker for original and ported applications. Original runs need no
+trajectory. A ported run exports a conversation/tool timeline (`trajectory.jsonl` and `trajectory.json`)
+and exact gate recordings (`gate-N.json`), independently of task completion.
+
+| Run artifact | Schema |
+| --- | --- |
+| `result.json` | Exactly `{"task_complete": true}` or `{"task_complete": false}` |
+| `run.json` | Framework diagnostics: `version: 1`, `side`, `case`, `sample`, `executionStatus` (`completed` or `failed`), nullable Boolean `taskCompleteness`, `trajectories` (relative filenames), optional `errorType` |
+| `trajectory.json` | `format: "policyscope-timeline"`, `version: 1`, `title`, `roles`, ordered `events`; event kinds include messages, tool calls/results, visible `llm_output` and captured state |
+| `trajectory.jsonl` | One metadata/participant header, followed by the same ordered events, one per line |
+| `gate-N.json` | `format: "policyscope-trajectory"`, `version: 1`; exact installed policy, gate inputs, decisions and outcomes, defined below |
+
+The historical `policyscope-*` wire identifiers remain unchanged for compatibility.
+Files live in `OUTPUT/CASE/SIDE/sample-N/`, which already identifies the case,
+app side and positive sample index. The student's single task verdict is true
+when actual effects and final responses match the expected outcome. False also
+covers an execution error or timeout that prevents confirming completion. Keep the
+same checker for both sides; a gate verdict does not establish task completion.
+
+After every run command, the shared CLI scans all current result files at that
+path shape and prints completed/total samples separately for original and ported.
+It counts files, not scenarios or planned samples; earlier results in the same
+output directory are included. Directories without a result file do not count.
+Only the Boolean `task_complete` field is accepted. The summary contains task
+completion only.
+
+`run.json` holds framework diagnostics separately. Execution/capture status can
+fail while retaining a true task verdict if assessment finished before capture
+failed. A missing assessment stays null in these diagnostics and yields false
+in `result.json`. Exception text is omitted; `errorType` records only its type.
+
+These files are private run artifacts. `result.json` is an assessment record;
+open its timeline with `policyweave inspect --traj FILE.jsonl --connection connection.yaml`.
+The same command accepts `FILE.json`. Use the private connection file prepared for
+translation so trajectory review includes QA.
+
+The student harness supplies execution and actual-effect completion checks. Port-in
+installs observation hooks; the shared runner owns export. Native gate evidence is
+embedded with policy identity and explicit `callId`, so Inspector can resolve
+parameters, verdicts and facts without a per-app converter. `Policy.trajectory()`
+exports one policy runtime, while `recording.export(directory)` exports an episode.
 
 Trusted host code can opt into recording on an ordinary gate:
 
@@ -101,13 +145,12 @@ Conversation/tool timelines now also support a data-only historical analysis
 contract and NL-to-Datalog in the [read-only viewer](timeline.md). Historical
 analysis rules can differ from online current-request gate rules: they need
 recorded effects, identities, state changes and declared task goals. The
-[LabCluster pilot](study/labcluster-pilot.md) supplies such a contract and checks
-answers against an independent fixture assessment. App Python is not needed by
+application supplies that contract and independent assessment criteria. App Python is not needed by
 the query translator; predicate meanings, units, evidence producers and scope
 still are. A transcript or bare predicate name cannot certify missing facts.
 
 ```python
-from policyscope.analysis import TrajectorySession
+from policyweave.analysis import TrajectorySession
 
 session = TrajectorySession(trajectory)
 verification = session.verify()
@@ -128,16 +171,16 @@ not a checked semantic proof; retain the result and scope beside the answer. A
 question without sufficient evidence can return a clarification.
 
 ```bash
-policyscope analyze trajectory.json --verify
-policyscope analyze trajectory.json --question 'Why was the first call blocked?' --connection /path/to/private-connection.json
+policyweave analyze trajectory.json --verify
+policyweave analyze trajectory.json --question 'Why was the first call blocked?' --connection /path/to/private-connection.yaml
 ```
 
 ## Compose all five modules
 
 ```bash
-policyscope pipeline /path/to/base-app /path/to/enforced-app \
+policyweave pipeline /path/to/base-app /path/to/enforced-app \
   --work-dir /path/to/private-work \
-  --connection /path/to/private-connection.json \
+  --connection /path/to/private-connection.yaml \
   --policy policies.md --app-doc app.md --image policy-portin:batch-v1
 ```
 

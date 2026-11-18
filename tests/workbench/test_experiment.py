@@ -6,9 +6,9 @@ import unittest
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 
-from policyscope.core.artifacts import save
-from policyscope.workbench.analysis import AnalysisServer
-from policyscope.workbench.experiment import Experiment, ExperimentServer
+from policyweave.core.artifacts import save
+from policyweave.workbench.analysis import AnalysisServer
+from policyweave.workbench.experiment import Experiment, ExperimentServer
 
 
 class ExperimentTests(unittest.TestCase):

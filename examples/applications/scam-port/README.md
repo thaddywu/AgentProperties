@@ -1,6 +1,6 @@
 # Original payment MCP tools with policy hooks
 
-Read [ADAPTATION.md](ADAPTATION.md) and the [PolicyScope guide](../../../src/policyscope/enforcement/README.md).
+Read [ADAPTATION.md](ADAPTATION.md) and the [PolicyWeave guide](../../../src/policyweave/enforcement/README.md).
 Original bank.json load/save, transfer mechanics, masked payee output and logging
 remain intact. Added decorators guard calls; confirmed transfer deltas update the
 policy EDB. No per-call full-bank projection runs.

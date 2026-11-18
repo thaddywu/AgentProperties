@@ -1,0 +1,51 @@
+// Host-observed execution. A sent message is not a certified receipt.
+.decl Invocation(E:symbol, Call:symbol, Actor:symbol, Tool:symbol)
+.input Invocation
+.decl Argument(E:symbol, Path:symbol, Json:symbol)
+.input Argument
+.decl CallOutcome(E:symbol, Call:symbol, Outcome:symbol)
+.input CallOutcome
+.decl ResultField(E:symbol, Name:symbol, Json:symbol)
+.input ResultField
+.decl CallbackReturned(E:symbol, Call:symbol)
+CallbackReturned(E,C) :- CallOutcome(E,C,"returned").
+CallbackReturned(E,C) :- CallOutcome(E,C,"applied").
+CallbackReturned(E,C) :- CallOutcome(E,C,"not_applied").
+.decl Message(E:symbol, Sender:symbol, Recipient:symbol, Phase:symbol, Id:symbol)
+.input Message
+.decl GateDecision(E:symbol, Gate:symbol, Actor:symbol, Action:symbol, Allowed:symbol)
+.input GateDecision
+.decl GateCall(E:symbol, Call:symbol)
+.input GateCall
+.decl RefusalReason(E:symbol, Reason:symbol)
+.input RefusalReason
+.decl RequestArgument(E:symbol, Name:symbol, Value:symbol)
+.input RequestArgument
+.decl GateOutcome(E:symbol, Gate:symbol, Policy:symbol, Outcome:symbol)
+.input GateOutcome
+.decl FactRow(Row:symbol, Predicate:symbol)
+.input FactRow
+.decl FactCell(Row:symbol, Position:number, Value:symbol)
+.input FactCell
+.decl NumberCell(Row:symbol, Position:number, Value:number)
+.input NumberCell
+.decl ProjectionOmitted(E:symbol, Path:symbol)
+.input ProjectionOmitted
+.decl FactChange(E:symbol, Trace:symbol, Phase:symbol, Change:symbol, Row:symbol)
+.input FactChange
+.decl DataSource(Data:symbol, Owner:symbol)
+.input DataSource
+.decl Dependency(Output:symbol, Input:symbol)
+.input Dependency
+.decl ContextCoverage(E:symbol, Context:symbol, Complete:symbol)
+.input ContextCoverage
+.decl ContextOutput(E:symbol, Data:symbol)
+.input ContextOutput
+.decl UnknownOrigin(Data:symbol)
+UnknownOrigin(D) :- ContextCoverage(E,_,"false"), ContextOutput(E,D).
+UnknownOrigin(D) :- Dependency(D,I), UnknownOrigin(I).
+.decl MayOrigin(Data:symbol, Owner:symbol)
+MayOrigin(D,O) :- DataSource(D,O).
+MayOrigin(D,O) :- Dependency(D,I), MayOrigin(I,O).
+.decl Refused(E:symbol, Actor:symbol, Action:symbol)
+Refused(E,A,T) :- GateDecision(E,_,A,T,"false").

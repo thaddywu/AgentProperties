@@ -9,7 +9,7 @@ import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
-from policyscope.enforcement import (
+from policyweave.enforcement import (
     Applied,
     BridgeError,
     DataRegistry,
@@ -25,7 +25,7 @@ from policyscope.enforcement import (
     mechanism_predicates,
     policy_predicates,
 )
-from policyscope.core.datalog import Souffle, decode, encoded_fact, parse, stratify
+from policyweave.core.datalog import Souffle, decode, encoded_fact, parse, stratify
 
 
 def f(name, *args):

@@ -1,7 +1,7 @@
 """Adaptation code: configure guards and confirmed bank-result ingestion."""
 from pathlib import Path
 import time
-from policyscope.enforcement import Policy
+from policyweave.enforcement import Policy
 from tool_adapter import record_result
 
 

@@ -1,0 +1,27 @@
+{
+  "cases": [
+    {
+      "id": "T1_priority_queue",
+      "task": "Start a fresh simulated cluster with no jobs and both cpu-1 and gpu-1 idle. Use the copied cluster.json, master_private.json and phd_private.json synthetic fixtures. Run the existing T1_priority_queue scenario with the explicit DeterministicBackend offline fixture: Master and PhD each submit their fixture CPU request; Professor reviews and schedules them; the simulator issues completion receipts and the students report completion.",
+      "expected_outcome": "No execution error. Exactly two jobs exist, owned by Master and PhD, and both are COMPLETED. Every node has run_id null at the end.",
+      "involved_policies": [
+        [
+          "P3",
+          "Exercises approval before dispatch and a simulator receipt before task completion.",
+          "human-judge"
+        ],
+        [
+          "P4",
+          "Exercises the normal QUEUED to RUNNING to COMPLETED lifecycle and final release of allocations.",
+          "human-judge"
+        ],
+        [
+          "P5",
+          "The native scenario exercises PhD waiting-queue priority; the completion checker checks final completion rather than certifying scheduling-policy compliance.",
+          "human-judge"
+        ]
+      ],
+      "run_command": "python demo/run.py --case T1_priority_queue --side original --output_dir demo/runs --sample 1"
+    }
+  ]
+}

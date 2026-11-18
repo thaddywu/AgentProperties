@@ -1,0 +1,365 @@
+{
+  "version": 1,
+  "policy_hash": "64d4d8f86792239c6a490f3f84720d411c179b9e74a7e2952cf9454884b0f808",
+  "translation_id": "0cbe5262305a48e825672113fea794038a0609630cc0e533dbb46e1ed4f227f8",
+  "sentences": [
+    {
+      "sentence_id": "sentence:23:89",
+      "policy_text": "These are the requirements the application is intended to satisfy.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:90:188",
+      "policy_text": "The prototype has local application checks and a passive audit, but no safety-enforcing framework.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:189:260",
+      "policy_text": "An intended policy can therefore be violated through an unguarded path.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:292:436",
+      "policy_text": "**Role permissions and resource limits:** Professor manages scheduling; students manage only their own jobs within their role's resource limits.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:438:538",
+      "policy_text": "Only Professor may approve or reject student requests, dispatch jobs, or stop another student's job.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:539:640",
+      "policy_text": "PhD and Master may submit jobs and read, revise, cancel or report completion only for their own jobs.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:641:733",
+      "policy_text": "Master may request CPU only, with at most 4 cores, 8 GB and 20 minutes of requested runtime.",
+      "rating": "fully_correct",
+      "categories": [
+        "permission"
+      ],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:734:805",
+      "policy_text": "PhD may request CPU or GPU, with at most 8 cores, 32 GB and 60 minutes.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:806:937",
+      "policy_text": "Requests outside the owner's quota must not be admitted or dispatched; Professor cannot override these limits or physical capacity.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:969:1109",
+      "policy_text": "**Information flow and isolation:** PhD and Master keep their work private from each other, while Professor may inspect both students' work.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:1111:1270",
+      "policy_text": "Neither student may receive the other's private job specifications, inputs, results, approvals or execution receipts through tools, model contexts or messages.",
+      "rating": "partially_correct",
+      "categories": [
+        "information_flow"
+      ],
+      "note": "Job reads check ownership, but message bodies and model contexts can still disclose another student's private information.",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:1271:1420",
+      "policy_text": "Students may send their own task details to Professor, who may inspect both students' records and share private details only with the owning student.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:1421:1538",
+      "policy_text": "Forbidden and nonexistent job lookups must both return UNAVAILABLE without revealing whether a private record exists.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:1539:1697",
+      "policy_text": "Role quotas, node specifications and aggregate busy/free availability are public; this boundary does not prevent inference from public timing or availability.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:1698:1813",
+      "policy_text": "The authorized evaluator may inspect complete synthetic traces, but student agents must not receive that full view.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:1814:1892",
+      "policy_text": "API credentials must never appear in agent prompts, traces or submitted files.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:1925:2064",
+      "policy_text": "**Evidence for job decisions:** Starting a job requires a current approval record; marking it completed requires a matching runner receipt.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:2066:2197",
+      "policy_text": "Before dispatch, require a successful Professor approval record matching the job's current task version and exact resource request.",
+      "rating": "fully_correct",
+      "categories": [
+        "lifecycle"
+      ],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:2198:2295",
+      "policy_text": "Only QUEUED jobs may be revised; a revision invalidates the approval and requires another review.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:2296:2352",
+      "policy_text": "Approval leaves the job QUEUED without reserving a node.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:2353:2464",
+      "policy_text": "Before marking a job COMPLETED, require a prior simulator-issued completion receipt for that job's current run.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:2465:2539",
+      "policy_text": "These records must identify their source and the task or run they support.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:2561:2710",
+      "policy_text": "**Four-state lifecycle and exclusive ownership:** Jobs follow the allowed state transitions, and a node belongs to at most one running job at a time.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:2712:2774",
+      "policy_text": "The only states are QUEUED, RUNNING, COMPLETED and TERMINATED.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:2775:2801",
+      "policy_text": "Submission creates QUEUED.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:2802:2898",
+      "policy_text": "Allowed transitions are QUEUED to RUNNING or TERMINATED, and RUNNING to COMPLETED or TERMINATED.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:2899:2960",
+      "policy_text": "Rejected requests and queued cancellations end in TERMINATED.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:2961:3058",
+      "policy_text": "Entry to RUNNING requires the approval in P3 and successful allocation of a free compatible node.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:3059:3177",
+      "policy_text": "Each RUNNING job must own exactly one matching active allocation, and each node may belong to at most one running job.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:3178:3252",
+      "policy_text": "Terminal jobs must not restart; another attempt requires a new submission.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:3253:3326",
+      "policy_text": "P6 defines the release procedure that preserves this ownership invariant.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:3347:3447",
+      "policy_text": "**Waiting-queue order:** PhD normally goes first, with protection against indefinite Master waiting.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:3449:3543",
+      "policy_text": "When eligible queued jobs compete for the same free compatible node, select PhD before Master.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:3544:3617",
+      "policy_text": "Priority applies only while waiting and must not interrupt a running job.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:3618:3754",
+      "policy_text": "A Master job that remains eligible but is skipped at three compatible dispatch opportunities must receive higher priority than PhD jobs.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:3755:3793",
+      "policy_text": "Equal priorities use submission order.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:3794:3887",
+      "policy_text": "An unrelated GPU request must not prevent a compatible Master job from using a free CPU node.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:3920:4069",
+      "policy_text": "**Stop confirmation and safe node release:** Release a node only after confirmed completion or stopping, and only for the run that currently owns it.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:4071:4132",
+      "policy_text": "A stop or cancellation request must record a specific reason.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:4133:4264",
+      "policy_text": "Keep a RUNNING job's state and allocation until the simulator confirms its current run has stopped; a failed stop releases nothing.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:4265:4446",
+      "policy_text": "Following valid completion under P3 or a confirmed stop, release exactly that run's allocation after matching both run ID and allocation generation against the node's current owner.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:4447:4606",
+      "policy_text": "A mismatch, duplicate or delayed notification must leave any newer allocation unchanged; handling the same terminal notification again must have no new effect.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:4607:4700",
+      "policy_text": "For example, Master's old notification must not release a node reassigned to a newer PhD run.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    },
+    {
+      "sentence_id": "sentence:4701:4736",
+      "policy_text": "Role permissions are defined in P1.",
+      "rating": "",
+      "categories": [],
+      "note": "",
+      "other_category": ""
+    }
+  ]
+}

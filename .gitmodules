@@ -2,3 +2,7 @@
 	path = docs/research
 	url = ../DP-overleaf.git
 	branch = main
+[submodule "phase2-course-materials"]
+	path = docs/phase2-hw-release
+	url = https://git.overleaf.com/PROJECT_ID
+	branch = main

@@ -6,21 +6,23 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
+import yaml
 from unittest.mock import patch
 
-from policyscope.policy_adder.codex import CodexPort, files, save
-from policyscope.policy_adder.repository import RepositoryApplication
-from policyscope.policy_adder.student import (
+from policyweave.policy_adder.codex import CodexPort, files, save
+from policyweave.policy_adder.repository import RepositoryApplication
+from policyweave.policy_adder.student import (
     check_base,
     clean_candidate,
     load_connection,
     publish,
     run,
 )
-from policyscope.policy_viewer.review import review_units
-from policyscope.workbench.student_review import BundleApplication, StudentStudy
+from policyweave.policy_viewer.review import review_units
+from policyweave.workbench.student_review import BundleApplication, StudentStudy
 
 
 class StudentWorkflowTests(unittest.TestCase):
@@ -167,7 +169,7 @@ class StudentWorkflowTests(unittest.TestCase):
         manifest.pop("id")
         manifest["origin"] = "manual"
         manifest.pop("model", None)
-        from policyscope.core.policy import fingerprint
+        from policyweave.core.policy import fingerprint
 
         manifest["id"] = fingerprint(manifest)
         save(manifest_path, manifest)
@@ -269,7 +271,7 @@ class StudentWorkflowTests(unittest.TestCase):
         units = review_units(app.reference())["units"]
         before = deepcopy(study.data)
         with patch(
-            "policyscope.workbench.student_review.save",
+            "policyweave.workbench.student_review.save",
             side_effect=PermissionError("read only"),
         ):
             with self.assertRaises(PermissionError):
@@ -290,12 +292,13 @@ class StudentWorkflowTests(unittest.TestCase):
         )
 
     def test_connection_defaults_and_explicit_model_override(self):
-        path = self.root / "connection.json"
-        save(path, dict(apiKey="synthetic-key"))
+        path = self.root / "connection.yaml"
+        path.write_text(yaml.safe_dump(dict(openai=dict(apiKey="synthetic-key"))))
         settings = load_connection(path)
         self.assertEqual(settings["modelId"], "gpt-6.1-sol")
         self.assertEqual(settings["reasoningEffort"], "medium")
-        save(path, dict(modelId="local-model", baseUrl="http://127.0.0.1/v1"))
+        path.write_text(yaml.safe_dump(dict(provider="openai", openai=dict(
+            modelId="local-model", baseUrl="http://127.0.0.1/v1"))))
         self.assertEqual(load_connection(path)["modelId"], "local-model")
 
     def test_environment_connection_and_explicit_file_precedence(self):
@@ -319,8 +322,8 @@ class StudentWorkflowTests(unittest.TestCase):
             self.assertEqual(load_connection()["modelId"], "local-model")
             self.assertEqual(load_connection()["reasoningEffort"], "high")
             self.assertEqual(load_connection()["baseUrl"], "http://127.0.0.1/v1")
-            path = self.root / "explicit.json"
-            save(path, dict(apiKey="synthetic-file-key", modelId="file-model"))
+            path = self.root / "explicit.yaml"
+            path.write_text(yaml.safe_dump(dict(openai=dict(apiKey="synthetic-file-key", modelId="file-model"))))
             self.assertEqual(load_connection(path)["apiKey"], "synthetic-file-key")
             self.assertEqual(load_connection(path)["modelId"], "file-model")
         with patch.dict(os.environ, {}, clear=True):
@@ -341,7 +344,13 @@ class StudentWorkflowTests(unittest.TestCase):
             self.assertNotIn("synthetic", str(error.exception))
 
     def test_entry_orchestrates_forward_publication_check_reverse_and_alignment(self):
+        from policyweave.__main__ import main
+
         stages = []
+        connection = self.root / "connection.yaml"
+        connection.write_text(yaml.safe_dump(dict(
+            provider="openai", openai=dict(self.port.settings, apiKey="synthetic-key"),
+        )))
         prior = self.port.output / "publication-check-0.json"
         save(prior, dict(prior=True))
 
@@ -352,7 +361,12 @@ class StudentWorkflowTests(unittest.TestCase):
             return dict(passed=True)
 
         with (
-            patch("policyscope.policy_adder.student.CodexPort", return_value=self.port),
+            patch.object(sys, "argv", [
+                "policyweave", "port", "--input", str(self.base), "--output", str(self.target),
+                "--connection", str(connection), "--work-dir", str(self.port.output),
+            ]),
+            patch("builtins.print"),
+            patch("policyweave.policy_adder.student.CodexPort", return_value=self.port),
             patch.object(self.port, "prepare"),
             patch.object(
                 self.port,
@@ -371,17 +385,37 @@ class StudentWorkflowTests(unittest.TestCase):
                 self.port, "review", side_effect=lambda: stages.append("align")
             ),
         ):
-            target = run(
-                self.base, self.target, self.port.settings, work=self.port.output
-            )
-        self.assertEqual(target, self.target)
+            main()
         self.assertEqual(stages, ["translate", "check", "reverse", "align"])
         self.assertEqual(json.loads(prior.read_text()), dict(prior=True))
-        self.assertTrue((target / "back-translation/manifest.json").exists())
+        self.assertTrue((self.target / "back-translation/manifest.json").exists())
+        self.assertTrue((self.target / "review.json").exists())
+        BundleApplication(self.target / "back-translation", self.base / "policy.md")
+
+    def test_port_rejects_invalid_inputs_before_loading_connection(self):
+        from policyweave.__main__ import main
+
+        for extra in (["--repairs", "-1"], []):
+            with self.subTest(extra=extra):
+                if not extra:
+                    (self.base / "app.py").write_text("uncommitted change")
+                with (
+                    patch.object(sys, "argv", [
+                        "policyweave", "port", "--input", str(self.base), "--output", str(self.target),
+                        "--connection", "missing.yaml", *extra,
+                    ]),
+                    patch("policyweave.policy_adder.student.load_connection") as load,
+                    patch("sys.stderr"),
+                    self.assertRaises(SystemExit) as error,
+                ):
+                    main()
+                self.assertEqual(error.exception.code, 1)
+                load.assert_not_called()
+                self.assertFalse(self.target.exists())
 
     def test_failed_publication_check_never_publishes_a_successful_app(self):
         with (
-            patch("policyscope.policy_adder.student.CodexPort", return_value=self.port),
+            patch("policyweave.policy_adder.student.CodexPort", return_value=self.port),
             patch.object(self.port, "prepare"),
             patch.object(self.port, "translate", return_value=dict(passed=True)),
             patch.object(self.port, "check", return_value=dict(passed=False)),

@@ -1,0 +1,10 @@
+FROM policy-portin:local
+USER root
+RUN python -m pip install --no-cache-dir PyYAML==6.0.3 mcp==1.30.0 pydantic==2.14.3 \
+    && apt-get update && apt-get install -y --no-install-recommends git \
+    && rm -rf /var/lib/apt/lists/*
+# Login shells used by coding agents can reset PATH from the base image.
+RUN ln -s /opt/souffle/usr/bin/souffle /usr/local/bin/souffle
+RUN rm -rf /framework
+COPY src/policyweave /framework/policyweave
+ENTRYPOINT []

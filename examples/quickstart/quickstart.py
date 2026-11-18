@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from policyscope.enforcement import Policy, fact
+from policyweave.enforcement import Policy, fact
 
 
 def main():

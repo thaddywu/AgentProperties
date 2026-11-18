@@ -5,9 +5,9 @@ import shutil
 import unittest
 from unittest.mock import patch
 
-from policyscope.analysis.answers import render_answer
-from policyscope.analysis.log_query import LogQuerySession, project
-from policyscope.analysis.timeline import Timeline
+from policyweave.analysis.answers import render_answer
+from policyweave.analysis.log_query import LogQuerySession, project
+from policyweave.analysis.timeline import Timeline
 
 
 class QuestionTranslationTests(unittest.TestCase):
@@ -44,7 +44,7 @@ class QuestionTranslationTests(unittest.TestCase):
             )
 
         with patch(
-            "policyscope.core.datalog.Souffle",
+            "policyweave.core.datalog.Souffle",
             side_effect=AssertionError("Translation must not evaluate facts."),
         ):
             plan = self.session.translate("哪些事件的接收者是 master？", model)

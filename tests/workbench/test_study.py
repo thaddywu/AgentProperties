@@ -7,11 +7,12 @@ import unittest
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
-from policyscope.workbench.example import Application
-from policyscope.workbench.importer import ReviewApplication
-from policyscope.workbench.server import Server
-from policyscope.workbench.study import Study
-from policyscope.policy_viewer.review import review_units
+from policyweave.workbench.example import Application
+from policyweave.workbench.importer import ReviewApplication
+from policyweave.workbench.server import Server
+from policyweave.workbench.study import Study
+from policyweave.policy_viewer.review import review_units
+from policyweave.core.policy import CORE, fingerprint, read_binding
 
 
 class StudyTests(unittest.TestCase):
@@ -235,13 +236,37 @@ class StudyTests(unittest.TestCase):
             Study(self.directory.name, self.app)
 
     def test_reference_import_preserves_source_and_hashes(self):
-        root = Path(__file__).resolve().parents[2]
-        app = ReviewApplication(root / "examples/applications/labcluster-port")
+        root = Path(self.directory.name) / "reference"
+        (root / "generated").mkdir(parents=True)
+        text = "Permit reads."
+        source = 'Allow(Q) :- Request(Q,P,"read").\n'
+        documents = [("app.md", "Synthetic document reader."),
+                     ("policy.md", "P1. " + text + "\n"), ("tools.md", "read()")]
+        for name, content in [*documents, ("rules.dl", source)]:
+            (root / name).write_text(content)
+        binding = read_binding(dict(version=1, id="reference-test", context="Synthetic reader.",
+            predicates=CORE, decision=dict(request="Request", parameters="Parameter", allow="Allow", deny="Deny"), tests=[]))
+        plan = dict(sourceHash=fingerprint([dict(id="P1", text=text)]), bindingHash=fingerprint(binding),
+            documentsHash=fingerprint([dict(path=name, content=content) for name, content in documents]),
+            requirements=[dict(id="r1", policyId="P1", source=text, start=0, end=len(text),
+                statement=text, implementation="datalog", relation="equivalent", assumptions=[], predicates=["Request", "Allow"])])
+        rules = [dict(id="read", datalog=source.strip())]
+        output = dict(rules=rules, coverage=[dict(id="r1", ruleIds=["read"])])
+        readings = dict(application="Synthetic reader", sourceHash=fingerprint(source), contractHash=fingerprint(binding),
+            programHash=fingerprint(rules), planHash=fingerprint(plan), obligations={},
+            behaviors=[dict(id="read", ruleIds=["read"], summary=text, conditions=[])])
+        for name, value in [("generated/runtime.json", binding), ("generated/policy-plan.json", plan),
+                            ("generated/reference-output.json", output), ("review-readings.json", readings)]:
+            (root / name).write_text(json.dumps(value))
+        app = ReviewApplication(root)
         review = app.reference()
-        self.assertEqual(len(review["requirements"]), 41)
+        self.assertEqual(len(review["requirements"]), 1)
         for row in review["requirements"]:
             self.assertEqual(app.policy[row["start"] : row["end"]], row["quote"])
         self.assertEqual(app.setup_fields, [])
+        (root / "rules.dl").write_text(source + "// Changed after review.\n")
+        with self.assertRaisesRegex(ValueError, "stale"):
+            ReviewApplication(root)
 
 
 class ServerTests(unittest.TestCase):
@@ -304,6 +329,7 @@ class ServerTests(unittest.TestCase):
                     Request(self.base + "/api/scenario", data=b"{}", headers=headers)
                 )
             self.assertEqual(caught.exception.code, 403)
+
         request = Request(
             self.base + "/api/judgment",
             data=json.dumps(
@@ -325,3 +351,18 @@ class ServerTests(unittest.TestCase):
                 Request(self.base + "/api/study", headers={"Host": "external.invalid"})
             )
         self.assertEqual(caught.exception.code, 403)
+
+    def test_forwarded_local_port_keeps_origin_boundary_and_download_headers(self):
+        with urlopen(Request(self.base + "/api/export", headers={"Host": "localhost:55555"})) as response:
+            self.assertEqual(response.status, 200)
+            self.assertEqual(response.headers["Content-Disposition"], 'attachment; filename="policy-study.json"')
+        for headers in (
+            {"Host": "localhost:55555", "Origin": "http://localhost:44444"},
+            {"Host": "localhost:55555", "Origin": "https://external.invalid"},
+            {"Host": "external.invalid:55555", "X-Forwarded-Host": "localhost:55555"},
+            {"Host": "localhost:65536"},
+            {"Host": "localhost:55555@external.invalid"},
+        ):
+            with self.assertRaises(HTTPError) as caught:
+                urlopen(Request(self.base + "/api/export", headers=headers))
+            self.assertEqual(caught.exception.code, 403)

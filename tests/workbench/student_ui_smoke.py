@@ -2,20 +2,49 @@
 
 import json
 from pathlib import Path
+import select
+import shutil
+import subprocess
 import sys
-import threading
 
 ROOT = Path(__file__).resolve().parents[2]
 for directory in ("src",):
     sys.path.insert(0, str(ROOT / directory))
 
-from policyscope._paths import cache_directory
+from policyweave._paths import cache_directory
 
 from playwright.sync_api import expect, sync_playwright
 from test_student_workflow import StudentWorkflowTests
-from policyscope.workbench.server import Server
-from policyscope.workbench.student_review import StudentStudy
-from policyscope.policy_adder.codex import save
+from policyweave.workbench.student_review import StudentStudy
+from policyweave.policy_adder.codex import save
+from policyweave.policy_viewer import review_units
+
+
+def stop_review(process):
+    process.terminate()
+    try:
+        process.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait(timeout=5)
+    process.stdout.close()
+
+
+def start_review(fixture):
+    process = subprocess.Popen([
+        sys.executable, "-B", "-m", "policyweave", "view-translation",
+        "--back-translation", str(fixture.target / "back-translation"),
+        "--policy", str(fixture.base / "policy.md"), "--port", "0",
+    ], cwd=fixture.root, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    try:
+        if not select.select([process.stdout], [], [], 15)[0]:
+            raise AssertionError("view-translation did not start")
+        line = process.stdout.readline().strip()
+        assert line.startswith("Evaluation UI: http://127.0.0.1:"), line
+        return process, line.removeprefix("Evaluation UI: ")
+    except BaseException:
+        stop_review(process)
+        raise
 
 
 def main():
@@ -26,9 +55,12 @@ def main():
         # the reviewer should see only relevant business sentences.
         reference_path = fixture.port.output / "review.json"
         reference = json.loads(reference_path.read_text())
-        reference["execution"]["procedures"][0]["title"] = (
-            "Bind a caller, evaluate current state, and distinguish permission from effect"
-        )
+        reference["execution"]["procedures"][0]["title"] = "Approval permission"
+        reference["execution"]["procedures"][0]["summary"] = "The reviewer can approve requests before the original approval action runs."
+        reference["execution"]["procedures"][0]["examples"] = [dict(
+            scenario="A student requests approval.",
+            outcome="This permission check does not grant the request.", ruleIds=["rule1"],
+        )]
         reference["execution"]["procedures"][0]["steps"] = [
             dict(
                 kind="A",
@@ -80,16 +112,28 @@ def main():
         path = fixture.target / "review.json"
         path.unlink()  # First launch creates the submission automatically.
         study = StudentStudy(fixture.root / "cache-one", application, path)
-        server = Server(("127.0.0.1", 0), study)
-        thread = threading.Thread(target=server.serve_forever, daemon=True)
-        thread.start()
+        reference = application.reference()
+        study.judge(
+            reference["id"],
+            review_units(reference)["units"][0]["id"],
+            dict(rating="unsure", categories=["uncertain"], note=""),
+        )
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=True)
             page = browser.new_page()
             errors = []
             page.on("pageerror", lambda error: errors.append(str(error)))
+            server, review_url = start_review(fixture)
             try:
-                page.goto(f"http://127.0.0.1:{server.server_port}")
+                page.goto(review_url)
+                expect(page.get_by_label("Not sure", exact=True)).to_have_count(0)
+                expect(page.locator('[name="rating"]')).to_have_count(4)
+                expect(page.locator('[name="categories"]')).to_have_count(4)
+                page.get_by_role("button", name="Next", exact=True).click()
+                page.get_by_role("button", name="Previous", exact=True).click()
+                legacy = json.loads(path.read_text())["sentences"][0]
+                assert legacy["rating"] == "unsure"
+                assert legacy["categories"] == ["uncertain"]
                 expect(page.locator("nav")).to_have_count(0)
                 expect(page.get_by_label("Review version")).to_have_count(0)
                 expect(
@@ -101,17 +145,15 @@ def main():
                     "Only the reviewer may approve an operation."
                 )
                 expect(page.locator(".review")).not_to_contain_text("Bind a caller")
+                expect(page.get_by_role("heading", name="Approval permission", exact=True)).to_be_visible()
                 expect(
                     page.get_by_text("An unrelated implementation detail.")
                 ).to_have_count(0)
-                expect(page.locator(".execution-caption")).to_have_text(
-                    [
-                        "Recorded information",
-                        "Decision rules",
-                        "Before execution",
-                    ]
-                )
-                expect(page.locator(".execution-section").nth(0)).to_contain_text(
+                expect(page.locator(".execution-caption")).to_have_count(0)
+                expect(page.locator(".execution-lines")).to_be_hidden()
+                expect(page.get_by_text("A student requests approval.", exact=True)).to_be_hidden()
+                page.get_by_text("How this is checked", exact=True).click()
+                expect(page.locator(".execution-line").nth(0)).to_contain_text(
                     "Before approve, the application supplies the caller role."
                 )
                 tool_name = page.locator(".execution-line code")
@@ -120,12 +162,15 @@ def main():
                     "font-family",
                     "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
                 )
-                expect(page.locator(".execution-section").nth(1)).to_contain_text(
+                expect(page.locator(".execution-line").nth(1)).to_contain_text(
                     "If the caller is the reviewer, derive permission."
                 )
-                expect(page.locator(".execution-section").nth(2)).to_contain_text(
+                expect(page.locator(".execution-line").nth(2)).to_contain_text(
                     "Allow approval when the actor is the reviewer."
                 )
+                page.get_by_text("Examples", exact=True).click()
+                expect(page.get_by_text("A student requests approval.", exact=True)).to_be_visible()
+                expect(page.get_by_text("This permission check does not grant the request.", exact=True)).to_be_visible()
                 expect(page.locator(".policy-column .column-caption")).to_have_text(
                     "policy.md"
                 )
@@ -194,6 +239,7 @@ def main():
                     json.loads(path.read_text())["sentences"][0]["rating"]
                     == "fully_correct"
                 )
+                assert json.loads(path.read_text())["sentences"][0]["categories"] == ["permission"]
                 page.get_by_label("Policy sentence").select_option("1")
                 expect(page.locator(".execution-caption")).to_have_count(0)
                 expect(page.locator(".execution-line")).to_have_text(
@@ -213,9 +259,22 @@ def main():
                     "download", "review.json"
                 )
                 exported = page.request.get(
-                    f"http://127.0.0.1:{server.server_port}/api/review"
+                    f"{review_url}/api/review"
                 ).json()
                 assert exported == json.loads(path.read_text())
+                # Exercise the browser download, including an edit whose autosave
+                # has not yet run, rather than only reading the JSON endpoint.
+                page.get_by_role("button", name="Add a note", exact=True).click()
+                page.get_by_label("Comment", exact=True).fill("Synthetic note entered before export.")
+                with page.expect_download() as event:
+                    page.get_by_role("link", name="Export", exact=True).click()
+                download = event.value
+                assert download.suggested_filename == "review.json"
+                assert download.failure() is None
+                exported = json.loads(Path(download.path()).read_text())
+                assert exported == json.loads(path.read_text())
+                assert exported["sentences"][1]["note"] == "Synthetic note entered before export."
+                assert page.url.startswith(review_url)
                 screenshots = cache_directory() / "test-results"
                 screenshots.mkdir(exist_ok=True)
                 page.get_by_label("Policy sentence").select_option("0")
@@ -223,19 +282,17 @@ def main():
                     path=str(screenshots / "student-review.png"), full_page=True
                 )
             finally:
-                server.shutdown()
-                server.server_close()
-                thread.join()
+                stop_review(server)
             # A fresh backend with a different empty cache must load the file.
-            resumed = StudentStudy(fixture.root / "cache-two", application, path)
-            server = Server(("127.0.0.1", 0), resumed)
-            thread = threading.Thread(target=server.serve_forever, daemon=True)
-            thread.start()
+            shutil.rmtree(fixture.target / "back-translation/.review-state")
+            server, review_url = start_review(fixture)
             try:
-                page.goto(f"http://127.0.0.1:{server.server_port}")
+                page.goto(review_url + "/#sentence=2")
+                expect(page.get_by_label("Policy sentence")).to_have_value("1")
+                expect(page.get_by_label("Not a policy", exact=True)).to_be_checked()
+                page.get_by_label("Policy sentence").select_option("0")
                 expect(page.get_by_label("Fully matches", exact=True)).to_be_checked()
                 page.get_by_label("Policy sentence").select_option("1")
-                expect(page.get_by_label("Not a policy", exact=True)).to_be_checked()
                 screenshots = cache_directory() / "test-results"
                 screenshots.mkdir(exist_ok=True)
                 page.screenshot(
@@ -244,12 +301,10 @@ def main():
                 assert not errors, errors
                 browser.close()
                 print(
-                    "Direct review.json Save/Export, non-policy labels, and resume with a fresh cache passed (fixture translation)."
+                    "view-translation CLI, review.json Save/Export, and resume with a fresh cache passed (fixture translation)."
                 )
             finally:
-                server.shutdown()
-                server.server_close()
-                thread.join()
+                stop_review(server)
     finally:
         fixture.tearDown()
 

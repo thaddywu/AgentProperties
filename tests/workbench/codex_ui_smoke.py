@@ -11,15 +11,15 @@ ROOT = Path(__file__).resolve().parents[2]
 for directory in ("src",):
     sys.path.insert(0, str(ROOT / directory))
 
-from policyscope._paths import cache_directory
+from policyweave._paths import cache_directory
 
 from playwright.sync_api import sync_playwright, expect
-from policyscope.core.policy import fingerprint
-from policyscope.core.artifacts import save
-from policyscope.workbench.example import Application
-from policyscope.policy_adder.repository import PortJobs
-from policyscope.workbench.server import Server
-from policyscope.workbench.study import Study
+from policyweave.core.policy import fingerprint
+from policyweave.core.artifacts import save
+from policyweave.workbench.example import Application
+from policyweave.policy_adder.repository import PortJobs
+from policyweave.workbench.server import Server
+from policyweave.workbench.study import Study
 
 
 def main():

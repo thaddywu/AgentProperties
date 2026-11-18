@@ -8,11 +8,16 @@ __pycache__/
 /build/
 /dist/
 .cache/
+.ruff_cache/
+.review-state/
 .DS_Store
 
 # Private configuration, runs and pre-restructure backups
 .env
 .env.*
+/connection.yaml
+/connection.yml
+/connection.json
 /output/
 /backups/
 /data/

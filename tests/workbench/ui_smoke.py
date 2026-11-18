@@ -10,12 +10,12 @@ ROOT = Path(__file__).resolve().parents[2]
 for directory in (ROOT / "src",):
     sys.path.insert(0, str(directory))
 
-from policyscope._paths import cache_directory
+from policyweave._paths import cache_directory
 
 from playwright.sync_api import sync_playwright, expect
-from policyscope.workbench.example import Application
-from policyscope.workbench.server import Server
-from policyscope.workbench.study import Study
+from policyweave.workbench.example import Application
+from policyweave.workbench.server import Server
+from policyweave.workbench.study import Study
 
 
 def synthetic_model(stage, prompt):
@@ -79,8 +79,11 @@ def main():
                     lambda e: (errors.append(str(e)), print("Browser error:", str(e))),
                 )
                 page.goto(f"http://127.0.0.1:{server.server_port}")
+                expect(page.get_by_label("Not sure", exact=True)).to_have_count(0)
+                expect(page.locator('[name="rating"]')).to_have_count(4)
+                expect(page.locator('[name="categories"]')).to_have_count(4)
                 expect(page.locator("nav")).to_have_count(0)
-                expect(page.locator("header")).not_to_contain_text("PolicyScope")
+                expect(page.locator("header")).not_to_contain_text("PolicyWeave")
                 expect(page.get_by_label("Review version")).to_have_count(0)
                 expect(
                     page.locator(".policy-column").get_by_role(

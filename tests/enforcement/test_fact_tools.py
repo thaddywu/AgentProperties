@@ -8,7 +8,7 @@ import shutil
 import tempfile
 import unittest
 
-from policyscope.enforcement import FactTool, Policy
+from policyweave.enforcement import FactTool, Policy
 
 RULES = """.decl Assigned(Op:symbol, Reviewer:symbol)
 .input Assigned

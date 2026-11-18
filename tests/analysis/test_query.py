@@ -2,8 +2,8 @@ from copy import deepcopy
 import json
 import shutil
 import unittest
-from policyscope.analysis import QuerySession
-from policyscope.core.policy import CORE, fact
+from policyweave.analysis import QuerySession
+from policyweave.core.policy import CORE, fact
 
 
 @unittest.skipUnless(

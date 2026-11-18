@@ -3,13 +3,13 @@ import threading
 import unittest
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-from policyscope.core.policy import CORE, read_binding
-from policyscope.policy_adder import (
+from policyweave.core.policy import CORE, policy_predicates, read_binding
+from policyweave.policy_adder import (
     TranslationFailure,
     translate,
     validate_requirements,
 )
-from policyscope.adapters.compatible import Connection
+from policyweave.adapters.compatible import Connection
 
 
 def binding():
@@ -44,6 +44,42 @@ def requirement(quote, **changes):
 
 
 class TranslationTests(unittest.TestCase):
+    def test_shared_observations_compile_with_an_explicit_result_condition(self):
+        trusted = binding()
+        trusted["mechanisms"] = ["observations"]
+        trusted["predicates"] = policy_predicates("", mechanisms=("observations",))
+        source = "Consume only after a confirmed observation."
+
+        def generate(stage, prompt):
+            payload = json.loads(prompt)
+            if stage == "requirements":
+                schemas = payload["contract"]["predicates"]
+                self.assertEqual(schemas["Event"]["args"], ["Id", "Principal", "Kind"])
+                self.assertTrue(schemas["Field"]["hostOnly"])
+                self.assertNotIn("Quantity", schemas)
+                self.assertNotIn("AgentStatement", schemas)
+                return json.dumps({"requirements": [requirement(
+                    source,
+                    predicates=["Request", "Parameter", "Event", "Field", "Allow"],
+                    categories=["lifecycle"],
+                )]})
+            if stage == "rules":
+                return json.dumps({
+                    "rules": [{"id": "consume", "datalog": 'Allow(Q) :- Request(Q, P, "consume"), Parameter(Q, "event", E), Event(E, P, "observe"), Field(E, "outcome", "applied").'}],
+                    "coverage": [{"id": "r1", "ruleIds": ["consume"]}],
+                })
+            self.assertNotIn(source, prompt)
+            return json.dumps({"behaviors": [{
+                "id": "consume", "ruleIds": ["consume"],
+                "summary": "The recorded observation and its applied outcome are required.",
+                "conditions": [],
+            }]})
+
+        result = translate(source, trusted, generate)
+        self.assertEqual(result["validation"], "static-only")
+        self.assertFalse(result["runtimeInstalled"])
+        self.assertEqual(result["coverage"], [{"id": "r1", "ruleIds": ["consume"]}])
+
     def test_roundtrip_mapping_repair_and_independent_backtranslation(self):
         original = "UNIQUE_SOURCE_SECRET: permit reading."
         records = []
@@ -234,12 +270,14 @@ class ConnectionTests(unittest.TestCase):
                     baseUrl=f"http://127.0.0.1:{server.server_port}/v1",
                     modelId="fake-local-model",
                     reasoningEffort="high",
+                    responseFormat={"type": "json_object"},
                 )
             )
             self.assertEqual(connection("requirements", "prompt"), "{}")
             self.assertNotIn("secret", str(connection.usage))
             self.assertEqual(captured[0]["model"], "fake-local-model")
             self.assertEqual(captured[0]["reasoning_effort"], "high")
+            self.assertEqual(captured[0]["response_format"], {"type": "json_object"})
             self.assertEqual(connection.metadata["reasoningEffort"], "high")
         finally:
             server.shutdown()

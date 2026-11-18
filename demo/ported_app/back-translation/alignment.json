@@ -1,0 +1,332 @@
+{
+  "links": [
+    {
+      "sentenceId": "sentence:23:89",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:90:188",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:189:260",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:292:436",
+      "procedureIds": [
+        "approval-permission",
+        "rejection-permission",
+        "dispatch-permission",
+        "kill-permission",
+        "submission-ownership",
+        "existing-job-ownership",
+        "phd-resource-limits",
+        "master-resource-limits"
+      ]
+    },
+    {
+      "sentenceId": "sentence:438:538",
+      "procedureIds": [
+        "approval-permission",
+        "rejection-permission",
+        "dispatch-permission",
+        "kill-permission",
+        "cancel-permission"
+      ]
+    },
+    {
+      "sentenceId": "sentence:539:640",
+      "procedureIds": [
+        "submit-permission",
+        "submission-ownership",
+        "student-read-permission",
+        "revise-permission",
+        "existing-job-ownership",
+        "cancel-permission",
+        "student-finish-permission"
+      ]
+    },
+    {
+      "sentenceId": "sentence:641:733",
+      "procedureIds": [
+        "master-resource-limits"
+      ]
+    },
+    {
+      "sentenceId": "sentence:734:805",
+      "procedureIds": [
+        "phd-resource-limits"
+      ]
+    },
+    {
+      "sentenceId": "sentence:806:937",
+      "procedureIds": [
+        "phd-resource-limits",
+        "master-resource-limits",
+        "requested-node-type",
+        "physical-capacity"
+      ]
+    },
+    {
+      "sentenceId": "sentence:969:1109",
+      "procedureIds": [
+        "view-permission",
+        "private-read-permission",
+        "professor-read-permission",
+        "student-read-permission",
+        "existing-job-ownership"
+      ]
+    },
+    {
+      "sentenceId": "sentence:1111:1270",
+      "procedureIds": [
+        "view-permission",
+        "private-read-permission",
+        "student-read-permission",
+        "existing-job-ownership"
+      ]
+    },
+    {
+      "sentenceId": "sentence:1271:1420",
+      "procedureIds": [
+        "private-read-permission",
+        "professor-read-permission",
+        "student-read-permission",
+        "existing-job-ownership"
+      ]
+    },
+    {
+      "sentenceId": "sentence:1421:1538",
+      "procedureIds": [
+        "professor-read-permission",
+        "student-read-permission",
+        "existing-job-ownership"
+      ]
+    },
+    {
+      "sentenceId": "sentence:1539:1697",
+      "procedureIds": [
+        "view-permission"
+      ]
+    },
+    {
+      "sentenceId": "sentence:1698:1813",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:1814:1892",
+      "procedureIds": [
+        "trace-credential-exclusion",
+        "provider-credential-exclusion",
+        "export-credential-exclusion"
+      ]
+    },
+    {
+      "sentenceId": "sentence:1925:2064",
+      "procedureIds": [
+        "current-approval",
+        "finish-receipt"
+      ]
+    },
+    {
+      "sentenceId": "sentence:2066:2197",
+      "procedureIds": [
+        "current-approval"
+      ]
+    },
+    {
+      "sentenceId": "sentence:2198:2295",
+      "procedureIds": [
+        "revise-queued",
+        "current-approval"
+      ]
+    },
+    {
+      "sentenceId": "sentence:2296:2352",
+      "procedureIds": [
+        "review-queued"
+      ]
+    },
+    {
+      "sentenceId": "sentence:2353:2464",
+      "procedureIds": [
+        "finish-receipt"
+      ]
+    },
+    {
+      "sentenceId": "sentence:2465:2539",
+      "procedureIds": [
+        "current-approval",
+        "finish-receipt"
+      ]
+    },
+    {
+      "sentenceId": "sentence:2561:2710",
+      "procedureIds": [
+        "dispatch-queued",
+        "finish-running",
+        "kill-cancel-state",
+        "physical-capacity",
+        "finish-allocation",
+        "release-allocation"
+      ]
+    },
+    {
+      "sentenceId": "sentence:2712:2774",
+      "procedureIds": [
+        "kill-cancel-state",
+        "finish-running"
+      ]
+    },
+    {
+      "sentenceId": "sentence:2775:2801",
+      "procedureIds": []
+    },
+    {
+      "sentenceId": "sentence:2802:2898",
+      "procedureIds": [
+        "dispatch-queued",
+        "finish-running",
+        "kill-cancel-state"
+      ]
+    },
+    {
+      "sentenceId": "sentence:2899:2960",
+      "procedureIds": [
+        "rejection-permission",
+        "kill-cancel-state"
+      ]
+    },
+    {
+      "sentenceId": "sentence:2961:3058",
+      "procedureIds": [
+        "current-approval",
+        "physical-capacity"
+      ]
+    },
+    {
+      "sentenceId": "sentence:3059:3177",
+      "procedureIds": [
+        "physical-capacity",
+        "finish-allocation",
+        "release-allocation"
+      ]
+    },
+    {
+      "sentenceId": "sentence:3178:3252",
+      "procedureIds": [
+        "dispatch-queued"
+      ]
+    },
+    {
+      "sentenceId": "sentence:3253:3326",
+      "procedureIds": [
+        "release-allocation",
+        "release-evidence"
+      ]
+    },
+    {
+      "sentenceId": "sentence:3347:3447",
+      "procedureIds": [
+        "phd-over-young-master",
+        "aged-master-over-phd"
+      ]
+    },
+    {
+      "sentenceId": "sentence:3449:3543",
+      "procedureIds": [
+        "phd-over-young-master",
+        "aged-master-over-phd"
+      ]
+    },
+    {
+      "sentenceId": "sentence:3544:3617",
+      "procedureIds": [
+        "dispatch-permission",
+        "dispatch-queued",
+        "phd-over-young-master",
+        "aged-master-over-phd",
+        "phd-fifo",
+        "master-fifo",
+        "aged-master-over-young-master"
+      ]
+    },
+    {
+      "sentenceId": "sentence:3618:3754",
+      "procedureIds": [
+        "phd-over-young-master",
+        "aged-master-over-phd"
+      ]
+    },
+    {
+      "sentenceId": "sentence:3755:3793",
+      "procedureIds": [
+        "phd-fifo",
+        "master-fifo"
+      ]
+    },
+    {
+      "sentenceId": "sentence:3794:3887",
+      "procedureIds": [
+        "phd-over-young-master",
+        "aged-master-over-phd",
+        "phd-fifo",
+        "master-fifo",
+        "aged-master-over-young-master"
+      ]
+    },
+    {
+      "sentenceId": "sentence:3920:4069",
+      "procedureIds": [
+        "finish-allocation",
+        "finish-receipt",
+        "release-allocation",
+        "release-evidence"
+      ]
+    },
+    {
+      "sentenceId": "sentence:4071:4132",
+      "procedureIds": [
+        "kill-cancel-reason"
+      ]
+    },
+    {
+      "sentenceId": "sentence:4133:4264",
+      "procedureIds": [
+        "kill-cancel-state",
+        "release-allocation",
+        "release-evidence"
+      ]
+    },
+    {
+      "sentenceId": "sentence:4265:4446",
+      "procedureIds": [
+        "finish-allocation",
+        "finish-receipt",
+        "release-allocation",
+        "release-evidence"
+      ]
+    },
+    {
+      "sentenceId": "sentence:4447:4606",
+      "procedureIds": [
+        "finish-running",
+        "finish-allocation",
+        "kill-cancel-state",
+        "release-allocation"
+      ]
+    },
+    {
+      "sentenceId": "sentence:4607:4700",
+      "procedureIds": [
+        "finish-allocation",
+        "release-allocation"
+      ]
+    },
+    {
+      "sentenceId": "sentence:4701:4736",
+      "procedureIds": []
+    }
+  ]
+}

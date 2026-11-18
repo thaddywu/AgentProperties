@@ -10,9 +10,9 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from policyscope.policy_adder.codex import CodexPort, choose_policy
-from policyscope.policy_adder.repository import PortJobs, RepositoryApplication
-from policyscope.workbench.study import Study
+from policyweave.policy_adder.codex import CodexPort, choose_policy
+from policyweave.policy_adder.repository import PortJobs, RepositoryApplication
+from policyweave.workbench.study import Study
 
 
 class CodexPortTests(unittest.TestCase):
@@ -28,6 +28,7 @@ class CodexPortTests(unittest.TestCase):
         (self.source / "app.md").write_text("A synthetic app.")
         (self.source / "tool.py").write_text("def run(): return True\n")
         (self.source / ".env").write_text("DO_NOT_COPY=synthetic\n")
+        (self.source / "connection.yaml").write_text("openai:\n  apiKey: synthetic-key\n")
         subprocess.run(["git", "-C", str(self.source), "add", "."], check=True)
         subprocess.run(
             [
@@ -58,9 +59,12 @@ class CodexPortTests(unittest.TestCase):
         self,
     ):
         self.assertFalse((self.port.output / "original/.env").exists())
-        framework = self.port.output / "framework/policyscope"
+        self.assertFalse((self.port.output / "original/connection.yaml").exists())
+        framework = self.port.output / "framework/policyweave"
         self.assertTrue((framework / "enforcement/api.py").is_file())
         self.assertTrue((framework / "core/foundations.json").is_file())
+        self.assertTrue((framework / "workbench/runner.py").is_file())
+        self.assertFalse((framework / "workbench/static").exists())
         self.assertFalse((framework / "policy_adder").exists())
         self.assertEqual(
             (self.port.output / "candidate/policy.md").read_text(),
@@ -122,6 +126,7 @@ class CodexPortTests(unittest.TestCase):
         (package / "test_port.py").write_text('x = "exclude test"')
         (package / "offline_fixtures.py").write_text("test_only_engine_double = True")
         (package / "plan.json").write_text('{"forward_plan":"must also be excluded"}')
+        (self.port.output / "candidate/connection.yml").write_text("anthropic:\n  apiKey: synthetic-key\n")
         config = self.port.output / "candidate/config"
         config.mkdir()
         (config / "policy.json").write_text('{"runtime_limit":20}')
@@ -133,7 +138,7 @@ class CodexPortTests(unittest.TestCase):
         # Stop before the native validation/model call; inspect the independently
         # created input snapshot, never execute app source on the host.
         with patch(
-            "policyscope.back_translation.codex.validate_rules",
+            "policyweave.back_translation.codex.validate_rules",
             side_effect=ValueError("stop"),
         ):
             with self.assertRaises(ValueError):
@@ -149,6 +154,7 @@ class CodexPortTests(unittest.TestCase):
             "policy_port/test_port.py",
             "policy_port/plan.json",
             "policy_port/offline_fixtures.py",
+            "connection.yml",
         ):
             self.assertFalse((reverse / name).exists(), name)
 
@@ -165,6 +171,23 @@ class CodexPortTests(unittest.TestCase):
             jobs.lock.release()
         self.assertTrue(jobs.status()["canTranslate"])
 
+    def test_backtranslation_rejects_implementation_changes_during_snapshot(self):
+        package = self.port.output / "candidate/policy_port"
+        package.mkdir()
+        (package / "rules.dl").write_text('Allow(Q) :- Request(Q,P,"read").')
+        copy = shutil.copy2
+
+        def copy_then_change(source, destination):
+            result = copy(source, destination)
+            if source == self.port.output / "candidate/tool.py":
+                source.write_text("def run(): return False\n")
+            return result
+
+        with patch("policyweave.back_translation.codex.shutil.copy2", side_effect=copy_then_change):
+            with self.assertRaisesRegex(ValueError, "changed while creating"):
+                self.port.backtranslate()
+        self.assertFalse((self.port.output / "backtranslation.json").exists())
+
     def test_previous_translation_is_retained_and_not_overwritten(self):
         path = self.port.output / "translation.json"
         path.write_text('{"status":"failed"}')
@@ -178,19 +201,31 @@ class CodexPortTests(unittest.TestCase):
         code = """from unittest.mock import patch
 from pathlib import Path
 import tempfile
-from policyscope.adapters.batch_worker import native_engine_guard
-counts = native_engine_guard()
-try:
-    with patch('policyscope.core.datalog.Souffle.evaluate', lambda *a: []):
-        raise AssertionError('Engine replacement was allowed')
-except RuntimeError:
-    pass
-from policyscope.enforcement import Policy
+from policyweave.adapters.batch_worker import native_engine_guard
+from policyweave.enforcement import Policy, caller_context
 with tempfile.TemporaryDirectory() as d:
+    tool = Path(d) / 'tool.py'
+    source = 'def plain(policy): return policy.execute("reader", "read", {}, lambda _: True)\\ndef decorated(): return True\\n'
+    scope = {}
+    exec(compile(source, str(tool), 'exec'), scope)
+    counts = native_engine_guard([
+        dict(id='plain', file='tool.py', symbol='plain'),
+        dict(id='decorated', file='tool.py', symbol='decorated'),
+    ], Path(d))
+    try:
+        with patch('policyweave.core.datalog.Souffle.evaluate', lambda *a: []):
+            raise AssertionError('Engine replacement was allowed')
+    except RuntimeError:
+        pass
     p = Path(d) / 'rules.dl'
     p.write_text('Allow(Q) :- Request(Q,P,"read").')
     policy = Policy(p)
     assert policy.runtime.check(dict(actor='reader',action='read',parameters={}))['allowed']
+    assert not counts['boundaryCalls'], 'Standalone gates must not count as application integration'
+    assert scope['plain'](policy)
+    with caller_context('reader'):
+        assert policy(name='read')(scope['decorated'])()
+    assert set(counts['boundaryCalls']) == {'plain', 'decorated'}
 assert counts['calls'] > 0
 """
         environment = dict(

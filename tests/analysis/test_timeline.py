@@ -9,8 +9,8 @@ from unittest.mock import patch
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
-from policyscope.analysis.timeline import Timeline
-from policyscope.workbench.analysis import AnalysisServer
+from policyweave.analysis.timeline import Timeline
+from policyweave.workbench.analysis import AnalysisServer
 
 EXAMPLE = Path(__file__).resolve().parents[2] / "examples/trajectories/team-review.json"
 
@@ -58,7 +58,7 @@ class TimelineTests(unittest.TestCase):
         "Native fixture generation required",
     )
     def test_existing_gate_logs_are_viewed_without_running_the_engine(self):
-        from policyscope.enforcement import Policy
+        from policyweave.enforcement import Policy
 
         with tempfile.TemporaryDirectory() as directory:
             rules = Path(directory) / "rules.dl"
@@ -72,7 +72,7 @@ class TimelineTests(unittest.TestCase):
             finally:
                 policy.runtime.close()
         with patch(
-            "policyscope.core.datalog.Souffle.evaluate",
+            "policyweave.core.datalog.Souffle.evaluate",
             side_effect=AssertionError("No replay"),
         ):
             timeline = Timeline(trace)
@@ -112,7 +112,7 @@ class TimelineTests(unittest.TestCase):
                 self.assertEqual(error.exception.code, 404)
             with self.assertRaises(HTTPError) as error:
                 post("ask", dict(trajectoryId=identity, question="Who sent a message?"))
-            self.assertEqual(error.exception.code, 409)
+            self.assertEqual(error.exception.code, 404)
             for headers in [
                 dict(token="wrong"),
                 dict(origin="https://example.invalid"),

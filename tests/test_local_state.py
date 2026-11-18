@@ -29,7 +29,7 @@ class LocalStateTests(unittest.TestCase):
                         sys.executable,
                         "-B",
                         "-m",
-                        "policyscope",
+                        "policyweave",
                         "review",
                         "--port",
                         "0",
@@ -61,7 +61,7 @@ class LocalStateTests(unittest.TestCase):
                         ) as response:
                             self.assertTrue("study" in json.load(response))
                         expected = (
-                            selected if explicit else state / "policyscope/default"
+                            selected if explicit else state / "policyweave/default"
                         )
                         record = expected / "study.json"
                         self.assertTrue(record.is_file())

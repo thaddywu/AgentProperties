@@ -3,9 +3,9 @@ from pathlib import Path
 import shutil
 import tempfile
 import unittest
-from policyscope.workbench.cases import read_cases, run_cases
-from policyscope.workbench.example import Application
-from policyscope.workbench.study import Study
+from policyweave.workbench.cases import read_cases, run_cases
+from policyweave.workbench.example import Application
+from policyweave.workbench.study import Study
 
 
 class CaseFileTests(unittest.TestCase):

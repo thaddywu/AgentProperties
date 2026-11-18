@@ -6,7 +6,7 @@ import unittest
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
-from policyscope.enforcement import Policy, BridgeError, caller_context, current_caller
+from policyweave.enforcement import Policy, BridgeError, caller_context, current_caller
 
 SOURCE = """.decl Grant(Principal:symbol, Resource:symbol)
 .input Grant

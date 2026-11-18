@@ -10,10 +10,10 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from policyscope.analysis import TrajectorySession
-from policyscope.core.policy import fingerprint
-from policyscope.enforcement import BridgeError, Policy, capture_trajectories
-from policyscope.workbench.pipeline import analyze_publication
+from policyweave.analysis import TrajectorySession
+from policyweave.core.policy import fingerprint
+from policyweave.enforcement import BridgeError, Policy, capture_trajectories
+from policyweave.workbench.pipeline import analyze_publication
 
 SOURCE = """
 .decl Owner(Document:symbol, Actor:symbol)
@@ -346,7 +346,7 @@ class TrajectoryTests(unittest.TestCase):
                 sys.executable,
                 "-B",
                 "-m",
-                "policyscope",
+                "policyweave",
                 "analyze",
                 str(trajectory_file),
                 "--verify",
@@ -363,7 +363,7 @@ class TrajectoryTests(unittest.TestCase):
                 sys.executable,
                 "-B",
                 "-m",
-                "policyscope",
+                "policyweave",
                 "analyze",
                 str(trajectory_file),
                 "--verify",

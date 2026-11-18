@@ -1,0 +1,41 @@
+{
+  "version": 2,
+  "policyHash": "64d4d8f86792239c6a490f3f84720d411c179b9e74a7e2952cf9454884b0f808",
+  "applicationFiles": {
+    "agents/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "agents/client.py": "70a4d2eb7d0212c5e3893133879926fb7e3ff26159a6b7dd868574f934e3b46b",
+    "agents/deterministic.py": "a79cd1a08607909c3696a5771b5a7baf53f5910bff78b3e8e6a56e18bdf0cb1e",
+    "agents/recorded.py": "51abec9d74cd763b44fa41b607dc249516437f848f7cb6bab631a3ac2df2236f",
+    "agents/runtime.py": "544c4f2e044ea60fd47ecfa6ecab27717271a265f0dbad7f36251cd3fbb2e6e4",
+    "core/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "core/access.py": "74246d9e84d2c00b1e67ccc4ad0d622b30f49fa4c0b1771653e50514ef141b91",
+    "core/audit.py": "13f9c6127fe1e78538bc6ab42a18230188de0dda10860389761dc69612eefc94",
+    "core/messaging.py": "35fc65ec50a443aade2f95b4cea6b5ec81deca414afff5fffe9d0a754b029d82",
+    "core/schemas.py": "4885057577ab9a8b0602e32b3d2f192e717ccd3fa464e3bbe579bea127ccabfd",
+    "core/store.py": "05681741d614f9dc0dcdadad36020dde6232050fc4b26bde2652d71a019289e8",
+    "core/tools.py": "127d0773c73a643bc3a848160c3eb4edcdbb69c2d6830d9598769c2cf3cc29bf",
+    "core/tracing.py": "c91bd81a661a2f0473c0c41d2d3182e777ca300a4913ef5ab7cf0d8c978962d7",
+    "fixtures/cluster.json": "606efea63c5736b8750b6a2f4d96502e852858f1cee7a38e977750fb15ac9ccc",
+    "fixtures/master_private.json": "63ed6b645019bafab3447fb7eba7665fe23098b5d5b787f8f5b0c138aff5733f",
+    "fixtures/phd_private.json": "b834739f874e8e1cd2499d19371347ef8906d328c603c7e950c0ded944fdd4b4",
+    "fixtures/professor_private.json": "9bef165514e2c6086765a93f01996876a9118a6f8bd5c33c182cd04fb496683a",
+    "phase1/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "phase1/run.py": "266cec32054c422ed0f86b5086197663422f983f9fe7576ce5552fb173e697e9",
+    "phase1/scenarios.py": "317ba397b5c7f4637f0a4c386602bf71d7362dea83242f4bf9e1150f21f47d96",
+    "policy_port/binding.py": "e8e53372478a4bd14de7c5ec8f00d6633dd270e1b428a15dd6771879157b5cd3",
+    "policy_port/rules.dl": "1c896772e0cd0f5bee5cf58b87c6f8fe62f5e9597ea3c8807a1463bc1a761c30",
+    "policy_port/__init__.py": "76ab3375a0a894ec77f5288be305645d8a1e4895cd5ae317adf44e667014d2e1",
+    "policy_port/adapter.py": "7a71b72f9f8adf20a0e622d27bcd141d3e6d3b06516a3ae1861fae6781127dec"
+  },
+  "assets": {
+    "execution.json": "5dcd4527558fddb46e29b66912eb3cca259346e43eeb4403fee189f7f348b5b5",
+    "alignment.json": "89fe5dd52fbbc7799a78b05dac0356d5e4b789c07adaf03023c0ad08fa562ae0",
+    "description.md": "5c015f3ca6c63ce318b8af5de5277fda3c071293c1e185eb7c5a0a6d3e5943e1"
+  },
+  "validation": "Source correspondence and development checks; not a semantic proof.",
+  "presentation": "Repository presentation harness over frozen independently reconstructed checks; real model iterations retained.",
+  "model": "gpt-6.1-sol",
+  "implementationHash": "32ced126fe160030cc80adb5e8afab94731439643e21ef2e3b84f72a87dc2513",
+  "applicationPath": "..",
+  "id": "0cbe5262305a48e825672113fea794038a0609630cc0e533dbb46e1ed4f227f8"
+}
