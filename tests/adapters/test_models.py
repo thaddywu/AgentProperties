@@ -171,7 +171,12 @@ def proxy_request(proxy, path, payload, headers=None):
     connection.sock.settimeout(5)
     connection.sock.connect(str(proxy.path))
     try:
-        connection.request("POST", path, json.dumps(payload), headers or {})
+        try:
+            connection.request("POST", path, json.dumps(payload), headers or {})
+        except BrokenPipeError:
+            # Rejected routes can close after headers, before the body write.
+            # Read and assert that response instead of racing the early close.
+            pass
         response = connection.getresponse()
         return response.status, response.read(), response.getheader("Content-Type")
     finally:

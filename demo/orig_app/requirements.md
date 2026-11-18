@@ -27,10 +27,10 @@ Revising queued work invalidates its approval. Students send their own requests 
 - Use queue priority to interrupt running work or let an old notification release a newer run's allocation.
 - Expose API keys or real student records in prompts, logs or the submission.
 
-The detailed, checkable conditions and exceptions are P1–P6 in [policies.md](policies.md). The same policies are provided in `policy.md` for the structured requirements archive.
+The detailed, checkable conditions and exceptions are P1–P6 in [the original policies](policies.md).
 
-## Prototype evidence and limits
+## Course demo
 
-No safety-enforcing framework is used. Ordinary application tools check normal operations, and a passive audit reports violations after actions. The intended requirements above are not a claim that every path is already protected. T2 and T4 deliberately exercise unguarded paths through labeled scripted fault injection.
-
-Four complete genuine DeepSeek traces are provided in `traces/`, each containing concise decision summaries, actions, sent and received messages, observations, causal references and state changes. The summaries represent observable agent thoughts; hidden chain of thought is not requested or stored. The model calls are real; server execution and task data are local simulations. [traces/README.md](traces/README.md) explains each scenario, observed policies and fault labels. Short step-by-step accounts are provided in the separate requirements archive.
+This snapshot runs the deterministic `T1_priority_queue` scenario in
+[the test cases](../test_cases.json) with synthetic fixtures. See
+[the walkthrough](../README.md) for the original and ported commands.
