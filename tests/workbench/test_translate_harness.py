@@ -3,6 +3,7 @@
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -71,6 +72,17 @@ class HarnessTranslationTests(unittest.TestCase):
                                       cwd=root, env=env, capture_output=True, text=True, timeout=10)
             self.assertEqual(paired.returncode, 1, paired.stderr)
             self.assertIn("ported app: 0/2", paired.stdout)
+            moved = root / "moved"
+            moved.mkdir()
+            for path in (original, ported, source, output):
+                shutil.move(path, moved / path.name)
+            relocated = subprocess.run(
+                [sys.executable, "-B", str(moved / output.name), "--side", "original",
+                 "--output_dir", str(moved / "runs")],
+                cwd=root, env=env, capture_output=True, text=True, timeout=10,
+            )
+            self.assertEqual(relocated.returncode, 0, relocated.stderr)
+            self.assertIn("original app: 1/1", relocated.stdout)
 
     def test_manifest_cases_are_complete_and_keep_the_declared_order(self):
         with tempfile.TemporaryDirectory() as directory:

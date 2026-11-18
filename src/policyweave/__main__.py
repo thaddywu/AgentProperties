@@ -6,6 +6,7 @@ import sys
 
 
 COMMANDS = {
+    "new-run": "policyweave.workbench.runs",
     "port": "policyweave.workbench.port",
     "translate-harness": "policyweave.workbench.translate_harness",
     "back-translate": "policyweave.workbench.back_translate",

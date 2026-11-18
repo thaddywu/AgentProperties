@@ -19,6 +19,7 @@ __pycache__/
 /connection.yml
 /connection.json
 /output/
+/runs/
 /backups/
 /data/
 /artifacts/

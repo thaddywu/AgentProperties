@@ -22,8 +22,9 @@ have no file tools or app execution. The coding CLI is used for rules and
 instrumentation; host validators check every planning response before progression.
 
 ```bash
+RUN_DIR="$(policyweave new-run Draft)"
 policy-translate /path/to/policy.md --binding /path/to/runtime.json \
-  --connection /path/to/private-connection.yaml --output ../policyweave-runs/draft
+  --connection /path/to/private-connection.yaml --output "$RUN_DIR/translation"
 ```
 
 The optional application-port workflow requires Docker, Linux x86_64 and a
@@ -46,6 +47,13 @@ policyweave view-translation \
 ```
 
 The original app is a clean Git checkout with `app.md` and `policy.md`. The target must be absent or empty. Debug flags can select existing document names without rewriting them. Git branches remain user-owned. The adapter preserves original documents, tests and business behavior; it adds rules, mediation and explicit fact producers. Passing development tests does not prove full policy fidelity or complete mediation.
+
+From the repository root, `RUN_DIR="$(policyweave new-run APP)"` creates a fresh
+`runs/YYYYMonDD_HHMM_APP/` workspace, with a numeric suffix for same-minute runs.
+Keep `orig_app/`, `ported_app/`, harnesses, results, reports and cost records inside
+that workspace. The entire `runs/` tree is ignored by Git and Docker builds.
+Generated harness paths are relative to the harness location, so keep the complete
+workspace layout when moving it. See [the demo walkthrough](../demo/step_by_step.sh).
 
 The execution image supplies framework dependencies. If an application needs
 additional or incompatible dependencies, prepare its test image before porting

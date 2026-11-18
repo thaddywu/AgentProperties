@@ -16,10 +16,13 @@ demo/
 
 Read [step_by_step.sh](step_by_step.sh) for the full course flow, from Appendix A
 installation through sections 3.1–3.7 and the final report. Short comments mark
-UI actions and file checks. Running the shell file only prints the walkthrough. It reserves `demo/workflow/` for fresh outputs and leaves the copied
-snapshots intact; those workflow outputs are not prepopulated.
-Use a fresh workflow directory. The walkthrough copies the one-case test file
-before translating the harness; extend it to ten scenarios for the assignment.
+UI actions and file checks. Running the shell file only prints the walkthrough.
+Each execution starts with `policyweave new-run Labcluster`, creating an empty
+`runs/YYYYMonDD_HHMM_Labcluster/` workspace. Repeated runs in the same minute get
+a numeric suffix. Sources, generated artifacts, results and reports stay together
+there, excluded from Git and Docker build contexts. The walkthrough copies the
+one-case test file before translating the harness; extend it to ten scenarios
+for the assignment.
 
 The review UI automatically saves to `ported_app/review.json` on **Save**;
 **Export** downloads another copy. The included [review.json](ported_app/review.json)
@@ -46,26 +49,29 @@ The generated entry point adds APP_DIR selection, trajectory export and cumulati
 task-completion reporting. `orig_app` is a copied source tree for inspection and
 execution, rather than a separate Git checkout for rerunning `policyweave port`.
 
-With PolicyWeave installed, commands from this directory are:
+To run the existing offline snapshot from the repository root:
 
 ```bash
-python run.py --case T1_priority_queue --side original --output_dir runs --sample 1
-python translated_harness.py --case T1_priority_queue --side ported --output_dir runs --sample 1
+RUN_DIR="$(policyweave new-run Labcluster)"
+cp -R demo/orig_app demo/ported_app "$RUN_DIR/"
+cp demo/run.py demo/translated_harness.py demo/test_cases.json "$RUN_DIR/"
+python "$RUN_DIR/translated_harness.py" --case T1_priority_queue --side original --output_dir "$RUN_DIR/results" --sample 1
+python "$RUN_DIR/translated_harness.py" --case T1_priority_queue --side ported --output_dir "$RUN_DIR/results" --sample 1
 ```
 
-The ported command also needs the native engine described in `../docs/setup.md`.
-Results go under `runs/T1_priority_queue/<side>/sample-1/`. The generated entry
-point prints cumulative completion counts for both sides and exports the ported
-trajectory as JSON and JSONL. Existing sample directories are retained; use a
-fresh output directory for a new batch.
+The ported command needs the native engine described in `../docs/setup.md`.
+Results go under `$RUN_DIR/results/T1_priority_queue/<side>/sample-1/`.
+The generated entry point prints cumulative completion counts for both sides and
+exports the ported trajectory as JSON and JSONL. A new workspace retains earlier
+runs and keeps each batch separate.
 
 To translate the original harness again, provide both app directories explicitly
 and choose a new output file:
 
 ```bash
 policyweave translate-harness \
-  --input run.py --output retranslated_harness.py \
-  --original-app orig_app --ported-app ported_app \
+  --input "$RUN_DIR/run.py" --output "$RUN_DIR/retranslated_harness.py" \
+  --original-app "$RUN_DIR/orig_app" --ported-app "$RUN_DIR/ported_app" \
   --connection "$CONNECTION_FILE"
 ```
 

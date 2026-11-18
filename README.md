@@ -28,7 +28,8 @@ The review opens a synthetic document example without a model or native engine. 
 
 ```bash
 python examples/quickstart/quickstart.py
-policyweave run-cases --cases examples/cases/document-tests.json --data ../policyweave-runs/example
+RUN_DIR="$(policyweave new-run Example)"
+policyweave run-cases --cases examples/cases/document-tests.json --data "$RUN_DIR/results"
 python -B -m tests
 ```
 

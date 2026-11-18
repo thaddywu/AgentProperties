@@ -11,6 +11,7 @@ src/policyweave/
   adapters/          Optional models and isolated execution workers
   workbench/         Shared HTTP/UI composition and study persistence
 tests/               Offline and headless browser tests
+runs/                Ignored local workspaces; one timestamped directory per app run
 examples/
   quickstart/        Small runnable integration
   applications/      App adapters and reviewed reference policies
@@ -89,7 +90,18 @@ Maintenance tools live with their owner: `python -B -m tests` runs verification 
 checksum-verified releases into the user cache, then links tools into the Python
 environment. Model credentials remain separate in the shared connection YAML.
 
-Default private runtime state lives under `~/.local/state/policyweave`; disposable outputs live under `~/.cache/policyweave`. `XDG_STATE_HOME` and `XDG_CACHE_HOME` can select other roots. Local historical backups are outside the checkout. Archive branches retain the previous host, TypeScript code and public experiment artifacts. There is one active development branch, `master`; the five `archive/*` module branches are frozen references.
+Create application workspaces from the repository root with `policyweave new-run APP`.
+Each empty `runs/YYYYMonDD_HHMM_APP/` directory holds that run's original app,
+port, harness, results, review, report and costs. Names use local time; same-minute
+collisions receive a numeric suffix. Git and Docker build contexts exclude the
+entire `runs/` tree. Generated harnesses retain relative application and fixture
+paths so a complete workspace can move together. Historical local evidence can
+be retained under `runs/_archive/`; Git archive branches retain older code.
+
+Default shared runtime state lives under `~/.local/state/policyweave`; disposable
+tool caches live under `~/.cache/policyweave`. `XDG_STATE_HOME` and `XDG_CACHE_HOME`
+can select other roots. There is one active development branch, `master`; the
+five `archive/*` module branches are frozen references.
 
 ## Historical implementations
 

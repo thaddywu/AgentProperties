@@ -148,10 +148,11 @@ def translate(input_file, output_file, *, original_app, ported_app, generate):
             context["validationError"] = str(error)
     prefix = ("# Generated application-launch integration; original test helpers retained.\n"
               "from pathlib import Path as _PolicyWeavePath\n"
-              f"INPUT_DIRECTORY = _PolicyWeavePath({str(source.parent)!r})\n"
+              "_POLICYWEAVE_DIRECTORY = _PolicyWeavePath(__file__).resolve().parent\n"
+              f"INPUT_DIRECTORY = (_POLICYWEAVE_DIRECTORY / {os.path.relpath(source.parent, output.parent)!r}).resolve()\n"
               f"__file__ = str(INPUT_DIRECTORY / {source.name!r})\n"
-              f"ORIGINAL_APPLICATION = _PolicyWeavePath({str(original_app)!r})\n"
-              f"PORTED_APPLICATION = _PolicyWeavePath({str(ported_app)!r})\n\n")
+              f"ORIGINAL_APPLICATION = (_POLICYWEAVE_DIRECTORY / {os.path.relpath(original_app, output.parent)!r}).resolve()\n"
+              f"PORTED_APPLICATION = (_POLICYWEAVE_DIRECTORY / {os.path.relpath(ported_app, output.parent)!r}).resolve()\n\n")
     suffix = ("\n\ndef _policyweave_dispatch(side, case, sample, output_dir):\n"
               "    global APP_DIR\n"
               "    APP_DIR = ORIGINAL_APPLICATION if side == 'original' else PORTED_APPLICATION\n"
