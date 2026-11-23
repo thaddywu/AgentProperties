@@ -154,8 +154,8 @@ def validate_settings(value):
     if not isinstance(key, str) or any(c in key for c in "\r\n"):
         raise ValueError("Invalid model credential.")
     tokens = settings.setdefault("maxTokens", 12000)
-    if type(tokens) is not int or not 1 <= tokens <= 32000:
-        raise ValueError("Invalid model token budget.")
+    if type(tokens) is not int or tokens < 1:
+        raise ValueError("Model token budget must be a positive integer.")
     timeout = settings.setdefault("timeoutSeconds", 180)
     if type(timeout) is not int or not 1 <= timeout <= 600:
         raise ValueError("Model timeout must be 1–600 seconds.")

@@ -267,6 +267,7 @@ def run(
         if not result.get("passed"):
             raise ValueError(
                 "Translation failed development checks. Private attempts were retained."
+                + (" " + result["error"] if result.get("error") else "")
             )
     clean = work / ("publish-" + uuid.uuid4().hex[:12])
     stage("published-enforcement")

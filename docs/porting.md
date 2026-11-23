@@ -235,10 +235,15 @@ The URL must use HTTPS, or HTTP on loopback (`localhost`, `127.0.0.1` or `::1`).
 Plain HTTP on a LAN address or a Docker hostname is rejected. The endpoint must
 be reachable from the PolicyWeave host; coding containers reach it through the
 host relay. Redirects are rejected. Data-only responses are limited to 1 MiB;
-`maxTokens` accepts 1–32,000 and `timeoutSeconds` accepts 1–600 for data-only calls.
+`maxTokens` accepts a positive integer and `timeoutSeconds` accepts 1–600 for data-only calls.
 Port planning defaults to 24,000 tokens unless configured otherwise. Choose
 budgets that fit the model's context window; source bundles and generated rules
 must fit, and host validators still reject invalid or incomplete output.
+The endpoint enforces its own supported token limits. Truncated responses report
+the configured `maxTokens`; raise it in the selected connection section when needed.
+Failed planning calls retain a private `STAGE-attempt-N-error.json` with the stage,
+failure kind, token budget, elapsed time, and available HTTP status, finish reason
+and numeric usage. Provider error bodies and partial output are excluded.
 
 ### Shared connection behavior
 

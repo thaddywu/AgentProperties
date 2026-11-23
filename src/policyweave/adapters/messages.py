@@ -64,7 +64,14 @@ def read_message(data):
     text = "".join(pieces)
     if not text.strip():
         raise ValueError("Model response contains no text.")
+    return text, message_usage(data)
+
+
+def message_usage(data):
+    """Project standard numeric usage even when an output is incomplete."""
     usage = data.get("usage", {})
+    if not isinstance(usage, dict):
+        return {}
     mapped = {}
     for source, target in (("input_tokens", "prompt_tokens"),
                            ("output_tokens", "completion_tokens")):
@@ -77,4 +84,4 @@ def read_message(data):
         )
     if len(mapped) == 2:
         mapped["total_tokens"] = sum(mapped.values())
-    return text, mapped
+    return mapped

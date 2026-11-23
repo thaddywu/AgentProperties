@@ -103,10 +103,9 @@ class ModelConformanceTests(unittest.TestCase):
                         self.assertEqual(request["path"], "/v1/chat/completions")
                         self.assertEqual(headers["authorization"], "Bearer synthetic-host-key")
 
-    def test_truncation_refusal_tool_calls_and_empty_text_fail_without_usage(self):
+    def test_refusal_tool_calls_and_empty_text_fail_without_usage(self):
         with ModelFixture() as fixture:
             for reason, content in (
-                ("max_tokens", [dict(type="text", text='{"partial":')]),
                 ("refusal", [dict(type="text", text="refused")]),
                 ("tool_use", [dict(type="tool_use", name="Bash", input={})]),
                 ("end_turn", [dict(type="thinking", thinking="private")]),
@@ -116,6 +115,55 @@ class ModelConformanceTests(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError, "invalid response"):
                     model("test", "data")
                 self.assertEqual(model.usage, [])
+
+    def test_large_budgets_and_truncation_diagnostics_use_the_shared_contract(self):
+        with ModelFixture() as fixture:
+            for protocol in ("chat-completions", "messages"):
+                with self.subTest(protocol=protocol):
+                    model = Connection(dict(protocol=protocol, baseUrl=fixture.base, modelId="fixture",
+                                            apiKey="synthetic-host-key", maxTokens=64000))
+                    self.assertEqual(model("binding-plan", "data"), '{"ok":true}')
+                    token_field = "max_tokens" if protocol == "messages" else "max_completion_tokens"
+                    self.assertEqual(fixture.requests[-1]["payload"][token_field], 64000)
+                    if protocol == "messages":
+                        reply = dict(type="message", stop_reason="max_tokens",
+                                     content=[dict(type="text", text="synthetic private partial")],
+                                     usage=dict(input_tokens=4, output_tokens=64000))
+                    else:
+                        reply = dict(choices=[dict(finish_reason="length", message=dict(content="synthetic private partial"))],
+                                     usage=dict(prompt_tokens=4, completion_tokens=64000, total_tokens=64004,
+                                                private="synthetic-host-key"))
+                    fixture.reply = json.dumps(reply).encode()
+                    with self.assertRaisesRegex(RuntimeError, r"reached maxTokens \(64000\)"):
+                        model("binding-plan", "data")
+                    self.assertEqual(len(model.usage), 1)
+                    failure = model.failures[-1]
+                    self.assertEqual(failure["stage"], "binding-plan")
+                    self.assertEqual(failure["kind"], "output_limit")
+                    self.assertEqual(failure["maxTokens"], 64000)
+                    self.assertEqual(failure["completion_tokens"], 64000)
+                    self.assertGreaterEqual(failure["elapsedSeconds"], 0)
+                    self.assertNotIn("synthetic private partial", json.dumps(failure))
+                    self.assertNotIn("synthetic-host-key", json.dumps(failure))
+                    fixture.reply = None
+
+    def test_failure_diagnostics_do_not_retain_untrusted_reasons_or_error_bodies(self):
+        with ModelFixture() as fixture:
+            for protocol in ("chat-completions", "messages"):
+                model = Connection(dict(protocol=protocol, baseUrl=fixture.base, modelId="fixture"))
+                reply = (dict(type="message", stop_reason="synthetic private reason", content=[])
+                         if protocol == "messages" else
+                         dict(choices=[dict(finish_reason="synthetic private reason")]))
+                fixture.reply = json.dumps(reply).encode()
+                with self.assertRaises(RuntimeError):
+                    model("binding-plan", "data")
+                self.assertEqual(model.failures[-1]["finishReason"], "unknown")
+                fixture.status, fixture.reply = 429, b"synthetic private upstream error"
+                with self.assertRaisesRegex(RuntimeError, "HTTP 429"):
+                    model("binding-plan", "data")
+                self.assertEqual(model.failures[-1]["httpStatus"], 429)
+                self.assertNotIn("synthetic private", json.dumps(model.failures))
+                fixture.status = 200
 
     def test_credentials_do_not_follow_redirects_or_appear_in_errors(self):
         with ModelFixture() as fixture:
