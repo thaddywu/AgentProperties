@@ -14,7 +14,7 @@ import unittest
 import yaml
 from unittest.mock import patch
 
-from policyweave.adapters.compatible import Connection
+from policyweave.adapters.compatible import Connection, MAX_RESPONSE_BYTES
 from policyweave.adapters.coding import CodingAgent
 from policyweave.adapters.messages import structured_schema
 from policyweave.adapters.model_proxy import ModelProxy
@@ -164,6 +164,26 @@ class ModelConformanceTests(unittest.TestCase):
                 self.assertEqual(model.failures[-1]["httpStatus"], 429)
                 self.assertNotIn("synthetic private", json.dumps(model.failures))
                 fixture.status = 200
+
+    def test_large_complete_responses_fit_and_oversized_responses_stay_bounded(self):
+        text = json.dumps(dict(evidence="synthetic evidence " * 70_000))
+        self.assertGreater(len(text.encode()), 1_048_576)
+        for protocol in ("chat-completions", "messages"):
+            with self.subTest(protocol=protocol):
+                model = Connection(dict(protocol=protocol, baseUrl="https://model.invalid/v1",
+                                        modelId="fixture", maxTokens=128_000))
+                reply = (dict(type="message", stop_reason="end_turn", content=[dict(type="text", text=text)])
+                         if protocol == "messages" else
+                         dict(choices=[dict(finish_reason="stop", message=dict(content=text))]))
+                with patch("policyweave.adapters.compatible.build_opener") as opener:
+                    response = opener.return_value.open.return_value.__enter__.return_value
+                    response.read.return_value = json.dumps(reply).encode()
+                    self.assertEqual(model("binding-plan", "data"), text)
+                    response.read.assert_called_once_with(MAX_RESPONSE_BYTES + 1)
+                    response.read.return_value = b" " * (MAX_RESPONSE_BYTES + 1)
+                    with self.assertRaisesRegex(RuntimeError, "8 MiB"):
+                        model("binding-plan", "data")
+                self.assertEqual(model.failures[-1]["kind"], "response_size")
 
     def test_credentials_do_not_follow_redirects_or_appear_in_errors(self):
         with ModelFixture() as fixture:

@@ -442,7 +442,7 @@ port.json must list per-policy coverage and concrete gaps, all input predicates/
         attempts = list(self.output.glob(stage + "-output-*.json"))
         if attempts:
             previous = max(attempts, key=lambda p: int(p.stem.rsplit("-", 1)[1]))
-            context["previousDraft"] = json.loads(artifact_text(self.output, previous.name, max_bytes=250_000))
+            context["previousDraft"] = json.loads(artifact_text(self.output, previous.name))
             validation = self.output / (stage + "-validation-" + previous.stem.rsplit("-", 1)[1] + ".json")
             if validation.exists():
                 context["previousValidation"] = json.loads(artifact_text(self.output, validation.name))
@@ -466,8 +466,8 @@ port.json must list per-policy coverage and concrete gaps, all input predicates/
                 )
                 if repair_sections:
                     context["repairInstruction"] += " Replace only these rejected sections: " + ", ".join(repair_sections)
-        settings = dict(self.settings, maxTokens=self.settings.get("maxTokens", 24000),
-                        timeoutSeconds=self.settings.get("timeoutSeconds", 300))
+        settings = dict(self.settings, maxTokens=self.settings.get("maxTokens", 128_000),
+                        timeoutSeconds=self.settings.get("timeoutSeconds", 600))
         if response_format is not None:
             settings["responseFormat"] = response_format
         connection = Connection(settings)

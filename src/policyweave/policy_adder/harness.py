@@ -131,7 +131,7 @@ def _json_stage(port, name, task, shape, validator, repairs):
     if drafts:
         previous = max(drafts, key=lambda p: int(p.stem.rsplit("-", 1)[1]))
         try:
-            validator(json.loads(artifact_text(port.output, previous.name, max_bytes=250_000)))
+            validator(json.loads(artifact_text(port.output, previous.name)))
         except (ValueError, KeyError, TypeError, OSError, SyntaxError) as error:
             errors.append(str(error)[:6000])
             repair_sections = getattr(error, "sections", [])
@@ -171,7 +171,7 @@ def _json_stage(port, name, task, shape, validator, repairs):
             _assert_source(port)
             if code or files(port.output / "candidate") != before:
                 raise ValueError("Planning stage failed or changed application code.")
-            value = json.loads(artifact_text(port.output, output, max_bytes=250_000))
+            value = json.loads(artifact_text(port.output, output))
             result = validator(value)
             save(port.output / (name + ".json"), result)
             state["stages"][name] = dict(passed=True, attempt=attempt, hash=fingerprint(result))

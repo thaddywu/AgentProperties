@@ -8,6 +8,8 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from .model_settings import request_headers, validate_settings
 
+MAX_RESPONSE_BYTES = 8 * 1024 * 1024
+
 
 class NoRedirect(HTTPRedirectHandler):
     def redirect_request(self, *args, **kwargs):
@@ -84,9 +86,9 @@ class Connection:
             with build_opener(NoRedirect()).open(
                 request, timeout=self._timeout
             ) as response:
-                raw = response.read(1_048_577)
-            if len(raw) > 1_048_576:
-                raise failure("response_size", "Model response exceeded the 1 MiB size limit.")
+                raw = response.read(MAX_RESPONSE_BYTES + 1)
+            if len(raw) > MAX_RESPONSE_BYTES:
+                raise failure("response_size", "Model response exceeded the 8 MiB size limit.")
             data = json.loads(raw)
             if self._protocol == "messages":
                 from .messages import message_usage, read_message
