@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 from . import QuerySession, TrajectorySession
 from policyweave.adapters.model_settings import load_connection
+from .timeline import MAX_TRAJECTORY_BYTES
 
 
 def main():
@@ -36,8 +37,8 @@ def main():
         "--connection", type=Path, help="Private compatible model connection for NL QA"
     )
     args = parser.parse_args()
-    if args.snapshot.stat().st_size > 64 * 1024 * 1024:
-        parser.error("Evidence file exceeds 64 MiB; select a shorter episode.")
+    if args.snapshot.stat().st_size > MAX_TRAJECTORY_BYTES:
+        parser.error("Evidence file exceeds 256 MiB; select a shorter episode.")
     value = json.loads(args.snapshot.read_text())
     if args.rules:
         if value.get("format") != "policyscope-timeline":

@@ -142,6 +142,18 @@ observation time must be present when the measured value is present; it does not
 supply a clock or enforce freshness. one rejects conflicting values and is not
 automatic replacement. callContract restricts actions, supplied parameter names
 and symbol/number/boolean/json encodings, not mandatory parameter presence.
+Project only the parameters used by the policy, identity joins or lifecycle
+matching. If a report rule reads only verdict, send verdict to the gate while
+the original callback receives the complete, unchanged section text. Do not copy
+every business argument into callContract. Gate parameter values and fact values
+are limited to 65,536 UTF-16 code units each; there are at most 32 gate parameters
+and a 4 MB aggregate input-fact value budget. These are input validation limits,
+not policy refusals. Invalid inputs do not produce a fabricated policy decision.
+Never silently truncate a value, or replace text with a hash or length when the
+policy needs its actual content. Keep original arguments/results in telemetry.
+Use the maintained EDB and confirmed fact changes instead of snapshotting the
+whole application or case file around every tool call. Only required authoritative
+facts belong in policy state; missing producers remain explicit gaps.
 Do not hide policy checks behind arbitrary Field keys or fabricate missing producers.
 Request describes the current gate invocation. Event may reuse its ID only when
 a real host producer records an occurrence; neither relation implies successful

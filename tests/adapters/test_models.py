@@ -225,6 +225,7 @@ class ModelConformanceTests(unittest.TestCase):
     def test_both_protocols_reject_unsafe_connections_before_network(self):
         for protocol in ("messages", "chat-completions"):
             for extra in (dict(baseUrl="http://example.invalid/v1"),
+                          dict(timeoutSeconds=3601),
                           dict(apiKey="synthetic\r\ninjection"),
                           dict(headers={"Authorization": "synthetic"}),
                           dict(headers={"X-Test": "value\nsecond"})):

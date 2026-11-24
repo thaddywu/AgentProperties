@@ -421,8 +421,8 @@ port.json must list per-policy coverage and concrete gaps, all input predicates/
                 continue
             text = artifact_text(self.output / "original", relative)
             total += len(text)
-            if total > 300_000:
-                raise ValueError("Planning source exceeds the bounded context; select narrower source evidence.")
+            if total > 2_000_000:
+                raise ValueError("Planning source exceeds 2,000,000 characters; select narrower source evidence.")
             source[relative] = text
         context = dict(
             task=prompt, source=source,
@@ -468,7 +468,7 @@ port.json must list per-policy coverage and concrete gaps, all input predicates/
                 if repair_sections:
                     context["repairInstruction"] += " Replace only these rejected sections: " + ", ".join(repair_sections)
         settings = dict(self.settings, maxTokens=self.settings.get("maxTokens", 128_000),
-                        timeoutSeconds=self.settings.get("timeoutSeconds", 600))
+                        timeoutSeconds=self.settings.get("timeoutSeconds", 1800))
         if response_format is not None:
             settings["responseFormat"] = response_format
         connection = Connection(settings)

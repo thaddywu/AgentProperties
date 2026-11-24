@@ -32,7 +32,8 @@ function route(event) {
   return event.tool || event.data?.request?.action || '';
 }
 async function post(operation, value) {
-  const response = await fetch('/api/analysis/' + operation, {method: 'POST', headers: {'Content-Type': 'application/json', 'X-Study-Token': token}, body: JSON.stringify(value), ...(operation==='explain' ? {signal:AbortSignal.timeout(15000)} : {})});
+  const raw=operation==='import' && value instanceof Blob;
+  const response = await fetch('/api/analysis/' + operation, {method: 'POST', headers: {'Content-Type': raw ? 'application/octet-stream' : 'application/json', 'X-Study-Token': token}, body: raw ? value : JSON.stringify(value), ...(operation==='explain' ? {signal:AbortSignal.timeout(15000)} : {})});
   const data = await response.json();
   if (!response.ok) throw Error(data.error || 'Could not read this trajectory.');
   return data;
@@ -294,8 +295,8 @@ function setLog(value, preferred) {
 $('#file').addEventListener('change',async()=>{
   const file=$('#file').files[0];if(!file)return;
   try {
-    if(file.size>64*1024*1024)throw Error('Trajectory exceeds 64 MiB.');
-    const response=await post('import',{text:await file.text()});
+    if(file.size>capabilities.maxTrajectoryBytes)throw Error(`Trajectory exceeds ${capabilities.maxTrajectoryBytes/1024/1024} MiB.`);
+    const response=await post('import',file);
     $('#status').textContent='';capabilities=response.capabilities || {};history.replaceState({},'','/');$('#export').href='/api/analysis/export';setLog(response.result);
   }catch(error){fail(error);}finally{$('#file').value='';}
 });

@@ -26,6 +26,7 @@ from policyweave.enforcement import (
     policy_predicates,
 )
 from policyweave.core.datalog import Souffle, decode, encoded_fact, parse, stratify
+from policyweave.core.policy import MAX_VALUE_CHARS, validate_inputs, validate_intent
 
 
 def f(name, *args):
@@ -77,6 +78,55 @@ def binding():
 
 
 class NativeTests(unittest.TestCase):
+    def test_report_sections_over_4096_are_evaluated_recorded_and_replayable(self):
+        from policyweave.analysis.timeline import Timeline
+        from policyweave.analysis.trajectory import TrajectorySession
+
+        section = "Synthetic report section. " * 400
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "rules.dl"
+            path.write_text('Allow(Q) :- Request(Q,P,"submit"), Parameter(Q,"verdict","approved").\n')
+            policy = Policy(path, trace=True, mechanisms=("observations",),
+                            inputs=[f("Field", "report", "text", section)],
+                            call_contract={"submit": {"section": "symbol", "verdict": "symbol"}})
+            calls = []
+            try:
+                for verdict in ("approved", "rejected"):
+                    result = policy.call("reader", "submit", dict(section=section, verdict=verdict),
+                                         lambda: calls.append(section) or "saved")
+                    self.assertEqual(result, "saved" if verdict == "approved" else {"ok": False, "code": "UNAVAILABLE"})
+                trajectory = policy.trajectory()
+            finally:
+                policy.runtime.close()
+        self.assertEqual(calls, [section])
+        self.assertEqual([event["outcome"] for event in trajectory["events"]], ["applied", "blocked"])
+        self.assertTrue(all(event["request"]["parameters"]["section"] == section for event in trajectory["events"]))
+        self.assertEqual(Timeline(trajectory).export(), trajectory)
+        self.assertTrue(TrajectorySession(trajectory).verify()["allMatched"])
+
+    def test_minimal_gate_arguments_keep_the_full_business_report(self):
+        section = "Synthetic report section. " * 400
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "rules.dl"
+            path.write_text('Allow(Q) :- Request(Q,P,"submit"), Parameter(Q,"verdict","approved").\n')
+            policy = Policy(path, trace=True, call_contract={"submit": {"verdict": "symbol"}})
+            try:
+                self.assertEqual(policy.call("reader", "submit", {"verdict": "approved"}, lambda: section), section)
+                self.assertEqual(policy.trajectory()["events"][0]["request"]["parameters"], {"verdict": "approved"})
+                with self.assertRaises(ValueError):
+                    policy.call("reader", "submit", {"verdict": "approved", "undeclared": "value"}, lambda: self.fail("Invalid request ran"))
+            finally:
+                policy.runtime.close()
+
+    def test_larger_values_retain_per_value_and_aggregate_limits(self):
+        for value in ("a" * MAX_VALUE_CHARS, "😀" * (MAX_VALUE_CHARS // 2)):
+            validate_intent(dict(actor="reader", action="read", parameters={"section": value}))
+        for value in ("a" * (MAX_VALUE_CHARS + 1), "😀" * (MAX_VALUE_CHARS // 2 + 1)):
+            with self.assertRaisesRegex(ValueError, "65,536"):
+                validate_intent(dict(actor="reader", action="read", parameters={"section": value}))
+        with self.assertRaisesRegex(ValueError, "4 MB"):
+            validate_inputs(binding(), [f("Grant", "reader", "a" * 65_000) for _ in range(65)])
+
     def runtime(self, **kwargs):
         b = binding()
         kwargs.setdefault("inputs", [])

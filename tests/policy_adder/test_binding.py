@@ -253,7 +253,7 @@ class BindingTests(unittest.TestCase):
             result = port.plan("inventory", "repair", "inventory-attempt-1",
                                response_format=planning_format("inventory"))
             self.assertEqual(connection.call_args.args[0]["maxTokens"], 128_000)
-            self.assertEqual(connection.call_args.args[0]["timeoutSeconds"], 600)
+            self.assertEqual(connection.call_args.args[0]["timeoutSeconds"], 1800)
             self.assertEqual(result["boundaries"], previous["boundaries"])
             self.assertEqual(result["gaps"], ["Still missing confirmation"])
             self.assertIn("anyOf", connection.call_args.args[0]["responseFormat"]["json_schema"]["schema"]["properties"]["boundaries"])

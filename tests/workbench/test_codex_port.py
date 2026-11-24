@@ -259,6 +259,29 @@ class CodexPortTests(unittest.TestCase):
             self.port.translate()
         self.assertEqual(json.loads(path.read_text())["status"], "failed")
 
+    def test_planning_keeps_large_source_complete_and_still_bounds_context(self):
+        source = 'PAYLOAD = ' + repr("synthetic source " * 40_000) + '\n'
+        (self.source / "large.py").write_text(source)
+        subprocess.run(["git", "-C", str(self.source), "add", "large.py"], check=True)
+        port = CodexPort(self.root / "large-plan", self.port.settings, codex="true")
+        port.prepare(self.source)
+        with patch("policyweave.adapters.compatible.build_opener") as opener:
+            opener.return_value.open.return_value.__enter__.return_value.read.return_value = json.dumps(
+                dict(choices=[dict(finish_reason="stop", message=dict(content='{"ok":true}'))])).encode()
+            self.assertEqual(port.plan("inventory", "plan", "inventory-attempt-0"), {"ok": True})
+            payload = json.loads(opener.return_value.open.call_args.args[0].data)
+            context = json.loads(payload["messages"][-1]["content"])
+            self.assertEqual(context["source"]["large.py"], source)
+            self.assertEqual(opener.return_value.open.call_args.kwargs["timeout"], 1800)
+        (self.source / "overflow.py").write_text('PAYLOAD = ' + repr("x" * 1_600_000))
+        subprocess.run(["git", "-C", str(self.source), "add", "overflow.py"], check=True)
+        oversized = CodexPort(self.root / "oversized-plan", self.port.settings, codex="true")
+        oversized.prepare(self.source)
+        with patch("policyweave.adapters.compatible.build_opener") as opener:
+            with self.assertRaisesRegex(ValueError, "2,000,000"):
+                oversized.plan("inventory", "plan", "inventory-attempt-0")
+            opener.assert_not_called()
+
     @unittest.skipUnless(shutil.which("souffle"), "Native engine required")
     def test_worker_rejects_engine_doubles_hidden_in_test_helpers(self):
         root = Path(__file__).resolve().parents[2]

@@ -182,7 +182,7 @@ fields are omitted. Students ordinarily fill only one `apiKey`. Advanced fields
 stay inside the corresponding section: `baseUrl`, `modelId`, `reasoningEffort`,
 `maxTokens`, `timeoutSeconds`, `codingCommand` and `headers`. Ordinary data-only
 calls default to 12,000 tokens and 180 seconds; port planning defaults to 128,000
-tokens and 600 seconds unless explicitly configured. A custom endpoint can reuse
+tokens and 1,800 seconds unless explicitly configured. A custom endpoint can reuse
 either protocol. For a keyless local connection, explicitly select its section
 with `provider` and set `baseUrl` and `modelId`.
 
@@ -235,7 +235,7 @@ The URL must use HTTPS, or HTTP on loopback (`localhost`, `127.0.0.1` or `::1`).
 Plain HTTP on a LAN address or a Docker hostname is rejected. The endpoint must
 be reachable from the PolicyWeave host; coding containers reach it through the
 host relay. Redirects are rejected. Data-only responses are limited to 8 MiB;
-`maxTokens` accepts a positive integer and `timeoutSeconds` accepts 1–600 for data-only calls.
+`maxTokens` accepts a positive integer and `timeoutSeconds` accepts 1–3,600 for data-only calls.
 Port planning defaults to 128,000 tokens unless configured otherwise. Choose
 budgets that fit the model's context window; source bundles and generated rules
 must fit, and host validators still reject invalid or incomplete output.
@@ -244,6 +244,11 @@ it is an upper limit, not a target output length. The [reported port](https://gi
 30,000 output tokens and succeeded with a 64,000-token cap; 128,000 doubles that
 successful cap to leave room for harder plans and additional reasoning. Planning
 artifacts use the shared 4 MB read limit, including accepted and repaired drafts.
+The planning source bundle accepts up to 2,000,000 characters of selected source
+evidence, retaining complete files rather than truncating them. Combined source,
+contracts, repair drafts and the output budget still need to fit the endpoint's
+context window. The longer default planning timeout leaves room for large inputs
+and reasoning; explicit connection settings remain authoritative.
 The endpoint enforces its own supported token limits. Truncated responses report
 the configured `maxTokens`; raise it in the selected connection section when needed.
 Failed planning calls retain a private `STAGE-attempt-N-error.json` with the stage,

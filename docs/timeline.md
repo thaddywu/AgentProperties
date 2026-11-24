@@ -168,10 +168,15 @@ the first visible blocked event is selected when one is recorded; otherwise the
 first activity is selected. Scenario titles are used in the file picker, without
 adding a scenario-specific heading to the replay screen.
 
-Limits are 256 participants, 10,000 events, a 64 MiB HTTP import body, 200,000
+Limits are 256 participants, 10,000 events, a 256 MiB trajectory file, 200,000
 characters per content field, and 1 MB each for `arguments`, `result`, and `data`.
 IDs are bounded to 128 characters. Content is displayed as literal text, never
 HTML, code, host commands or executable connectors.
+Browser file selection uploads the original bytes directly, without wrapping
+and escaping the whole file in another JSON string. The backend supplies the
+file limit to the browser. Existing JSON import requests remain supported with
+transport headroom for escaping, and decoded evidence still has the same limit.
+The CLI and registered-file reads use the same trajectory size limit.
 
 ## Existing gate trajectories
 
@@ -181,6 +186,10 @@ then presents recorded requests, decisions, callback status, results, inputs and
 committed facts. Display does not invoke the native evaluator. Actor labels are
 read from the recorded requests; absent conversation bodies and timestamps remain
 absent.
+For large monitor logs, `gate-1.json` (or another `gate-N.json` from `run.json`)
+remains a focused alternative for authorization replay. Each gate file belongs
+to one captured policy recorder and can contain multiple decisions; it is not a
+replacement for the full conversation/tool timeline and must fit the file limit.
 
 ## Read-only analysis
 
