@@ -71,6 +71,21 @@ def main():
             font_response = page.request.get(base + "/geist-latin-wght-normal.woff2")
             assert font_response.status == 200 and font_response.body()[:4] == b"wOF2"
             expect(page.locator(".event")).to_have_count(4)
+            # Import a real file above the old 64 MiB threshold. Padding leaves
+            # the evidence unchanged and verifies the browser's raw upload.
+            with tempfile.TemporaryDirectory() as directory:
+                large = Path(directory) / "large-trajectory.json"
+                with large.open("wb") as stream:
+                    stream.write(json.dumps(example).encode())
+                    for _ in range(65):
+                        stream.write(b" " * 1024 * 1024)
+                with page.expect_response(lambda response: response.url.endswith('/api/analysis/import'), timeout=30000) as imported:
+                    page.locator("#file").set_input_files(str(large))
+                assert imported.value.ok
+                assert imported.value.request.headers['content-type'] == 'application/octet-stream'
+                expect(page.locator(".event")).to_have_count(4)
+                assert page.request.get(base + '/api/analysis/export').json() == example
+                page.screenshot(path=str(screenshots / 'trajectory-large-import.png'), full_page=True)
             expect(page.locator("#detail .content")).to_have_text(
                 example["events"][0]["content"]
             )

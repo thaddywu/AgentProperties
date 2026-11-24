@@ -12,6 +12,8 @@ from .source import read_policy_source, read_policy_document
 
 CATALOG = json.loads(Path(__file__).with_name("foundations.json").read_text())
 INTERNAL = {"QueryResult", "RuntimeSentinel"}
+MAX_VALUE_CHARS = 65_536
+MAX_INPUT_VALUE_BYTES = 4_000_000
 CORE = {
     "Request": {
         "kind": "input",
@@ -134,13 +136,17 @@ def validate_intent(intent):
     for key, value in params.items():
         if not isinstance(key, str) or not NAME.fullmatch(key) or len(key) > 64:
             raise ValueError("Invalid parameter name.")
-        text(value, 4096, empty=True)
+        try:
+            text(value, MAX_VALUE_CHARS, empty=True)
+        except (ValueError, UnicodeError):
+            raise ValueError(f"Parameter {key} must be a string of at most {MAX_VALUE_CHARS:,} UTF-16 code units.") from None
 
 
 def validate_inputs(binding, facts):
     if not isinstance(facts, list) or len(facts) > 5000:
         raise ValueError("At most 5000 input facts.")
     gate = binding["decision"]
+    total_bytes = 0
     for fact in facts:
         if not isinstance(fact, dict):
             raise ValueError("Invalid input fact.")
@@ -155,7 +161,10 @@ def validate_inputs(binding, facts):
         ):
             raise ValueError("Only declared, non-request input facts may be supplied.")
         for index, arg in enumerate(args):
-            text(arg, 4096, empty=True)
+            text(arg, MAX_VALUE_CHARS, empty=True)
+            total_bytes += len(arg.encode("utf-8"))
+            if total_bytes > MAX_INPUT_VALUE_BYTES:
+                raise ValueError("Input fact values exceed the 4 MB native input budget.")
             if schema.get("types", ["symbol"] * len(args))[index] == "number":
                 integer(arg)
         if "observations" in binding.get("mechanisms", []):

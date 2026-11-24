@@ -7,7 +7,7 @@ import secrets
 import threading
 import uuid
 
-from policyweave.analysis.timeline import Timeline
+from policyweave.analysis.timeline import MAX_TRAJECTORY_BYTES, Timeline
 from policyweave.core.artifacts import artifact_text, save
 from policyweave.core.policy import fingerprint
 from .server import Handler, Server
@@ -48,7 +48,7 @@ class Experiment:
                 raise ValueError("Unknown case artifact.")
             relative = row["timeline"]
             Timeline(
-                json.loads(artifact_text(root, relative, max_bytes=64 * 1024 * 1024))
+                json.loads(artifact_text(root, relative, max_bytes=MAX_TRAJECTORY_BYTES))
             )
             identifier = fingerprint(
                 dict(
@@ -136,7 +136,7 @@ class Experiment:
             row = deepcopy(self.records[identifier])
         path = Path(row["path"])
         value = json.loads(
-            artifact_text(path.parent, path.name, max_bytes=64 * 1024 * 1024)
+            artifact_text(path.parent, path.name, max_bytes=MAX_TRAJECTORY_BYTES)
         )
         timeline = Timeline(value)
         self.viewer.register_file(path, timeline)

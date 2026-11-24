@@ -106,7 +106,7 @@ class CodexPortTests(unittest.TestCase):
     def test_snapshot_keeps_large_runtime_data_and_image_bytes(self):
         data = self.source / "data"
         data.mkdir()
-        (data / "stop_times.txt").write_bytes(b"departure,arrival\n" * 150_000)
+        (data / "stop_times.txt").write_bytes(b"departure,arrival\n" * 2_500_000)
         (data / "schedule.png").write_bytes(b"\x89PNG\r\n\x1a\n\x00\xff")
         subprocess.run(["git", "-C", str(self.source), "add", "data"], check=True)
         destination = self.root / "asset-snapshot"
@@ -117,7 +117,7 @@ class CodexPortTests(unittest.TestCase):
     def test_snapshot_rejects_total_size_overflow_instead_of_omitting_data(self):
         path = self.source / "large.txt"
         with path.open("wb") as stream:
-            stream.truncate(40_000_001)
+            stream.truncate(200_000_001)
         subprocess.run(["git", "-C", str(self.source), "add", "large.txt"], check=True)
         with self.assertRaisesRegex(ValueError, "snapshot exceeds"):
             copy_source(self.source, self.root / "oversized-snapshot")
@@ -258,6 +258,29 @@ class CodexPortTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.port.translate()
         self.assertEqual(json.loads(path.read_text())["status"], "failed")
+
+    def test_planning_keeps_large_source_complete_and_still_bounds_context(self):
+        source = 'PAYLOAD = ' + repr("synthetic source " * 40_000) + '\n'
+        (self.source / "large.py").write_text(source)
+        subprocess.run(["git", "-C", str(self.source), "add", "large.py"], check=True)
+        port = CodexPort(self.root / "large-plan", self.port.settings, codex="true")
+        port.prepare(self.source)
+        with patch("policyweave.adapters.compatible.build_opener") as opener:
+            opener.return_value.open.return_value.__enter__.return_value.read.return_value = json.dumps(
+                dict(choices=[dict(finish_reason="stop", message=dict(content='{"ok":true}'))])).encode()
+            self.assertEqual(port.plan("inventory", "plan", "inventory-attempt-0"), {"ok": True})
+            payload = json.loads(opener.return_value.open.call_args.args[0].data)
+            context = json.loads(payload["messages"][-1]["content"])
+            self.assertEqual(context["source"]["large.py"], source)
+            self.assertEqual(opener.return_value.open.call_args.kwargs["timeout"], 1800)
+        (self.source / "overflow.py").write_text('PAYLOAD = ' + repr("x" * 1_600_000))
+        subprocess.run(["git", "-C", str(self.source), "add", "overflow.py"], check=True)
+        oversized = CodexPort(self.root / "oversized-plan", self.port.settings, codex="true")
+        oversized.prepare(self.source)
+        with patch("policyweave.adapters.compatible.build_opener") as opener:
+            with self.assertRaisesRegex(ValueError, "2,000,000"):
+                oversized.plan("inventory", "plan", "inventory-attempt-0")
+            opener.assert_not_called()
 
     @unittest.skipUnless(shutil.which("souffle"), "Native engine required")
     def test_worker_rejects_engine_doubles_hidden_in_test_helpers(self):

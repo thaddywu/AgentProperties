@@ -12,6 +12,7 @@ from .trajectory import TrajectorySession
 # Keep persisted v1 identifiers stable across the PolicyWeave rename.
 FORMAT = TIMELINE_FORMAT
 KINDS = TIMELINE_KINDS
+MAX_TRAJECTORY_BYTES = 512 * 1024 * 1024
 
 
 def bounded(value, limit=128, *, empty=False):
@@ -22,8 +23,8 @@ def bounded(value, limit=128, *, empty=False):
 
 def decode_trajectory(text):
     """Read one JSON document or a JSONL header followed by observation events."""
-    if not isinstance(text, str) or len(text.encode("utf-8")) > 64 * 1024 * 1024:
-        raise ValueError("Expected a trajectory of at most 64 MiB.")
+    if not isinstance(text, str) or len(text.encode("utf-8")) > MAX_TRAJECTORY_BYTES:
+        raise ValueError("Expected a trajectory of at most 512 MiB.")
     try:
         return json.loads(text)
     except json.JSONDecodeError:

@@ -137,6 +137,25 @@ class TimelineTests(unittest.TestCase):
             with self.assertRaises(HTTPError) as error:
                 post("event", dict(trajectoryId=identity, eventId="m1"))
             self.assertEqual(error.exception.code, 409)
+            # A real >64 MiB upload stays raw; insignificant JSON whitespace
+            # exercises the transport limit without bloating event payloads.
+            raw = json.dumps(self.value).encode() + b" " * (65 * 1024 * 1024)
+            response = json.load(urlopen(Request(base + "/api/analysis/import", data=raw,
+                headers={"Content-Type": "application/octet-stream", "X-Study-Token": server.token}), timeout=15))
+            self.assertEqual(response["capabilities"]["maxTrajectoryBytes"], 512 * 1024 * 1024)
+            self.assertEqual(response["trajectoryId"], identity)
+            self.assertEqual(json.load(urlopen(base + "/api/analysis/export")), self.value)
+            for body in (b'not json', b'{"path":"outside.json"}'):
+                with self.assertRaises(HTTPError) as error:
+                    urlopen(Request(base + "/api/analysis/import", data=body,
+                        headers={"Content-Type": "application/octet-stream", "X-Study-Token": server.token}))
+                self.assertEqual(error.exception.code, 400)
+            self.assertEqual(json.load(urlopen(base + "/api/analysis"))["trajectory"]["id"], identity)
+            with self.assertRaises(HTTPError) as error:
+                urlopen(Request(base + "/api/analysis/import", data=b'{}', headers={
+                    "Content-Type": "application/octet-stream", "X-Study-Token": server.token,
+                    "Content-Length": str(512 * 1024 * 1024 + 1)}))
+            self.assertEqual(error.exception.code, 413)
         finally:
             server.shutdown()
             server.server_close()

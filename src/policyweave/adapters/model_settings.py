@@ -157,8 +157,8 @@ def validate_settings(value):
     if type(tokens) is not int or tokens < 1:
         raise ValueError("Model token budget must be a positive integer.")
     timeout = settings.setdefault("timeoutSeconds", 180)
-    if type(timeout) is not int or not 1 <= timeout <= 600:
-        raise ValueError("Model timeout must be 1–600 seconds.")
+    if type(timeout) is not int or not 1 <= timeout <= 3600:
+        raise ValueError("Model timeout must be 1–3600 seconds.")
     effort = settings.get("reasoningEffort")
     efforts = {"low", "medium", "high", "xhigh", "max"}
     if protocol == "chat-completions":

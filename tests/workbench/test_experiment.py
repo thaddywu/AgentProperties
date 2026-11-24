@@ -29,6 +29,9 @@ class ExperimentTests(unittest.TestCase):
                 started.set()
                 release.wait(5)
                 save(destination / "trace.json", example)
+                with (destination / "trace.json").open("ab") as stream:
+                    for _ in range(65):
+                        stream.write(b" " * 1024 * 1024)
                 return [
                     dict(
                         caseId=case["id"],

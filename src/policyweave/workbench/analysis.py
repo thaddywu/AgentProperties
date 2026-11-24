@@ -10,7 +10,7 @@ import threading
 import uuid
 from urllib.parse import urlsplit, parse_qs
 
-from policyweave.analysis.timeline import Timeline, decode_trajectory
+from policyweave.analysis.timeline import MAX_TRAJECTORY_BYTES, Timeline, decode_trajectory
 from policyweave.analysis.call_analysis import analyze_call, call_questions
 from policyweave.analysis.log_query import LogQuerySession, project
 from policyweave.core.artifacts import save, artifact_text
@@ -18,7 +18,7 @@ from policyweave.core.policy import fingerprint
 from policyweave._paths import state_directory
 from .server import Handler, Server
 
-MAX_BYTES = 64 * 1024 * 1024
+MAX_BYTES = MAX_TRAJECTORY_BYTES
 
 
 class AnalysisServer(Server):
@@ -106,6 +106,7 @@ class AnalysisServer(Server):
             (timeline.export().get("analysis") or project(timeline)) if timeline else {}
         )
         return dict(
+            maxTrajectoryBytes=MAX_BYTES,
             queryAvailable=bool(shutil.which("souffle") and shutil.which("prlimit")),
             modelAvailable=self.generate is not None,
             queryExamples=contract.get("templates", []),
@@ -169,8 +170,6 @@ class AnalysisHandler(Handler):
             self.headers.get("X-Study-Token", ""), self.server.token
         ):
             return self.reply(403, {"error": "Local session token required."})
-        if self.headers.get("Content-Type") != "application/json":
-            return self.reply(415, {"error": "JSON required."})
         operation = self.path.removeprefix("/api/analysis/")
         if self.path != "/api/analysis/" + operation or operation not in {
             "import",
@@ -182,12 +181,16 @@ class AnalysisHandler(Handler):
             "explain",
         }:
             return self.reply(404, {"error": "Not found."})
+        raw_import = operation == "import" and self.headers.get("Content-Type") == "application/octet-stream"
+        if not raw_import and self.headers.get("Content-Type") != "application/json":
+            return self.reply(415, {"error": "JSON required."})
         try:
             length = int(self.headers.get("Content-Length", "0"))
-            limit = MAX_BYTES if operation == "import" else 200_000
+            limit = (MAX_BYTES if raw_import else 2 * MAX_BYTES + 4096) if operation == "import" else 200_000
             if not 0 < length <= limit or self.headers.get("Transfer-Encoding"):
                 return self.reply(413, {"error": "Request exceeds the size limit."})
-            value = json.loads(self.rfile.read(length))
+            body = self.rfile.read(length)
+            value = {"text": body.decode("utf-8")} if raw_import else json.loads(body)
             if not isinstance(value, dict):
                 raise ValueError("Expected object.")
         except (ValueError, UnicodeError, RecursionError):
@@ -202,7 +205,8 @@ class AnalysisHandler(Handler):
             if operation == "import":
                 if set(value) not in ({"trajectory"}, {"text"}):
                     raise ValueError("Expected trajectory data only.")
-                timeline = Timeline(decode_trajectory(value["text"]) if "text" in value else value["trajectory"])
+                text = value["text"] if "text" in value else json.dumps(value["trajectory"], ensure_ascii=False)
+                timeline = Timeline(decode_trajectory(text))
                 self.server.timeline = timeline
                 result = timeline.describe()
             else:
@@ -455,7 +459,7 @@ def main():
     trajectory = None
     if args.trajectory:
         if not args.trajectory.is_file() or args.trajectory.stat().st_size > MAX_BYTES:
-            parser.error("Expected a trajectory JSON file of at most 64 MiB.")
+            parser.error("Expected a trajectory JSON file of at most 512 MiB.")
         trajectory = decode_trajectory(args.trajectory.read_text())
         if args.rules:
             from policyweave.analysis.execution import execution_analysis

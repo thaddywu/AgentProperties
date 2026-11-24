@@ -50,6 +50,15 @@ business execution. Contexts reset on exit and are isolated across threads/tasks
 This records reported names and does not authenticate them. Ordinary put/delete
 calls inside the decorated body use the same staged batch.
 
+Gate parameters and input-fact values support up to 65,536 UTF-16 code units
+each; input facts retain a 4 MB aggregate value budget and native evaluation
+limits. Pass only policy-relevant fields to the gate. For example,
+`policy.call(actor, "submit", {"verdict": verdict}, lambda: submit(full_text))`
+keeps the full business text unchanged without turning it into a policy fact.
+When a policy actually needs a longer value, pass it intact within these limits;
+do not truncate it to manufacture a decision. Oversized or malformed inputs are
+validation errors, distinct from an evaluated policy refusal.
+
 Existing fn(event_id) dispatchers use `@policy(name=name, arguments=args)`;
 the actual trace ID is preserved while policy checks the real tool name/arguments.
 MCP adapters may extract caller names from request metadata and enter caller_context;
