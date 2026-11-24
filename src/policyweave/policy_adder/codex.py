@@ -26,6 +26,7 @@ from policyweave.adapters.coding import CodingAgent
 from policyweave.adapters.model_settings import CONNECTION_FILENAMES, load_connection
 from policyweave.core.artifacts import save, artifact_text, files
 from policyweave.core.compilation import validate_rules
+from policyweave.core.validation import parse_json
 
 PACKAGE = Path(__file__).resolve().parents[1]
 CONTRACT = PACKAGE / "policy_adder/porting-contract.md"
@@ -480,7 +481,7 @@ port.json must list per-policy coverage and concrete gaps, all input predicates/
         finally:
             save(self.output / (name + "-usage.json"), connection.usage)
         save(self.output / (name + "-response.json"), dict(response=response))
-        result = json.loads(response)
+        result = parse_json(response, max_chars=4_000_000)
         if "previousDraft" in context:
             if not isinstance(result, dict) or set(result) != set(context["previousDraft"]):
                 raise ValueError("Repair must address exactly the original top-level sections.")

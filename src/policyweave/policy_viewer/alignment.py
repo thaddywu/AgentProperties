@@ -11,23 +11,28 @@ from policyweave.back_translation.execution import (
 def align_execution(units, procedures, generate, record=lambda _: None):
     def validate(value):
         links = value.get("links", [])
-        if not isinstance(links, list) or len(links) != len(units):
+        if not isinstance(links, list):
             raise ValueError(
                 "Return exactly one mapping per source sentence, including omissions."
             )
         expected = {u["id"] for u in units}
-        seen, known = set(), {p["id"] for p in procedures}
+        by_sentence, known = {}, {p["id"] for p in procedures}
         for link in links:
-            if link.get("sentenceId") not in expected - seen:
-                raise ValueError("Unknown or repeated sentence ID.")
-            seen.add(link["sentenceId"])
+            if not isinstance(link, dict) or link.get("sentenceId") not in expected:
+                raise ValueError("Unknown sentence ID.")
             if (
                 not isinstance(link.get("procedureIds"), list)
                 or not set(link["procedureIds"]) <= known
-                or len(set(link["procedureIds"])) != len(link["procedureIds"])
             ):
                 raise ValueError("Invalid procedure IDs.")
-        return links
+            sentence = link["sentenceId"]
+            identifiers = list(dict.fromkeys(link["procedureIds"]))
+            if sentence in by_sentence and set(by_sentence[sentence]) != set(identifiers):
+                raise ValueError("Repeated sentence mappings must agree.")
+            by_sentence[sentence] = identifiers
+        if set(by_sentence) != expected:
+            raise ValueError("Return exactly one mapping per source sentence, including omissions.")
+        return [dict(sentenceId=unit["id"], procedureIds=by_sentence[unit["id"]]) for unit in units]
 
     return checked(
         "execution-alignment",

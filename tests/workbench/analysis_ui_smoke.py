@@ -27,7 +27,7 @@ def main():
     model_stages = []
 
     def model(stage, prompt):
-        payload = json.loads(prompt)
+        payload = json.loads(prompt.split("\nRepair this candidate:", 1)[0])
         model_stages.append(stage)
         if stage == "call-analysis-queries":
             return json.dumps(dict(queries=[dict(
@@ -35,6 +35,8 @@ def main():
                 explanation="Recorded document ownership.", displayColumns=["Actor", "Document", "Owner"],
             )]))
         if stage == "call-analysis-answer":
+            if model_stages.count(stage) == 1:
+                return '{"answer":"Synthetic incomplete answer without event citations."}'
             return json.dumps(
                 dict(
                     answer=("This call was blocked because the caller does not own the document; the app did not run the operation."
@@ -317,8 +319,12 @@ def main():
                         expect(page.locator("#call-answer pre").last).to_contain_text("Owns")
                     if not allowed:
                         page.screenshot(path=str(screenshots / f"trajectory-call-{preset}.png"), full_page=True)
+                        if preset == "decision":
+                            assert model_stages.count("call-analysis-queries") == 1
+                            assert model_stages.count("call-analysis-answer") == 2
+                            page.screenshot(path=str(screenshots / "trajectory-answer-repaired.png"), full_page=True)
             assert model_stages.count("call-analysis-queries") == 4
-            assert model_stages.count("call-analysis-answer") == 8
+            assert model_stages.count("call-analysis-answer") == 9
             assert "analysis-query" not in model_stages
             assert page.request.get(base + "/api/analysis/export").json() == monitored
             page.set_viewport_size(dict(width=390, height=844))

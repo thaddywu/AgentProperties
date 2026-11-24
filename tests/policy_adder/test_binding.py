@@ -192,6 +192,25 @@ class BindingTests(unittest.TestCase):
         plan = self.validate(raw)
         self.assertEqual(plan["observations"][0]["evidence"]["file"], "tool.py")
 
+    def test_inventory_citation_is_scoped_to_its_named_function(self):
+        source = self.tool + ('\nclass OtherTools:\n    def call(self, name, args):\n'
+                              '        return self.backend(name, args["resource"])\n')
+        (self.original / "tool.py").write_text(source)
+        result = validate_inventory(self.inventory, self.original, self.framework, "policy.md")
+        proof = result["boundaries"][0]["evidence"]
+        self.assertEqual(proof["start"], source.index(proof["quote"]))
+        outside = deepcopy(self.inventory)
+        outside["boundaries"][0]["evidence"] = self.proof('return record["owner"]')
+        with self.assertRaises(ValueError):
+            validate_inventory(outside, self.original, self.framework, "policy.md")
+        (self.original / "tool.py").write_text(self.tool.replace(
+            '        return self.backend',
+            '        self.backend(name, args["resource"])\n        return self.backend'))
+        ambiguous = deepcopy(self.inventory)
+        ambiguous["boundaries"][0]["evidence"] = self.proof('self.backend(name, args["resource"])')
+        with self.assertRaises(ValueError):
+            validate_inventory(ambiguous, self.original, self.framework, "policy.md")
+
     def test_internal_operation_mode_is_not_invented_as_an_extra_tool(self):
         source = 'def memory(action):\n    if action == "add":\n        return "saved"\n    return "contents"\n'
         (self.original / "memory.py").write_text(source)
@@ -229,7 +248,7 @@ class BindingTests(unittest.TestCase):
         port = CodexPort.__new__(CodexPort)
         port.output, port.runtime, port.settings = self.root, self.framework, {}
         with patch("policyweave.adapters.compatible.Connection") as connection:
-            connection.return_value.return_value = json.dumps(dict(boundaries=None, gaps=["Still missing confirmation"]))
+            connection.return_value.return_value = "```json\n" + json.dumps(dict(boundaries=None, gaps=["Still missing confirmation"])) + "\n```"
             connection.return_value.usage = []
             result = port.plan("inventory", "repair", "inventory-attempt-1",
                                response_format=planning_format("inventory"))

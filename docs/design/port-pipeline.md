@@ -69,7 +69,9 @@ can invoke the same backend directly.
 The host validates boundary kinds `tool`, `message`, `model_context`, `reply` and
 `background`, parses Python source without importing application code, and checks
 that the named function/method and ordered signature parameters actually exist.
-Its exact unique quotation must lie inside that function. This source validation
+Its exact quotation must be unique inside that named function; the same code
+may occur in other functions without making the citation ambiguous. Other
+binding citations still identify unique file spans. This source validation
 does not infer every effect or automatically discover omitted boundaries.
 
 For each boundary, record the source file and symbol, call path, actual arguments,

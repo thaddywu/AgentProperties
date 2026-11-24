@@ -3,7 +3,7 @@
 import json
 
 from policyweave.core.datalog import query_facts, read_query
-from policyweave.core.validation import checked, parse_json
+from policyweave.core.validation import checked
 from .trajectory import TrajectorySession
 
 
@@ -144,15 +144,16 @@ def analyze_call(timeline, event_id, template_id, generate, *, gate=None, record
     prompt = json.dumps(payload, ensure_ascii=False)
     if len(prompt) > 160000:
         return dict(status="clarification", clarification="This snapshot exceeds the explanation context limit; select a smaller recorded episode.")
-    raw = generate("call-analysis-answer", prompt)
-    record(dict(stage="call-analysis-answer", output=raw))
-    answer = parse_json(raw)
-    if (set(answer) != {"answer", "eventIds", "limitations"}
-            or not isinstance(answer["answer"], str) or not 1 <= len(answer["answer"]) <= 8000
-            or answer["eventIds"] != [event_id] or not isinstance(answer["limitations"], list)
-            or len(answer["limitations"]) > 12
-            or any(not isinstance(s, str) or len(s) > 2000 for s in answer["limitations"])):
-        raise ValueError("Explanation must cite the selected event and retain evidence limits.")
+    def validate_answer(answer):
+        if (set(answer) != {"answer", "eventIds", "limitations"}
+                or not isinstance(answer["answer"], str) or not 1 <= len(answer["answer"]) <= 8000
+                or answer["eventIds"] != [event_id] or not isinstance(answer["limitations"], list)
+                or len(answer["limitations"]) > 12
+                or any(not isinstance(s, str) or len(s) > 2000 for s in answer["limitations"])):
+            raise ValueError("Explanation must cite the selected event and retain evidence limits.")
+        return answer
+
+    answer = checked("call-analysis-answer", payload, validate_answer, generate, record)
     answer["limitations"] = list(dict.fromkeys(limits + answer["limitations"]))
     return dict(status="answered", **answer, **result, eventId=event_id, templateId=template_id,
                 interpretation=preset["question"], query=query, supportingQueries=supporting,

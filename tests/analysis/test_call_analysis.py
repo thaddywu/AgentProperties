@@ -181,6 +181,38 @@ class CallAnalysisTests(unittest.TestCase):
             analyze_call(timeline, value["events"][1]["id"], "effect",
                          lambda *_: json.dumps(dict(answer="Wrong event.", eventIds=[value["events"][0]["id"]], limitations=[])))
 
+    def test_answer_repairs_do_not_rerun_queries_or_change_native_evidence(self):
+        timeline, value = self.capture()
+        event = value["events"][1]
+        original = deepcopy(timeline.export())
+        stages, attempts = [], []
+        answers = 0
+        valid = self.model([])
+
+        def generate(stage, prompt):
+            nonlocal answers
+            stages.append(stage)
+            if stage != "call-analysis-answer":
+                return valid(stage, prompt)
+            payload = json.loads(prompt.split("\nRepair this candidate:", 1)[0])
+            answers += 1
+            if answers == 1:
+                return '{"answer":"Missing citation fields."}'
+            if answers == 2:
+                self.assertIn("Repair this candidate", prompt)
+                return json.dumps(dict(answer="Wrong event.", eventIds=[value["events"][0]["id"]], limitations=[]))
+            self.assertIn("cite the selected event", prompt)
+            return json.dumps(dict(answer="No explicit grant was recorded.",
+                                   eventIds=[payload["selectedEventId"]], limitations=[]))
+
+        result = analyze_call(timeline, event["id"], "decision", generate, record=attempts.append)
+        self.assertEqual(stages.count("call-analysis-queries"), 1)
+        self.assertEqual(stages.count("call-analysis-answer"), 3)
+        self.assertEqual(sum("error" in attempt for attempt in attempts), 2)
+        self.assertFalse(result["decision"]["allowed"])
+        self.assertEqual(result["eventIds"], [event["id"]])
+        self.assertEqual(timeline.export(), original)
+
     def test_http_owns_four_questions_and_rejects_free_text_and_tampered_presets(self):
         timeline, value = self.capture()
         seen = []
