@@ -168,7 +168,7 @@ the first visible blocked event is selected when one is recorded; otherwise the
 first activity is selected. Scenario titles are used in the file picker, without
 adding a scenario-specific heading to the replay screen.
 
-Limits are 256 participants, 10,000 events, a 256 MiB trajectory file, 200,000
+Limits are 256 participants, 10,000 events, a 512 MiB trajectory file, 200,000
 characters per content field, and 1 MB each for `arguments`, `result`, and `data`.
 IDs are bounded to 128 characters. Content is displayed as literal text, never
 HTML, code, host commands or executable connectors.

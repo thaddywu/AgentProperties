@@ -142,7 +142,7 @@ class TimelineTests(unittest.TestCase):
             raw = json.dumps(self.value).encode() + b" " * (65 * 1024 * 1024)
             response = json.load(urlopen(Request(base + "/api/analysis/import", data=raw,
                 headers={"Content-Type": "application/octet-stream", "X-Study-Token": server.token}), timeout=15))
-            self.assertEqual(response["capabilities"]["maxTrajectoryBytes"], 256 * 1024 * 1024)
+            self.assertEqual(response["capabilities"]["maxTrajectoryBytes"], 512 * 1024 * 1024)
             self.assertEqual(response["trajectoryId"], identity)
             self.assertEqual(json.load(urlopen(base + "/api/analysis/export")), self.value)
             for body in (b'not json', b'{"path":"outside.json"}'):
@@ -154,7 +154,7 @@ class TimelineTests(unittest.TestCase):
             with self.assertRaises(HTTPError) as error:
                 urlopen(Request(base + "/api/analysis/import", data=b'{}', headers={
                     "Content-Type": "application/octet-stream", "X-Study-Token": server.token,
-                    "Content-Length": str(256 * 1024 * 1024 + 1)}))
+                    "Content-Length": str(512 * 1024 * 1024 + 1)}))
             self.assertEqual(error.exception.code, 413)
         finally:
             server.shutdown()

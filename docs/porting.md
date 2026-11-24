@@ -244,6 +244,9 @@ it is an upper limit, not a target output length. The [reported port](https://gi
 30,000 output tokens and succeeded with a 64,000-token cap; 128,000 doubles that
 successful cap to leave room for harder plans and additional reasoning. Planning
 artifacts use the shared 4 MB read limit, including accepted and repaired drafts.
+The local source snapshot accepts up to 200 MB of included tracked files. This
+copying budget is separate from model context; runtime assets stay available
+without being sent wholesale to the planning model.
 The planning source bundle accepts up to 2,000,000 characters of selected source
 evidence, retaining complete files rather than truncating them. Combined source,
 contracts, repair drafts and the output budget still need to fit the endpoint's

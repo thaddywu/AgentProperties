@@ -106,7 +106,7 @@ class CodexPortTests(unittest.TestCase):
     def test_snapshot_keeps_large_runtime_data_and_image_bytes(self):
         data = self.source / "data"
         data.mkdir()
-        (data / "stop_times.txt").write_bytes(b"departure,arrival\n" * 150_000)
+        (data / "stop_times.txt").write_bytes(b"departure,arrival\n" * 2_500_000)
         (data / "schedule.png").write_bytes(b"\x89PNG\r\n\x1a\n\x00\xff")
         subprocess.run(["git", "-C", str(self.source), "add", "data"], check=True)
         destination = self.root / "asset-snapshot"
@@ -117,7 +117,7 @@ class CodexPortTests(unittest.TestCase):
     def test_snapshot_rejects_total_size_overflow_instead_of_omitting_data(self):
         path = self.source / "large.txt"
         with path.open("wb") as stream:
-            stream.truncate(40_000_001)
+            stream.truncate(200_000_001)
         subprocess.run(["git", "-C", str(self.source), "add", "large.txt"], check=True)
         with self.assertRaisesRegex(ValueError, "snapshot exceeds"):
             copy_source(self.source, self.root / "oversized-snapshot")

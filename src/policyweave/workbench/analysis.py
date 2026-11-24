@@ -459,7 +459,7 @@ def main():
     trajectory = None
     if args.trajectory:
         if not args.trajectory.is_file() or args.trajectory.stat().st_size > MAX_BYTES:
-            parser.error("Expected a trajectory JSON file of at most 256 MiB.")
+            parser.error("Expected a trajectory JSON file of at most 512 MiB.")
         trajectory = decode_trajectory(args.trajectory.read_text())
         if args.rules:
             from policyweave.analysis.execution import execution_analysis

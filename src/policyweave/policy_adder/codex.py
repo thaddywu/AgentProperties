@@ -108,8 +108,8 @@ def copy_source(source, destination):
                 or any((source / parent).is_symlink() for parent in relative.parents)):
             continue
         total += path.stat().st_size
-        if total > 40_000_000:
-            raise ValueError("Source snapshot exceeds the porting limit.")
+        if total > 200_000_000:
+            raise ValueError("Source snapshot exceeds the 200 MB porting limit.")
         target = destination / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(path, target)

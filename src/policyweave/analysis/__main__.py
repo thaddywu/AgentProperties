@@ -38,7 +38,7 @@ def main():
     )
     args = parser.parse_args()
     if args.snapshot.stat().st_size > MAX_TRAJECTORY_BYTES:
-        parser.error("Evidence file exceeds 256 MiB; select a shorter episode.")
+        parser.error("Evidence file exceeds 512 MiB; select a shorter episode.")
     value = json.loads(args.snapshot.read_text())
     if args.rules:
         if value.get("format") != "policyscope-timeline":
