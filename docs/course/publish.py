@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[2]
 COURSE = "docs/phase2-hw-release"
 DESTINATION = "git@github.com:thaddywu/CS239-Phase2.git"
 FILES = (
-    "LICENSE", ".gitignore", ".dockerignore", "install.sh", "pyproject.toml",
+    "LICENSE", ".gitattributes", ".gitignore", ".dockerignore", "install.sh", "pyproject.toml",
     "src/policyweave", "tests", "examples", "demo",
     "docs/setup.md", "docs/porting.md", "docs/trajectory.md", "docs/timeline.md",
     "docs/design", "docs/repository-structure.md", "docs/course/README.md",

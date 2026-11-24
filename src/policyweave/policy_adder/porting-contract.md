@@ -298,9 +298,10 @@ repair failures within their stage; do not change a frozen plan or rules during
 instrumentation. Native gate evidence must use the accepted rules, observation
 and call contracts and approved input/action vocabulary, with complete capture
 and both applied and blocked outcomes. The check mounts immutable inventory into
-the native worker, whose nativeBoundaryCalls are collected from actual evaluation
-stacks and the trusted @policy checked wrapper's bound body. Each planned gate
-boundary must have a nonzero count. Producer boundaries instead need nonzero
+the native worker, whose nativeBoundaryActions count gate decisions by action,
+collected from actual evaluation stacks (for Policy.acall, the awaiting caller's)
+and functions held in locals of the trusted @policy checked wrapper or a policy_port frame. Each planned gate boundary
+needs a nonzero count for one of its own planned actions. Producer boundaries instead need nonzero
 boundaryExecutions from actual source function calls; observing a result does
 not itself require an authorization gate. A blocked decorated call may count before
 its body executes; these counts do not certify business effects. Placement and

@@ -326,12 +326,23 @@ in-scope actions for effects. Evidence must be complete under the capture contra
 and demonstrate both `applied` and `blocked` outcomes.
 
 `CodexPort.check` mounts the frozen inventory read-only into the native batch
-worker. At native evaluation time, the worker matches actual Python stack frames
-to the inventory's source files and qualified symbols, reporting counts as
-`nativeBoundaryCalls`. For `@policy`, the checked wrapper's bound body function
-also identifies the boundary because authorization precedes entering its body.
-`check_recordings` requires a nonzero count for every boundary referenced by
-supported/partial requirements. Unsupported-only inventory entries are excluded.
+worker. At each gate decision (`decide()` called from `PolicyRuntime.execute`,
+which every gating form reaches: `@policy`, `call`, `acall`, `wrap` and
+`execute`), the worker matches actual Python stack frames to the inventory's
+source files and qualified symbols, and counts the decision by action as
+`nativeBoundaryActions`. `Policy.acall` decides in a separate thread, so the
+frames of the caller awaiting it are matched too. An `acall` started with
+`create_task` or `gather` runs as a separate task without those frames and is
+not attributed. For `@policy` and policy_port wrappers, a function held in any local of the
+wrapper frame (or its `functools.wraps` chain) also identifies the boundary
+because authorization precedes entering its body.
+For every gate boundary referenced by supported/partial requirements,
+`check_recordings` requires a decision for one of that boundary's own planned
+actions. Producer boundaries instead need an actual source call
+(`boundaryExecutions`). Unsupported-only inventory entries are excluded. Engine
+runs that are not gate decisions (building a policy, the admin `check()` and
+`what_if()`) do not count; they are still reported as `nativeBoundaryCalls`,
+which the check does not use.
 Counts are collected by the worker, not accepted from a generated test's claimed coverage.
 
 These checks provide placement and native-execution evidence within the planned
@@ -393,7 +404,7 @@ implementation; their evidence scopes are different.
 | Staged application adaptation | [harness.py](../../src/policyweave/policy_adder/harness.py) enforces four stages with persisted artifacts, bounded repairs, binding/factory/rule freezes and native trace checks; [codex.py](../../src/policyweave/policy_adder/codex.py) supplies data-only `plan()` calls for inventory/binding and isolated coding-CLI sessions for rules/instrumentation. |
 | Source-backed fixed binding | [binding.py](../../src/policyweave/policy_adder/binding.py) checks Python symbols/signatures, unique evidence spans, fixed stock EDB, the fixed schema, requirement dispositions and agent-write entries, then generates the factory. It does not prove all source-to-field semantics or exhaustive boundary discovery. |
 | Change validation | [preservation.py](../../src/policyweave/policy_adder/preservation.py) and host boundary checks constrain additive instrumentation and protected assets. They do not prove absence of helper side effects or all application bypasses. |
-| Planned-boundary execution | [batch_worker.py](../../src/policyweave/adapters/batch_worker.py) records native evaluations from gate stack frames or the trusted decorator's bound body, and actual source calls for `role: producer`. The harness requires the corresponding evidence for each supported/partial boundary and rejects unchanged source symbols in that implemented scope. Unsupported-only inventory entries remain gaps. This establishes scoped placement/execution evidence, not guaranteed business effects or complete mediation. |
+| Planned-boundary execution | [batch_worker.py](../../src/policyweave/adapters/batch_worker.py) records native gate decisions by action, from gate stack frames (for `Policy.acall`, the awaiting caller's) or a function held in any local of the trusted decorator or a policy_port wrapper frame, and actual source calls for `role: producer`. The harness requires a decision for one of each supported/partial gate boundary's planned actions, or the producer's source call, and rejects unchanged source symbols in that implemented scope. Unsupported-only inventory entries remain gaps. This establishes scoped placement/execution evidence, not guaranteed business effects or complete mediation. |
 | Independent review | [back-translation](../../src/policyweave/back_translation/README.md) and [viewer alignment](../../src/policyweave/policy_viewer/README.md) separate implementation reading from source comparison. Model descriptions still need review. |
 | Target-app execution | Existing profile-specific runners and captured trajectories supply scoped evidence. A generic adapter does not automatically supply every app's native runner, reset/replay or authoritative observations. |
 

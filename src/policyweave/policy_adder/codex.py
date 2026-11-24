@@ -87,11 +87,15 @@ def copy_source(source, destination):
     total = 0
     for name in filter(None, names):
         relative = Path(name)
-        if set(relative.parts) & EXCLUDED or relative.suffix.lower() not in EXTENSIONS:
+        if set(relative.parts) & EXCLUDED:
             continue
         if (
             relative.name.startswith(".env")
-            or relative.name.lower() in CONNECTION_FILENAMES | {"auth.json"}
+            or relative.name.lower() in CONNECTION_FILENAMES | {
+                "auth.json", ".netrc", ".npmrc", ".pypirc", ".git-credentials",
+                "id_rsa", "id_dsa", "id_ecdsa", "id_ed25519",
+            }
+            or relative.suffix.lower() in {".pem", ".key", ".p12", ".pfx", ".jks", ".keystore"}
             or any(
                 word in relative.name.lower()
                 for word in ("credential", "secret", "private-key")
@@ -99,7 +103,8 @@ def copy_source(source, destination):
         ):
             continue
         path = source / relative
-        if path.is_symlink() or not path.is_file():
+        if (path.is_symlink() or not path.is_file()
+                or any((source / parent).is_symlink() for parent in relative.parents)):
             continue
         total += path.stat().st_size
         if total > 40_000_000:
@@ -437,7 +442,7 @@ port.json must list per-policy coverage and concrete gaps, all input predicates/
         attempts = list(self.output.glob(stage + "-output-*.json"))
         if attempts:
             previous = max(attempts, key=lambda p: int(p.stem.rsplit("-", 1)[1]))
-            context["previousDraft"] = json.loads(artifact_text(self.output, previous.name, max_bytes=250_000))
+            context["previousDraft"] = json.loads(artifact_text(self.output, previous.name))
             validation = self.output / (stage + "-validation-" + previous.stem.rsplit("-", 1)[1] + ".json")
             if validation.exists():
                 context["previousValidation"] = json.loads(artifact_text(self.output, validation.name))
@@ -461,13 +466,19 @@ port.json must list per-policy coverage and concrete gaps, all input predicates/
                 )
                 if repair_sections:
                     context["repairInstruction"] += " Replace only these rejected sections: " + ", ".join(repair_sections)
-        settings = dict(self.settings, maxTokens=min(self.settings.get("maxTokens", 24000), 32000),
-                        timeoutSeconds=self.settings.get("timeoutSeconds", 300))
+        settings = dict(self.settings, maxTokens=self.settings.get("maxTokens", 128_000),
+                        timeoutSeconds=self.settings.get("timeoutSeconds", 600))
         if response_format is not None:
             settings["responseFormat"] = response_format
         connection = Connection(settings)
-        response = connection(stage, json.dumps(context, ensure_ascii=False))
-        save(self.output / (name + "-usage.json"), connection.usage)
+        try:
+            response = connection(stage, json.dumps(context, ensure_ascii=False))
+        except RuntimeError:
+            if connection.failures:
+                save(self.output / (name + "-error.json"), connection.failures[-1])
+            raise
+        finally:
+            save(self.output / (name + "-usage.json"), connection.usage)
         save(self.output / (name + "-response.json"), dict(response=response))
         result = json.loads(response)
         if "previousDraft" in context:

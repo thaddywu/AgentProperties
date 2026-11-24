@@ -31,8 +31,10 @@ instrumentation stages. Host validation still checks evidence and contract
 consistency after structured generation.
 Planning errors can restrict repair to rejected top-level sections; the host
 merges retained sections and revalidates the whole plan. Instrumentation checks
-reject unchanged planned source symbols and require worker-collected
-`nativeBoundaryCalls` for every planned boundary. This is scoped placement and
+reject unchanged planned source symbols and require worker-collected evidence
+for every planned boundary: a gate decision for one of its planned actions
+(`nativeBoundaryActions`), or for an observation producer, an actual source
+call (`boundaryExecutions`). This is scoped placement and
 execution evidence, not proof of business success or complete mediation.
 `CodexPort.translate` uses this harness and does not automatically invoke later
 `backtranslate` or `review` entries. Structural checks and source references do

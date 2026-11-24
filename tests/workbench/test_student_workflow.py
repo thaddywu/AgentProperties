@@ -222,6 +222,13 @@ class StudentWorkflowTests(unittest.TestCase):
         )
         self.assertEqual(files(self.base), before)
 
+    def test_port_reports_the_failed_stage_without_requiring_a_coding_cli(self):
+        with patch.object(CodexPort, "translate", return_value=dict(
+                passed=False, error="binding-plan failed: Model response reached maxTokens (64000).")):
+            with self.assertRaisesRegex(ValueError, "Translation failed development checks.*maxTokens"):
+                run(self.base, self.target, self.port.settings, work=self.root / "failed-port", codex="true")
+        self.assertFalse(self.target.exists())
+
     def test_save_resume_and_manual_file_edits_use_same_submission(self):
         app = self.export()
         path = self.target / "review.json"
