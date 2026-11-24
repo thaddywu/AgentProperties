@@ -42,7 +42,7 @@ def identifier(value):
     return value
 
 
-def evidence(value, original, framework, policy):
+def evidence(value, original, framework, policy, *, span=None):
     if not isinstance(value, dict) or set(value) != {"origin", "file", "quote"}:
         raise ValueError("Evidence needs origin, file and exact quote.")
     origin = value["origin"]
@@ -57,14 +57,16 @@ def evidence(value, original, framework, policy):
     root = framework if origin == "framework" else original
     text = artifact_text(root, value["file"])
     quote = bounded(value["quote"], 8000)
-    start = text.find(quote)
-    if start < 0 or text.find(quote, start + 1) >= 0:
-        candidates = [line for line in text.splitlines() if quote in line]
+    begin, end = span if span is not None else (0, len(text))
+    scoped = text[begin:end]
+    start = text.find(quote, begin, end)
+    if start < 0 or text.find(quote, start + 1, end) >= 0:
+        candidates = [line for line in scoped.splitlines() if quote in line]
         if not candidates:
-            candidates = get_close_matches(quote.splitlines()[0], text.splitlines(), n=3, cutoff=0.3)
+            candidates = get_close_matches(quote.splitlines()[0], scoped.splitlines(), n=3, cutoff=0.3)
         raise ValueError("Evidence must quote one exact, unique source span in "
                          + value["file"] + ": " + repr(quote)[:300]
-                         + " (matches: " + str(text.count(quote)) + "). Actual candidate lines: "
+                         + " (matches: " + str(scoped.count(quote)) + "). Actual candidate lines: "
                          + repr(candidates)[:1000])
     return dict(value, start=start, end=start + len(quote))
 
@@ -102,19 +104,19 @@ def validate_inventory(value, original, framework, policy):
         if name in seen or row["kind"] not in KINDS:
             raise ValueError("Use distinct boundary IDs and kinds: " + ", ".join(sorted(KINDS)))
         seen.add(name)
-        node = _symbol(artifact_text(original, row["file"]), bounded(row["symbol"], 200))
+        source = artifact_text(original, row["file"])
+        node = _symbol(source, bounded(row["symbol"], 200))
         parameters = [a.arg for a in node.args.posonlyargs + node.args.args + node.args.kwonlyargs]
         if parameters and parameters[0] in {"self", "cls"}:
             parameters.pop(0)
         parameters += [a.arg for a in (node.args.vararg, node.args.kwarg) if a]
         if row["parameters"] != parameters:
             raise ValueError("Boundary parameters differ from the actual source signature.")
-        proof = evidence(row["evidence"], original, framework, policy)
-        if proof["origin"] != "application" or proof["file"] != row["file"]:
-            raise ValueError("Boundary evidence must come from its application file.")
-        source = artifact_text(original, row["file"])
         lines = source.splitlines(keepends=True)
         begin, end = sum(map(len, lines[:node.lineno - 1])), sum(map(len, lines[:node.end_lineno]))
+        proof = evidence(row["evidence"], original, framework, policy, span=(begin, end))
+        if proof["origin"] != "application" or proof["file"] != row["file"]:
+            raise ValueError("Boundary evidence must come from its application file.")
         if proof["start"] < begin or proof["end"] > end:
             raise ValueError("Boundary evidence is outside the named function.")
         for key in ("identity", "effect", "outcome"):

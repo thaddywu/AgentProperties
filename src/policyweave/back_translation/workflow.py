@@ -108,23 +108,10 @@ def validate_presentation(value, chains, rules, evidence):
             raise ValueError("Do not add, omit or merge frozen check IDs.")
         seen.add(identifier)
         check = by_id[identifier]
-        if not bounded(row.get("summary"), 360):
-            raise ValueError(
-                "Every check needs a student summary of at most 360 characters."
-            )
-        if not isinstance(row.get("steps"), list) or not 1 <= len(row["steps"]) <= 3:
-            raise ValueError(
-                "Use 1–3 concise detail lines without fixed A/B/C sections."
-            )
-        if any(
-            not isinstance(line, dict) or not bounded(line.get("text"), 360)
-            for line in row["steps"]
-        ):
-            raise ValueError(
-                "Each student detail line must have 1–360 characters; keep internal plumbing in the frozen evidence."
-            )
-        if not row["summary"].lstrip().startswith("Records:") or not row["steps"][0]["text"].lstrip().startswith("Rules:"):
-            raise ValueError("Use Records: for facts, then Rules: for conditions and refusal.")
+        if "summary" not in row:
+            raise ValueError("Every frozen check needs a student summary.")
+        if not isinstance(row.get("steps"), list) or any(not isinstance(line, dict) for line in row["steps"]):
+            raise ValueError("Student details must be an array of text objects.")
         examples = row.get("examples", [])
         if examples != []:
             raise ValueError("Keep examples empty; explain this check in Records and Rules.")
@@ -136,7 +123,7 @@ def validate_presentation(value, chains, rules, evidence):
                 ruleIds=deepcopy(check["ruleIds"]),
                 reads=deepcopy(check["reads"]),
                 # A/B/C belong to reconstruction, not the student presentation.
-                steps=[dict(indent=0, text=line["text"]) for line in row["steps"]],
+                steps=[dict(indent=0, text=line.get("text")) for line in row["steps"]],
                 evidence=deepcopy(check["evidence"]),
                 examples=deepcopy(examples),
             )
@@ -170,7 +157,8 @@ def describe_checks(chains, rules, evidence, generate, record=lambda _: None):
             task=READING_STYLE + " Describe only the frozen checks below. Preserve every check ID and "
             "its actual conditions, alternatives and concrete coverage gaps. Use global limitations only "
             "where they identify an actual unprotected channel relevant to this check. Do not repeat a summary "
-            "in the details. Summary and each detail line are at most 360 characters. "
+            "in the details. Aim for a summary and detail lines of at most 360 characters; "
+            "use additional space when needed to preserve material conditions and gaps. "
             "Return only id,title,summary,steps,examples; the host "
             "attaches frozen rule references, inputs and exact citations. Paraphrase the accepted conditions "
             "into readable actions rather than copying code-like wording from the audit. "

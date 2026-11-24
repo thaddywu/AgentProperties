@@ -5,6 +5,7 @@ Only structural coverage and evidence quotations are checked automatically.
 """
 
 from policyweave.core.datalog import parse, variable, decode
+from policyweave.core.validation import bounded
 
 SOURCES = {
     "runtime identity",
@@ -80,13 +81,11 @@ def validate_execution(value, rules, evidence):
     ids, covered = set(), set()
     rule_ids = {r["id"] for r in rules}
     for p in procedures:
-        if not isinstance(p.get("id"), str) or not p["id"] or p["id"] in ids:
+        if not isinstance(p, dict) or not isinstance(p.get("id"), str) or not p["id"] or p["id"] in ids:
             raise ValueError("Procedure IDs must be unique.")
         ids.add(p["id"])
-        if "summary" in p and (
-            not isinstance(p["summary"], str) or not 1 <= len(p["summary"]) <= 360
-        ):
-            raise ValueError("Student summaries require 1–360 characters.")
+        if "summary" in p and not bounded(p["summary"], 2000):
+            raise ValueError("Student summaries require 1–2000 characters.")
         if (
             not isinstance(p.get("title"), str)
             or not p["title"]
@@ -103,18 +102,17 @@ def validate_execution(value, rules, evidence):
             raise ValueError("Use 1–30 concise execution lines per procedure.")
         for line in p["steps"]:
             if (
-                type(line.get("indent")) is not int
+                not isinstance(line, dict)
+                or type(line.get("indent")) is not int
                 or not 0 <= line["indent"] <= 4
-                or not isinstance(line.get("text"), str)
-                or not line["text"]
-                or len(line["text"]) > 550
+                or not bounded(line.get("text"), 2000)
                 or ("kind" in line and line["kind"] not in {"A", "B", "C"})
             ):
                 raise ValueError(
                     "Execution lines need indent 0–4, short text and optional kind A, B or C."
                 )
         for read in p["reads"]:
-            sources = read.get("sources", [read.get("source")])
+            sources = read.get("sources", [read.get("source")]) if isinstance(read, dict) else None
             if (
                 not isinstance(sources, list)
                 or not sources
@@ -132,7 +130,8 @@ def validate_execution(value, rules, evidence):
         citations = []
         for citation in p["evidence"]:
             if (
-                citation.get("file") not in evidence
+                not isinstance(citation, dict)
+                or citation.get("file") not in evidence
                 or not isinstance(citation.get("quote"), str)
                 or not citation["quote"].strip()
             ):

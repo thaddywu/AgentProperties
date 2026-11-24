@@ -21,8 +21,8 @@ def strings(value, limit=100):
     )
 
 
-def parse_json(raw):
-    if not isinstance(raw, str) or len(raw) > 200_000:
+def parse_json(raw, *, max_chars=200_000):
+    if not isinstance(raw, str) or len(raw) > max_chars:
         raise ValueError("Model response exceeds the size limit.")
     value = json.loads(
         re.sub(r"^```(?:json)?\s*\n([\s\S]*?)\n```$", r"\1", raw.strip())
@@ -43,7 +43,7 @@ def checked(stage, payload, validate, generate, record):
             entry["error"] = str(error)
             record(entry)
             if attempt == 2:
-                raise ValueError(f"{stage} failed structural validation") from error
+                raise ValueError(f"{stage} failed structural validation: {str(error)[:1800]}") from error
             prompt = (
                 json.dumps(payload, ensure_ascii=False)
                 + "\nRepair this candidate: "

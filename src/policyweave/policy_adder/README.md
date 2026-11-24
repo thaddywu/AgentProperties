@@ -19,11 +19,10 @@ stages. `binding.py` validates source evidence and fixed schemas; `harness.py`
 persists progression, freezes contracts/rules and checks native gate traces.
 The binding freezes explicit role/group/grant/FSM configuration. PrincipalGroup
 records direct roles or user groups; shared InGroup supplies nested membership.
-Custom IDB starts empty. At most eight justified helpers may be planned for
-negative existence, reused nontrivial joins, recursion or global violations;
-rules cannot invent further predicate names. Simple aliases and unused helpers
-are rejected. The final IDB set freezes with accepted rules; instrumentation
-cannot change it. Helpers introduce no new input predicates or producers.
+The port workflow keeps custom IDB empty and reuses the existing shared
+predicates; plans cannot introduce helper schemas or new input producers.
+Missing expressibility stays visible as a gap. The rule vocabulary freezes
+with accepted rules; instrumentation cannot change it.
 Inventory and binding use `CodexPort.plan()`: bounded provider-neutral model
 calls with strict JSON schemas and a host-selected original-source bundle, no
 file tools and no app execution. The coding CLI runs only the rules and

@@ -39,9 +39,13 @@ The review keeps source sentences on the left and relevant independent checks on
 the right. Each check has a required short summary with decisive conditions and
 material dependencies or gaps. “How this is checked” reveals concise details in
 condition-first order, followed by necessary source/timing context. Each check
-has at most three detail lines, each at most 360 characters. Internal method names
+aims for at most three detail lines of 360 characters. These are style targets;
+the shared validator accepts up to 30 lines and 2,000 characters per summary or
+detail line so necessary conditions need not be dropped to fit. Internal method names
 and event/field plumbing stay in reconstruction evidence. The UI also
 accepts older descriptions with A/B/C annotations, without showing fixed sections.
+The suggested `Records:` and `Rules:` prefixes are presentation guidance, not
+validation requirements; their absence does not invalidate a grounded reading.
 
 “Examples” appears only when a check has an illustrative scenario. Examples
 describe the outcome of that check, not guaranteed authorization or business
@@ -51,6 +55,9 @@ Code evidence remains in the data artifacts.
 After the independent reading freezes, the viewer's separate alignment pass may
 read source policy and map sentences to relevant check IDs. It cannot rewrite
 the reading or assign a correctness judgment. Human review remains necessary.
+Identical repeated mapping rows and check IDs are deduplicated. Every source
+sentence still needs a mapping, and unknown IDs or conflicting repeated mappings
+are rejected and sent through bounded model repair.
 
 ## UI copy
 

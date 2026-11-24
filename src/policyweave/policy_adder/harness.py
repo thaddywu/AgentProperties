@@ -154,7 +154,8 @@ def _json_stage(port, name, task, shape, validator, repairs):
             + task + "\nWrite ONLY " + output + ". Required JSON shape (examples are synthetic, replace them):\n"
             + json.dumps(shape) + "\nEvidence objects contain only origin, file, quote. Origins: application paths in original/, "
             "framework paths relative to framework/policyweave/, or policy using source.json's policy path. "
-            "Quotes must be exact, contiguous and unique. Inspect files before quoting; do not guess. "
+            "Quotes must be exact and contiguous. Inventory citations must be unique within their named function; "
+            "other citations must be unique within their file. Inspect files before quoting; do not guess. "
             "Framework has no policy_adder module in this workspace; do not try to import host validators.\n"
             + ("Prior validation failures:\n" + json.dumps(errors) if errors else "")
         )

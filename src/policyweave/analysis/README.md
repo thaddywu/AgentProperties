@@ -25,6 +25,9 @@ replay status. Permission, callback execution and task completion remain distinc
 A blocked read does not prove the entire run avoided disclosure.
 Model explanations should be assessed against the displayed evidence; matching
 decision replay verifies the verdict, not every sentence of the explanation.
+Malformed explanation objects receive up to two model repair attempts using
+the same native query results. Wrong event citations remain invalid; repairs
+do not rerun application operations or change the recorded verdict.
 
 `LogQuerySession` provides a separate Python question workflow:
 

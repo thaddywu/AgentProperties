@@ -52,6 +52,8 @@ class ExecutionTests(unittest.TestCase):
                 self.assertNotIn("PRIVATE_POLICY_INTENT", prompt)
                 candidate = deepcopy(chain)
                 if len(calls) == 1:
+                    candidate["reads"] = ["Malformed model object"]
+                elif len(calls) == 2:
                     candidate["evidence"] = [
                         dict(file="adapter.py", quote="invented evidence")
                     ]
@@ -87,7 +89,7 @@ class ExecutionTests(unittest.TestCase):
         )
         self.assertEqual(aligned[1]["procedureIds"], [])
         self.assertIn("error", records[0])
-        self.assertEqual(len(calls), 4)
+        self.assertEqual(len(calls), 5)
 
     def test_presentation_cannot_reassign_checks_or_replace_frozen_evidence(self):
         rules = [dict(id="r1", datalog='Allow(Q) :- Request(Q, "student", "read").')]
@@ -126,7 +128,7 @@ class ExecutionTests(unittest.TestCase):
                             evidence=[dict(file="fake", quote="fake")],
                             steps=[
                                 dict(
-                                    text="x" * 361
+                                    text="x" * 2001
                                     if presentation_calls == 2
                                     else "Rules: The student role derives Allow; no grant refuses entry."
                                 )
@@ -232,6 +234,46 @@ class ExecutionTests(unittest.TestCase):
             )
         self.assertEqual(published["workflow.json"]["status"], "failed")
         self.assertNotIn("backtranslation.json", published)
+
+    def test_presentation_labels_are_style_guidance_not_a_validation_gate(self):
+        rules = [dict(id="r1", datalog='Allow(Q) :- Request(Q,"student","read").')]
+        evidence = {"adapter.py": "check before read"}
+        chains = dict(checks=[dict(id="read", ruleIds=["r1"], reads=[],
+            evidence=[dict(file="adapter.py", quote=evidence["adapter.py"])])])
+        row = dict(id="read", title="Read", summary="The gate reads the caller before entry.",
+                   steps=[dict(text="A student read is allowed; a missing grant refuses entry.")], examples=[])
+        result = validate_presentation(dict(procedures=[row]), chains, rules, evidence)
+        self.assertEqual(result[0]["summary"], row["summary"])
+        self.assertEqual(result[0]["steps"][0]["text"], row["steps"][0]["text"])
+        self.assertEqual(result[0]["evidence"], chains["checks"][0]["evidence"])
+        longer = deepcopy(row)
+        longer["summary"] = "The gate reads the supplied caller before entry. " * 10
+        longer["steps"] = [dict(text="A missing grant refuses this scoped read. " * 12) for _ in range(4)]
+        result = validate_presentation(dict(procedures=[longer]), chains, rules, evidence)
+        self.assertEqual(len(result[0]["steps"]), 4)
+        self.assertGreater(len(result[0]["summary"]), 360)
+        longer["summary"] = "x" * 2001
+        with self.assertRaises(ValueError):
+            validate_presentation(dict(procedures=[longer]), chains, rules, evidence)
+
+    def test_alignment_deduplicates_identical_links_but_keeps_coverage_checks(self):
+        units = [dict(id="s1", quote="Students may read."), dict(id="s2", quote="Context.")]
+        procedures = [dict(id="read")]
+        response = dict(links=[dict(sentenceId="s1", procedureIds=["read", "read"]),
+                              dict(sentenceId="s1", procedureIds=["read"]),
+                              dict(sentenceId="s2", procedureIds=[])])
+        self.assertEqual(align_execution(units, procedures, lambda *_: json.dumps(response)),
+                         [dict(sentenceId="s1", procedureIds=["read"]), dict(sentenceId="s2", procedureIds=[])])
+        for invalid in (
+            [dict(sentenceId="s1", procedureIds=["read"])],
+            [dict(sentenceId="s1", procedureIds=["invented"]), dict(sentenceId="s2", procedureIds=[])],
+            [dict(sentenceId="s1", procedureIds=["read"]), dict(sentenceId="s1", procedureIds=[]),
+             dict(sentenceId="s2", procedureIds=[])],
+        ):
+            attempts = []
+            with self.subTest(links=invalid), self.assertRaises(ValueError):
+                align_execution(units, procedures, lambda *_: json.dumps(dict(links=invalid)), attempts.append)
+            self.assertEqual(len(attempts), 3)
 
     def test_permission_split_and_thresholds_do_not_strengthen_denial(self):
         rules = [
